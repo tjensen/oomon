@@ -165,9 +165,9 @@ Dnsbl::process(void)
 void
 Dnsbl::status(BotClient * client) const
 {
-#ifdef DNSBL_DEBUG
+#ifdef HAVE_LIBADNS
   client->send("DNSBL queries: " + IntToStr(this->_queries.size()));
-#endif /* DNSBL_DEBUG */
+#endif /* HAVE_LIBADNS */
 }
 
 
