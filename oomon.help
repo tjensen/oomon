@@ -337,7 +337,9 @@ info traps
 .d.
 .d.Rules in the .trap command line have the
 .d.syntax, "<field>=<pattern>", where "<field>" can
-.d.be one of: nick, userhost, gecos, version,
+.d.be one of: n or nick, u or user, h or host, uh
+.d.or userhost, nuh or nickuserhost, g or gecos,
+.d.nuhg or nickuserhostgecos, c or class, version,
 .d.privmsg, or notice and "<pattern>" can be a
 .d.regular expression or a glob-style wildcard
 .d.pattern.
@@ -353,7 +355,7 @@ info traps
 .d.against NOTICEs, the TRAP_NOTICES setting must
 .d.be ON!
 .e.> .trap kline_host userhost=*.aol.com,version=/iroffer/ No iroffer bots allowed from AOL!
-.e.Toast@OOMon added trap KLINE_HOST: userhost=*.aol.com,version=/iroffer/ (No iroffer bots allowed from AOL!)
+.e.Toast@OOMon added trap KLINE_HOST: uh=*.aol.com,version=/iroffer/ (No iroffer bots allowed from AOL!)
 .l.info patterns
 .l.info regex
 .l.set ctcpversion_enable
@@ -2408,16 +2410,19 @@ trace
 .l.reload
 trap
 .s.trap [-a] [-t] [list]
-.s.trap remove <rules>
+.s.trap remove <index>|<rules>
 .s.trap <action> [<timeout>] <rules> [<reason>]
 .d.Watches client connects and nick changes and
 .d.performs the desired action when they match the
 .d.rules specified in the format:
 .d.   <field>=<pattern>[,<field>=<pattern>[,...]]
-.d.The "field" may be "nick", "userhost", or
-.d."gecos".  The pattern may be a regular expression
-.d.or old-style cluster pattern.  Action may be one
-.d.of the following:
+.d.The "field" may be "n" or "nick", "u" or "user",
+.d."h" or "host", "uh" or "userhost", "nuh" or
+.d."nickuserhost", "g" or "gecos", "nuhg" or
+.d."nickuserhostgecos", "c" or "class", "version",
+.d."privmsg", or "notice".  The pattern may be a
+.d.regular expression or old-style cluster pattern.
+.d.Action may be one of the following:
 .d. echo - notify opers of matching clients
 .d. kill - forcefully disconnect matching clients
 .d. kline - k-line *user@*domain matching clients
@@ -2433,13 +2438,15 @@ trap
 .d.The "-t" argument will display a timestamp of the
 .d.most recent match for each trap.
 .e.> .trap kline_host nick=pK-????? pK drone
-.e.Toast@OOMon added trap KLINE_HOST: nick=pK-????? (pK drone)
+.e.*** Toast@OOMon added trap KLINE_HOST: n=pK-????? (pK drone)
 .e.> .trap dline_net userhost=*rolex*@* packet monkey
-.e.Toast@OOMon added trap DLINE_NET: userhost=*rolex*@* (packet monkey)
+.e.*** Toast@OOMon added trap DLINE_NET: uh=*rolex*@* (packet monkey)
 .e.> .trap kline_ip 1440 gecos=/-[0-9]{5}$/ flooding drone
-.e.Toast@OOMon added trap KLINE_IP: 1440 gecos=/-[0-9]{5}$/ (flooding drone)
+.e.*** Toast@OOMon added trap KLINE_IP 1440: g=/-[0-9]{5}$/ (flooding drone)
 .e.> .trap kline_host 1440 version=/sdbot/ drone bot
-.e.Toast@OOMon added trap KLINE_HOST: 1440 version=/sdbot/ (drone bot)
+.e.*** Toast@OOMon added trap KLINE_HOST 1440: version=/sdbot/ (drone bot)
+.e.> .trap remove 100
+.e.*** Toast@OOMon removed trap: 100
 .f.mo
 .l.dline
 .l.info patterns

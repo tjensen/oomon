@@ -105,6 +105,28 @@ public:
     result += BotSock::inet_ntoa(this->ip);
     return result;
   }
+  std::string getNickUserHostGecos(void) const
+  {
+    std::string result(this->nick);
+    result += '!';
+    result += this->user;
+    result += '@';
+    result += this->host;
+    result += '#';
+    result += this->gecos;
+    return result;
+  }
+  std::string getNickUserIPGecos(void) const
+  {
+    std::string result(this->nick);
+    result += '!';
+    result += this->user;
+    result += '@';
+    result += BotSock::inet_ntoa(this->ip);
+    result += '#';
+    result += this->gecos;
+    return result;
+  }
   std::time_t getConnectTime(void) const { return this->connectTime; };
   std::time_t getReportTime(void) const { return this->reportTime; };
 

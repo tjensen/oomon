@@ -54,14 +54,13 @@ Trap::Trap(const TrapAction action, const long timeout,
     std::string pattern = grabPattern(this->reason_);
     this->reason_ = trimLeft(this->reason_);
 
-    this->rePattern_.reset(new RegExPattern(pattern));
+    this->nuh_.reset(new RegExPattern(pattern));
   }
   else
   {
     std::string copy = line;
 
-    if (Trap::parsePattern(copy, this->nick_, this->userhost_, this->gecos_,
-      this->version_, this->privmsg_, this->notice_))
+    if (this->parsePattern(copy))
     {
       this->reason_ = trimLeft(copy);
     }
@@ -69,9 +68,14 @@ Trap::Trap(const TrapAction action, const long timeout,
     {
       copy = line;
 
-      this->nick_.reset();
-      this->userhost_.reset();
-      this->gecos_.reset();
+      this->n_.reset();
+      this->u_.reset();
+      this->h_.reset();
+      this->uh_.reset();
+      this->nuh_.reset();
+      this->g_.reset();
+      this->nuhg_.reset();
+      this->c_.reset();
       this->version_.reset();
       this->privmsg_.reset();
       this->notice_.reset();
@@ -82,11 +86,11 @@ Trap::Trap(const TrapAction action, const long timeout,
 
       if (nick != "*")
       {
-        this->nick_.reset(new NickClusterPattern(nick));
+        this->n_.reset(new NickClusterPattern(nick));
       }
       if (userhost != "*@*")
       {
-        this->userhost_.reset(new ClusterPattern(userhost));
+        this->uh_.reset(new ClusterPattern(userhost));
       }
       this->reason_ = copy;
     }
@@ -95,11 +99,11 @@ Trap::Trap(const TrapAction action, const long timeout,
 
 
 Trap::Trap(const Trap & copy)
-  : action_(copy.action_), timeout_(copy.timeout_), nick_(copy.nick_),
-  userhost_(copy.userhost_), gecos_(copy.gecos_), version_(copy.version_),
-  privmsg_(copy.privmsg_), notice_(copy.notice_), rePattern_(copy.rePattern_),
-  reason_(copy.reason_), lastMatch_(copy.lastMatch_),
-  matchCount_(copy.matchCount_)
+  : action_(copy.action_), timeout_(copy.timeout_), n_(copy.n_),
+  u_(copy.u_), h_(copy.h_), uh_(copy.uh_), nuh_(copy.nuh_), g_(copy.g_),
+  nuhg_(copy.nuhg_), c_(copy.c_), version_(copy.version_),
+  privmsg_(copy.privmsg_), notice_(copy.notice_), reason_(copy.reason_),
+  lastMatch_(copy.lastMatch_), matchCount_(copy.matchCount_)
 {
 }
 
@@ -120,132 +124,93 @@ bool
 Trap::matches(const UserEntryPtr user, const std::string & version,
   const std::string & privmsg, const std::string & notice) const
 {
-  if (NULL != this->rePattern_)
+  if (this->n_ && !this->n_->match(user->getNick()))
   {
-    return (this->rePattern_->match(user->getNickUserHost()) ||
-      this->rePattern_->match(user->getNickUserIP()));
+    return false;
   }
-  else
+  if (this->u_ && !this->u_->match(user->getUser()))
   {
-    if ((this->nick_ && !this->nick_->match(user->getNick())) ||
-      (this->gecos_ && !this->gecos_->match(user->getGecos())) ||
-      (this->version_ && !this->version_->match(version)) ||
-      (this->privmsg_ && !this->privmsg_->match(privmsg)) ||
-      (this->notice_ && !this->notice_->match(notice)) ||
-      (this->userhost_ && !this->userhost_->match(user->getUserHost()) &&
-      !this->userhost_->match(user->getUserIP())))
-    {
-      return false;
-    }
+    return false;
+  }
+  if (this->h_ && !this->h_->match(user->getHost()) &&
+      !this->h_->match(user->getTextIP()))
+  {
+    return false;
+  }
+  if (this->uh_ && !this->uh_->match(user->getUserHost()) &&
+      !this->uh_->match(user->getUserIP()))
+  {
+    return false;
+  }
+  if (this->nuh_ && !this->nuh_->match(user->getNickUserHost()) &&
+      !this->nuh_->match(user->getNickUserIP()))
+  {
+    return false;
+  }
+  if (this->g_ && !this->g_->match(user->getGecos()))
+  {
+    return false;
+  }
+  if (this->nuhg_ && !this->nuhg_->match(user->getNickUserHostGecos()) &&
+      !this->nuhg_->match(user->getNickUserIPGecos()))
+  {
+    return false;
+  }
+  if (this->c_ && !this->c_->match(user->getClass()))
+  {
+    return false;
+  }
+  if (this->version_ && !this->version_->match(version))
+  {
+    return false;
+  }
+  if (this->privmsg_ && !this->privmsg_->match(privmsg))
+  {
+    return false;
+  }
+  if (this->notice_ && !this->notice_->match(notice))
+  {
+    return false;
+  }
+  return true;
+}
 
-    return true;
+
+bool
+Trap::patternsEqual(const PatternPtr & left, const PatternPtr & right)
+{
+  bool result = true;
+
+  if (left && right)
+  {
+    if (left->get() != right->get())
+    {
+      result = false;
+    }
   }
+  else if (left || right)
+  {
+    result = false;
+  }
+
+  return result;
 }
 
 
 bool
 Trap::operator==(const Trap & other) const
 {
-  if (this->rePattern_)
-  {
-    if (other.rePattern_)
-    {
-      return (other.rePattern_->get() == this->rePattern_->get());
-    }
-    else
-    {
-      return false;
-    }
-  }
-  else
-  {
-    if (this->nick_)
-    {
-      if (!other.nick_ || (this->nick_->get() != other.nick_->get()))
-      {
-	return false;
-      }
-    }
-    else
-    {
-      if (other.nick_)
-      {
-	return false;
-      }
-    }
-    if (this->userhost_)
-    {
-      if (!other.userhost_ ||
-	(this->userhost_->get() != other.userhost_->get()))
-      {
-	return false;
-      }
-    }
-    else
-    {
-      if (other.userhost_)
-      {
-	return false;
-      }
-    }
-    if (this->gecos_)
-    {
-      if (!other.gecos_ || (this->gecos_->get() != other.gecos_->get()))
-      {
-	return false;
-      }
-    }
-    else
-    {
-      if (other.gecos_)
-      {
-	return false;
-      }
-    }
-    if (this->version_)
-    {
-      if (!other.version_ || (this->version_->get() != other.version_->get()))
-      {
-	return false;
-      }
-    }
-    else
-    {
-      if (other.version_)
-      {
-	return false;
-      }
-    }
-    if (this->privmsg_)
-    {
-      if (!other.privmsg_ || (this->privmsg_->get() != other.privmsg_->get()))
-      {
-	return false;
-      }
-    }
-    else
-    {
-      if (other.privmsg_)
-      {
-	return false;
-      }
-    }
-    if (this->notice_)
-    {
-      if (!other.notice_ || (this->notice_->get() != other.notice_->get()))
-      {
-	return false;
-      }
-    }
-    else
-    {
-      if (other.notice_)
-      {
-	return false;
-      }
-    }
-    return true;
-  }
+  return (Trap::patternsEqual(this->n_, other.n_) &&
+      Trap::patternsEqual(this->u_, other.u_) &&
+      Trap::patternsEqual(this->h_, other.h_) &&
+      Trap::patternsEqual(this->uh_, other.uh_) &&
+      Trap::patternsEqual(this->nuh_, other.nuh_) &&
+      Trap::patternsEqual(this->g_, other.g_) &&
+      Trap::patternsEqual(this->nuhg_, other.nuhg_) &&
+      Trap::patternsEqual(this->c_, other.c_) &&
+      Trap::patternsEqual(this->version_, other.version_) &&
+      Trap::patternsEqual(this->privmsg_, other.privmsg_) &&
+      Trap::patternsEqual(this->notice_, other.notice_));
 }
 
 
@@ -267,21 +232,33 @@ Trap::getString(bool showCount, bool showTime) const
     result += ' ';
   }
 
-  if (showTime && (0 != this->getLastMatch()))
+  if (showTime)
   {
-    result += timeStamp(TIMESTAMP_LOG, this->getLastMatch());
-    result += ' ';
+    if (0 != this->getLastMatch())
+    {
+      result += timeStamp(TIMESTAMP_LOG, this->getLastMatch());
+      result += ' ';
+    }
+    else
+    {
+      result += "never ";
+    }
   }
 
-  result += TrapList::actionString(this->getAction()) + ": ";
+  result += TrapList::actionString(this->getAction());
   TrapAction action = this->getAction();
   switch (action)
   {
     case TRAP_ECHO:
+      result += ": ";
       result += this->getPattern();
       break;
     case TRAP_KILL:
-      result += this->getPattern() + " (" + this->getReason() + ")";
+      result += ": ";
+      result += this->getPattern();
+      result += " (";
+      result += this->getReason();
+      result += ')';
       break;
     case TRAP_DLINE_IP:
     case TRAP_DLINE_NET:
@@ -293,20 +270,14 @@ Trap::getString(bool showCount, bool showTime) const
     case TRAP_KLINE_NET:
       if (this->getTimeout() > 0)
       {
+        result += ' ';
         result += boost::lexical_cast<std::string>(this->getTimeout());
-	result += ' ';
-	result += this->getPattern();
-	result += " (";
-	result += this->getReason();
-	result += ')';
       }
-      else
-      {
-        result += this->getPattern();
-	result += " (";
-	result += this->getReason();
-	result += ')';
-      }
+      result += ": ";
+      result += this->getPattern();
+      result += " (";
+      result += this->getReason();
+      result += ')';
       break;
     default:
       result = "Unknown TRAP type!";
@@ -380,59 +351,92 @@ Trap::getPattern(void) const
 {
   std::string result;
 
-  if (NULL != this->rePattern_)
+  if (this->n_)
   {
-    result = this->rePattern_->get();
+    result = "n=" + this->n_->get();
   }
-  else
+  if (this->u_)
   {
-    if (this->nick_)
+    if (!result.empty())
     {
-      result = "nick=" + this->nick_->get();
+      result += ',';
     }
-    if (this->userhost_)
+    result += "u=" + this->u_->get();
+  }
+  if (this->h_)
+  {
+    if (!result.empty())
     {
-      if (!result.empty())
-      {
-	result += ',';
-      }
-      result += "userhost=" + this->userhost_->get();
+      result += ',';
     }
-    if (this->gecos_)
+    result += "h=" + this->h_->get();
+  }
+  if (this->uh_)
+  {
+    if (!result.empty())
     {
-      if (!result.empty())
-      {
-	result += ',';
-      }
-      result += "gecos=" + this->gecos_->get();
+      result += ',';
     }
-    if (this->version_)
+    result += "uh=" + this->uh_->get();
+  }
+  if (this->nuh_)
+  {
+    if (!result.empty())
     {
-      if (!result.empty())
-      {
-	result += ',';
-      }
-      result += "version=";
-      result += this->version_->get();
+      result += ',';
     }
-    if (this->privmsg_)
+    result += "nuh=" + this->nuh_->get();
+  }
+  if (this->g_)
+  {
+    if (!result.empty())
     {
-      if (!result.empty())
-      {
-	result += ',';
-      }
-      result += "privmsg=";
-      result += this->privmsg_->get();
+      result += ',';
     }
-    if (this->notice_)
+    result += "g=" + this->g_->get();
+  }
+  if (this->nuhg_)
+  {
+    if (!result.empty())
     {
-      if (!result.empty())
-      {
-	result += ',';
-      }
-      result += "notice=";
-      result += this->notice_->get();
+      result += ',';
     }
+    result += "nuhg=" + this->nuhg_->get();
+  }
+  if (this->c_)
+  {
+    if (!result.empty())
+    {
+      result += ',';
+    }
+    result += "c=" + this->c_->get();
+  }
+  if (this->version_)
+  {
+    if (!result.empty())
+    {
+      result += ',';
+    }
+    result += "version=";
+    result += this->version_->get();
+  }
+  if (this->privmsg_)
+  {
+    if (!result.empty())
+    {
+      result += ',';
+    }
+    result += "privmsg=";
+    result += this->privmsg_->get();
+  }
+  if (this->notice_)
+  {
+    if (!result.empty())
+    {
+      result += ',';
+    }
+    result += "notice=";
+    result += this->notice_->get();
   }
   return result;
 }
@@ -465,9 +469,11 @@ Trap::split(const std::string & pattern, std::string & nick,
 
 
 void
-Trap::doAction(const UserEntryPtr user) const
+Trap::doAction(const TrapKey key, const UserEntryPtr user) const
 {
-  std::string notice("*** Trapped: ");
+  std::string notice("*** Trapped ");
+  notice += boost::lexical_cast<std::string>(key);
+  notice += ": ";
   notice += user->getNickUserHost();
   notice += " [";
   notice += user->getTextIP();
@@ -574,7 +580,7 @@ Trap::doAction(const UserEntryPtr user) const
 
 
 Trap
-TrapList::add(const unsigned int key, const TrapAction action,
+TrapList::add(const TrapKey key, const TrapAction action,
   const long timeout, const std::string & line)
 {
   Trap trap(action, timeout, line);
@@ -598,11 +604,11 @@ TrapList::add(const unsigned int key, const TrapAction action,
 }
 
 
-unsigned int
+TrapKey
 TrapList::getMaxKey(void)
 {
   TrapMap::reverse_iterator last = traps.rbegin();
-  unsigned int result = 0;
+  TrapKey result = 0;
 
   if (last != traps.rend())
   {
@@ -644,7 +650,7 @@ TrapList::cmd(BotClient * client, std::string line)
       bool success = false;
       try
       {
-        unsigned int key = boost::lexical_cast<unsigned int>(val);
+        TrapKey key = boost::lexical_cast<TrapKey>(val);
         success = TrapList::remove(key);
       }
       catch (boost::bad_lexical_cast)
@@ -657,7 +663,8 @@ TrapList::cmd(BotClient * client, std::string line)
 
         if (0 != client->id().compare("CONFIG"))
         {
-          std::string notice(client->handleAndBot());
+          std::string notice("*** ");
+          notice += client->handleAndBot();
           notice += " removed trap: ";
           notice += line;
           ::SendAll(notice, UserFlags::OPER, WATCH_TRAPS);
@@ -676,11 +683,11 @@ TrapList::cmd(BotClient * client, std::string line)
   }
   else // command == "ADD"
   {
-    unsigned int key = 0;
+    TrapKey key = 0;
 
     try
     {
-      key = boost::lexical_cast<unsigned int>(flag);
+      key = boost::lexical_cast<TrapKey>(flag);
       flag = UpCase(FirstWord(line));
     }
     catch (boost::bad_lexical_cast)
@@ -707,7 +714,8 @@ TrapList::cmd(BotClient * client, std::string line)
 
         if (0 != client->id().compare("CONFIG"))
         {
-          std::string notice(client->handleAndBot());
+          std::string notice("*** ");
+          notice += client->handleAndBot();
 	  notice +=" added trap ";
 	  notice += node.getString();
           ::SendAll(notice, UserFlags::OPER, WATCH_TRAPS);
@@ -738,7 +746,7 @@ TrapList::cmd(BotClient * client, std::string line)
 
 
 bool
-TrapList::remove(const unsigned int key)
+TrapList::remove(const TrapKey key)
 {
   const TrapMap::iterator begin = traps.lower_bound(key);
   const TrapMap::iterator end = traps.upper_bound(key);
@@ -784,7 +792,7 @@ TrapList::match(const UserEntryPtr user, const std::string & version,
         if (pos->second.matches(user, version, privmsg, notice))
         {
 	  pos->second.updateStats();
-	  pos->second.doAction(user);
+	  pos->second.doAction(pos->first, user);
         }
       }
       catch (OOMon::regex_error & e)
@@ -860,62 +868,88 @@ TrapList::save(std::ofstream & file)
 
 
 bool
-Trap::parsePattern(std::string & pattern, PatternPtr & nick,
-  PatternPtr & userhost, PatternPtr & gecos, PatternPtr & version,
-  PatternPtr & privmsg, PatternPtr & notice)
+Trap::parsePattern(std::string & pattern)
 {
   while (!pattern.empty())
   {
-    if ((pattern.length() >= 5) && Same("nick=", pattern.substr(0, 5)))
+    std::string::size_type equals = pattern.find('=');
+    if (equals != std::string::npos)
     {
-      pattern.erase(0, 5);
-      std::string temp = grabPattern(pattern, " ,");
-      nick = smartPattern(temp, true);
+      std::string field(UpCase(pattern), 0, equals);
+      pattern.erase(0, equals + 1);
+      if ((0 == field.compare("N")) || (0 == field.compare("NICK")))
+      {
+        std::string temp = grabPattern(pattern, " ,");
+        this->n_ = smartPattern(temp, true);
+      }
+      else if ((0 == field.compare("U")) || (0 == field.compare("USER")))
+      {
+        std::string temp = grabPattern(pattern, " ,");
+        this->u_ = smartPattern(temp, false);
+      }
+      else if ((0 == field.compare("H")) || (0 == field.compare("HOST")))
+      {
+        std::string temp = grabPattern(pattern, " ,");
+        this->h_ = smartPattern(temp, false);
+      }
+      else if ((0 == field.compare("UH")) || (0 == field.compare("USERHOST")))
+      {
+        std::string temp = grabPattern(pattern, " ,");
+        this->uh_ = smartPattern(temp, false);
+      }
+      else if ((0 == field.compare("NUH")) ||
+          (0 == field.compare("NICKUSERHOST")))
+      {
+        std::string temp = grabPattern(pattern, " ,");
+        this->nuh_ = smartPattern(temp, false);
+      }
+      else if ((0 == field.compare("G")) || (0 == field.compare("GECOS")))
+      {
+        std::string temp = grabPattern(pattern, " ,");
+        this->g_ = smartPattern(temp, false);
+      }
+      else if ((0 == field.compare("NUHG")) ||
+          (0 == field.compare("NICKUSERHOSTGECOS")))
+      {
+        std::string temp = grabPattern(pattern, " ,");
+        this->nuhg_ = smartPattern(temp, false);
+      }
+      else if ((0 == field.compare("C")) || (0 == field.compare("CLASS")))
+      {
+        std::string temp = grabPattern(pattern, " ,");
+        this->c_ = smartPattern(temp, false);
+      }
+      else if (0 == field.compare("VERSION"))
+      {
+        std::string temp = grabPattern(pattern, " ,");
+        this->version_ = smartPattern(temp, false);
+      }
+      else if (0 == field.compare("PRIVMSG"))
+      {
+        std::string temp = grabPattern(pattern, " ,");
+        this->privmsg_ = smartPattern(temp, false);
+      }
+      else if (0 == field.compare("NOTICE"))
+      {
+        std::string temp = grabPattern(pattern, " ,");
+        this->notice_ = smartPattern(temp, false);
+      }
+      else
+      {
+        // WTF?
+        return false;
+      }
     }
-    else if ((pattern.length() >= 9) && Same("userhost=", pattern.substr(0, 9)))
-    {
-      pattern.erase(0, 9);
-      std::string temp = grabPattern(pattern, " ,");
-      userhost = smartPattern(temp, false);
-    }
-    else if ((pattern.length() >= 6) && Same("gecos=", pattern.substr(0, 6)))
-    {
-      pattern.erase(0, 6);
-      std::string temp = grabPattern(pattern, " ,");
-      gecos = smartPattern(temp, false);
-    }
-    else if ((pattern.length() >= 8) && Same("version=", pattern.substr(0, 8)))
-    {
-      pattern.erase(0, 8);
-      std::string temp = grabPattern(pattern, " ,");
-      version = smartPattern(temp, false);
-    }
-    else if ((pattern.length() >= 8) && Same("privmsg=", pattern.substr(0, 8)))
-    {
-      pattern.erase(0, 8);
-      std::string temp = grabPattern(pattern, " ,");
-      privmsg = smartPattern(temp, false);
-    }
-    else if ((pattern.length() >= 7) && Same("notice=", pattern.substr(0, 7)))
-    {
-      pattern.erase(0, 7);
-      std::string temp = grabPattern(pattern, " ,");
-      notice = smartPattern(temp, false);
-    }
-    else
-    {
-      // WTF?
-      return false;
-    }
+
     if (!pattern.empty())
     {
       if (pattern[0] == ' ')
       {
-	return true;
+        return true;
       }
       else if (pattern[0] == ',')
       {
-	pattern.erase(0, 1);
+        pattern.erase(0, 1);
       }
     }
   }

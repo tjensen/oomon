@@ -45,6 +45,9 @@ enum TrapAction
 };
 
 
+typedef unsigned int TrapKey;
+
+
 class Trap
 {
 public:
@@ -56,7 +59,7 @@ public:
     const std::string & privmsg, const std::string & notice) const;
   bool operator==(const Trap & other) const;
   bool operator==(const std::string & other) const;
-  void doAction(const UserEntryPtr user) const;
+  void doAction(const TrapKey key, const UserEntryPtr user) const;
 
   void updateStats(void);
 
@@ -70,25 +73,28 @@ public:
 
 private:
   typedef boost::shared_ptr<Pattern> PatternPtr;
-  typedef boost::shared_ptr<RegExPattern> RegExPatternPtr;
   TrapAction	action_;
   long		timeout_;	// For K-Lines only
-  PatternPtr	nick_;
-  PatternPtr	userhost_;
-  PatternPtr	gecos_;
+  PatternPtr	n_;    // nickname
+  PatternPtr	u_;    // username
+  PatternPtr	h_;    // hostname
+  PatternPtr	uh_;   // username@hostname
+  PatternPtr    nuh_;  // nickname!username@hostname
+  PatternPtr	g_;    // gecos
+  PatternPtr    nuhg_; // nickname!username@hostname#gecos
+  PatternPtr	c_;    // class
   PatternPtr	version_;
   PatternPtr	privmsg_;
   PatternPtr	notice_;
-  RegExPatternPtr	rePattern_;
   std::string	reason_;	// For Kills, K-Lines, and D-Lines only
   std::time_t	lastMatch_;
   unsigned long	matchCount_;
 
   static void split(const std::string & pattern, std::string & nick,
     std::string & userhost);
-  static bool parsePattern(std::string & pattern, PatternPtr & nick,
-    PatternPtr & userhost, PatternPtr & gecos, PatternPtr & version,
-    PatternPtr & privmsg, PatternPtr & notice);
+  static bool patternsEqual(const PatternPtr & left, const PatternPtr & right);
+
+  bool parsePattern(std::string & pattern);
 };
 
 
@@ -96,7 +102,7 @@ class TrapList
 {
 public:
   static void cmd(class BotClient * client, std::string line);
-  static bool remove(const unsigned int key);
+  static bool remove(const TrapKey key);
   static bool remove(const std::string & pattern);
   static void clear(void) { TrapList::traps.clear(); };
 
@@ -117,12 +123,12 @@ public:
   static std::string actionString(const TrapAction & action);
 
 private:
-  typedef std::multimap<unsigned int, Trap> TrapMap;
+  typedef std::multimap<TrapKey, Trap> TrapMap;
   static TrapMap traps;
 
-  static Trap add(const unsigned int key, const TrapAction action,
+  static Trap add(const TrapKey key, const TrapAction action,
     const long timeout, const std::string & line);
-  static unsigned int getMaxKey(void);
+  static TrapKey getMaxKey(void);
 };
 
 #endif /* __TRAP_H__ */
