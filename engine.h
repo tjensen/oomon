@@ -68,14 +68,16 @@ bool onKillNotice(std::string text);
 
 void klineClones(const bool kline, const std::string & rate,
   const std::string & User, const std::string & Host,
-  const BotSock::Address & ip, const bool differentUser, const bool differentIp,
+  const BotSock::Address & ip, const std::string & userClass,
+  const bool differentUser, const bool differentIp,
   const bool identd);
 
 void CheckProxy(const std::string &, const std::string &, const std::string &,
   const std::string &);
 
 bool checkForSpoof(const std::string & nick, const std::string & user, 
-  const std::string & host, const std::string & ip);
+  const std::string & host, const std::string & ip,
+  const std::string & userClass);
 
 void status(class BotClient * client);
 

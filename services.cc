@@ -116,7 +116,22 @@ Services::onXoNotice(std::string text)
     ::SendAll(notice, UserFlags::OPER);
     Log::Write(notice);
 
-    BotSock::Address ip = users.getIP(nick, this->cloningUserhost);
+    bool excluded(false);
+    BotSock::Address ip(INADDR_NONE);
+    UserEntryPtr find(users.findUser(nick, this->cloningUserhost));
+    if (find)
+    {
+      ip = find->getIP();
+      excluded = config.isExcluded(find) ||
+        config.isOper(this->cloningUserhost, find->getIP());
+    }
+    else
+    {
+      // If we can't find the user in our userlist, we won't be able to find
+      // its IP address either
+      excluded = config.isExcluded(this->cloningUserhost) ||
+        config.isOper(this->cloningUserhost);
+    }
 
     Format reason;
     reason.setStringToken('n', nick);
@@ -125,8 +140,7 @@ Services::onXoNotice(std::string text)
     reason.setStringToken('c', count);
     reason.setStringToken('s', vars[VAR_XO_SERVICES_RESPONSE]->getString());
 
-    if (!config.isExcluded(this->cloningUserhost, ip) &&
-      !config.isOper(this->cloningUserhost, ip))
+    if (!excluded)
     {
       doAction(nick, this->cloningUserhost, ip,
 	vars[VAR_XO_SERVICES_CLONE_ACTION]->getAction(),

@@ -40,8 +40,24 @@ I:remotes.cf
 # port number for us.
 #D:0:
 
-# Exceptions
+# ====================================================================
+# Exception - This defines userhost and class patterns that may be
+#             excluded from being killed, klined, etc.  Note that in
+#             some instances a user's class name can't be checked!
+#
+# Syntax
+#  E:<userhost pattern>
+#  EC:<class pattern>
+#
+# userhost pattern - A regex or cluster-style pattern to match against
+#                    users' user@host fields.
+# class pattern    - A regex or cluster-style pattern to match against
+#                    users' class name fields.
+# ====================================================================
 E:*@*toast.pc
+E:oomon@*
+EC:opers
+EC:friends
 
 # Spoofers (don't kline spoofers with IPs matching the following)
 F:192.168.*.*

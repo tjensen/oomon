@@ -124,8 +124,8 @@ makeKline(const std::string & mask, const std::string & reason,
 void
 klineClones(const bool kline, const std::string & rate,
   const std::string & User, const std::string & Host,
-  const BotSock::Address & ip, const bool differentUser, const bool differentIp,
-  const bool identd)
+  const BotSock::Address & ip, const std::string & userClass,
+  const bool differentUser, const bool differentIp, const bool identd)
 {
   std::string Notice;
   std::string UserAtHost = User + "@" + Host;
@@ -138,7 +138,9 @@ klineClones(const bool kline, const std::string & rate,
     return;
   }
 
-  if (config.isExcluded(UserAtHost, ip) && config.isOper(UserAtHost, ip))
+  if (config.isExcluded(UserAtHost, ip) ||
+      (!userClass.empty() && config.isExcludedClass(userClass)) ||
+      config.isOper(UserAtHost, ip))
   {
     // Don't k-line our friendlies!
     return;
@@ -429,7 +431,21 @@ addToNickChangeList(const std::string & userhost, const std::string & oldNick,
       ::SendAll(notice, UserFlags::OPER);
       Log::Write(notice);
 
-      BotSock::Address ip = users.getIP(oldNick, userhost);
+      bool excluded(false);
+      BotSock::Address ip(INADDR_NONE);
+      UserEntryPtr user(users.findUser(oldNick, userhost));
+      if (user)
+      {
+        ip = user->getIP();
+        excluded = config.isExcluded(user) ||
+          config.isOper(userhost, user->getIP());
+      }
+      else
+      {
+        // If we can't find the user in our userlist, we won't be able to find
+        // its IP address either
+        excluded = config.isExcluded(userhost) || config.isOper(userhost);
+      }
 
       Format reason;
       reason.setStringToken('n', lastNick);
@@ -437,7 +453,7 @@ addToNickChangeList(const std::string & userhost, const std::string & oldNick,
       reason.setStringToken('i', BotSock::inet_ntoa(ip));
       reason.setStringToken('r', rate);
 
-      if (!config.isExcluded(userhost, ip) && !config.isOper(userhost, ip))
+      if (!excluded)
       {
 	doAction(lastNick, userhost, ip,
 	  vars[VAR_NICK_FLOOD_ACTION]->getAction(),
@@ -668,7 +684,7 @@ onCsClones(std::string text)
     Log::Write("CS clones: " + userhost);
 
     klineClones(false, "CS detected", user, host, users.getIP(nick, userhost),
-      false, false, identd);
+      "", false, false, identd);
 
     result = true;
   }
@@ -699,9 +715,24 @@ onCsNickFlood(std::string text)
   ::SendAll(notice, UserFlags::OPER);
   Log::Write(notice);
 
-  BotSock::Address ip = users.getIP(nick, userhost);
+  bool excluded = false;
 
-  if ((!config.isExcluded(userhost, ip)) && (!config.isOper(userhost, ip)))
+  BotSock::Address ip(INADDR_NONE);
+  UserEntryPtr user(users.findUser(nick, userhost));
+  if (user)
+  {
+    ip = user->getIP();
+    excluded = config.isExcluded(user) ||
+      config.isOper(userhost, user->getIP());
+  }
+  else
+  {
+    // If we can't find the user in our userlist, we won't be able to find
+    // its IP address either
+    excluded = config.isExcluded(userhost) || config.isOper(userhost);
+  }
+
+  if (!excluded)
   {
     doAction(nick, userhost, ip, vars[VAR_NICK_FLOOD_ACTION]->getAction(),
       vars[VAR_NICK_FLOOD_ACTION]->getInt(),
@@ -1147,14 +1178,15 @@ onOperFailNotice(const std::string & text)
 
 bool
 checkForSpoof(const std::string & nick, const std::string & user, 
-  const std::string & host, const std::string & ip)
+  const std::string & host, const std::string & ip,
+  const std::string & userClass)
 {
   if (vars[VAR_CHECK_FOR_SPOOFS]->getBool())
   {
     std::string userhost = user + '@' + host;
 
     if (!config.isOper(userhost, ip) && !config.isExcluded(userhost, ip) &&
-      !config.spoofer(ip))
+        !config.isExcludedClass(userClass) && !config.spoofer(ip))
     {
       if (isNumericIPv4(host))
       {

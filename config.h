@@ -80,6 +80,7 @@ class Config
     bool isExcluded(const std::string & userhost, const BotSock::Address & ip)
       const;
     bool isExcluded(const UserEntryPtr & user) const;
+    bool isExcludedClass(const std::string & name) const;
     bool isOper(const std::string & userhost) const;
     bool isOper(const std::string & userhost, const std::string & ip) const;
     bool isOper(const std::string & userhost, const BotSock::Address & ip)
@@ -120,6 +121,7 @@ class Config
     void parseCLine(const StrVector & fields);
     void parseDLine(const StrVector & fields);
     void parseELine(const StrVector & fields);
+    void parseEcLine(const StrVector & fields);
     void parseFLine(const StrVector & fields);
     void parseGLine(const StrVector & fields);
     void parseHLine(const StrVector & fields);
@@ -162,6 +164,7 @@ class Config
     Config::LinkMap links_;
     Config::YLineMap ylines_;
     Config::PatternList exceptions_;
+    Config::PatternList classExceptions_;
     Config::PatternList spoofers_;
     std::string nick_;
     std::string username_;

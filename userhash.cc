@@ -130,7 +130,7 @@ UserHash::add(const std::string & nick, const std::string & userhost,
     std::string user = userhost.substr(0, at);
     std::string host = userhost.substr(at + 1);
 
-    if (!checkForSpoof(nick, user, host, ip))
+    if (!checkForSpoof(nick, user, host, ip, userClass))
     {
       // If we made it this far, we'll just assume it isn't a spoofed
       // hostname.  Oh, happy day!
@@ -156,7 +156,7 @@ UserHash::add(const std::string & nick, const std::string & userhost,
       // Don't check for wingate or clones when doing a TRACE
       if (!fromTrace)
       {
-        if (!config.isExcluded(userhost, ip) && !config.isOper(userhost, ip))
+        if (!config.isExcluded(newuser) && !config.isOper(userhost, ip))
         {
           // Check if this client matches any traps
           if (vars[VAR_TRAP_CONNECTS]->getBool())
@@ -335,8 +335,8 @@ UserHash::updateNick(const std::string & oldNick, const std::string & userhost,
     }
 
     if ((find->getScore() >= vars[VAR_SEEDRAND_REPORT_MIN]->getInt()) &&
-      !config.isOper(userhost, find->getIP()) &&
-      !config.isExcluded(userhost, find->getIP()) && !find->getOper())
+      !config.isOper(userhost, find->getIP()) && !config.isExcluded(find) &&
+      !find->getOper())
     {
       std::string scoreStr(
 	boost::lexical_cast<std::string>(find->getScore()));
@@ -1738,7 +1738,8 @@ UserHash::checkHostClones(const std::string & host)
         }
 
         klineClones(true, rate, currentUser, (*find)->getHost(),
-          (*find)->getIP(), differentUser, false, lastIdentd | currentIdentd);
+          (*find)->getIP(), (*find)->getClass(), differentUser, false,
+          lastIdentd | currentIdentd);
       }
 
       (*find)->setReportTime(now);
@@ -1924,7 +1925,7 @@ UserHash::checkIpClones(const BotSock::Address & ip)
 	}
 
         klineClones(true, rate, currentUser, (*find)->getHost(),
-          (*find)->getIP(), differentUser, differentIp,
+          (*find)->getIP(), (*find)->getClass(), differentUser, differentIp,
           lastIdentd | currentIdentd);
       }
 

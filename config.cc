@@ -159,6 +159,7 @@ Config::initialize(void)
   this->addParser("C", 4, boost::bind(&Config::parseCLine, this, _1));
   this->addParser("D", 1, boost::bind(&Config::parseDLine, this, _1));
   this->addParser("E", 1, boost::bind(&Config::parseELine, this, _1));
+  this->addParser("EC", 1, boost::bind(&Config::parseEcLine, this, _1));
   this->addParser("F", 1, boost::bind(&Config::parseFLine, this, _1));
   this->addParser("G", 1, boost::bind(&Config::parseGLine, this, _1));
   this->addParser("H", 1, boost::bind(&Config::parseHLine, this, _1));
@@ -342,6 +343,14 @@ Config::parseELine(const StrVector & fields)
 {
   PatternPtr pattern(smartPattern(fields[0], false));
   this->exceptions_.push_back(pattern);
+}
+
+
+void
+Config::parseEcLine(const StrVector & fields)
+{
+  PatternPtr pattern(smartPattern(fields[0], false));
+  this->classExceptions_.push_back(pattern);
 }
 
 
@@ -651,6 +660,39 @@ Config::isExcluded(const std::string & userhost, const BotSock::Address & ip)
   const
 {
   return this->isExcluded(userhost, BotSock::inet_ntoa(ip));
+}
+
+
+bool
+Config::isExcluded(const UserEntryPtr & user) const
+{
+  return (this->isExcluded(user->getUserHost(), user->getIP()) ||
+    this->isExcludedClass(user->getClass()));
+}
+
+
+bool
+Config::isExcludedClass(const std::string & name) const
+{
+  try
+  {
+    for (Config::PatternList::const_iterator pos =
+        this->classExceptions_.begin(); pos != this->classExceptions_.end();
+        ++pos)
+    {
+      if ((*pos)->match(name))
+      {
+        return true;
+      }
+    }
+  }
+  catch (OOMon::regex_error & e)
+  {
+    Log::Write("RegEx error in Config::isExcludedClass(): " + e.what());
+    std::cerr << "RegEx error in Config::isExcludedClass(): " << e.what() <<
+                                                                 std::endl;
+  }
+  return false;
 }
 
 
