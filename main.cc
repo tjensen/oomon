@@ -83,15 +83,15 @@ SendAll(const std::string & message, const UserFlags flags,
 {
   clients.sendAll(message, flags, watches, skip);
 
-  if ((0 == skip) || Same(skip->bot(), Config::GetNick()))
+  if ((0 == skip) || Same(skip->bot(), config.nickname()))
   {
-    remotes.sendBroadcast(Config::GetNick(), message,
+    remotes.sendBroadcast(config.nickname(), message,
       UserFlags::getNames(flags, ','),
       WatchSet::getWatchNames(watches, false, ','));
   }
   else
   {
-    remotes.sendBroadcastId(Config::GetNick(), skip->id(), skip->bot(), message,
+    remotes.sendBroadcastId(config.nickname(), skip->id(), skip->bot(), message,
       UserFlags::getNames(flags, ','),
       WatchSet::getWatchNames(watches, false, ','));
   }
@@ -137,19 +137,39 @@ gracefuldie(int sig)
 void
 reload(void)
 {
-  Config::Clear();
-  Config::Load(configFile);
-  Config::loadSettings();
-  Log::Stop();
-  Log::Start();
-  remotes.listen();
+  try
+  {
+    Config newConfig(configFile);
+    config = newConfig;
+
+    Log::Stop();
+    Log::Start();
+    config.loadSettings();
+    remotes.listen();
+    try
+    {
+      boost::shared_ptr<UserDB> newConfig(new UserDB(config.userDBFilename()));
+      userConfig.swap(newConfig);
+    }
+    catch (OOMon::botdb_error & e)
+    {
+      Log::Write(e.what() + " (" + e.why() + ")");
+      ::SendAll("*** " + e.what() + " (" + e.why() + ")", UserFlags::MASTER);
+    }
+  }
+  catch (Config::parse_failed & e)
+  {
+    Log::Write(e.what());
+    ::SendAll("*** " + e.what(), UserFlags::MASTER);
+    std::cerr << "*** " << e.what() << std::endl;
+  }
 }
 
 
 void
 ReloadConfig(const std::string & from)
 {
-  ::SendAll("Reload CONFIG requested by " + from, UserFlags::OPER);
+  ::SendAll("*** Reload CONFIG requested by " + from, UserFlags::OPER);
   reload();
 }
 
@@ -177,8 +197,8 @@ process()
 #ifdef MAIN_DEBUG
       std::cout << "Connecting to IRC server." << std::endl;
 #endif
-      server.bindTo(Config::GetHostName());
-      if (!server.connect(Config::GetServerHostName(), Config::GetServerPort()))
+      server.bindTo(config.hostname());
+      if (!server.connect(config.serverAddress(), config.serverPort()))
       {
 	server.reset();
       }
@@ -261,7 +281,7 @@ motd(BotClient * client)
   std::ifstream	motdfile;
   char		line[MAX_BUFF];
 
-  motdfile.open(Config::GetMOTD().c_str());
+  motdfile.open(config.motdFilename().c_str());
   if (!motdfile.fail())
   {
     client->send("Message Of The Day:");
@@ -363,8 +383,17 @@ main(int argc, char **argv)
     return EXIT_CMDLINE_ERROR;
   }
 
-  Config::Load(configFile);
-  Config::loadSettings();
+  try
+  {
+    config = Config(configFile);
+  }
+  catch (Config::parse_failed & e)
+  {
+    std::cerr << "*** " << e.what() << std::endl;
+    return EXIT_CONFIG_ERROR;
+  }
+
+  config.loadSettings();
 
   if (alreadyRunning())
   {
@@ -373,7 +402,7 @@ main(int argc, char **argv)
 
   try
   {
-    userConfig.reset(new UserDB(Config::getUserDBFile()));
+    userConfig.reset(new UserDB(config.userDBFilename()));
   }
   catch (OOMon::botdb_error & reason)
   {

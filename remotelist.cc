@@ -173,7 +173,7 @@ RemoteList::RemoteProcess::operator()(RemotePtr r)
 
   if (remove && r->ready())
   {
-    remotes.sendBotPart(Config::GetNick(), r->getHandle());
+    remotes.sendBotPart(config.nickname(), r->getHandle());
     clients.sendAll("*** Bot " + r->getHandle() + " has disconnected",
       UserFlags::OPER);
   }
@@ -229,7 +229,7 @@ void
 RemoteList::sendNotice(const std::string & from, const std::string & clientId,
   const std::string & clientBot, const std::string & text)
 {
-  if (Same(clientBot, Config::GetNick()))
+  if (Same(clientBot, config.nickname()))
   {
     clients.sendTo(from, clientId, text);
   }
@@ -386,7 +386,7 @@ RemoteList::cmdDisconn(BotClient * from, const std::string & command,
 void
 RemoteList::getLinks(BotClient * client)
 {
-  client->send(Config::GetNick());
+  client->send(config.nickname());
 
   for (ConnectionList::iterator pos = this->connections_.begin();
     pos != this->connections_.end(); ++pos)
@@ -419,7 +419,7 @@ RemoteList::getBotNet(BotLinkList & list, const Remote *skip)
 
     if ((copy.get() != skip) && copy->ready())
     {
-      list.push_back(BotLink(Config::GetNick(), copy->getHandle()));
+      list.push_back(BotLink(config.nickname(), copy->getHandle()));
       copy->getBotNetBranch(list);
     }
   }
@@ -454,7 +454,7 @@ RemoteList::listen(void)
 {
   this->listeners_.clear();
 
-  this->listen("", htons(Config::getRemotePort()));
+  this->listen("", htons(config.remotePort()));
 }
 
 
@@ -467,7 +467,7 @@ RemoteList::connect(BotClient * from, const std::string & handle)
   std::string password;
   bool result = false;
 
-  if (Config::GetConn(handle_, host, port, password))
+  if (config.connect(handle_, host, port, password))
   {
     RemotePtr temp(new Remote(handle_));
 

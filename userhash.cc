@@ -156,7 +156,7 @@ UserHash::add(const std::string & nick, const std::string & userhost,
       // Don't check for wingate or clones when doing a TRACE
       if (!fromTrace)
       {
-        if (!Config::IsOKHost(userhost, ip) && !Config::IsOper(userhost, ip))
+        if (!config.isExcluded(userhost, ip) && !config.isOper(userhost, ip))
         {
           // Check if this client matches any traps
           if (vars[VAR_TRAP_CONNECTS]->getBool())
@@ -337,8 +337,8 @@ UserHash::updateNick(const std::string & oldNick, const std::string & userhost,
     }
 
     if ((find->getScore() >= vars[VAR_SEEDRAND_REPORT_MIN]->getInt()) &&
-      !Config::IsOper(userhost, find->getIP()) &&
-      !Config::IsOKHost(userhost, find->getIP()) && !find->getOper())
+      !config.isOper(userhost, find->getIP()) &&
+      !config.isExcluded(userhost, find->getIP()) && !find->getOper())
     {
       std::string scoreStr(
 	boost::lexical_cast<std::string>(find->getScore()));
@@ -894,7 +894,7 @@ UserHash::reportClasses(BotClient * client, const std::string & className) const
         buffer += "  ";
         buffer += padRight(boost::lexical_cast<std::string>(pos->first), 5);
         buffer += "  ";
-        buffer += Config::GetYLineDescription(pos->second);
+        buffer += config.classDescription(pos->second);
         client->send(buffer);
       }
     }
@@ -921,7 +921,7 @@ UserHash::reportClasses(BotClient * client, const std::string & className) const
       buffer += "  ";
       buffer += padRight(boost::lexical_cast<std::string>(pos->second), 5);
       buffer += "  ";
-      buffer += Config::GetYLineDescription(pos->first);
+      buffer += config.classDescription(pos->first);
       client->send(buffer);
     }
   }
@@ -1345,7 +1345,7 @@ UserHash::reportMulti(BotClient * client, const int minimum) const
             server.same((*temp)->getDomain(), (*userptr)->getDomain()))
 	  {
             if (vars[VAR_OPER_IN_MULTI]->getBool() || (!(*temp)->getOper() &&
-	      !Config::IsOper((*temp)->getUserHost(), (*temp)->getIP())))
+	      !config.isOper((*temp)->getUserHost(), (*temp)->getIP())))
             {
               ++numfound;       /* - zaph & Dianora :-) */
 	    }
@@ -1415,7 +1415,7 @@ UserHash::reportHMulti(BotClient * client, const int minimum) const
           if (server.same((*temp)->getHost(), (*userptr)->getHost()))
 	  {
             if (vars[VAR_OPER_IN_MULTI]->getBool() || (!(*temp)->getOper() &&
-	      !Config::IsOper((*temp)->getUserHost(), (*temp)->getIP())))
+	      !config.isOper((*temp)->getUserHost(), (*temp)->getIP())))
             {
               ++numfound;       /* - zaph & Dianora :-) */
 	    }
@@ -1477,7 +1477,7 @@ UserHash::reportUMulti(BotClient * client, const int minimum) const
           if (server.same((*temp)->getUser(), (*userptr)->getUser()))
 	  {
             if (vars[VAR_OPER_IN_MULTI]->getBool() || (!(*temp)->getOper() &&
-	      !Config::IsOper((*temp)->getUserHost(), (*temp)->getIP())))
+	      !config.isOper((*temp)->getUserHost(), (*temp)->getIP())))
             {
               ++numfound;       /* - zaph & Dianora :-) */
 	    }
@@ -1543,7 +1543,7 @@ UserHash::reportVMulti(BotClient * client, const int minimum) const
 	    ((*userptr)->getIP() & BotSock::ClassCNetMask)))
 	  {
             if (vars[VAR_OPER_IN_MULTI]->getBool() || (!(*temp)->getOper() &&
-	      !Config::IsOper((*temp)->getUserHost(), (*temp)->getIP())))
+	      !config.isOper((*temp)->getUserHost(), (*temp)->getIP())))
             {
               ++numfound;       /* - zaph & Dianora :-) */
 	    }

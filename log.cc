@@ -45,7 +45,7 @@ void Log::Start()
 #ifdef LOG_DEBUG
     std::cout << "Opening log file for append" << std::endl;
 #endif
-    logfile.open(Config::GetLogFile().c_str(), std::ios::app);
+    logfile.open(config.logFilename().c_str(), std::ios::app);
     IsOpen = true;
   }
 }

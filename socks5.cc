@@ -115,7 +115,7 @@ Socks5::onRead(const char *text, const int size)
     {
       this->state = STATE_WAIT2;
 
-      BotSock::Port port = Config::GetServerPort();
+      BotSock::Port port = config.serverPort();
       BotSock::Address dst = ntohl(server.getRemoteAddress());
       //BotSock::Address dst = ntohl(inet_addr("198.175.186.5"));
 

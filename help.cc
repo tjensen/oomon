@@ -52,7 +52,7 @@ Help::getIndex(BotClient * client)
 
   if (topicList.size() <= 0)
   {
-    std::ifstream helpFile(Config::getHelpFilename().c_str());
+    std::ifstream helpFile(config.helpFilename().c_str());
     while (helpFile.getline(line, sizeof(line) - 1))
     {
       if ((line[0] != '.') && (line[0] != '#'))

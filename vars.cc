@@ -532,7 +532,7 @@ Vars::set(const std::string & name, const std::string & value,
       
       if (vars[VAR_AUTO_SAVE]->getBool())
       {
-        Config::saveSettings();
+        config.saveSettings();
       }
     }
     return error;

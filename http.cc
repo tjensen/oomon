@@ -65,9 +65,9 @@ Http::onConnect()
 #endif
 
   std::string buffer("CONNECT ");
-  buffer += Config::GetServerHostName();
+  buffer += config.serverAddress();
   buffer += ':';
-  buffer += boost::lexical_cast<std::string>(Config::GetServerPort());
+  buffer += boost::lexical_cast<std::string>(config.serverPort());
   buffer += " HTTP/1.0\n\n";
 
 #ifdef HTTP_DEBUG

@@ -1127,7 +1127,7 @@ void
 CommandParser::cmdSave(BotClient * from, const std::string & command,
   std::string parameters)
 {
-  if (Config::saveSettings())
+  if (config.saveSettings())
   {
     std::string notice("*** Saved settings to file.");
     ::SendAll(notice, UserFlags::OPER);
@@ -1144,7 +1144,7 @@ void
 CommandParser::cmdLoad(BotClient * from, const std::string & command,
   std::string parameters)
 {
-  if (Config::loadSettings())
+  if (config.loadSettings())
   {
     std::string notice("*** Loaded settings from file.");
     ::SendAll(notice, UserFlags::OPER);

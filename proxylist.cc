@@ -93,7 +93,7 @@ ProxyList::connect(ProxyPtr newProxy, const std::string & address,
     port << std::endl;
 #endif
 
-  newProxy->bindTo(Config::getProxyVhost());
+  newProxy->bindTo(config.proxyVhost());
   newProxy->setTimeout(PROXY_IDLE_MAX);
 
   if (!newProxy->connect(address, port))

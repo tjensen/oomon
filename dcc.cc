@@ -220,7 +220,7 @@ DCC::parse(std::string text)
         command = command.substr(0, at);
       }
 
-      if (to.empty() || (0 == to.compare("*")) || Same(to, Config::GetNick()))
+      if (to.empty() || (0 == to.compare("*")) || Same(to, config.nickname()))
       {
 	// ISSUE LOCAL COMMAND
         try
@@ -237,7 +237,7 @@ DCC::parse(std::string text)
         }
       }
 
-      if (!to.empty() && !Same(to, Config::GetNick()))
+      if (!to.empty() && !Same(to, config.nickname()))
       {
 	// ISSUE REMOTE COMMAND
 	remotes.sendRemoteCommand(this, to, command, text);
@@ -272,9 +272,9 @@ DCC::cmdAuth(BotClient *from, const std::string & command,
     userip += BotSock::inet_ntoa(this->ircIp_);
   }
 
-  if (Config::Auth(authHandle, this->userhost_, parameters, flags, handle) ||
-    (!userip.empty() && Config::Auth(authHandle, userip, parameters, flags,
-    handle)))
+  if (config.authUser(authHandle, this->userhost_, parameters, flags, handle) ||
+      (!userip.empty() &&
+       config.authUser(authHandle, userip, parameters, flags, handle)))
   {
     this->handle(handle);
     this->flags(flags);

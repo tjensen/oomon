@@ -153,17 +153,18 @@ IRC::onConnect()
   Log::Write("Connected to IRC server");
 
   // Send password (if necessary)
-  if (Config::GetServerPassword() != "")
+  std::string password(config.serverPassword());
+  if (!password.empty())
   {
-    this->write("PASS " + Config::GetServerPassword() + "\n");
+    this->write("PASS " + password + "\n");
   }
 
   // Register client
-  this->write("USER " + Config::GetUserName() + " oomon " +
-    std::string(OOMON_VERSION) + " :" + Config::GetIRCName() + "\n");
+  this->write("USER " + config.username() + " oomon " +
+    std::string(OOMON_VERSION) + " :" + config.realName() + "\n");
 
   // Select nickname
-  this->myNick = Config::GetNick();
+  this->myNick = config.nickname();
   this->write("NICK " + this->myNick + "\n");
 
   this->amIAnOper = false;
@@ -237,17 +238,20 @@ IRC::onRead(std::string text)
       case 001:
         serverName = from;
         // Oper up
-        this->write("OPER " + Config::GetOperNick() + " " +
-	  Config::GetOperPass() + "\n");
+        this->write("OPER " + config.operName() + " " + config.operPassword() +
+            "\n");
         this->klines.Clear();
         this->dlines.Clear();
         this->gettingDlines = false;
         this->gettingKlines = false;
         this->gettingTempKlines = false;
         this->gettingTrace = false;
-        if (Config::GetChannels() != "")
         {
-          this->write("JOIN " + Config::GetChannels() + "\n");
+          std::string channels(config.channels());
+          if (!channels.empty())
+          {
+            this->write("JOIN " + channels + "\n");
+          }
         }
 	initFloodTables();
         break;
@@ -408,6 +412,9 @@ IRC::onRead(std::string text)
 	  }
 	}
 	break;
+      case 464:        /* ERR_PASSWDMISMATCH */
+        Log::Write("Unable to OPER up due to incorrect password!");
+        break;
       case 473:		/* ERR_INVITEONLYCHAN */
 	if (params.size() > 3)
 	{
@@ -415,12 +422,15 @@ IRC::onRead(std::string text)
 
           // If the IRC server supports the KNOCK command and the invite-only
 	  // channel is listed in the bot's config file, issue a KNOCK.
-	  if (this->supportKnock && Config::haveChannel(channel))
+	  if (this->supportKnock && config.haveChannel(channel))
 	  {
 	    this->knock(channel);
 	  }
 	}
 	break;
+      case 491:        /* ERR_NOOPERHOST */
+        Log::Write("Unable to OPER up due to ircd configuration!");
+        break;
       case 709:
         if (this->gettingTrace && (params.size() > 9))
         {
@@ -486,7 +496,7 @@ IRC::onRead(std::string text)
           if (this->same(to, this->myNick))
 	  {
 	    // Is the channel listed in the config file?
-	    if (Config::haveChannel(channel))
+	    if (config.haveChannel(channel))
 	    {
 	      // Yes, so accept the invite by joining the channel!
 	      this->join(channel);
@@ -558,7 +568,7 @@ IRC::onCtcp(const std::string & from, const std::string & userhost,
 
   if ((command == "DCC") && (this->same(to, this->myNick)))
   {
-    if (!vars[VAR_OPER_ONLY_DCC]->getBool() || Config::IsOper(userhost, ip))
+    if (!vars[VAR_OPER_ONLY_DCC]->getBool() || config.isOper(userhost, ip))
     {
       std::string dccCommand = FirstWord(text);
       if (dccCommand == "CHAT")
@@ -599,7 +609,7 @@ IRC::onCtcp(const std::string & from, const std::string & userhost,
       }
     }
   }
-  else if (Config::IsOper(userhost, ip) && (command == "CHAT"))
+  else if (config.isOper(userhost, ip) && (command == "CHAT"))
   {
     Log::Write("CHAT request from " + from + " (" + userhost + ")");
     if (!clients.listen(from, userhost, ip))

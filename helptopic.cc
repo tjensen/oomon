@@ -256,7 +256,7 @@ HelpTopic::getHelp(BotClient * client, const std::string & topic)
   std::string	line;
   bool		inTopic = false;
 
-  std::ifstream	helpFile(Config::getHelpFilename().c_str());
+  std::ifstream	helpFile(config.helpFilename().c_str());
   if (!helpFile.is_open())
   {
     error = true;

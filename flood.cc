@@ -67,7 +67,7 @@ FloodList::addFlood(const std::string & nick, const std::string & userhost,
 
 	BotSock::Address ip = users.getIP(nick, userhost);
 
-        if (local && !Config::IsOKHost(userhost, ip))
+        if (local && !config.isExcluded(userhost, ip))
         {
 	  doAction(nick, userhost, ip, vars[this->getActionVar()]->getAction(),
 	    vars[this->getActionVar()]->getInt(),
@@ -144,7 +144,7 @@ FloodList::onNotice(const std::string & notice, std::string text,
   }
 
   /* Don't complain about opers */
-  if (!Config::IsOper(userhost, users.getIP(nick, userhost)) &&
+  if (!config.isOper(userhost, users.getIP(nick, userhost)) &&
     !users.isOper(nick, userhost))
   {
     ::SendAll(notice, UserFlags::OPER, this->getWatch());

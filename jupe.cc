@@ -65,8 +65,8 @@ JupeJoinList::checkJupe(const std::string & nick,
 
     BotSock::Address ip = users.getIP(nick, entry.userhost);
 
-    if (!Config::IsOper(entry.userhost, ip) &&
-      !Config::IsOKHost(entry.userhost, ip))
+    if (!config.isOper(entry.userhost, ip) &&
+      !config.isExcluded(entry.userhost, ip))
     {
       Format reason;
       reason.setStringToken('n', nick);

@@ -125,8 +125,8 @@ Services::onXoNotice(std::string text)
     reason.setStringToken('c', count);
     reason.setStringToken('s', vars[VAR_XO_SERVICES_RESPONSE]->getString());
 
-    if (!Config::IsOKHost(this->cloningUserhost, ip) &&
-      !Config::IsOper(this->cloningUserhost, ip))
+    if (!config.isExcluded(this->cloningUserhost, ip) &&
+      !config.isOper(this->cloningUserhost, ip))
     {
       doAction(nick, this->cloningUserhost, ip,
 	vars[VAR_XO_SERVICES_CLONE_ACTION]->getAction(),

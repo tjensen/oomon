@@ -28,7 +28,9 @@
 #include <string>
 
 // Boost C++ Headers
+#include <boost/shared_ptr.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/bind.hpp>
 
 // OOMon Headers
 #include "config.h"
@@ -55,554 +57,464 @@
 #endif
 
 
-struct OperDef
+struct Config::Oper
 {
-  OperDef() { };
-
-  std::string Handle, Passwd;
-  PatternPtr pattern;
-  class UserFlags Flags;
-};
-
-
-struct LinkDef
-{
-  LinkDef() { };
-
-  std::string Handle, Passwd;
-  PatternPtr pattern;
-};
-
-
-struct ConnDef
-{
-  ConnDef() { };
-
-  std::string Handle, Hostname, Passwd;
-  BotSock::Port port;
-};
-
-
-struct YLine
-{
-  YLine() { };
-
-  std::string YClass;
-  std::string Description;
-};
-
-struct RemoteClient
-{
-  RemoteClient(const PatternPtr pattern_, const UserFlags flags_)
-    : pattern(pattern_), flags(flags_) { }
-
+  Oper(const std::string & handle_, const PatternPtr & pattern_,
+      const std::string & password_, const UserFlags & flags_)
+    : handle(handle_), password(password_), pattern(pattern_), flags(flags_) { }
+  const std::string handle, password;
   const PatternPtr pattern;
   const UserFlags flags;
 };
 
 
-OperList Config::Opers;
-BotSock::Port Config::remotePort = DEFAULT_REMOTE_PORT;
-BotSock::Port Config::dccPort = DEFAULT_DCC_PORT;
-Config::PatternList Config::Exceptions;
-Config::PatternList Config::Spoofers;
-LinkList Config::Links;
-ConnList Config::Connections;
-YLineList Config::YLines;
-RemoteClientList Config::remoteClients;
-std::string Config::Nick, Config::UserName, Config::IRCName, Config::OperNick, Config::OperPass;
-std::string Config::OurHostName;
-std::string Config::LogFile = ::expandPath(DEFAULT_LOGFILE, LOGDIR);
-std::string Config::MOTD = ::expandPath(DEFAULT_MOTDFILE, ETCDIR);
-struct server Config::Server;
-std::string Config::proxyVhost;
-std::string Config::helpFilename = ::expandPath(DEFAULT_HELPFILE, ETCDIR);
-std::string Config::settingsFile = ::expandPath(DEFAULT_SETTINGSFILE, ETCDIR);
-std::string Config::userDBFile = ::expandPath(DEFAULT_USERDBFILE, ETCDIR);
-
-// AddOper(Handle, pattern, Passwd, Flags)
-//
-// This does the actually adding of an Oper to the list.
-// The user@host mask is the only required parameter.
-// Passwords and handles are highly recommended. In fact, a handle is
-// required for authorization if you have a password! :P
-// Supported flags are: (case sensitive!)
-//  C - user can request channel ops
-//  D - user can dline
-//  G - user can gline
-//  K - user can kline, kill, etc.
-//  M - user is a master and can control linking
-//  N - user can see nick changes
-//  O - user is an oper (pretty mandatory)
-//  R - user can remotely control other bots
-//  W - user can see WALLOPS
-//  X - user can see client connects/disconnects
-//
-void Config::AddOper(const std::string & Handle, const std::string & pattern,
-	const std::string & Passwd, const std::string & Flags)
+struct Config::Link
 {
-  try
-  {
-    OperDef temp;
-    temp.Handle = Handle;
-    temp.pattern = smartPattern(pattern, false);
-    temp.Passwd = Passwd;
-    temp.Flags = Config::parseUserFlags(Flags);
-    Opers.push_back(temp);
-#ifdef CONFIG_DEBUG
-    std::cout << "Oper: " << Handle << ", " << pattern << ", " << Passwd <<
-      ", " << Flags << std::endl;
-#endif
-  }
-  catch (OOMon::regex_error & e)
-  {
-    std::cerr << "RegEx error: " << e.what() << std::endl;
-  }
+  Link(const std::string & handle_, const PatternPtr & pattern_,
+    const std::string & password_) : handle(handle_), password(password_),
+    pattern(pattern_) { }
+  const std::string handle, password;
+  const PatternPtr pattern;
+};
+
+
+struct Config::Connect
+{
+  Connect(const std::string & handle_, const std::string & address_,
+      const std::string & password_, const BotSock::Port & port_)
+    : handle(handle_), address(address_), password(password_), port(port_) { }
+  const std::string handle, address, password;
+  const BotSock::Port port;
+};
+
+
+struct Config::Remote
+{
+  Remote(const PatternPtr pattern_, const UserFlags flags_)
+    : pattern(pattern_), flags(flags_) { }
+  const PatternPtr pattern;
+  const UserFlags flags;
+};
+
+
+struct Config::Parser
+{
+  Parser(const StrVector::size_type args_,
+      const Config::ParserFunction function_)
+    : args(args_), function(function_) { }
+  const StrVector::size_type args;
+  const Config::ParserFunction function;
+};
+
+
+class Config::syntax_error : public OOMon::oomon_error
+{
+  public:
+    syntax_error(const std::string & arg) : oomon_error(arg) { };
+};
+
+
+class Config::bad_port_number : public Config::syntax_error
+{
+  public:
+    bad_port_number(void) : syntax_error("bad port number") { };
+};
+
+
+Config config;
+
+
+Config::Config(void)
+{
+  this->initialize();
 }
 
 
-// AddException(pattern)
-//
-// Adds an exception pattern to the list
-//
-void Config::AddException(const std::string & pattern)
+Config::Config(const std::string & filename)
 {
-  try
-  {
-    PatternPtr tmp(smartPattern(pattern, false));
-    Exceptions.push_back(tmp);
-#ifdef CONFIG_DEBUG
-    std::cout << "Exception: " << pattern << std::endl;
-#endif
-  }
-  catch (OOMon::regex_error & e)
-  {
-    std::cerr << "RegEx error: " << e.what() << std::endl;
-  }
+  this->initialize();
+  this->parse(filename);
 }
 
 
-// AddSpoofer(pattern)
-//
-// Adds an spoofer ip pattern to the list
-//
-void Config::AddSpoofer(const std::string & pattern)
+Config::~Config(void)
 {
-  try
-  {
-    PatternPtr tmp(smartPattern(pattern, false));
-    Spoofers.push_back(tmp);
-#ifdef CONFIG_DEBUG
-    std::cout << "Spoofer: " << pattern << std::endl;
-#endif
-  }
-  catch (OOMon::regex_error & e)
-  {
-    std::cerr << "RegEx error: " << e.what() << std::endl;
-  }
-}
-
-
-// AddLink(Handle, pattern, Passwd)
-//
-// Adds a link definition to the list.
-// A handle and host pattern are required! Passwords are highly recommended!
-// Supported flags are: (case sensitive!)
-//
-//
-void Config::AddLink(const std::string & Handle, const std::string & pattern,
-	const std::string & Passwd)
-{
-  if (Handle != "")
-  {
-    try
-    {
-      LinkDef temp;
-      temp.Handle = Handle;
-      temp.pattern = smartPattern(pattern, false);
-      temp.Passwd = Passwd;
-      Links.push_back(temp);
-#ifdef CONFIG_DEBUG
-      std::cout << "Link: " << Handle << ", " << pattern << ", " << Passwd <<
-        std::endl;
-#endif
-    }
-    catch (OOMon::regex_error & e)
-    {
-      std::cerr << "RegEx error: " << e.what() << std::endl;
-    }
-  }
-}
-
-
-// AddConn(Handle, Hostname, Passwd, port)
-//
-// Adds a connection definition to the list
-// A handle, hostname, and port number are required! Password requirements
-// depend on the bot you are connecting to.
-// Supported flags are the same as for AddLink()
-//
-void Config::AddConn(const std::string & Handle, const std::string & Hostname,
-  const std::string & Passwd, const BotSock::Port port)
-{
-  if ((Handle != "") && (Hostname != "") && (port != 0)) {
-    ConnDef temp;
-    temp.Handle = Handle;
-    temp.Hostname = Hostname;
-    temp.Passwd = Passwd;
-    temp.port = port;
-    Connections.push_back(temp);
-    #ifdef CONFIG_DEBUG
-      std::cout << "Conn: " << Handle << ", " << Hostname << ", " << Passwd <<
-	", " << port << std::endl;
-    #endif
-  }
-}
-
-
-// AddYLine(YClass, Description)
-//
-// Adds a connection class (Y-line) to the list
-// A YClass and Description are required.
-//
-void Config::AddYLine(const std::string & YClass,
-  const std::string & Description)
-{
-  if (Description != "")
-  {
-    YLine temp;
-    temp.YClass = YClass;
-    temp.Description = Description;
-    YLines.push_back(temp);
-    #ifdef CONFIG_DEBUG
-      std::cout << "Y-Line: " << YClass << ", " << Description << std::endl;
-    #endif
-  }
 }
 
 
 void
-Config::addRemoteClient(const std::string & mask, const std::string & flags)
+Config::initialize(void)
 {
-  try
-  {
-    PatternPtr pat(smartPattern(mask, false));
-
-    remoteClients.push_back(RemoteClient(pat, Config::parseUserFlags(flags)));
-  }
-  catch (OOMon::regex_error & e)
-  {
-    std::cerr << "Regex error: " << e.what() << std::endl;
-  }
-  catch (UserFlags::invalid_flag & e)
-  {
-    std::cerr << e.what() << std::endl;
-  }
-}
-
-
-// Load(filename)
-//
-// This does the actual loading of the configuration file.
-//
-// I ought to trim any leading white space before parsing, but oh well.
-//
-void
-Config::Load(const std::string filename)
-{
-  char		line[MAX_BUFF];
-  char		*key,
-		*value;
-  std::string	handle,
-		mask,
-		hostname,
-		passwd,
-		flags,
-		yclass;
-  int		port;
-  StrVector Parameters;
- 
-  #ifdef CONFIG_DEBUG
-    std::cout << "Reading configuration file (" << filename << ")" << std::endl;
-  #endif
+  this->remotePort_ = DEFAULT_REMOTE_PORT;
+  this->dccPort_ = DEFAULT_DCC_PORT;
+  this->logFilename_ = ::expandPath(DEFAULT_LOGFILE, LOGDIR);
+  this->motdFilename_ = ::expandPath(DEFAULT_MOTDFILE, ETCDIR);
+  this->helpFilename_ = ::expandPath(DEFAULT_HELPFILE, ETCDIR);
+  this->settingsFilename_ = ::expandPath(DEFAULT_SETTINGSFILE, ETCDIR);
+  this->userDBFilename_ = ::expandPath(DEFAULT_USERDBFILE, ETCDIR);
 
   Help::flush();
 
-  std::ifstream CfgFile(filename.c_str());
-  while (CfgFile.getline(line, MAX_BUFF-1))
+  this->addParser("B", 6, boost::bind(&Config::parseBLine, this, _1));
+  this->addParser("C", 4, boost::bind(&Config::parseCLine, this, _1));
+  this->addParser("D", 1, boost::bind(&Config::parseDLine, this, _1));
+  this->addParser("E", 1, boost::bind(&Config::parseELine, this, _1));
+  this->addParser("F", 1, boost::bind(&Config::parseFLine, this, _1));
+  this->addParser("G", 1, boost::bind(&Config::parseGLine, this, _1));
+  this->addParser("H", 1, boost::bind(&Config::parseHLine, this, _1));
+  this->addParser("I", 1, boost::bind(&Config::parseILine, this, _1));
+  this->addParser("L", 3, boost::bind(&Config::parseLLine, this, _1));
+  this->addParser("M", 1, boost::bind(&Config::parseMLine, this, _1));
+  this->addParser("O", 4, boost::bind(&Config::parseOLine, this, _1));
+  this->addParser("P", 1, boost::bind(&Config::parsePLine, this, _1));
+  this->addParser("R", 2, boost::bind(&Config::parseRLine, this, _1));
+  this->addParser("S", 4, boost::bind(&Config::parseSLine, this, _1));
+  this->addParser("T", 1, boost::bind(&Config::parseTLine, this, _1));
+  this->addParser("U", 1, boost::bind(&Config::parseULine, this, _1));
+  this->addParser("W", 1, boost::bind(&Config::parseWLine, this, _1));
+  this->addParser("Y", 2, boost::bind(&Config::parseYLine, this, _1));
+}
+
+
+void
+Config::addParser(const std::string & key, const StrVector::size_type args,
+    const Config::ParserFunction function)
+{
+  boost::shared_ptr<Config::Parser> parser(new Config::Parser(args, function));
+  ParserMap::value_type node(UpCase(key), parser);
+
+  this->parser_.insert(node);
+}
+
+
+void
+Config::parse(const std::string & filename)
+{
+  unsigned int line(1);
+
+  try
   {
-    if (line[0] == '#')
+    std::ifstream file(filename.c_str());
+    if (file.good())
     {
-      continue;
-    }
+      while (file.good())
+      {
+        std::string text;
+        std::getline(file, text);
+        text = trimLeft(text);
 
-    key = strtok(line, ":");
-    if (key == NULL)
-    {
-      continue;
-    }
-    value = strtok(NULL, "\r\n");
-    if (value == NULL)
-    {
-      continue;
-    }
-      
-    StrSplit(Parameters, value, ":");
+        if (!text.empty() && (text[0] != '#'))
+        {
+          StrVector fields;
+          StrSplit(fields, text, ":");
 
-    switch (*key)
-    {
-      case 'b':
-      case 'B':
-	if (Parameters.size() > 5)
-	{
-	  // Bot parameters
-	  #ifdef CONFIG_DEBUG
-	    std::cout << "Bot: ";
-	    //Parameters.Print();
-	  #endif
-	  Nick = Parameters[0];
-	  UserName = Parameters[1];
-	  OurHostName = Parameters[2];
-	  IRCName = Parameters[3];
-	  OperNick = Parameters[4];
-	  OperPass = Parameters[5];
-	}
-	break;
-      case 'c':
-      case 'C':
-	if (Parameters.size() >= 4)
-	{
-	  // Connection parameters
-	  handle = Parameters[0];
-	  hostname = Parameters[1];
-	  passwd = Parameters[2];
-	  try
-	  {
-	    port = boost::lexical_cast<BotSock::Port>(Parameters[3]);
-	    AddConn(handle, hostname, passwd, port);
-	  }
-	  catch (boost::bad_lexical_cast)
-	  {
-	    std::cerr << "Bad port number in C: line!" << std::endl;
-	  }
-	}
-	break;
-      case 'd':
-      case 'D':
-	if (Parameters.size() > 0)
-	{
-	  // DCC Listen port number
-	  try
-	  {
-	    Config::dccPort = boost::lexical_cast<BotSock::Port>(Parameters[0]);
-#ifdef CONFIG_DEBUG
-            std::cout << "DCC Port: " << Config::dccPort << std::endl;
-#endif
+          Config::ParserMap::iterator pos =
+            this->parser_.find(UpCase(fields[0]));
+          if (pos != this->parser_.end())
+          {
+            fields.erase(fields.begin());
+            if (fields.size() >= pos->second->args)
+            {
+              pos->second->function(fields);
+            }
+            else
+            {
+              throw Config::syntax_error("not enough fields");
+            }
           }
-	  catch (boost::bad_lexical_cast)
-	  {
-	    std::cerr << "Bad port number in D: line!" << std::endl;
-	  }
-	}
-	break;
-      case 'e':
-      case 'E':
-	if (Parameters.size() > 0)
-	{
-	  // Exception
-	  AddException(Parameters[0]);
-	}
-	break;
-      case 'f':
-      case 'F':
-	if (Parameters.size() > 0)
-	{
-	  // Spoofers
-	  AddSpoofer(Parameters[0]);
-	}
-	break;
-      case 'g':
-      case 'G':
-	if ((Parameters.size() > 0) && (Parameters[0].length() > 0))
-	{
-	  // Log file
-	  LogFile = ::expandPath(Parameters[0], LOGDIR);
+          else
+          {
+            throw Config::syntax_error("unknown line type '" + fields[0] + "'");
+          }
         }
-	break;
-      case 'h':
-      case 'H':
-	if ((Parameters.size() > 0) && (Parameters[0].length() > 0))
-	{
-	  // Help file
-	  helpFilename = ::expandPath(Parameters[0], ETCDIR);
-	}
-	break;
-      case 'i':
-      case 'I':
-	if ((Parameters.size() > 0) && (Parameters[0].length() > 0))
-	{
-	  // Include file
-	  Load(::expandPath(Parameters[0], ETCDIR));
-	}
-	break;
-      case 'l':
-      case 'L':
-	if (Parameters.size() >= 3)
-	{
-	  // Link parameters
-	  handle = Parameters[0];
-	  mask = Parameters[1];
-	  passwd = Parameters[2];
-	  AddLink(handle, mask, passwd);
-	}
-	break;
-      case 'm':
-      case 'M':
-	if ((Parameters.size() > 0) && (Parameters[0].length() > 0))
-	{
-	  // MOTD file
-	  MOTD = ::expandPath(Parameters[0], ETCDIR);
-	}
-	break;
-      case 'o':
-      case 'O':
-	if (Parameters.size() > 3)
-	{
-	  // Oper definition
-	  handle = Parameters[0];
-	  mask = Parameters[1];
-	  passwd = Parameters[2];
-	  flags = Parameters[3];
-	  AddOper(handle, mask, passwd, UpCase(flags));
-	}
-	break;
-      case 'p':
-      case 'P':
-	if (Parameters.size() > 0)
-	{
-	  // Port number
-	  try
-	  {
-	    Config::remotePort =
-	      boost::lexical_cast<BotSock::Port>(Parameters[0]);
-#ifdef CONFIG_DEBUG
-            std::cout << "Port: " << Config::remotePort << std::endl;
-#endif
-          }
-	  catch (boost::bad_lexical_cast)
-	  {
-	    std::cerr << "Bad port number in P: line!" << std::endl;
-	  }
-	}
-	break;
-      case 'r':
-      case 'R':
-	if (Parameters.size() > 1)
-	{
-	  std::string mask(Parameters[0]);
-	  std::string flags(Parameters[1]);
-#ifdef CONFIG_DEBUG
-          std::cout << "Remote Client: " << mask << " (" << flags << ")" <<
-	    std::endl;
-#endif /* CONFIG_DEBUG */
-	  Config::addRemoteClient(mask, flags);
-	}
-	break;
-      case 's':
-      case 'S':
-	if (Parameters.size() > 3)
-	{
-	  // Server Parameters
-	  Server.Hostname = Parameters[0];
-	  try
-	  {
-	    Server.port = boost::lexical_cast<BotSock::Port>(Parameters[1]);
-	  }
-	  catch (boost::bad_lexical_cast)
-	  {
-	    std::cerr << "Bad port number in S: line!" << std::endl;
-	  }
-	  Server.Password = Parameters[2];
-	  Server.Channels =  Parameters[3];
-	}
-	break;
-      case 't':
-      case 'T':
-	if ((Parameters.size() > 0) && (Parameters[0].length() > 0))
-	{
-	  // OOMon Settings file
-	  settingsFile = ::expandPath(Parameters[0], ETCDIR);
-	}
-	break;
-      case 'u':
-      case 'U':
-	if ((Parameters.size() > 0) && (Parameters[0].length() > 0))
-	{
-	  // User settings file
-	  userDBFile = ::expandPath(Parameters[0], ETCDIR);
-	}
-	break;
-      case 'w':
-      case 'W':
-	if (Parameters.size() > 0)
-	{
-	  // WinGate/Proxy checker virtual hostname
-	  proxyVhost = Parameters[0];
-	}
-	break;
-      case 'y':
-      case 'Y':
-	if (Parameters.size() > 1)
-	{
-	  // User classes (Y-lines)
-	  #ifdef CONFIG_DEBUG
-	    std::cout << "Y-line: ";
-	    //Parameters.Print();
-	  #endif
-	  yclass = Parameters[0];
-	  hostname = Parameters[1];
-	  AddYLine(yclass, hostname);
-	}
-        break;
+        ++line;
+      }
+
+      file.close();
+    }
+    else
+    {
+      std::string result("Failed to open ");
+      result += filename;
+      result = " for reading!";
+      throw Config::parse_failed(result);
     }
   }
-  CfgFile.close();
-
-  #ifdef CONFIG_DEBUG
-    std::cout << "Completed reading configuration (" << filename << ")" <<
-      std::endl;
-  #endif
+  catch (Config::syntax_error & e)
+  {
+    std::string result("Syntax error in ");
+    result += filename;
+    result += " at line ";
+    result += boost::lexical_cast<std::string>(line);
+    result += ": ";
+    result += e.what();
+    throw Config::parse_failed(result);
+  }
+  catch (OOMon::regex_error & e)
+  {
+    std::string result("Regex error in ");
+    result += filename;
+    result += " at line ";
+    result += boost::lexical_cast<std::string>(line);
+    result += ": ";
+    result += e.what();
+    throw Config::parse_failed(result);
+  }
 }
 
 
-// Clear()
-//
-// Clears the current configuration. This is usually done immediately before
-// loading the configuration from file.
-//
-void Config::Clear()
+void
+Config::parseBLine(const StrVector & fields)
 {
-  Opers.clear();
-  Exceptions.clear();
-  Spoofers.clear();
-  Links.clear();
-  Connections.clear();
-  YLines.clear();
-  remotePort = DEFAULT_REMOTE_PORT;
-  dccPort = DEFAULT_DCC_PORT;
-  Server.Hostname = "";
-  Server.port = 0;
-  Server.Password = "";
-  Server.Channels = "";
-  LogFile = ::expandPath(DEFAULT_LOGFILE, LOGDIR);
-  MOTD = ::expandPath(DEFAULT_MOTDFILE, ETCDIR);
-  helpFilename = ::expandPath(DEFAULT_HELPFILE, ETCDIR);
-  settingsFile = ::expandPath(DEFAULT_SETTINGSFILE, ETCDIR);
-  userDBFile = ::expandPath(DEFAULT_USERDBFILE, ETCDIR);
+  this->nick_ = fields[0];
+  if (this->nick_.empty())
+  {
+    throw Config::syntax_error("bad nickname '" + fields[0] + "'");
+  }
+
+  this->username_ = fields[1];
+  this->hostname_ = fields[2];
+  this->realName_ = fields[3];
+
+  this->operName_ = fields[4];
+  if (this->operName_.empty())
+  {
+    throw Config::syntax_error("bad oper name '" + fields[4] + "'");
+  }
+
+  this->operPassword_ = fields[5];
+  if (this->operPassword_.empty())
+  {
+    throw Config::syntax_error("no oper password");
+  }
 }
 
 
-// Auth(Handle, UserHost, Password, Flags, NewHandle)
+void
+Config::parseCLine(const StrVector & fields)
+{
+  std::string handle(fields[0]);
+  if (handle.empty())
+  {
+    throw Config::syntax_error("bad bot handle '" + handle + "'");
+  }
+  std::string address(fields[1]);
+  if (address.empty())
+  {
+    throw Config::syntax_error("no bot address");
+  }
+  std::string password(fields[2]);
+  if (password.empty())
+  {
+    throw Config::syntax_error("no password");
+  }
+  try
+  {
+    BotSock::Port port(boost::lexical_cast<BotSock::Port>(fields[3]));
+    boost::shared_ptr<Config::Connect> connect(new Config::Connect(handle,
+          address, password, port));
+    this->connects_.insert(Config::ConnectMap::value_type(UpCase(handle),
+          connect));
+  }
+  catch (boost::bad_lexical_cast)
+  {
+    throw Config::bad_port_number();
+  }
+}
+
+
+void
+Config::parseDLine(const StrVector & fields)
+{
+  try
+  {
+    this->dccPort_ = boost::lexical_cast<BotSock::Port>(fields[0]);
+  }
+  catch (boost::bad_lexical_cast)
+  {
+    throw Config::bad_port_number();
+  }
+}
+
+
+void
+Config::parseELine(const StrVector & fields)
+{
+  PatternPtr pattern(smartPattern(fields[0], false));
+  this->exceptions_.push_back(pattern);
+}
+
+
+void
+Config::parseFLine(const StrVector & fields)
+{
+  PatternPtr pattern(smartPattern(fields[0], false));
+  this->spoofers_.push_back(pattern);
+}
+
+
+void
+Config::parseGLine(const StrVector & fields)
+{
+  this->logFilename_ = ::expandPath(fields[0], LOGDIR);
+}
+
+
+void
+Config::parseHLine(const StrVector & fields)
+{
+  this->helpFilename_ = ::expandPath(fields[0], ETCDIR);
+}
+
+
+void
+Config::parseILine(const StrVector & fields)
+{
+  this->parse(::expandPath(fields[0], ETCDIR));
+}
+
+
+void
+Config::parseLLine(const StrVector & fields)
+{
+  std::string handle(fields[0]);
+  if (handle.empty())
+  {
+    throw Config::syntax_error("bad bot handle '" + handle + "'");
+  }
+
+  PatternPtr pattern(smartPattern(fields[1], false));
+
+  std::string password(fields[2]);
+  if (password.empty())
+  {
+    throw Config::syntax_error("no password");
+  }
+
+  boost::shared_ptr<Config::Link> link(new Config::Link(handle, pattern,
+        password));
+
+  this->links_.insert(Config::LinkMap::value_type(UpCase(handle), link));
+}
+
+
+void
+Config::parseMLine(const StrVector & fields)
+{
+  this->motdFilename_ = ::expandPath(fields[0], ETCDIR);
+}
+
+
+void
+Config::parseOLine(const StrVector & fields)
+{
+  std::string handle(fields[0]);
+  if (handle.empty())
+  {
+    throw Config::syntax_error("bad bot handle '" + handle + "'");
+  }
+
+  PatternPtr pattern(smartPattern(fields[1], false));
+
+  std::string password(fields[2]);
+  if (password.empty())
+  {
+    throw Config::syntax_error("no password");
+  }
+
+  UserFlags flags(Config::userFlags(fields[3]));
+
+  boost::shared_ptr<Config::Oper> oper(new Config::Oper(handle, pattern,
+        password, flags));
+
+  this->opers_.insert(Config::OperMap::value_type(UpCase(handle), oper));
+}
+
+
+void
+Config::parsePLine(const StrVector & fields)
+{
+  try
+  {
+    this->remotePort_ = boost::lexical_cast<BotSock::Port>(fields[0]);
+  }
+  catch (boost::bad_lexical_cast)
+  {
+    throw Config::bad_port_number();
+  }
+}
+
+
+void
+Config::parseRLine(const StrVector & fields)
+{
+  PatternPtr pattern(smartPattern(fields[0], false));
+  UserFlags flags(Config::userFlags(fields[1]));
+
+  boost::shared_ptr<Config::Remote> remote(new Config::Remote(pattern, flags));
+
+  this->remotes_.push_back(remote);
+}
+
+
+void
+Config::parseSLine(const StrVector & fields)
+{
+  this->serverAddress_ = fields[0];
+  if (serverAddress_.empty())
+  {
+    throw Config::syntax_error("no server address");
+  }
+
+  try
+  {
+    this->serverPort_ = boost::lexical_cast<BotSock::Port>(fields[1]);
+  }
+  catch (boost::bad_lexical_cast)
+  {
+    throw Config::bad_port_number();
+  }
+
+  this->serverPassword_ = fields[2];
+  this->channels_ = fields[3];
+}
+
+
+void
+Config::parseTLine(const StrVector & fields)
+{
+  this->settingsFilename_ = ::expandPath(fields[0], ETCDIR);
+}
+
+
+void
+Config::parseULine(const StrVector & fields)
+{
+  this->userDBFilename_ = ::expandPath(fields[0], ETCDIR);
+}
+
+
+void
+Config::parseWLine(const StrVector & fields)
+{
+  this->proxyVhost_ = fields[0];
+}
+
+
+void
+Config::parseYLine(const StrVector & fields)
+{
+  std::string name(fields[0]);
+  if (name.empty())
+  {
+    throw Config::syntax_error("no class name");
+  }
+
+  this->ylines_.insert(YLineMap::value_type(UpCase(name), fields[1]));
+}
+
+
+// authUser(handle, userhost, password, flags, newHandle)
 //
 // Attempts to receive authorization.
 //
@@ -614,47 +526,48 @@ void Config::Clear()
 //
 // Note that Flags and NewHandle are NOT modified if authorization fails.
 //
-bool Config::Auth(const std::string & Handle, const std::string & UserHost,
-	const std::string & Password, UserFlags & Flags, std::string & NewHandle)
+bool
+Config::authUser(const std::string & handle, const std::string & userhost,
+    const std::string & password, UserFlags & flags,
+    std::string & newHandle) const
 {
 #ifdef CONFIG_DEBUG
-  std::cout << "Config::Auth(Handle = \"" << Handle << "\", UserHost = \"" <<
-    UserHost << "\", Password = \"" << Password << "\", ...)" << std::endl;
+  std::cout << "Config::authUser(handle = \"" << handle <<
+    "\", userhost = \"" << userhost << "\", password = \"" << password <<
+    "\", ...)" << std::endl;
 #endif
   try
   {
-    for (OperList::iterator pos = Opers.begin(); pos != Opers.end(); ++pos)
+    const std::string key(UpCase(handle));
+
+    for (Config::OperMap::const_iterator pos = this->opers_.lower_bound(key);
+        pos != this->opers_.upper_bound(key); ++pos)
     {
-      if (Same(pos->Handle, Handle) && pos->pattern->match(UserHost))
+      if (Same(pos->second->handle, handle) &&
+          pos->second->pattern->match(userhost))
       {
 #ifdef CONFIG_DEBUG
-        std::cout << "Config::Auth(): found match" << std::endl;
+        std::cout << "Config::authUser(): found match" << std::endl;
 #endif
-        if (ChkPass(pos->Passwd, Password))
+        if (ChkPass(pos->second->password, password))
         {
 #ifdef CONFIG_DEBUG
-          std::cout << "Config::Auth(): password is correct" << std::endl;
+          std::cout << "Config::authUser(): password is correct" << std::endl;
 #endif
-          if (pos->Handle != "")
+	  flags = UserFlags::AUTHED;
+          if (!pos->second->handle.empty())
 	  {
 	    // Only people with registered handles should be allowed to do
 	    // anything
-            NewHandle = pos->Handle;
-	    Flags = UserFlags::AUTHED;
-            Flags |= pos->Flags;
-          }
-	  else
-	  {
-	    // You might want to set up an open O: line *@* in the config file
-	    // (with no nick) to allow anyone to chat
-	    Flags = UserFlags::AUTHED;
+            newHandle = pos->second->handle;
+	    flags |= pos->second->flags;
           }
           return true;
         }
         else
         {
 #ifdef CONFIG_DEBUG
-          std::cout << "Config::Auth(): incorrect password" << std::endl;
+          std::cout << "Config::authUser(): incorrect password" << std::endl;
 #endif
         }
       }
@@ -662,41 +575,43 @@ bool Config::Auth(const std::string & Handle, const std::string & UserHost,
   }
   catch (OOMon::regex_error & e)
   {
-    Log::Write("RegEx error in Config::Auth(): " + e.what());
-    std::cerr << "RegEx error in Config::Auth(): " << e.what() << std::endl;
+    Log::Write("RegEx error in Config::authUser(): " + e.what());
+    std::cerr << "RegEx error in Config::authUser(): " << e.what() << std::endl;
   }
   return false;
 }
 
-std::string Config::GetHostName()
-{
-  return OurHostName;
-}
 
-std::string Config::GetUserName()
+std::string
+Config::username(void) const
 {
-  if (UserName == "")
+  std::string result = this->username_;
+
+  if (result.empty())
   {
     char *login = getlogin();
 
     if (login && *login)
-      return login;
+    {
+      result = login;
+    }
     else
-      return "oomon";
+    {
+      result = "oomon";
+    }
   }
-  else
-  {
-    return UserName;
-  }
+
+  return result;
 }
 
 
-bool Config::IsOKHost(const std::string & userhost)
+bool
+Config::isExcluded(const std::string & userhost) const
 {
   try
   {
-    for (PatternList::iterator pos = Exceptions.begin();
-      pos != Exceptions.end(); ++pos)
+    for (Config::PatternList::const_iterator pos = this->exceptions_.begin();
+      pos != this->exceptions_.end(); ++pos)
     {
       if ((*pos)->match(userhost))
       {
@@ -706,166 +621,192 @@ bool Config::IsOKHost(const std::string & userhost)
   }
   catch (OOMon::regex_error & e)
   {
-    Log::Write("RegEx error in Config::IsOKHost(): " + e.what());
-    std::cerr << "RegEx error in Config::IsOKHost(): " << e.what() << std::endl;
+    Log::Write("RegEx error in Config::isExcluded(): " + e.what());
+    std::cerr << "RegEx error in Config::isExcluded(): " << e.what() <<
+                                                            std::endl;
   }
   return false;
 }
 
 
-bool Config::IsOKHost(const std::string & userhost, const std::string & ip)
+bool
+Config::isExcluded(const std::string & userhost, const std::string & ip) const
 {
   if (ip == "")
   {
-    return Config::IsOKHost(userhost);
+    return Config::isExcluded(userhost);
   }
   else
   {
     std::string user = userhost.substr(0, userhost.find('@'));
     std::string userip = user + "@" + ip;
 
-    return Config::IsOKHost(userhost) || Config::IsOKHost(userip);
+    return this->isExcluded(userhost) || this->isExcluded(userip);
   }
 }
 
 
-bool Config::IsOKHost(const std::string & userhost, const BotSock::Address & ip)
+bool
+Config::isExcluded(const std::string & userhost, const BotSock::Address & ip)
+  const
 {
-  return IsOKHost(userhost, BotSock::inet_ntoa(ip));
+  return this->isExcluded(userhost, BotSock::inet_ntoa(ip));
 }
 
 
-bool Config::IsOper(const std::string & userhost)
+bool
+Config::isOper(const std::string & userhost) const
 {
   try
   {
-    for (OperList::iterator pos = Opers.begin(); pos != Opers.end(); ++pos)
+    for (Config::OperMap::const_iterator pos = this->opers_.begin();
+        pos != this->opers_.end(); ++pos)
     {
-      if (pos->pattern->match(userhost))
+      if (pos->second->pattern->match(userhost))
       {
-        return pos->Flags.has(UserFlags::OPER);
+        return pos->second->flags.has(UserFlags::OPER);
       }
     }
   }
   catch (OOMon::regex_error & e)
   {
-    Log::Write("RegEx error in Config::IsOper(): " + e.what());
-    std::cerr << "RegEx error in Config::IsOper(): " << e.what() << std::endl;
+    Log::Write("RegEx error in Config::isOper(): " + e.what());
+    std::cerr << "RegEx error in Config::isOper(): " << e.what() << std::endl;
   }
   return false;
 }
 
 
-bool Config::IsOper(const std::string & userhost, const std::string & ip)
+bool
+Config::isOper(const std::string & userhost, const std::string & ip) const
 {
-  if (ip == "")
+  if (ip.empty())
   {
-    return Config::IsOper(userhost);
+    return this->isOper(userhost);
   }
   else
   {
     std::string user = userhost.substr(0, userhost.find('@'));
     std::string userip = user + "@" + ip;
 
-    return Config::IsOper(userhost) || Config::IsOper(userip);
+    return this->isOper(userhost) || this->isOper(userip);
   }
 }
 
 
-bool Config::IsOper(const std::string & userhost, const BotSock::Address & ip)
+bool
+Config::isOper(const std::string & userhost, const BotSock::Address & ip) const
 {
-  return Config::IsOper(userhost, BotSock::inet_ntoa(ip));
+  return this->isOper(userhost, BotSock::inet_ntoa(ip));
 }
 
 
-bool Config::IsLinkable(const std::string & host)
+bool
+Config::linkable(const std::string & host) const
 {
+  bool result(false);
+
   try
   {
-    for (LinkList::iterator pos = Links.begin(); pos != Links.end(); ++pos)
+    for (Config::LinkMap::const_iterator pos = this->links_.begin();
+        pos != this->links_.end(); ++pos)
     {
-      if (pos->pattern->match(host))
+      if (pos->second->pattern->match(host))
       {
-        return true;
+        result = true;
+        break;
       }
     }
   }
   catch (OOMon::regex_error & e)
   {
-    Log::Write("RegEx error in Config::IsLinkable(): " + e.what());
-    std::cerr << "RegEx error in Config::IsLinkable(): " << e.what() <<
-      std::endl;
+    Log::Write("RegEx error in Config::linkable(): " + e.what());
+    std::cerr << "RegEx error in Config::linkable(): " << e.what() <<
+                                                          std::endl;
   }
-  return false;
+  return result;
 }
 
-bool Config::GetConn(std::string & BotHandle, std::string & Host,
-  BotSock::Port & port, std::string & Passwd)
+
+bool
+Config::connect(std::string & handle, std::string & address,
+    BotSock::Port & port, std::string & password) const
 {
-  for (ConnList::iterator pos = Connections.begin(); pos != Connections.end();
-    ++pos)
+  Config::ConnectMap::const_iterator pos = this->connects_.find(UpCase(handle));
+  bool result(false);
+
+  if (pos != this->connects_.end())
   {
-    if (Same(BotHandle, pos->Handle))
-    {
-      BotHandle = pos->Handle;
-      Host = pos->Hostname;
-      port = pos->port;
-      Passwd = pos->Passwd;
-      return true;
-    }
+    handle = pos->second->handle;
+    address = pos->second->address;
+    port = pos->second->port;
+    password = pos->second->password;
+    result = true;
   }
-  return false;
+
+  return result;
 }
 
-bool Config::AuthBot(const std::string & Handle, const std::string & Host,
-	const std::string & Passwd)
+
+bool
+Config::authBot(const std::string & handle, const std::string & address,
+    const std::string & password) const
 {
+  bool result(false);
+
   try
   {
-    for (LinkList::iterator pos = Links.begin(); pos != Links.end(); ++pos)
+    std::string key(UpCase(handle));
+
+    for (Config::LinkMap::const_iterator pos = this->links_.lower_bound(key);
+        pos != this->links_.upper_bound(key); ++pos)
     {
-      if (Same(Handle, pos->Handle) && pos->pattern->match(Host) &&
-        (pos->Passwd == Passwd))
+      if (pos->second->pattern->match(address) &&
+          (pos->second->password == password))
       {
-        return true;
+        result = true;
+        break;
       }
     }
   }
   catch (OOMon::regex_error & e)
   {
-    Log::Write("RegEx error in Config::AuthBot(): " + e.what());
-    std::cerr << "RegEx error in Config::AuthBot(): " << e.what() << std::endl;
+    Log::Write("RegEx error in Config::authBot(): " + e.what());
+    std::cerr << "RegEx error in Config::authBot(): " << e.what() << std::endl;
   }
-  return false;
+
+  return result;
 }
 
-std::string Config::GetYLineDescription(const std::string & YClass)
+
+std::string
+Config::classDescription(const std::string & name) const
 {
-  for (YLineList::iterator pos = YLines.begin(); pos != YLines.end(); ++pos)
+  std::string result;
+
+  Config::YLineMap::const_iterator pos = this->ylines_.find(UpCase(name));
+  if (pos != this->ylines_.end())
   {
-    if (YClass == pos->YClass)
-    {
-      return pos->Description;
-    }
+    result = pos->second;
   }
-  return "";
+  return result;
 }
 
 
 UserFlags
-Config::getRemoteFlags(const std::string & client)
+Config::remoteFlags(const std::string & client) const
 {
   UserFlags flags(UserFlags::NONE());
 
   try
   {
-    for (RemoteClientList::const_iterator pos = remoteClients.begin();
-      pos != remoteClients.end(); ++pos)
+    for (Config::RemoteList::const_iterator pos = this->remotes_.begin();
+        pos != this->remotes_.end(); ++pos)
     {
-      if (pos->pattern->match(client))
+      if ((*pos)->pattern->match(client))
       {
         flags |= UserFlags::AUTHED;
-        flags |= pos->flags;
+        flags |= (*pos)->flags;
         break;
       }
     }
@@ -880,7 +821,7 @@ Config::getRemoteFlags(const std::string & client)
 
 
 UserFlags
-Config::parseUserFlags(const std::string & text)
+Config::userFlags(const std::string & text)
 {
   UserFlags result(UserFlags::NONE());
 
@@ -910,41 +851,43 @@ Config::parseUserFlags(const std::string & text)
 
 
 std::string
-Config::getProxyVhost()
+Config::proxyVhost(void) const
 {
-  if (proxyVhost == "")
-    return Config::GetHostName();
-  else
-    return proxyVhost;
+  return this->proxyVhost_.empty() ? this->hostname() : this->proxyVhost_;
 }
 
-bool Config::IsSpoofer(const std::string & ip)
+
+bool
+Config::spoofer(const std::string & ip) const
 {
+  bool result(false);
+
   try
   {
-    for (PatternList::iterator pos = Spoofers.begin();
-      pos != Spoofers.end(); ++pos)
+    for (Config::PatternList::const_iterator pos = this->spoofers_.begin();
+        pos != this->spoofers_.end(); ++pos)
     {
       if ((*pos)->match(ip))
       {
-        return true;
+        result = true;
+        break;
       }
     }
   }
   catch (OOMon::regex_error & e)
   {
-    Log::Write("RegEx error in Config::IsSpoofer(): " + e.what());
-    std::cerr << "RegEx error in Config::IsSpoofer(): " << e.what() <<
-      std::endl;
+    Log::Write("RegEx error in Config::spoofer(): " + e.what());
+    std::cerr << "RegEx error in Config::spoofer(): " << e.what() << std::endl;
   }
-  return false;
+
+  return result;
 }
 
 
 bool
-Config::saveSettings()
+Config::saveSettings(void) const
 {
-  std::ofstream file(settingsFile.c_str());
+  std::ofstream file(this->settingsFilename().c_str());
 
   if (file)
   {
@@ -989,11 +932,11 @@ public:
 
 
 bool
-Config::loadSettings()
+Config::loadSettings(void)
 {
   bool result = true;
 
-  std::ifstream file(settingsFile.c_str());
+  std::ifstream file(this->settingsFilename().c_str());
 
   if (file)
   {
@@ -1070,11 +1013,11 @@ Config::loadSettings()
 //  file and false otherwise.
 //////////////////////////////////////////////////////////////////////
 bool
-Config::haveChannel(const std::string & channel)
+Config::haveChannel(const std::string & channel) const
 {
   StrVector channels;
 
-  StrSplit(channels, server.downCase(Server.Channels), ",");
+  StrSplit(channels, server.downCase(this->channels_), ",");
 
   return (channels.end() != std::find(channels.begin(), channels.end(),
     server.downCase(channel)));

@@ -171,8 +171,8 @@ public:
   bool triggered(const int & count, const std::time_t & interval) const
   {
     // Return true if the user is not an Oper and is not E: lined.
-    return (!Config::IsOKHost(this->userhost) &&
-      !Config::IsOper(this->userhost));
+    return (!config.isExcluded(this->userhost) &&
+        !config.isOper(this->userhost));
   }
 
   // Derived classes should implement execute to perform the desired

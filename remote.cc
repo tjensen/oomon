@@ -125,7 +125,7 @@ Remote::isAuthorized(void) const
     std::cout << "Remote host: " << hostname << " [" << address << "]" <<
       std::endl;
 #endif
-    result = Config::IsLinkable(hostname) || Config::IsLinkable(address);
+    result = config.linkable(hostname) || config.linkable(address);
   }
   else
   {
@@ -133,7 +133,7 @@ Remote::isAuthorized(void) const
     std::cout << "Remote host: " << address << std::endl;
 #endif
     // If hostname is invalid, only check the IP address
-    result = Config::IsLinkable(address);
+    result = config.linkable(address);
   }
 
   return result;
@@ -272,7 +272,7 @@ Remote::send(const std::string & text)
 {
   if (this->targetEstablished_)
   {
-    this->sendNotice(Config::GetNick(), this->clientId_, this->clientBot_,
+    this->sendNotice(config.nickname(), this->clientId_, this->clientBot_,
       text);
   }
   else
@@ -385,8 +385,8 @@ Remote::onAuth(const std::string & from, const std::string & command,
     std::string hostname = this->getHostname();
     std::string handle = parameters[0];
 
-    if (Config::AuthBot(handle, address, parameters[1]) ||
-      (!hostname.empty() && Config::AuthBot(handle, hostname, parameters[1])))
+    if (config.authBot(handle, address, parameters[1]) ||
+      (!hostname.empty() && config.authBot(handle, hostname, parameters[1])))
     {
 #ifdef REMOTE_DEBUG
       std::cout << "Authentication successful!" << std::endl;
@@ -531,7 +531,7 @@ Remote::onBotJoin(const std::string & from, const std::string & command,
     this->stage_ = Remote::STAGE_READY;
     this->sock_.setTimeout(300);
 
-    remotes.sendBotJoin(Config::GetNick(), this->getHandle(), this);
+    remotes.sendBotJoin(config.nickname(), this->getHandle(), this);
 
     std::string notice("*** Bot ");
     notice += this->getHandle();
@@ -682,7 +682,7 @@ Remote::onCommand(const std::string & from, const std::string & command,
         this->clientHandle_ = handle;
         this->clientBot_ = bot;
         this->clientId_ = id;
-        this->clientFlags_ = Config::getRemoteFlags(from);
+        this->clientFlags_ = config.remoteFlags(from);
 
         this->targetEstablished_ = true;
 	if (0 == to.compare("*"))
@@ -699,7 +699,7 @@ Remote::onCommand(const std::string & from, const std::string & command,
 	}
 	else
 	{
-	  if (Same(to, Config::GetNick()))
+	  if (Same(to, config.nickname()))
 	  {
 	    try
 	    {
@@ -755,7 +755,7 @@ Remote::onBroadcast(const std::string & from, const std::string & command,
       std::string skipId = skip.substr(0, at);
       std::string skipBot = skip.substr(at + 1);
 
-      if (Same(skipBot, Config::GetNick()))
+      if (Same(skipBot, config.nickname()))
       {
         clients.sendAll(from, skipId, text, flags, watches);
         remotes.sendBroadcastPtr(from, this, text, flags, watches);
@@ -991,7 +991,7 @@ Remote::sendMyBotNet(void)
   {
     result += this->sendCommand(pos->nodeA, "BOTJOIN", pos->nodeB, false);
   }
-  this->sendCommand(Config::GetNick(), "BOTJOIN", "", false);
+  this->sendCommand(config.nickname(), "BOTJOIN", "", false);
 
   return result;
 }
@@ -1021,9 +1021,9 @@ Remote::sendAuth(void)
   BotSock::Port port;
   std::string password;
 
-  Config::GetConn(handle, hostname, port, password);
+  config.connect(handle, hostname, port, password);
 
-  return this->sendCommand("", "AUTH", Config::GetNick() + " :" + password,
+  return this->sendCommand("", "AUTH", config.nickname() + " :" + password,
     false);
 }
 

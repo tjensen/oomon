@@ -58,7 +58,7 @@ public:
   virtual void send(const std::string & message);
   virtual UserFlags flags(void) const { return this->flags_; }
   virtual std::string handle(void) const { return this->handle_; }
-  virtual std::string bot(void) const { return Config::GetNick(); }
+  virtual std::string bot(void) const { return config.nickname(); }
   virtual std::string id(void) const { return this->id_; }
 
   void flags(const UserFlags f) { this->flags_ = f; }

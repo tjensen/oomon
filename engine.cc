@@ -138,7 +138,7 @@ klineClones(const bool kline, const std::string & rate,
     return;
   }
 
-  if (Config::IsOKHost(UserAtHost, ip) && Config::IsOper(UserAtHost, ip))
+  if (config.isExcluded(UserAtHost, ip) && config.isOper(UserAtHost, ip))
   {
     // Don't k-line our friendlies!
     return;
@@ -437,7 +437,7 @@ addToNickChangeList(const std::string & userhost, const std::string & oldNick,
       reason.setStringToken('i', BotSock::inet_ntoa(ip));
       reason.setStringToken('r', rate);
 
-      if (!Config::IsOKHost(userhost, ip) && !Config::IsOper(userhost, ip))
+      if (!config.isExcluded(userhost, ip) && !config.isOper(userhost, ip))
       {
 	doAction(lastNick, userhost, ip,
 	  vars[VAR_NICK_FLOOD_ACTION]->getAction(),
@@ -701,7 +701,7 @@ onCsNickFlood(std::string text)
 
   BotSock::Address ip = users.getIP(nick, userhost);
 
-  if ((!Config::IsOKHost(userhost, ip)) && (!Config::IsOper(userhost, ip)))
+  if ((!config.isExcluded(userhost, ip)) && (!config.isOper(userhost, ip)))
   {
     doAction(nick, userhost, ip, vars[VAR_NICK_FLOOD_ACTION]->getAction(),
       vars[VAR_NICK_FLOOD_ACTION]->getInt(),
@@ -1153,8 +1153,8 @@ checkForSpoof(const std::string & nick, const std::string & user,
   {
     std::string userhost = user + '@' + host;
 
-    if (!Config::IsOper(userhost, ip) && !Config::IsOKHost(userhost, ip) &&
-      !Config::IsSpoofer(ip))
+    if (!config.isOper(userhost, ip) && !config.isExcluded(userhost, ip) &&
+      !config.spoofer(ip))
     {
       if (isNumericIPv4(host))
       {

@@ -517,7 +517,7 @@ TrapList::cmd(BotClient * client, std::string line)
   if (modified && (0 != client->id().compare("CONFIG")) &&
     vars[VAR_AUTO_SAVE]->getBool())
   {
-    Config::saveSettings();
+    config.saveSettings();
   }
 }
 
@@ -559,8 +559,8 @@ void
 TrapList::match(const UserEntryPtr user, const std::string & version,
   const std::string & privmsg, const std::string & notice)
 {
-  if (!Config::IsOKHost(user->getUserHost(), user->getIP()) &&
-    !Config::IsOper(user->getUserHost(), user->getIP()))
+  if (!config.isExcluded(user->getUserHost(), user->getIP()) &&
+    !config.isOper(user->getUserHost(), user->getIP()))
   {
     for (TrapMap::iterator pos = traps.begin(); pos != traps.end(); ++pos)
     {

@@ -78,7 +78,7 @@ Socks4::onConnect()
   else
     tmp = "";
 
-  BotSock::Port port = Config::GetServerPort();
+  BotSock::Port port = config.serverPort();
   BotSock::Address dst = ntohl(server.getRemoteAddress());
   //BotSock::Address dst = ntohl(inet_addr("198.175.186.5"));
 
