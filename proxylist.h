@@ -71,6 +71,10 @@ public:
   static const std::time_t CACHE_EXPIRE;
 
 private:
+  void initiateCheck(const Proxy::Protocol type, const std::string & port,
+    const std::string & address, const std::string & hostname,
+    const std::string & nick, const std::string & userhost);
+
   typedef std::list<ProxyPtr> SockList;
   SockList scanners;
 

@@ -283,11 +283,21 @@ Vars::Vars(void) : vec(VAR_COUNT)
     DEFAULT_RELAY_MSGS_TO_LOCOPS));
   this->vec[VAR_SCAN_FOR_PROXIES] =
     SettingPtr(new BoolSetting("SCAN_FOR_PROXIES", DEFAULT_SCAN_FOR_PROXIES));
+  this->vec[VAR_SCAN_HTTP_CONNECT_PORTS] =
+    SettingPtr(new StrSetting("SCAN_HTTP_CONNECT_PORTS",
+    DEFAULT_SCAN_HTTP_CONNECT_PORTS));
   this->vec[VAR_SCAN_PROXY_ACTION] =
     SettingPtr(new ActionSetting("SCAN_PROXY_ACTION",
     DEFAULT_SCAN_PROXY_ACTION));
   this->vec[VAR_SCAN_PROXY_REASON] =
     SettingPtr(new StrSetting("SCAN_PROXY_REASON", DEFAULT_SCAN_PROXY_REASON));
+  this->vec[VAR_SCAN_SOCKS4_PORTS] =
+    SettingPtr(new StrSetting("SCAN_SOCKS4_PORTS", DEFAULT_SCAN_SOCKS4_PORTS));
+  this->vec[VAR_SCAN_SOCKS5_PORTS] =
+    SettingPtr(new StrSetting("SCAN_SOCKS5_PORTS", DEFAULT_SCAN_SOCKS5_PORTS));
+  this->vec[VAR_SCAN_WINGATE_PORTS] =
+    SettingPtr(new StrSetting("SCAN_WINGATE_PORTS",
+    DEFAULT_SCAN_WINGATE_PORTS));
   this->vec[VAR_SEEDRAND_ACTION] =
     SettingPtr(new ActionSetting("SEEDRAND_ACTION", DEFAULT_SEEDRAND_ACTION));
   this->vec[VAR_SEEDRAND_COMMAND_MIN] =

@@ -771,8 +771,12 @@ set
 .t.operfail_reason
 .t.relay_msgs_to_locops
 .t.scan_for_proxies
+.t.scan_http_connect_ports
 .t.scan_proxy_action
 .t.scan_proxy_reason
+.t.scan_socks4_ports
+.t.scan_socks5_ports
+.t.scan_wingate_ports
 .t.seedrand_action
 .t.seedrand_command_min
 .t.seedrand_reason
@@ -1632,8 +1636,23 @@ set scan_for_proxies
 .d.connecting clients for open proxies.  When
 .d.OFF, no scanning will be performed.
 .f.mo
+.l.set scan_http_connect_ports
 .l.set scan_proxy_action
 .l.set scan_proxy_reason
+.l.set scan_socks4_ports
+.l.set scan_socks5_ports
+.l.set scan_wingate_ports
+set scan_http_connect_ports
+.s.set scan_http_connect_ports [<port>[,<port>[,...]]]
+.d.Determines the TCP port numbers to scan
+.d.when scanning for open HTTP CONNECT proxies.
+.d.Port numbers should be separated by commas
+.d.and/or spaces.
+.f.mo
+.l.set scan_for_proxies
+.l.set scan_socks4_ports
+.l.set scan_socks5_ports
+.l.set scan_wingate_ports
 set scan_proxy_action
 .s.set scan_proxy_action [<action> [<time>]]
 .d.This setting determines how the monitor bot
@@ -1654,6 +1673,39 @@ set scan_proxy_reason
 .d.proxy, and "%t" will be replaced by the type
 .d.of proxy detected.
 .f.mo
+set scan_socks4_ports
+.s.set scan_socks4_ports [<port>[,<port>[,...]]]
+.d.Determines the TCP port numbers to scan
+.d.when scanning for open SOCKS4 proxies. Port
+.d.numbers should be separated by commas and/or
+.d.spaces.
+.f.mo
+.l.set scan_for_proxies
+.l.set scan_http_connect_ports
+.l.set scan_socks5_ports
+.l.set scan_wingate_ports
+set scan_socks5_ports
+.s.set scan_socks5_ports [<port>[,<port>[,...]]]
+.d.Determines the TCP port numbers to scan
+.d.when scanning for open SOCKS5 proxies. Port
+.d.numbers should be separated by commas and/or
+.d.spaces.
+.f.mo
+.l.set scan_for_proxies
+.l.set scan_http_connect_ports
+.l.set scan_socks4_ports
+.l.set scan_wingate_ports
+set scan_wingate_ports
+.s.set scan_wingate_ports [<port>[,<port>[,...]]]
+.d.Determines the TCP port numbers to scan
+.d.when scanning for open WINGATE proxies. Port
+.d.numbers should be separated by commas and/or
+.d.spaces.
+.f.mo
+.l.set scan_for_proxies
+.l.set scan_http_connect_ports
+.l.set scan_socks4_ports
+.l.set scan_socks5_ports
 set seedrand_command_min
 .s.set seedrand_command_min [<integer>]
 .d.This setting determines the default minimum

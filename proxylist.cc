@@ -113,6 +113,55 @@ ProxyList::connect(ProxyPtr newProxy, const std::string & address,
 }
 
 
+void
+ProxyList::initiateCheck(const Proxy::Protocol type, const std::string & port,
+  const std::string & address, const std::string & hostname,
+  const std::string & nick, const std::string & userhost)
+{
+  try
+  {
+    int portNum = boost::lexical_cast<int>(port);
+
+    if (!this->skipCheck(address, portNum, type))
+    {
+      ProxyPtr newProxy;
+
+      switch (type)
+      {
+	case Proxy::HTTP:
+	  newProxy = ProxyPtr(new Http(hostname, nick, userhost));
+	  break;
+	case Proxy::WINGATE:
+	  newProxy = ProxyPtr(new WinGate(hostname, nick, userhost));
+	  break;
+	case Proxy::SOCKS4:
+	  newProxy = ProxyPtr(new Socks4(hostname, nick, userhost));
+	  break;
+	case Proxy::SOCKS5:
+	  newProxy = ProxyPtr(new Socks5(hostname, nick, userhost));
+	  break;
+	default:
+	  std::cerr << "Unknown proxy type?" << std::endl;
+	  break;
+      }
+
+      if (0 != newProxy)
+      {
+	this->connect(newProxy, address, portNum);
+      }
+    }
+  }
+  catch (boost::bad_lexical_cast)
+  {
+    std::cerr << "Bad port number: " << port << std::endl;
+  }
+  catch (OOMon::errno_error & e)
+  {
+    std::cerr << "Connect to proxy failed (" << e.why() << ")" << std::endl;
+  }
+}
+
+
 // check(address, hostname, nick, userhost)
 //
 // Checks a client for proxies
@@ -123,52 +172,29 @@ void
 ProxyList::check(const std::string & address, const std::string & hostname,
   const std::string & nick, const std::string & userhost)
 {
-  typedef struct { Proxy::Protocol type; BotSock::Port port; } ScanDef;
-  ScanDef defs[] =
+  StrVector http, socks4, socks5, wingate;
+
+  StrSplit(http, vars[VAR_SCAN_HTTP_CONNECT_PORTS]->getString(), " ,", true);
+  StrSplit(socks4, vars[VAR_SCAN_SOCKS4_PORTS]->getString(), " ,", true);
+  StrSplit(socks4, vars[VAR_SCAN_SOCKS5_PORTS]->getString(), " ,", true);
+  StrSplit(wingate, vars[VAR_SCAN_WINGATE_PORTS]->getString(), " ,", true);
+
+  for (StrVector::iterator pos = http.begin(); pos != http.end(); ++pos)
   {
-    { Proxy::WINGATE, 23 }, { Proxy::SOCKS4, 1080 },
-    { Proxy::SOCKS5, 1080 }, { Proxy::HTTP, 80 },
-    { Proxy::HTTP, 1080 }, { Proxy::HTTP, 3128 },
-    { Proxy::HTTP, 8080 }
-  };
-
-  for (unsigned long i = 0; i < (sizeof(defs) / sizeof(ScanDef)); ++i)
+    ProxyList::initiateCheck(Proxy::HTTP, *pos, address, hostname, nick,
+      userhost);
+  }
+  for (StrVector::iterator pos = socks4.begin(); pos != socks4.end(); ++pos)
   {
-    try
-    {
-      if (!this->skipCheck(address, defs[i].port, defs[i].type))
-      {
-	ProxyPtr newProxy;
-
-	switch (defs[i].type)
-	{
-	  case Proxy::HTTP:
-	    newProxy = ProxyPtr(new Http(hostname, nick, userhost));
-	    break;
-	  case Proxy::WINGATE:
-	    newProxy = ProxyPtr(new WinGate(hostname, nick, userhost));
-	    break;
-	  case Proxy::SOCKS4:
-	    newProxy = ProxyPtr(new Socks4(hostname, nick, userhost));
-	    break;
-	  case Proxy::SOCKS5:
-	    newProxy = ProxyPtr(new Socks5(hostname, nick, userhost));
-	    break;
-	  default:
-	    std::cerr << "Unknown proxy type?" << std::endl;
-	    break;
-	}
-
-        if (0 != newProxy)
-	{
-          this->connect(newProxy, address, defs[i].port);
-	}
-      }
-    }
-    catch (OOMon::errno_error & e)
-    {
-      std::cerr << "Connect to proxy failed (" << e.why() << ")" << std::endl;
-    }
+    initiateCheck(Proxy::SOCKS4, *pos, address, hostname, nick, userhost);
+  }
+  for (StrVector::iterator pos = socks5.begin(); pos != socks5.end(); ++pos)
+  {
+    initiateCheck(Proxy::SOCKS5, *pos, address, hostname, nick, userhost);
+  }
+  for (StrVector::iterator pos = wingate.begin(); pos != wingate.end(); ++pos)
+  {
+    initiateCheck(Proxy::WINGATE, *pos, address, hostname, nick, userhost);
   }
 }
 
