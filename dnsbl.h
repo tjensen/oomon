@@ -47,8 +47,15 @@ public:
 
 #ifdef HAVE_LIBADNS
   void process(void);
+#endif /* HAVE_LIBADNS */
+
+  void status(class BotClient * client) const;
 
 private:
+  bool checkZone(const BotSock::Address & addr, const std::string & nick,
+    const std::string & userhost, const std::string & zone);
+
+#ifdef HAVE_LIBADNS
   class Query
   {
   public:

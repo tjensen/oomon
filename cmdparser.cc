@@ -41,6 +41,7 @@
 #include "vars.h"
 #include "config.h"
 #include "help.h"
+#include "dnsbl.h"
 
 
 #ifdef DEBUG
@@ -228,6 +229,7 @@ CommandParser::cmdStatus(BotClient * from, const std::string & command,
   server.status(from);
   clients.status(from);
   proxies.status(from);
+  dnsbl.status(from);
 }
 
 

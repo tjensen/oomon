@@ -40,24 +40,23 @@
 #include "autoaction.h"
 #include "log.h"
 #include "main.h"
+#include "botclient.h"
 
 
 Dnsbl dnsbl;
 
 
 bool
-Dnsbl::check(const BotSock::Address & addr, const std::string & nick,
-  const std::string & userhost)
+Dnsbl::checkZone(const BotSock::Address & addr, const std::string & nick,
+  const std::string & userhost, const std::string & zone)
 {
-  std::string dns = vars[VAR_DNSBL_PROXY_ZONE]->getString();
-
+  if (!zone.empty())
+  {
 #ifdef HAVE_LIBADNS
 
-  if (!dns.empty())
-  {
     QueryPtr temp(new Query(addr, nick, userhost));
 
-    int ret = adns.submit_rbl(addr, dns, temp->query);
+    int ret = adns.submit_rbl(addr, zone, temp->query);
 
     if (0 == ret)
     {
@@ -67,14 +66,13 @@ Dnsbl::check(const BotSock::Address & addr, const std::string & nick,
     {
       std::cerr << "adns.submit_rbl() returned error: " << ret << std::endl;
     }
-  }
 
 #else
 
-  if (!dns.empty())
-  {
     std::string::size_type pos = 0;
     std::string ip(BotSock::inet_ntoa(addr));
+
+    std::string lookup(zone);
 
     // Reverse the order of the octets and use them to prefix the blackhole
     // zone.
@@ -82,12 +80,12 @@ Dnsbl::check(const BotSock::Address & addr, const std::string & nick,
     while (dots >= 0)
     {
       std::string::size_type nextDot = ip.find('.', pos);
-      dns = ip.substr(pos, nextDot - pos) + "." + dns;
+      lookup = ip.substr(pos, nextDot - pos) + "." + lookup;
       pos = nextDot + 1;
       dots--;
     }
 
-    struct hostent *result = gethostbyname(dns.c_str());
+    struct hostent *result = gethostbyname(lookup.c_str());
 
     if (NULL != result)
     {
@@ -95,11 +93,23 @@ Dnsbl::check(const BotSock::Address & addr, const std::string & nick,
 
       return true;
     }
-  }
 
 #endif /* HAVE_LIBADNS */
+  }
 
   return false;
+}
+
+bool
+Dnsbl::check(const BotSock::Address & addr, const std::string & nick,
+  const std::string & userhost)
+{
+  StrVector zones;
+
+  StrSplit(zones, vars[VAR_DNSBL_PROXY_ZONE]->getString(), " ,", true);
+
+  return (zones.end() != std::find_if(zones.begin(), zones.end(),
+    boost::bind(&Dnsbl::checkZone, this, addr, nick, userhost, _1)));
 }
 
 
@@ -152,6 +162,15 @@ Dnsbl::process(void)
 
 
 void
+Dnsbl::status(BotClient * client) const
+{
+#ifdef DNSBL_DEBUG
+  client->send("DNSBL queries: " + IntToStr(this->_queries.size()));
+#endif /* DNSBL_DEBUG */
+}
+
+
+void
 Dnsbl::openProxyDetected(const BotSock::Address & addr,
   const std::string & nick, const std::string & userhost)
 {
@@ -170,5 +189,4 @@ Dnsbl::openProxyDetected(const BotSock::Address & addr,
     vars[VAR_DNSBL_PROXY_ACTION]->getInt(),
     vars[VAR_DNSBL_PROXY_REASON]->getString(), false);
 }
-
 

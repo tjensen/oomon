@@ -1055,9 +1055,13 @@ set dnsbl_proxy_reason
 .f.mo
 .l.set dnsbl_proxy_action
 set dnsbl_proxy_zone
-.s.set dnsbl_proxy_zone [<text>]
-.d.Determines the DNSBL zone to be used for
-.d.detecting proxies.
+.s.set dnsbl_proxy_zone [<zone>[,<zone>[,...]]]
+.d.Determines the DNSBL zone(s) to be used for
+.d.detecting proxies.  To list multiple OPM
+.d.zones, separate them by spaces or commas.
+.d.Note: Configuring OOMon with multiple OPM
+.d.DNSBL zones may cause significant lag if the
+.d.bot is not linked with the ADNS library.
 .f.mo
 .l.set dnsbl_proxy_action
 set extra_kline_info
