@@ -256,8 +256,7 @@ Remote::onRead(std::string text)
   else
   {
 #ifdef REMOTE_DEBUG
-    std::cout << "Remote >> " << hexDump(text.c_str(), text.length()) <<
-      " (" << text << ")" << std::endl;
+    std::cout << "Remote >> " << text << std::endl;
 #endif
 
     switch (this->_stage)

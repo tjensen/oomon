@@ -347,7 +347,10 @@ WatchSet::getWatchValues(StrVector & watches)
 
   for (StrVector::iterator pos = watches.begin(); pos != watches.end(); ++pos)
   {
-    result.add(WatchSet::getWatchValue(*pos));
+    if (0 != UpCase(*pos).compare("NONE"))
+    {
+      result.add(WatchSet::getWatchValue(*pos));
+    }
   }
 
   return result;
@@ -355,11 +358,11 @@ WatchSet::getWatchValues(StrVector & watches)
 
 
 WatchSet
-WatchSet::getWatchValues(const std::string & watches)
+WatchSet::getWatchValues(const std::string & watches, const char separator)
 {
   StrVector vector;
 
-  StrSplit(vector, watches, " ", true);
+  StrSplit(vector, watches, std::string(1, separator), true);
 
   return WatchSet::getWatchValues(vector);
 }

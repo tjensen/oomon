@@ -1118,22 +1118,6 @@ CommandParser::cmdDie(BotClient * from, const std::string & command,
 
 
 void
-CommandParser::cmdConn(BotClient * from, const std::string & command,
-  std::string parameters)
-{
-  remotes.cmdConn(from, command, parameters);
-}
-
-
-void
-CommandParser::cmdDisconn(BotClient * from, const std::string & command,
-  std::string parameters)
-{
-  remotes.cmdDisconn(from, command, parameters);
-}
-
-
-void
 CommandParser::cmdRaw(BotClient * from, const std::string & command,
   std::string parameters)
 {

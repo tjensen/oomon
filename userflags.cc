@@ -81,7 +81,8 @@ UserFlags::UserFlags(const std::string & bits, const char separator) : bits(0)
       this->bits.set(UserFlags::REMOTE);
     else if (0 == copy.compare("WALLOPS"))
       this->bits.set(UserFlags::WALLOPS);
-    else throw UserFlags::invalid_flag("Unknown flag: " + copy);
+    else if (0 != copy.compare("NONE"))
+      throw UserFlags::invalid_flag("Unknown flag: " + copy);
   }
 }
 

@@ -97,7 +97,8 @@ public:
 
   // Convert a space-separated list of symbolic names to a set of watch
   // types.
-  static WatchSet getWatchValues(const std::string & watches);
+  static WatchSet getWatchValues(const std::string & watches,
+    const char separator = ' ');
 
   // Convert vector of symbolic names to a set of watch types.
   static WatchSet getWatchValues(StrVector & watches);

@@ -314,9 +314,15 @@ void
 DCCList::statsP(StrList & output)
 {
   output.clear();
+  int operCount = 0;
 
-  int operCount = std::count_if(this->connections.begin(),
-    this->connections.end(), boost::bind(&DCC::statsP, _1, output));
+  for (SockList::const_iterator pos = this->connections.begin();
+    pos != this->connections.end(); ++pos)
+  {
+    DCCPtr copy(*pos);
+
+    if (copy->statsP(output)) ++operCount;
+  }
 
   output.push_back(IntToStr(operCount) + " OOMon oper" +
     (operCount == 1 ? "" : "s"));
