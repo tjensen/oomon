@@ -566,36 +566,41 @@ IRC::onCtcp(const std::string & from, const std::string & userhost,
 
   BotSock::Address ip = users.getIP(from, userhost);
 
-  if ((command == "DCC") && (this->same(to, this->myNick)))
+  if ((0 == command.compare("DCC")) && (this->same(to, this->myNick)))
   {
-    Log::Write("DCC CHAT request from " + from + " (" + userhost + ")");
+    std::string dccCommand = this->upCase(FirstWord(text));
 
-    if (config.mayChat(userhost, ip))
+    if (0 == dccCommand.compare("CHAT"))
     {
-      std::string dccCommand = FirstWord(text);
-      if (dccCommand == "CHAT")
-      {
-        FirstWord(text);	// Ignore "chat" parameter
+      FirstWord(text);	// Ignore "chat" parameter
 
+      if (config.mayChat(userhost, ip))
+      {
         try
 	{
           BotSock::Address address =
-	    boost::lexical_cast<BotSock::Address>(FirstWord(text));
+            boost::lexical_cast<BotSock::Address>(FirstWord(text));
           BotSock::Port port =
-	    boost::lexical_cast<BotSock::Port>(FirstWord(text));
+            boost::lexical_cast<BotSock::Port>(FirstWord(text));
 
           if ((address == INADDR_ANY) || (address == INADDR_NONE))
           {
+            Log::Write("Invalid DCC CHAT address from " + from + " (" +
+                userhost + ")");
             this->notice(from,
-	      "Invalid address specified for DCC CHAT. Not funny.");
+                "Invalid address specified for DCC CHAT. Not funny.");
           }
           else if (port < 1024)
           {
+            Log::Write("Invalid DCC CHAT port from " + from + " (" + userhost +
+                ")");
             this->notice(from,
-	      "Invalid port specified for DCC CHAT. Not funny.");
+                "Invalid port specified for DCC CHAT. Not funny.");
           }
 	  else
 	  {
+            Log::Write("DCC CHAT request from " + from + " (" + userhost + ")");
+
             if (!clients.connect(address, port, from, userhost, ip))
             {
               Log::Write("DCC CHAT failed for " + from);
@@ -604,20 +609,40 @@ IRC::onCtcp(const std::string & from, const std::string & userhost,
         }
 	catch (boost::bad_lexical_cast)
 	{
+          Log::Write("Malformed DCC CHAT request from " + from + " (" +
+              userhost + ")");
           this->notice(from, "Malformed DCC CHAT request. Not funny.");
 	}
       }
+      else
+      {
+        Log::Write("Unauthorized DCC CHAT request from " + from + " (" +
+            userhost + ")");
+      }
+    }
+    else
+    {
+      Log::Write("Unsupported DCC " + dccCommand + " request from " + from +
+          " (" + userhost + ")");
     }
   }
-  else if (config.mayChat(userhost, ip) && (command == "CHAT"))
+  else if (0 == command.compare("CHAT"))
   {
-    Log::Write("CTCP CHAT request from " + from + " (" + userhost + ")");
-
-    if (!clients.listen(from, userhost, ip))
+    if (config.mayChat(userhost, ip))
     {
-      Log::Write("DCC CHAT listen failed for " + from);
-      this->notice(from,
-	"Unable to initiate DCC CHAT request!  Try again later?");
+      Log::Write("CTCP CHAT request from " + from + " (" + userhost + ")");
+
+      if (!clients.listen(from, userhost, ip))
+      {
+        Log::Write("DCC CHAT listen failed for " + from);
+        this->notice(from,
+          "Unable to initiate DCC CHAT request!  Try again later?");
+      }
+    }
+    else
+    {
+      Log::Write("Unauthorized CTCP CHAT request from " + from + " (" +
+          userhost + ")");
     }
   }
   else if ((command == std::string("PING")) ||
