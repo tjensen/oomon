@@ -162,17 +162,6 @@ hangup(int sig)
 }
 
 
-void
-pipevec(int sig)
-{
-  if (sig == SIGPIPE)
-  {
-    std::cerr << "Caught SIGPIPE" << std::endl;
-    signal(SIGPIPE, pipevec);
-  }
-}
-
-
 bool
 process()
 {
@@ -402,7 +391,7 @@ main(int argc, char **argv)
   signal(SIGTERM, gracefuldie);
   signal(SIGINT, gracefuldie);
   signal(SIGHUP, hangup);
-  signal(SIGPIPE, pipevec);
+  signal(SIGPIPE, SIG_IGN);
 
   std::ofstream PIDfile;
   PIDfile.open(pidFile.c_str());
