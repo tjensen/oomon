@@ -36,6 +36,13 @@
 #include "pattern.h"
 
 
+enum IRCCommand
+{
+  IRC_UNKNOWN, IRC_PING, IRC_NICK, IRC_JOIN, IRC_PART, IRC_KICK, IRC_INVITE,
+  IRC_NOTICE, IRC_PRIVMSG, IRC_WALLOPS, IRC_ERROR
+};
+
+
 class IRC : public BotSock
 {
 public:
@@ -118,6 +125,8 @@ private:
     const std::string &, std::string);
   void onNotice(const std::string &, const std::string &,
     const std::string &, std::string);
+
+  static IRCCommand getCommand(const std::string & text);
 };
 
 

@@ -335,7 +335,7 @@ IRC::onRead(std::string text)
   }
   else
   {
-    switch(getIRCCommand(command))
+    switch (IRC::getCommand(command))
     {
       case IRC_PING:
 	if (params.size() > 2)
@@ -1145,3 +1145,32 @@ IRC::checkUserDelta(void)
     this->lastUserDeltaCheck = now;
   }
 }
+
+
+IRCCommand
+IRC::getCommand(const std::string & text)
+{
+  if (text == std::string("PING"))
+    return IRC_PING;
+  else if (text == std::string("NICK"))
+    return IRC_NICK;
+  else if (text == std::string("JOIN"))
+    return IRC_JOIN;
+  else if (text == std::string("PART"))
+    return IRC_PART;
+  else if (text == std::string("KICK"))
+    return IRC_KICK;
+  else if (text == std::string("INVITE"))
+    return IRC_INVITE;
+  else if (text == std::string("NOTICE"))
+    return IRC_NOTICE;
+  else if (text == std::string("PRIVMSG"))
+    return IRC_PRIVMSG;
+  else if (text == std::string("WALLOPS"))
+    return IRC_WALLOPS;
+  else if (text == std::string("ERROR"))
+    return IRC_ERROR;
+  else
+    return IRC_UNKNOWN;
+}
+

@@ -31,12 +31,6 @@
 #include "strtype"
 
 
-enum IRCCommand
-{
-  IRC_UNKNOWN, IRC_PING, IRC_NICK, IRC_JOIN, IRC_PART, IRC_KICK, IRC_INVITE,
-  IRC_NOTICE, IRC_PRIVMSG, IRC_WALLOPS, IRC_ERROR
-};
-
 enum TimeStampFormat
 {
   TIMESTAMP_LOG, TIMESTAMP_KLINE
@@ -50,9 +44,6 @@ int StrSplit(StrVector &, std::string, const std::string &,
 // Join StrVector into a std::string
 std::string StrJoin(char, const StrVector &);
 
-// Read a line of data from a socket (or whatever)
-int ReadLine(register int, std::string &);
-
 // Splits data from an IRC server into its pieces
 int SplitIRC(StrVector &, std::string);
 
@@ -61,9 +52,6 @@ void SplitFrom(std::string, std::string &, std::string &);
 
 // Returns the nick in a nick!user@host thingy
 std::string getNick(const std::string &);
-
-// Convers an IRC command to an integer
-IRCCommand getIRCCommand(const std::string &);
 
 // Converts ASCII to an unsigned long
 unsigned long atoul(const char *);

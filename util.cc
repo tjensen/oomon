@@ -87,34 +87,6 @@ StrSplit(StrVector & temp, std::string input, const std::string & tokens,
 }
 
 
-int
-ReadLine(register int fd, std::string & text)
-{
-  int n, rc;
-  char c;
-
-  text = "";
-
-  for (n = 1; n < MAX_BUFF; n++) {
-    if ((rc = read(fd, &c, 1)) == 1) {
-      if ((c != '\n') && (c != '\r'))
-	text = text + c;
-      else {
-	//n--;
-	break;
-      }
-    } else if (rc == 0) {
-      if (n == 1)
-	return 0;
-      else
-	break;
-    } else
-      return -1;
-  }
-  return n;
-}
-
-
 //////////////////////////////////////////////////////////////////////
 // SplitIRC(temp, text)
 //
@@ -235,34 +207,6 @@ getNick(const std::string & text)
   {
     return text.substr(0, bang);
   }
-}
-
-
-IRCCommand
-getIRCCommand(const std::string & text)
-{
-  if (text == std::string("PING"))
-    return IRC_PING;
-  else if (text == std::string("NICK"))
-    return IRC_NICK;
-  else if (text == std::string("JOIN"))
-    return IRC_JOIN;
-  else if (text == std::string("PART"))
-    return IRC_PART;
-  else if (text == std::string("KICK"))
-    return IRC_KICK;
-  else if (text == std::string("INVITE"))
-    return IRC_INVITE;
-  else if (text == std::string("NOTICE"))
-    return IRC_NOTICE;
-  else if (text == std::string("PRIVMSG"))
-    return IRC_PRIVMSG;
-  else if (text == std::string("WALLOPS"))
-    return IRC_WALLOPS;
-  else if (text == std::string("ERROR"))
-    return IRC_ERROR;
-  else
-    return IRC_UNKNOWN;
 }
 
 
