@@ -194,16 +194,43 @@ hangup(int sig)
 bool
 process()
 {
+  std::time_t nextConnectAttempt(0);
+  std::time_t attemptWait(1);
+
   for (;;)
   {
-    if (!server.isConnected() && !server.isConnecting())
+    std::time_t now(time(0));
+
+    if (!server.isConnected() && !server.isConnecting() &&
+        (now >= nextConnectAttempt))
     {
+      nextConnectAttempt = now + attemptWait;
+
+      std::string notice("Connecting to IRC server at ");
+      notice += config.serverAddress();
+      notice += ':';
+      notice += boost::lexical_cast<std::string>(config.serverPort());
 #ifdef MAIN_DEBUG
-      std::cout << "Connecting to IRC server." << std::endl;
+      std::cout << notice << std::endl;
 #endif
+      Log::Write(notice);
       server.bindTo(config.hostname());
-      if (!server.connect(config.serverAddress(), config.serverPort()))
+      if (server.connect(config.serverAddress(), config.serverPort()))
       {
+        // Success!
+        attemptWait = 1;
+      }
+      else
+      {
+        if (attemptWait < 120)
+        {
+          attemptWait *= 2;
+        }
+        std::string notice("Connect failed");
+#ifdef MAIN_DEBUG
+        std::cout << notice << std::endl;
+#endif
+        Log::Write(notice);
 	server.reset();
       }
     }
@@ -236,9 +263,11 @@ process()
         if ((server.isConnected() || server.isConnecting()) &&
           !server.process(readfds, writefds))
         {
+          std::string notice("Disconnected from IRC server.");
 #ifdef MAIN_DEBUG
-          std::cout << "Disconnected from IRC server." << std::endl;
+          std::cout << notice << std::endl;
 #endif
+          Log::Write(notice);
           server.reset();
         }
       }
