@@ -35,6 +35,8 @@
 class RemoteList
 {
 public:
+  typedef boost::shared_ptr<Remote> RemotePtr;
+
   RemoteList(void) { this->shutdown(); };
   ~RemoteList(void) { };
 
@@ -66,15 +68,84 @@ public:
   void getBotNet(BotLinkList & list, const Remote *exception = (Remote *) 0);
 
   bool isLinkedDirectlyToMe(const std::string &) const;
-  Remote *findBot(const std::string &) const;
+  RemotePtr findBot(const std::string &) const;
   bool isConnected(const std::string &) const;
 
 private:
   bool listen(const std::string & address, const BotSock::Port & port);
-  void shutdownListeners(void);
 
-  typedef std::list<BotSock *> ListenerList;
-  typedef std::list<Remote *> ConnectionList;
+  typedef std::list<BotSock::ptr> ListenerList;
+  typedef std::list<RemotePtr> ConnectionList;
+
+  class ListenProcess
+  {
+  public:
+    ListenProcess(const fd_set & readset, const fd_set & writeset,
+      ConnectionList & connections) : _readset(readset), _writeset(writeset),
+      _connections(connections) { }
+    bool operator()(BotSock::ptr s);
+  private:
+    const fd_set & _readset;
+    const fd_set & _writeset;
+    ConnectionList & _connections;
+  };
+
+  class RemoteProcess
+  {
+  public:
+    RemoteProcess(const fd_set & readset, const fd_set & writeset)
+      : _readset(readset), _writeset(writeset) { }
+    bool operator()(RemotePtr r);
+  private:
+    const fd_set & _readset;
+    const fd_set & _writeset;
+  };
+
+  class SendChat
+  {
+  public:
+    SendChat(const std::string & from, const std::string & text,
+      const Remote *exception = (Remote *) 0) : _from(from), _text(text),
+      _exception(exception) { }
+    void operator()(RemotePtr r)
+    {
+      if (r.get() != this->_exception)
+      {
+        r->sendChat(this->_from, this->_text);
+      }
+    }
+  private:
+    const std::string & _from;
+    const std::string & _text;
+    const Remote *_exception;
+  };
+
+  class SendBotJoinPart
+  {
+  public:
+    SendBotJoinPart(const bool join, const std::string node1,
+      const std::string node2, const Remote *exception = (Remote *) 0)
+      : _join(join), _node1(node1), _node2(node2), _exception(exception) { }
+    void operator()(RemotePtr r)
+    {
+      if (r.get() != this->_exception)
+      {
+	if (this->_join)
+	{
+          r->sendBotJoin(this->_node1, this->_node2);
+	}
+	else
+	{
+          r->sendBotPart(this->_node1, this->_node2);
+	}
+      }
+    }
+  private:
+    const bool _join;
+    const std::string & _node1;
+    const std::string & _node2;
+    const Remote *_exception;
+  };
 
   ListenerList _listeners;
   ConnectionList _connections;

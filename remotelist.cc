@@ -47,181 +47,141 @@ RemoteList remotes;
 void
 RemoteList::shutdown(void)
 {
-  this->shutdownListeners();
-
-  for (ConnectionList::iterator pos = this->_connections.begin();
-    pos != this->_connections.end(); )
-  {
-    Remote *copy = *pos;
-
-    pos = this->_connections.erase(pos);
-    delete copy;
-  }
-}
-
-
-void
-RemoteList::shutdownListeners(void)
-{
-  for (ListenerList::iterator pos = this->_listeners.begin();
-    pos != this->_listeners.end(); ++pos)
-  {
-    BotSock *copy = *pos;
-
-    pos = this->_listeners.erase(pos);
-    delete copy;
-  }
+  this->_listeners.clear();
+  this->_connections.clear();
 }
 
 
 void
 RemoteList::setFD(fd_set & readset, fd_set & writeset) const
 {
-  for (ListenerList::const_iterator pos = this->_listeners.begin();
-    pos != this->_listeners.end(); ++pos)
+  BotSock::FDSetter s(readset, writeset);
+
+  std::for_each(this->_listeners.begin(), this->_listeners.end(), s);
+  std::for_each(this->_connections.begin(), this->_connections.end(), s);
+}
+
+
+bool
+RemoteList::ListenProcess::operator()(BotSock::ptr s)
+{
+  bool remove;
+
+  try
   {
-    BotSock *copy = *pos;
-    copy->setFD(readset, writeset);
+    remove = !s->process(this->_readset, this->_writeset);
+  }
+  catch (OOMon::ready_for_accept)
+  {
+#ifdef REMOTELIST_DEBUG
+    std::cout << "Remote listener threw exception: ready_for_accept" <<
+      std::endl;
+#endif
+
+    remove = false;
+
+    RemotePtr temp;
+    bool addRemote = true;
+
+    try
+    {
+      temp = RemotePtr(new Remote(s.get()));
+    }
+    catch (OOMon::errno_error & e)
+    {
+#ifdef REMOTELIST_DEBUG
+      std::cout << "Remote::accept() threw exception: " << e.why() << std::endl;
+#endif
+      if (EWOULDBLOCK == e.getErrno())
+      {
+        addRemote = (EWOULDBLOCK == e.getErrno());
+      }
+      else
+      {
+        Log::Write("Remote bot accept error: " + e.why());
+      }
+    }
+
+    if (addRemote && temp->onConnect())
+    {
+      this->_connections.push_back(temp);
+    }
   }
 
-  for (ConnectionList::const_iterator pos = this->_connections.begin();
-    pos != this->_connections.end(); ++pos)
+  return remove;
+}
+
+
+bool
+RemoteList::RemoteProcess::operator()(RemotePtr r)
+{
+  bool remove;
+
+  try
   {
-    Remote *copy = *pos;
-    copy->setFD(readset, writeset);
+    remove = !r->process(this->_readset, this->_writeset);
+
+    if (remove)
+    {
+      std::string handle = r->getHandle();
+      if (handle.empty())
+      {
+        handle = "unknown";
+      }
+#ifdef REMOTELIST_DEBUG
+      std::cout << "Remote bot (" + handle + ") closed connection" << std::endl;
+#endif
+      Log::Write("Remote bot (" + handle + ") closed connection");
+    }
   }
+  catch (OOMon::timeout_error)
+  {
+#ifdef REMOTELIST_DEBUG
+    std::cout << "Remote::process() threw exception: timeout_error" <<
+      std::endl;
+#endif
+    remove = true;
+
+    if (r->isConnected())
+    {
+      r->sendError("Timeout");
+      std::string handle = r->getHandle();
+      if (handle.empty())
+      {
+        handle = "unknown";
+      }
+      Log::Write("Remote bot connection to " + handle + " timed out");
+    }
+  }
+  catch (OOMon::errno_error & e)
+  {
+    remove = true;
+#ifdef REMOTELIST_DEBUG
+    std::cout << "Remote::process() threw exception: errno_error: " <<
+      e.why() << std::endl;
+#endif
+    r->sendError(e.why());
+    Log::Write("Remote bot connection error: " + e.why());
+  }
+
+  if (remove && r->ready())
+  {
+    remotes.sendBotPart(Config::GetNick(), r->getHandle());
+    clients.sendAll("*** Bot " + r->getHandle() + " has disconnected", UF_OPER);
+  }
+
+  return remove;
 }
 
 
 void
 RemoteList::processAll(const fd_set & readset, const fd_set & writeset)
 {
-  for (ListenerList::iterator pos = this->_listeners.begin();
-    pos != this->_listeners.end(); )
-  {
-    bool keepListener = true;
-    BotSock *copy = *pos;
+  ListenProcess lp(readset, writeset, this->_connections);
+  this->_listeners.remove_if(lp);
 
-    try
-    {
-      keepListener = copy->process(readset, writeset);
-    }
-    catch (OOMon::ready_for_accept)
-    {
-#ifdef REMOTELIST_DEBUG
-      std::cout << "Remote listener threw exception: ready_for_accept" <<
-	std::endl;
-#endif
-      try
-      {
-        Remote *temp = new Remote(copy);
-
-        if (temp->onConnect())
-        {
-          this->_connections.push_back(temp);
-        }
-        else
-        {
-          delete temp;
-        }
-      }
-      catch (OOMon::errno_error & e)
-      {
-#ifdef REMOTELIST_DEBUG
-        std::cout << "Remote::accept() threw exception: " << e.why() <<
-	  std::endl;
-#endif
-        keepListener = (EWOULDBLOCK == e.getErrno());
-	if (EWOULDBLOCK != e.getErrno())
-	{
-          Log::Write("Remote bot accept error: " + e.why());
-        }
-      }
-    }
-
-    if (keepListener)
-    {
-      ++pos;
-    }
-    else
-    {
-      pos = this->_listeners.erase(pos);
-      delete copy;
-    }
-  }
-
-  for (ConnectionList::iterator pos = this->_connections.begin();
-    pos != this->_connections.end(); )
-  {
-    bool keepConnection = true;
-    Remote *copy = *pos;
-
-    try
-    {
-      keepConnection = copy->process(readset, writeset);
-
-      if (!keepConnection)
-      {
-	std::string handle = copy->getHandle();
-	if (handle.empty())
-	{
-	  handle = "unknown";
-	}
-#ifdef REMOTELIST_DEBUG
-        std::cout << "Remote bot (" + handle + ") closed connection" <<
-	  std::endl;
-#endif
-        Log::Write("Remote bot (" + handle + ") closed connection");
-      }
-    }
-    catch (OOMon::timeout_error)
-    {
-#ifdef REMOTELIST_DEBUG
-      std::cout << "Remote::process() threw exception: timeout_error" <<
-	std::endl;
-#endif
-      keepConnection = false;
-
-      if (copy->isConnected())
-      {
-        copy->sendError("Timeout");
-	std::string handle = copy->getHandle();
-	if (handle.empty())
-	{
-	  handle = "unknown";
-	}
-        Log::Write("Remote bot connection to " + handle + " timed out");
-      }
-    }
-    catch (OOMon::errno_error & e)
-    {
-      keepConnection = false;
-#ifdef REMOTELIST_DEBUG
-      std::cout << "Remote::process() threw exception: errno_error: " <<
-	e.why() << std::endl;
-#endif
-      copy->sendError(e.why());
-      Log::Write("Remote bot connection error: " + e.why());
-    }
-
-    if (keepConnection)
-    {
-      ++pos;
-    }
-    else
-    {
-      pos = this->_connections.erase(pos);
-
-      if (copy->ready())
-      {
-	this->sendBotPart(Config::GetNick(), copy->getHandle());
-	clients.sendAll("*** Bot " + copy->getHandle() + " has disconnected",
-	  UF_OPER);
-      }
-
-      delete copy;
-    }
-  }
+  RemoteProcess rp(readset, writeset);
+  this->_connections.remove_if(rp);
 }
 
 
@@ -237,16 +197,8 @@ void
 RemoteList::sendChat(const std::string & from, const std::string & text,
   const Remote *exception)
 {
-  for (ConnectionList::iterator pos = this->_connections.begin();
-    pos != this->_connections.end(); ++pos)
-  {
-    Remote *copy = *pos;
-
-    if (copy != exception)
-    {
-      copy->sendChat(from, text);
-    }
-  }
+  std::for_each(this->_connections.begin(), this->_connections.end(),
+    RemoteList::SendChat(from, text, exception));
 }
 
 
@@ -254,16 +206,8 @@ void
 RemoteList::sendBotJoin(const std::string & oldnode,
   const std::string & newnode, const Remote *exception)
 {
-  for (ConnectionList::iterator pos = this->_connections.begin();
-    pos != this->_connections.end(); ++pos)
-  {
-    Remote *copy = *pos;
-
-    if (copy != exception)
-    {
-      copy->sendBotJoin(oldnode, newnode);
-    }
-  }
+  std::for_each(this->_connections.begin(), this->_connections.end(),
+    SendBotJoinPart(true, oldnode, newnode, exception));
 }
 
 
@@ -271,16 +215,8 @@ void
 RemoteList::sendBotPart(const std::string & from, const std::string & node,
   const Remote *exception)
 {
-  for (ConnectionList::iterator pos = this->_connections.begin();
-    pos != this->_connections.end(); ++pos)
-  {
-    Remote *copy = *pos;
-
-    if (copy != exception)
-    {
-      copy->sendBotPart(from, node);
-    }
-  }
+  std::for_each(this->_connections.begin(), this->_connections.end(),
+    SendBotJoinPart(false, from, node, exception));
 }
 
 
@@ -310,7 +246,7 @@ RemoteList::getLinks(StrList & Output)
   for (ConnectionList::iterator pos = this->_connections.begin();
     pos != this->_connections.end(); ++pos)
   {
-    Remote *copy = *pos;
+    RemotePtr copy(*pos);
 
     if (copy != this->_connections.back())
     {
@@ -334,9 +270,9 @@ RemoteList::getBotNet(BotLinkList & list, const Remote *exception)
   for (ConnectionList::iterator pos = this->_connections.begin();
     pos != this->_connections.end(); ++pos)
   {
-    Remote *copy = *pos;
+    RemotePtr copy(*pos);
 
-    if ((copy != exception) && copy->ready())
+    if ((copy.get() != exception) && copy->ready())
     {
       list.push_back(BotLink(Config::GetNick(), copy->getHandle()));
       copy->getBotNetBranch(list);
@@ -350,7 +286,7 @@ RemoteList::listen(const std::string & address, const BotSock::Port & port)
 {
   bool result = false;
 
-  Remote *temp = new Remote;
+  BotSock::ptr temp(new BotSock);
 
   if (!address.empty())
   {
@@ -363,10 +299,6 @@ RemoteList::listen(const std::string & address, const BotSock::Port & port)
 
     result = true;
   }
-  else
-  {
-    delete temp;
-  }
 
   return result;
 }
@@ -375,7 +307,7 @@ RemoteList::listen(const std::string & address, const BotSock::Port & port)
 void
 RemoteList::listen(void)
 {
-  this->shutdownListeners();
+  this->_listeners.clear();
 
   this->listen("", htons(Config::GetPort()));
 }
@@ -393,7 +325,7 @@ RemoteList::connect(const std::string & handle)
 
   if (Config::GetConn(_handle, host, port, password, flags))
   {
-    Remote *temp = new Remote(_handle);
+    RemotePtr temp(new Remote(_handle));
 
     temp->connect(host, port);
 
@@ -412,7 +344,7 @@ RemoteList::isLinkedDirectlyToMe(const std::string & Name) const
   for (ConnectionList::const_iterator pos = this->_connections.begin();
     pos != this->_connections.end(); ++pos)
   {
-    Remote *copy = *pos;
+    RemotePtr copy(*pos);
 
     if (Same(Name, copy->getHandle()))
     {
@@ -423,20 +355,23 @@ RemoteList::isLinkedDirectlyToMe(const std::string & Name) const
 }   
 
 
-Remote *
-RemoteList::findBot(const std::string & To) const
+RemoteList::RemotePtr
+RemoteList::findBot(const std::string & to) const
 {
+  RemotePtr result;
+
   for (ConnectionList::const_iterator pos = this->_connections.begin();
     pos != this->_connections.end(); ++pos)
   {
-    Remote *copy = *pos;
+    RemotePtr copy(*pos);
 
-    if (copy->isConnectedTo(To))
+    if (copy->isConnectedTo(to))
     {
-      return copy;
+      result = copy;
+      break;
     }
   }
-  return NULL;
+  return result;
 }
 
 
