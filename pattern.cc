@@ -161,7 +161,7 @@ RegExPattern::match(const std::string & text) const
   {
     return true;
   }
-  else if (result = REG_NOMATCH)
+  else if (result == REG_NOMATCH)
   {
     return false;
   }
