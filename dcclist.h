@@ -41,8 +41,10 @@ class DCCList
 {
 public:
   bool connect(const BotSock::Address address, const int port,
-    const std::string & nick, const std::string & userhost);
-  bool listen(const std::string & nick, const std::string & userhost);
+    const std::string & nick, const std::string & userhost,
+    const BotSock::Address ircIp);
+  bool listen(const std::string & nick, const std::string & userhost,
+    const BotSock::Address ircIp);
   void setAllFD(fd_set & readset, fd_set & writeset);
   void processAll(const fd_set & readset, const fd_set & writeset);
 

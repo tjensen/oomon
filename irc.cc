@@ -587,7 +587,7 @@ IRC::onCtcp(const std::string & from, const std::string & userhost,
 	  {
             Log::Write("DCC CHAT request from " + from + " (" + userhost + ")");
 
-            if (!clients.connect(address, port, from, userhost))
+            if (!clients.connect(address, port, from, userhost, ip))
             {
               Log::Write("DCC CHAT failed for " + from);
 	    }
@@ -603,7 +603,7 @@ IRC::onCtcp(const std::string & from, const std::string & userhost,
   else if (Config::IsOper(userhost, ip) && (command == "CHAT"))
   {
     Log::Write("CHAT request from " + from + " (" + userhost + ")");
-    if (!clients.listen(from, userhost))
+    if (!clients.listen(from, userhost, ip))
     {
       Log::Write("DCC CHAT listen failed for " + from);
       this->notice(from,

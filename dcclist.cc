@@ -60,13 +60,14 @@ DCCList clients;
 //
 bool
 DCCList::connect(const BotSock::Address address, const int port,
-  const std::string & nick, const std::string & userhost)
+  const std::string & nick, const std::string & userhost,
+  const BotSock::Address ircIp)
 {
   try
   {
     class DCCPtr newClient(new DCC);
 
-    if (newClient->connect(ntohl(address), port, nick, userhost))
+    if (newClient->connect(ntohl(address), port, nick, userhost, ircIp))
     {
       this->connections.push_back(newClient);
       return true;
@@ -89,13 +90,14 @@ DCCList::connect(const BotSock::Address address, const int port,
 // Returns 0 if no errors ocurred.
 //
 bool
-DCCList::listen(const std::string & nick, const std::string & userhost)
+DCCList::listen(const std::string & nick, const std::string & userhost,
+  const BotSock::Address ircIp)
 {
   try
   {
     class DCCPtr newListener(new DCC);
 
-    if (newListener->listen(nick, userhost, htons(Config::getDccPort())))
+    if (newListener->listen(nick, userhost, ircIp, htons(Config::getDccPort())))
     {
       std::string request("DCC CHAT chat ");
       request += boost::lexical_cast<std::string>(htonl(

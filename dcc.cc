@@ -51,7 +51,8 @@
 #endif
 
 
-DCC::DCC(const std::string & nick, const std::string & userhost)
+DCC::DCC(const std::string & nick, const std::string & userhost,
+  const BotSock::Address ircIp)
   : _sock(false, true), _flags(UserFlags::NONE())
 {
   this->_sock.registerOnConnectHandler(boost::bind(&DCC::onConnect, this));
@@ -60,6 +61,7 @@ DCC::DCC(const std::string & nick, const std::string & userhost)
 
   this->_echoMyChatter = false;
   this->_userhost = userhost;
+  this->_ircIp = ircIp;
   this->_nick = nick;
   this->_watches = WatchSet::defaults();
   this->_id = boost::lexical_cast<std::string>(this);
@@ -68,7 +70,7 @@ DCC::DCC(const std::string & nick, const std::string & userhost)
 }
 
 
-DCC::DCC(DCC *listener, const std::string & nick, const std::string & userhost)
+DCC::DCC(DCC *listener)
   : _sock(&listener->_sock, false, true), _flags(UserFlags::NONE())
 {
   this->_sock.registerOnConnectHandler(boost::bind(&DCC::onConnect, this));
@@ -77,6 +79,7 @@ DCC::DCC(DCC *listener, const std::string & nick, const std::string & userhost)
 
   this->_echoMyChatter = listener->_echoMyChatter;
   this->_userhost = listener->_userhost;
+  this->_ircIp = listener->_ircIp;
   this->_nick = listener->_nick;
   this->_watches = listener->_watches;
   this->_id = boost::lexical_cast<std::string>(this);
@@ -117,21 +120,24 @@ DCC::addCommand(const std::string & command,
 
 bool
 DCC::connect(const BotSock::Address address, const BotSock::Port port,
-  const std::string nick, const std::string userhost)
+  const std::string & nick, const std::string & userhost,
+  const BotSock::Address ircIp)
 {
   this->_nick = nick;
   this->_userhost = userhost;
+  this->_ircIp = ircIp;
 
   return this->_sock.connect(address, port);
 }
 
 
 bool
-DCC::listen(const std::string nick, const std::string userhost,
-  const BotSock::Port port, const int backlog)
+DCC::listen(const std::string & nick, const std::string & userhost,
+  const BotSock::Address ircIp, const BotSock::Port port, const int backlog)
 {
   this->_nick = nick;
   this->_userhost = userhost;
+  this->_ircIp = ircIp;
 
   this->_sock.setTimeout(60);
   return this->_sock.listen(port, backlog);
@@ -253,10 +259,20 @@ DCC::cmdAuth(BotClient *from, const std::string & command,
 {
   std::string authHandle = FirstWord(parameters);
   std::string handle;
+  std::string userip;
   UserFlags flags;
 
-  if (Config::Auth(authHandle, this->_userhost, parameters, flags,
-    handle))
+  std::string::size_type at = this->_userhost.find('@');
+  if ((std::string::npos != at) && (INADDR_NONE != this->_ircIp))
+  {
+    userip = this->_userhost.substr(0, at);
+    userip += '@';
+    userip += BotSock::inet_ntoa(this->_ircIp);
+  }
+
+  if (Config::Auth(authHandle, this->_userhost, parameters, flags, handle) ||
+    (!userip.empty() && Config::Auth(authHandle, userip, parameters, flags,
+    handle)))
   {
     this->handle(handle);
     this->flags(flags);

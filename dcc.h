@@ -38,14 +38,16 @@
 class DCC : public BotClient
 {
 public:
-  DCC(const std::string & nick = "", const std::string & userhost = "");
-  DCC(DCC *listener, const std::string & nick = "",
-    const std::string & userhost = "");
+  DCC(const std::string & nick = "", const std::string & userhost = "",
+    const BotSock::Address userIp = INADDR_NONE);
+  DCC(DCC *listener);
 
   bool connect(const BotSock::Address address, const BotSock::Port port,
-    const std::string nick, const std::string userhost);
-  bool listen(const std::string nick, const std::string userhost,
-    const BotSock::Port port, const int backlog = 1);
+    const std::string & nick, const std::string & userhost,
+    const BotSock::Address ircIp);
+  bool listen(const std::string & nick, const std::string & userhost,
+    const BotSock::Address ircIp, const BotSock::Port port,
+    const int backlog = 1);
 
   void motd(void);
 
@@ -90,6 +92,7 @@ private:
   BotSock _sock;
   bool _echoMyChatter;
   std::string _userhost;
+  BotSock::Address _ircIp;
   std::string _nick;
   WatchSet _watches;
   CommandParser _parser;
