@@ -1856,7 +1856,7 @@ DCC::load(const std::string & to, std::string text)
 void
 DCC::set(const std::string & to, std::string text)
 {
-  if (this->Flags & UF_MASTER)
+  if (this->Flags & UF_OPER)
   {
     if (to == "")
     {
@@ -1883,10 +1883,17 @@ DCC::set(const std::string & to, std::string text)
       }
       else
       {
-	std::string error = vars.set(varName, text, this->getHandle());
-	if (error.length() > 0)
+        if (this->Flags & UF_MASTER)
+        {
+	  std::string error = vars.set(varName, text, this->getHandle());
+	  if (error.length() > 0)
+	  {
+	    this->send(error);
+	  }
+	}
+	else
 	{
-	  this->send(error);
+          this->noAccess();
 	}
       }
     }
@@ -2283,12 +2290,12 @@ DCC::send(StrList & messages, const int flags, const WatchSet & watches)
 void
 DCC::trap(const std::string & to, std::string text)
 {
-  if (this->Flags & UF_MASTER)
+  if (this->Flags & UF_OPER)
   {
     if (to == "")
     {
       StrList output;
-      TrapList::cmd(output, text, this->getHandle());
+      TrapList::cmd(output, text, this->Flags & UF_MASTER, this->getHandle());
       this->send(output);
     }
     else

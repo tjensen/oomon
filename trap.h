@@ -79,7 +79,7 @@ private:
 class TrapList
 {
 public:
-  static void cmd(StrList & output, std::string line,
+  static void cmd(StrList & output, std::string line, const bool master,
     const std::string & handle = "");
   static bool remove(const Trap & pattern);
   static bool remove(const std::string & pattern);

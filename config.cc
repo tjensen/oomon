@@ -865,7 +865,7 @@ Config::loadSettings()
       {
 	StrList discard;
 
-	TrapList::cmd(discard, line);
+	TrapList::cmd(discard, line, true);
 
 #ifdef CONFIG_DEBUG
         std::cout << "Added trap: " << line << std::endl;

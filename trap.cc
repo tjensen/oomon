@@ -553,7 +553,8 @@ TrapList::add(const TrapAction action, const long timeout,
 
 
 void
-TrapList::cmd(StrList & output, std::string line, const std::string & handle)
+TrapList::cmd(StrList & output, std::string line, const bool master,
+  const std::string & handle)
 {
   std::string flag = UpCase(FirstWord(line));
   long timeout = 0;
@@ -573,45 +574,59 @@ TrapList::cmd(StrList & output, std::string line, const std::string & handle)
   }
   else if (flag == "REMOVE")
   {
-    if (TrapList::remove(line))
+    if (master)
     {
-      modified = true;
-      if (handle.size() > 0)
+      if (TrapList::remove(line))
       {
-        ::SendAll(handle + " removed trap: " + line, UF_OPER,
-	  WATCH_TRAPS, NULL);
-        Log::Write(handle + " removed trap: " + line);
+        modified = true;
+        if (handle.size() > 0)
+        {
+          ::SendAll(handle + " removed trap: " + line, UF_OPER,
+	    WATCH_TRAPS, NULL);
+          Log::Write(handle + " removed trap: " + line);
+        }
+      }
+      else
+      {
+        output.push_back(std::string("*** No trap exists for: ") + line);
       }
     }
     else
     {
-      output.push_back(std::string("*** No trap exists for: ") + line);
+      output.push_back("*** You don't have access to remove traps!");
     }
   }
   else
   {
-    try
+    if (master)
     {
-      TrapAction actionType = TrapList::actionType(flag);
-
-      Trap node = TrapList::add(actionType, timeout, line);
-
-      modified = true;
-
-      if (handle.length() > 0)
+      try
       {
-        std::string notice(handle + " added trap " + node.getString());
-        ::SendAll(notice, UF_OPER, WATCH_TRAPS);
-        Log::Write(notice);
+        TrapAction actionType = TrapList::actionType(flag);
+
+        Trap node = TrapList::add(actionType, timeout, line);
+
+        modified = true;
+
+        if (handle.length() > 0)
+        {
+          std::string notice(handle + " added trap " + node.getString());
+          ::SendAll(notice, UF_OPER, WATCH_TRAPS);
+          Log::Write(notice);
+        }
+      }
+      catch (OOMon::invalid_action & e)
+      {
+        output.push_back("*** Invalid TRAP action: " + e.what());
+      }
+      catch (OOMon::regex_error & e)
+      {
+        output.push_back("*** RegEx error: " + e.what());
       }
     }
-    catch (OOMon::invalid_action & e)
+    else
     {
-      output.push_back("*** Invalid TRAP action: " + e.what());
-    }
-    catch (OOMon::regex_error & e)
-    {
-      output.push_back("*** RegEx error: " + e.what());
+      output.push_back("*** You don't have access to add traps!");
     }
   }
 
