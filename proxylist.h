@@ -70,6 +70,8 @@ public:
 
   void status(StrList & output) const;
 
+  static const time_t CACHE_EXPIRE;
+
 private:
   typedef std::list<ProxyPtr> SockList;
   SockList scanners;
@@ -151,7 +153,6 @@ private:
   typedef std::vector<CacheEntry> Cache;
   Cache safeHosts;
   static const SockList::size_type CACHE_SIZE;
-  static const time_t CACHE_EXPIRE;
 };
 
 
