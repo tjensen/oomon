@@ -330,7 +330,7 @@ IRC::onRead(std::string text)
         // IRC >> :plasma.engr.arizona.edu 216 OOMon K *bork.com * *hork moo la la la (1998/03/03 11.18)
         if ((params.size() > 6) &&
             ((params[3] == "K") && IRC::trackPermKlines_) ||
-            ((params[3] == "k") && IRC::trackTempKlines))
+            ((params[3] == "k") && IRC::trackTempKlines_))
         {
 	  std::string reason = (params.size() > 7) ? params[7] : "";
 	  for (StrVector::size_type pos = 8; pos < params.size(); pos++)
