@@ -109,7 +109,7 @@ BotDB::BotDB(const std::string & file, int mode)
   db = gdbm_open(const_cast<char *>(file.c_str()), 0,
       GDBM_WRCREAT | GDBM_NOLOCK | GDBM_SYNC, mode, NULL);
 #elif defined(HAVE_BSDDB)
-  db = dbopen(file.c_str(), O_CREAT | O_RDWR | O_SYNC, mode, DB_HASH, NULL);
+  db = dbopen(file.c_str(), O_CREAT | O_RDWR, mode, DB_HASH, NULL);
   if (NULL == this->db)
   {
     BotDB::errno_ = errno;
@@ -149,7 +149,11 @@ BotDB::del(const std::string & key)
 
   int result = this->db->del(this->db, &k, 0);
 
-  if (result < 0)
+  if (0 == result)
+  {
+    this->sync();
+  }
+  else if (result < 0)
   {
     BotDB::errno_ = errno;
   }
@@ -259,7 +263,11 @@ BotDB::put(const std::string & key, const std::string & data)
 
   int result = this->db->put(this->db, &k, &d, 0);
 
-  if (result < 0)
+  if (0 == result)
+  {
+    this->sync();
+  }
+  else if (result < 0)
   {
     BotDB::errno_ = errno;
   }
