@@ -120,9 +120,9 @@ else
 fi
 
 # sys/ ones
-AC_CHECK_HEADERS(sys/un.h sys/select.h sys/fcntl.h sys/file.h sys/time.h sys/wait.h sys/twg_config.h sys/ptem.h)
+AC_CHECK_HEADERS(sys/un.h sys/select.h sys/poll.h sys/fcntl.h sys/file.h sys/time.h sys/wait.h sys/twg_config.h sys/ptem.h)
 # non sys/ ones
-AC_CHECK_HEADERS(stdarg.h unistd.h fcntl.h string.h memory.h netdb.h limits.h crypt.h)
+AC_CHECK_HEADERS(stdarg.h unistd.h fcntl.h string.h memory.h netdb.h limits.h poll.h crypt.h)
 AC_CHECK_HEADERS(termbits.h)
 AC_CHECK_HEADERS([algorithm bitset cctype cerrno csignal cstdlib ctime deque fstream functional iostream list map set string vector],,AC_MSG_ERROR([Bad or missing STL implementation]))
 AC_CHECK_FUNC(setsid, AC_DEFINE(HAVE_SETSID, 1, [Define if your system has a setsid() function.]),)
@@ -433,6 +433,11 @@ AC_CHECK_FUNC(select, ,
         AC_CHECK_LIB(cposix, select, LIBS="$LIBS -lcposix",
           AC_CHECK_LIB(net, select, LIBS="$LIBS -lnet",
             AC_MSG_WARN(i can not find select.  you might need to help me)))))))
+
+#
+# checking for poll()
+#
+AC_CHECK_FUNC(poll, AC_DEFINE(HAVE_POLL, 1, [Define if your system has a poll() function.]),)
 
 #
 # need this for dcc stuff
