@@ -151,6 +151,11 @@ private:
 
   static void clearHash(UserEntryTable & table);
 
+#ifdef DEBUG_USERHASH
+  static void debugStatus(BotClient * client, const UserEntryTable & table,
+      const std::string & label, const int userCount);
+#endif
+
   UserEntryTable hosttable;
   UserEntryTable domaintable;
   UserEntryTable usertable;

@@ -1783,6 +1783,41 @@ UserHash::checkIpClones(const BotSock::Address & ip)
 }
 
 
+#ifdef DEBUG_USERHASH
+void
+UserHash::debugStatus(BotClient * client, const UserEntryTable & table,
+    const std::string & label, const int userCount)
+{
+  int tableSize = table.size();
+  if (tableSize > 0)
+  {
+    double average = userCount / tableSize;
+    int max = 0;
+    double square = 0.0;
+    for (UserEntryTable::const_iterator i = table.begin(); i != table.end();
+        ++i)
+    {
+      int size = i->size();
+      double diff = size - average;
+      square += (diff * diff) / tableSize;
+      if (size > max)
+      {
+        max = size;
+      }
+    }
+
+    std::string notice(label);
+    notice += " stddev: ";
+    notice += boost::lexical_cast<std::string>(sqrt(square));
+    notice += " (max = ";
+    notice += boost::lexical_cast<std::string>(max);
+    notice += ")";
+    client->send(notice);
+  }
+}
+#endif
+
+
 void
 UserHash::status(BotClient * client)
 {
@@ -1849,6 +1884,13 @@ UserHash::status(BotClient * client)
   client->send("Average seedrand score: " +
     ((this->userCount > 0) ?
     boost::lexical_cast<std::string>(scoreSum / this->userCount) : "N/A"));
+
+#ifdef DEBUG_USERHASH
+  this->debugStatus(client, this->usertable, "usertable", this->userCount);
+  this->debugStatus(client, this->hosttable, "hosttable", this->userCount);
+  this->debugStatus(client, this->domaintable, "domaintable", this->userCount);
+  this->debugStatus(client, this->iptable, "iptable", this->userCount);
+#endif
 }
 
 
