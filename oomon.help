@@ -730,6 +730,10 @@ set
 .t.oper_in_multi
 .t.oper_nick_in_reason
 .t.oper_only_dcc
+.t.operfail_action
+.t.operfail_max_count
+.t.operfail_max_time
+.t.operfail_reason
 .t.relay_msgs_to_locops
 .t.scan_for_proxies
 .t.scan_proxy_action
@@ -778,6 +782,7 @@ set
 .t.watch_jupe_notices
 .t.watch_links_notices
 .t.watch_motd_notices
+.t.watch_operfail_notices
 .t.watch_spambot_notices
 .t.watch_stats_notices
 .t.watch_trace_notices
@@ -1448,6 +1453,48 @@ set oper_only_dcc
 .d.When OFF, all users may DCC CHAT with the
 .d.monitor bot.
 .f.mo
+set operfail_action
+.s.set operfail_action [<action>]
+.d.This setting determines how the monitor bot
+.d.should respond when it detects a client has
+.d.made too many failed oper attempts.
+.f.mo
+.l.set operfail_max_count
+.l.set operfail_max_time
+.l.set operfail_reason
+.l.set watch_operfail_notices
+set operfail_max_count
+.s.set operfail_max_count [<integer>]
+.d.This setting determines how many failed
+.d.oper attempts a client must make before
+.d.it is considered abusive.
+.f.mo
+.l.set operfail_action
+.l.set operfail_max_time
+.l.set operfail_reason
+.l.set watch_operfail_notices
+set operfail_max_time
+.s.set operfail_max_time [<integer>]
+.d.This setting determines the maximum number
+.d.of seconds that may pass between failed
+.d.oper attempts for a client to be considered
+.d.abusive.
+.f.mo
+.l.set operfail_action
+.l.set operfail_max_count
+.l.set operfail_reason
+.l.set watch_operfail_notices
+set operfail_reason
+.s.set operfail_reason [<text>]
+.d.This setting determines the kill, k-line, or
+.d.d-line reason to use when a client is
+.d.detected to have made too many failed oper
+.d.attempts.
+.f.mo
+.l.set operfail_action
+.l.set operfail_max_count
+.l.set operfail_max_time
+.l.set watch_operfail_notices
 set relay_msgs_to_locops
 .s.set relay_msgs_to_locops [ON|OFF]
 .d.When ON, all private messages sent to the
@@ -1908,6 +1955,7 @@ set watch_flooder_notices
 .l.set watch_jupe_notices
 .l.set watch_links_notices
 .l.set watch_motd_notices
+.l.set watch_operfail_notices
 .l.set watch_spambot_notices
 .l.set watch_stats_notices
 .l.set watch_trace_notices
@@ -1921,6 +1969,7 @@ set watch_info_notices
 .l.set watch_jupe_notices
 .l.set watch_links_notices
 .l.set watch_motd_notices
+.l.set watch_operfail_notices
 .l.set watch_spambot_notices
 .l.set watch_stats_notices
 .l.set watch_trace_notices
@@ -1934,6 +1983,7 @@ set watch_jupe_notices
 .l.set watch_info_notices
 .l.set watch_links_notices
 .l.set watch_motd_notices
+.l.set watch_operfail_notices
 .l.set watch_spambot_notices
 .l.set watch_stats_notices
 .l.set watch_trace_notices
@@ -1947,6 +1997,7 @@ set watch_links_notices
 .l.set watch_info_notices
 .l.set watch_jupe_notices
 .l.set watch_motd_notices
+.l.set watch_operfail_notices
 .l.set watch_spambot_notices
 .l.set watch_stats_notices
 .l.set watch_trace_notices
@@ -1960,6 +2011,21 @@ set watch_motd_notices
 .l.set watch_info_notices
 .l.set watch_jupe_notices
 .l.set watch_links_notices
+.l.set watch_operfail_notices
+.l.set watch_spambot_notices
+.l.set watch_stats_notices
+.l.set watch_trace_notices
+set watch_operfail_notices
+.s.set watch_operfail_notices [ON|OFF]
+.d.When ON, the monitor bot will watch for
+.d.clients that make too many failed oper
+.d.attempts.
+.f.mo
+.l.set watch_flooder_notices
+.l.set watch_info_notices
+.l.set watch_jupe_notices
+.l.set watch_links_notices
+.l.set watch_motd_notices
 .l.set watch_spambot_notices
 .l.set watch_stats_notices
 .l.set watch_trace_notices
@@ -1974,6 +2040,7 @@ set watch_spambot_notices
 .l.set watch_jupe_notices
 .l.set watch_links_notices
 .l.set watch_motd_notices
+.l.set watch_operfail_notices
 .l.set watch_stats_notices
 .l.set watch_trace_notices
 set watch_stats_notices
@@ -1987,6 +2054,7 @@ set watch_stats_notices
 .l.set watch_jupe_notices
 .l.set watch_links_notices
 .l.set watch_motd_notices
+.l.set watch_operfail_notices
 .l.set watch_spambot_notices
 .l.set watch_trace_notices
 set watch_trace_notices
@@ -2000,6 +2068,7 @@ set watch_trace_notices
 .l.set watch_jupe_notices
 .l.set watch_links_notices
 .l.set watch_motd_notices
+.l.set watch_operfail_notices
 .l.set watch_spambot_notices
 .l.set watch_stats_notices
 set xo_services_clone_action
