@@ -329,13 +329,13 @@ info regex
 .l.trap
 info traps
 .d.OOMon's .trap command provides a flexible way to
-.d.match clients against pattern rules when they
-.d.connect to the server and when they change
-.d.nicknames.  Rules can match against nicknames,
-.d.userhosts, IP addresses, GECOS fields, CTCP
-.d.VERSION replies, or any combination thereof.
+.d.match clients against filters when they connect
+.d.to the server and when they change nicknames.
+.d.Filters can match against nicknames, userhosts,
+.d.IP addresses, GECOS fields, CTCP VERSION replies,
+.d.or any combination thereof.
 .d.
-.d.Rules in the .trap command line have the
+.d.Filters in the .trap command line have the
 .d.syntax, "<field>=<pattern>", where "<field>" can
 .d.be one of: n or nick, u or user, h or host, uh
 .d.or userhost, nuh or nickuserhost, g or gecos,
@@ -344,9 +344,13 @@ info traps
 .d.regular expression or a glob-style wildcard
 .d.pattern.
 .d.
-.d.Multiple rules can be specified by separating
+.d.If "<field>=" is left out, the .trap command
+.d.assumes you want the pattern to match against
+.d.the "nick!user@host" field.
+.d.
+.d.Multiple filters can be specified by separating
 .d.them with commas.  In order for a trap to match
-.d.a client, all rules in the trap must match.
+.d.a client, all filters in the trap must match.
 .d.
 .d.Note: To trap against CTCP VERSION replies, the
 .d.CTCPVERSION_ENABLE and TRAP_CTCP_VERSIONS
@@ -2411,10 +2415,10 @@ trace
 trap
 .s.trap [-a] [-t] [list]
 .s.trap remove <index>|<rules>
-.s.trap <action> [<timeout>] <rules> [<reason>]
+.s.trap <action> [<timeout>] <filter> [<reason>]
 .d.Watches client connects and nick changes and
 .d.performs the desired action when they match the
-.d.rules specified in the format:
+.d.filter specified in the format:
 .d.   <field>=<pattern>[,<field>=<pattern>[,...]]
 .d.The "field" may be "n" or "nick", "u" or "user",
 .d."h" or "host", "uh" or "userhost", "nuh" or

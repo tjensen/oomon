@@ -33,7 +33,7 @@
 // OOMon Headers
 #include "strtype"
 #include "botsock.h"
-#include "pattern.h"
+#include "filter.h"
 #include "userentry.h"
 
 
@@ -65,7 +65,7 @@ public:
 
   TrapAction getAction(void) const { return this->action_; }
   long getTimeout(void) const { return this->timeout_; }
-  std::string getPattern(void) const;
+  std::string getFilter(void) const { return this->filter_.get(); }
   std::string getReason(void) const { return this->reason_; }
   std::string getString(bool showCount = false, bool showTime = false) const;
   std::time_t getLastMatch(void) const { return this->lastMatch_; };
@@ -75,26 +75,10 @@ private:
   typedef boost::shared_ptr<Pattern> PatternPtr;
   TrapAction	action_;
   long		timeout_;	// For K-Lines only
-  PatternPtr	n_;    // nickname
-  PatternPtr	u_;    // username
-  PatternPtr	h_;    // hostname
-  PatternPtr	uh_;   // username@hostname
-  PatternPtr    nuh_;  // nickname!username@hostname
-  PatternPtr	g_;    // gecos
-  PatternPtr    nuhg_; // nickname!username@hostname#gecos
-  PatternPtr	c_;    // class
-  PatternPtr	version_;
-  PatternPtr	privmsg_;
-  PatternPtr	notice_;
+  Filter        filter_;
   std::string	reason_;	// For Kills, K-Lines, and D-Lines only
   std::time_t	lastMatch_;
   unsigned long	matchCount_;
-
-  static void split(const std::string & pattern, std::string & nick,
-    std::string & userhost);
-  static bool patternsEqual(const PatternPtr & left, const PatternPtr & right);
-
-  bool parsePattern(std::string & pattern);
 };
 
 

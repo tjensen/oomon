@@ -405,8 +405,11 @@ grabPattern(std::string & input, const std::string & delimiters)
       ++pos;
     }
   }
-  result = input.substr(0, pos);
-  input = input.substr(pos);
+  if (pos < len)
+  {
+    result = input.substr(0, pos);
+    input = input.substr(pos);
+  }
   return result;
 }
 

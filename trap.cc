@@ -45,65 +45,18 @@ TrapList::TrapMap TrapList::traps;
 
 Trap::Trap(const TrapAction action, const long timeout,
   const std::string & line)
-  : action_(action), timeout_(timeout), lastMatch_(0), matchCount_(0)
+  : action_(action), timeout_(timeout), filter_(line, Filter::FIELD_NUH),
+  lastMatch_(0), matchCount_(0)
 {
-  if ((line.length() > 0) && (line[0] == '/'))
-  {
-    // Broken format! :(
-    this->reason_ = line;
-    std::string pattern = grabPattern(this->reason_);
-    this->reason_ = trimLeft(this->reason_);
-
-    this->nuh_.reset(new RegExPattern(pattern));
-  }
-  else
-  {
-    std::string copy = line;
-
-    if (this->parsePattern(copy))
-    {
-      this->reason_ = trimLeft(copy);
-    }
-    else
-    {
-      copy = line;
-
-      this->n_.reset();
-      this->u_.reset();
-      this->h_.reset();
-      this->uh_.reset();
-      this->nuh_.reset();
-      this->g_.reset();
-      this->nuhg_.reset();
-      this->c_.reset();
-      this->version_.reset();
-      this->privmsg_.reset();
-      this->notice_.reset();
-
-      std::string pattern = FirstWord(copy);
-      std::string nick, userhost;
-      Trap::split(pattern, nick, userhost);
-
-      if (nick != "*")
-      {
-        this->n_.reset(new NickClusterPattern(nick));
-      }
-      if (userhost != "*@*")
-      {
-        this->uh_.reset(new ClusterPattern(userhost));
-      }
-      this->reason_ = copy;
-    }
-  }
+  std::string rest = this->filter_.rest();
+  this->reason_ = trimLeft(rest);
 }
 
 
 Trap::Trap(const Trap & copy)
-  : action_(copy.action_), timeout_(copy.timeout_), n_(copy.n_),
-  u_(copy.u_), h_(copy.h_), uh_(copy.uh_), nuh_(copy.nuh_), g_(copy.g_),
-  nuhg_(copy.nuhg_), c_(copy.c_), version_(copy.version_),
-  privmsg_(copy.privmsg_), notice_(copy.notice_), reason_(copy.reason_),
-  lastMatch_(copy.lastMatch_), matchCount_(copy.matchCount_)
+  : action_(copy.action_), timeout_(copy.timeout_), filter_(copy.filter_),
+  reason_(copy.reason_), lastMatch_(copy.lastMatch_),
+  matchCount_(copy.matchCount_)
 {
 }
 
@@ -124,100 +77,21 @@ bool
 Trap::matches(const UserEntryPtr user, const std::string & version,
   const std::string & privmsg, const std::string & notice) const
 {
-  if (this->n_ && !this->n_->match(user->getNick()))
-  {
-    return false;
-  }
-  if (this->u_ && !this->u_->match(user->getUser()))
-  {
-    return false;
-  }
-  if (this->h_ && !this->h_->match(user->getHost()) &&
-      !this->h_->match(user->getTextIP()))
-  {
-    return false;
-  }
-  if (this->uh_ && !this->uh_->match(user->getUserHost()) &&
-      !this->uh_->match(user->getUserIP()))
-  {
-    return false;
-  }
-  if (this->nuh_ && !this->nuh_->match(user->getNickUserHost()) &&
-      !this->nuh_->match(user->getNickUserIP()))
-  {
-    return false;
-  }
-  if (this->g_ && !this->g_->match(user->getGecos()))
-  {
-    return false;
-  }
-  if (this->nuhg_ && !this->nuhg_->match(user->getNickUserHostGecos()) &&
-      !this->nuhg_->match(user->getNickUserIPGecos()))
-  {
-    return false;
-  }
-  if (this->c_ && !this->c_->match(user->getClass()))
-  {
-    return false;
-  }
-  if (this->version_ && !this->version_->match(version))
-  {
-    return false;
-  }
-  if (this->privmsg_ && !this->privmsg_->match(privmsg))
-  {
-    return false;
-  }
-  if (this->notice_ && !this->notice_->match(notice))
-  {
-    return false;
-  }
-  return true;
-}
-
-
-bool
-Trap::patternsEqual(const PatternPtr & left, const PatternPtr & right)
-{
-  bool result = true;
-
-  if (left && right)
-  {
-    if (left->get() != right->get())
-    {
-      result = false;
-    }
-  }
-  else if (left || right)
-  {
-    result = false;
-  }
-
-  return result;
+  return this->filter_.matches(user, version, privmsg, notice);
 }
 
 
 bool
 Trap::operator==(const Trap & other) const
 {
-  return (Trap::patternsEqual(this->n_, other.n_) &&
-      Trap::patternsEqual(this->u_, other.u_) &&
-      Trap::patternsEqual(this->h_, other.h_) &&
-      Trap::patternsEqual(this->uh_, other.uh_) &&
-      Trap::patternsEqual(this->nuh_, other.nuh_) &&
-      Trap::patternsEqual(this->g_, other.g_) &&
-      Trap::patternsEqual(this->nuhg_, other.nuhg_) &&
-      Trap::patternsEqual(this->c_, other.c_) &&
-      Trap::patternsEqual(this->version_, other.version_) &&
-      Trap::patternsEqual(this->privmsg_, other.privmsg_) &&
-      Trap::patternsEqual(this->notice_, other.notice_));
+  return (0 == this->filter_.get().compare(other.filter_.get()));
 }
 
 
 bool
 Trap::operator==(const std::string & pattern) const
 {
-  return (this->getPattern() == pattern);
+  return (0 == this->filter_.get().compare(pattern));
 }
 
 
@@ -251,11 +125,11 @@ Trap::getString(bool showCount, bool showTime) const
   {
     case TRAP_ECHO:
       result += ": ";
-      result += this->getPattern();
+      result += this->filter_.get();
       break;
     case TRAP_KILL:
       result += ": ";
-      result += this->getPattern();
+      result += this->filter_.get();
       result += " (";
       result += this->getReason();
       result += ')';
@@ -274,7 +148,7 @@ Trap::getString(bool showCount, bool showTime) const
         result += boost::lexical_cast<std::string>(this->getTimeout());
       }
       result += ": ";
-      result += this->getPattern();
+      result += this->filter_.get();
       result += " (";
       result += this->getReason();
       result += ')';
@@ -286,6 +160,7 @@ Trap::getString(bool showCount, bool showTime) const
 
   return result;
 }
+
 
 std::string
 TrapList::actionString(const TrapAction & action)
@@ -342,129 +217,6 @@ TrapList::actionType(const std::string & text)
     return TRAP_DLINE_NET;
 
   throw OOMon::invalid_action(text);
-}
-
-
-
-std::string
-Trap::getPattern(void) const
-{
-  std::string result;
-
-  if (this->n_)
-  {
-    result = "n=" + this->n_->get();
-  }
-  if (this->u_)
-  {
-    if (!result.empty())
-    {
-      result += ',';
-    }
-    result += "u=" + this->u_->get();
-  }
-  if (this->h_)
-  {
-    if (!result.empty())
-    {
-      result += ',';
-    }
-    result += "h=" + this->h_->get();
-  }
-  if (this->uh_)
-  {
-    if (!result.empty())
-    {
-      result += ',';
-    }
-    result += "uh=" + this->uh_->get();
-  }
-  if (this->nuh_)
-  {
-    if (!result.empty())
-    {
-      result += ',';
-    }
-    result += "nuh=" + this->nuh_->get();
-  }
-  if (this->g_)
-  {
-    if (!result.empty())
-    {
-      result += ',';
-    }
-    result += "g=" + this->g_->get();
-  }
-  if (this->nuhg_)
-  {
-    if (!result.empty())
-    {
-      result += ',';
-    }
-    result += "nuhg=" + this->nuhg_->get();
-  }
-  if (this->c_)
-  {
-    if (!result.empty())
-    {
-      result += ',';
-    }
-    result += "c=" + this->c_->get();
-  }
-  if (this->version_)
-  {
-    if (!result.empty())
-    {
-      result += ',';
-    }
-    result += "version=";
-    result += this->version_->get();
-  }
-  if (this->privmsg_)
-  {
-    if (!result.empty())
-    {
-      result += ',';
-    }
-    result += "privmsg=";
-    result += this->privmsg_->get();
-  }
-  if (this->notice_)
-  {
-    if (!result.empty())
-    {
-      result += ',';
-    }
-    result += "notice=";
-    result += this->notice_->get();
-  }
-  return result;
-}
-
-
-
-void
-Trap::split(const std::string & pattern, std::string & nick,
-  std::string & userhost)
-{
-  std::string::size_type bang = pattern.find('!');
-  std::string::size_type at = pattern.find('@');
-
-  if (bang != std::string::npos)
-  {
-    nick = pattern.substr(0, bang);
-    userhost = pattern.substr(bang + 1, std::string::npos);
-  }
-  else if (at != std::string::npos)
-  {
-    nick = "*";
-    userhost = pattern;
-  }
-  else
-  {
-    nick = pattern;
-    userhost = "*@*";
-  }
 }
 
 
@@ -730,6 +482,10 @@ TrapList::cmd(BotClient * client, std::string line)
       {
         client->send("*** RegEx error: " + e.what());
       }
+      catch (Filter::bad_field & e)
+      {
+        client->send(e.what());
+      }
     }
     else
     {
@@ -861,98 +617,8 @@ TrapList::save(std::ofstream & file)
   {
     file << "TRAP " << pos->first << " " <<
       TrapList::actionString(pos->second.getAction()) << " " <<
-      pos->second.getTimeout() << " " << pos->second.getPattern() << " " <<
+      pos->second.getTimeout() << " " << pos->second.getFilter() << " " <<
       pos->second.getReason() << std::endl;
   }
-}
-
-
-bool
-Trap::parsePattern(std::string & pattern)
-{
-  while (!pattern.empty())
-  {
-    std::string::size_type equals = pattern.find('=');
-    if (equals != std::string::npos)
-    {
-      std::string field(UpCase(pattern), 0, equals);
-      pattern.erase(0, equals + 1);
-      if ((0 == field.compare("N")) || (0 == field.compare("NICK")))
-      {
-        std::string temp = grabPattern(pattern, " ,");
-        this->n_ = smartPattern(temp, true);
-      }
-      else if ((0 == field.compare("U")) || (0 == field.compare("USER")))
-      {
-        std::string temp = grabPattern(pattern, " ,");
-        this->u_ = smartPattern(temp, false);
-      }
-      else if ((0 == field.compare("H")) || (0 == field.compare("HOST")))
-      {
-        std::string temp = grabPattern(pattern, " ,");
-        this->h_ = smartPattern(temp, false);
-      }
-      else if ((0 == field.compare("UH")) || (0 == field.compare("USERHOST")))
-      {
-        std::string temp = grabPattern(pattern, " ,");
-        this->uh_ = smartPattern(temp, false);
-      }
-      else if ((0 == field.compare("NUH")) ||
-          (0 == field.compare("NICKUSERHOST")))
-      {
-        std::string temp = grabPattern(pattern, " ,");
-        this->nuh_ = smartPattern(temp, false);
-      }
-      else if ((0 == field.compare("G")) || (0 == field.compare("GECOS")))
-      {
-        std::string temp = grabPattern(pattern, " ,");
-        this->g_ = smartPattern(temp, false);
-      }
-      else if ((0 == field.compare("NUHG")) ||
-          (0 == field.compare("NICKUSERHOSTGECOS")))
-      {
-        std::string temp = grabPattern(pattern, " ,");
-        this->nuhg_ = smartPattern(temp, false);
-      }
-      else if ((0 == field.compare("C")) || (0 == field.compare("CLASS")))
-      {
-        std::string temp = grabPattern(pattern, " ,");
-        this->c_ = smartPattern(temp, false);
-      }
-      else if (0 == field.compare("VERSION"))
-      {
-        std::string temp = grabPattern(pattern, " ,");
-        this->version_ = smartPattern(temp, false);
-      }
-      else if (0 == field.compare("PRIVMSG"))
-      {
-        std::string temp = grabPattern(pattern, " ,");
-        this->privmsg_ = smartPattern(temp, false);
-      }
-      else if (0 == field.compare("NOTICE"))
-      {
-        std::string temp = grabPattern(pattern, " ,");
-        this->notice_ = smartPattern(temp, false);
-      }
-      else
-      {
-        // WTF?
-        return false;
-      }
-    }
-
-    if (!pattern.empty())
-    {
-      if (pattern[0] == ' ')
-      {
-        return true;
-      }
-      else if (pattern[0] == ',')
-      {
-        pattern.erase(0, 1);
-      }
-    }
-  }
-  return true;
 }
 
