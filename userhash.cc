@@ -1185,7 +1185,7 @@ UserHash::reportClones(BotClient * client) const
             if (!foundany)
 	    {
 	      foundany = true;
-              client->send("Possible clonebots from the following hosts:");
+              client->send("Possible clones from the following hosts:");
 	    }
 
             char outmsg[MAX_BUFF];
@@ -1202,7 +1202,97 @@ UserHash::reportClones(BotClient * client) const
   }
   if (!foundany)
   {
-    client->send("No potential clonebots found.");
+    client->send("No potential clones found.");
+  }
+}
+
+
+void
+UserHash::reportVClones(BotClient * client) const
+{
+  bool foundany = false;
+
+  for (UserEntryTable::const_iterator i = this->iptable.begin();
+      i != this->iptable.end(); ++i)
+  {
+    for (UserEntryList::const_iterator userptr = i->begin();
+        userptr != i->end(); ++userptr)
+    {
+      UserEntryList::const_iterator temp = i->begin();
+      for (; temp != userptr; ++temp)
+      {
+        if (BotSock::sameClassC((*temp)->getIP(), (*userptr)->getIP()) &&
+            server.same((*temp)->getUser(), (*userptr)->getUser()))
+	{
+	  break;
+	}
+      }
+
+      if (temp == userptr)
+      {
+        std::vector<std::time_t> connectTime;
+	connectTime.reserve(100);
+
+        int numfound = 1;
+        connectTime.push_back((*temp)->getConnectTime());
+
+        ++temp;
+        while (temp != i->end())
+	{
+          if (BotSock::sameClassC((*temp)->getIP(), (*userptr)->getIP()) &&
+              server.same((*temp)->getUser(), (*userptr)->getUser()))
+	  {
+	    ++numfound;
+            connectTime.push_back((*temp)->getConnectTime());
+	  }
+          ++temp;
+        }
+
+        if (numfound > 2)
+	{
+	  // sort connect times in decreasing order
+	  std::sort(connectTime.begin(), connectTime.end(),
+	    std::greater<std::time_t>());
+
+	  int j, k;
+
+          for (k = numfound - 1; k > 1; --k)
+	  {
+            for (j = 0; j < numfound - k; ++j)
+	    {
+              if ((connectTime[j] > 0) && (connectTime[j + k] > 0) &&
+		((connectTime[j] - connectTime[j + k]) <=
+		((k + 1) * CLONE_DETECT_INC)))
+	      {
+                goto getout;  /* goto rules! */
+	      }
+            }
+	  }
+          getout:
+          if (k > 1)
+	  {
+            if (!foundany)
+	    {
+	      foundany = true;
+              client->send("Possible vhosted clones from the following users:");
+	    }
+
+            char outmsg[MAX_BUFF];
+            sprintf(outmsg,
+	      "  %2d connections in %3ld seconds (%2d total) from %s@%s", k + 1,
+	      connectTime[j] - connectTime[j + k], numfound,
+	      (*userptr)->getUser().c_str(),
+              classCMask(BotSock::inet_ntoa((*userptr)->getIP())).c_str());
+
+            client->send(outmsg);
+          }   
+        } 
+      }     
+    }
+  }
+  if (!foundany)
+  {
+    client->send("No potential vhosted clones found.");
   }
 }
 

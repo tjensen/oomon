@@ -83,6 +83,7 @@ clones
 .e.   3 connections in  26 seconds ( 4 total) from mainframe.sysedata.no
 .f.o
 .l.multi
+.l.vclones
 conn
 .s.conn <bot handle>
 .d.Links the monitor bot to another.
@@ -2544,6 +2545,17 @@ unkline
 .l.findk
 .l.kline
 .l.undline
+vclones
+.s.vclones
+.d.Lists any instances of virtual hosted clones
+.d.detected by the monitor bot.
+.e.> .vclones
+.e.Possible clonebots from the following hosts:
+.e.   7 connections in  32 seconds (18 total) from loaf@10.1.72.*
+.e.   3 connections in  26 seconds ( 4 total) from sys@192.168.4.*
+.f.o
+.l.clones
+.l.multi
 version
 .s.version
 .d.Shows details about the OOMon, including its

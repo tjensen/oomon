@@ -115,6 +115,7 @@ CommandParser::CommandParser(void)
   this->addCommand("VMULTI", &CommandParser::cmdMulti, UserFlags::OPER);
   this->addCommand("VBOTS", &CommandParser::cmdMulti, UserFlags::OPER);
   this->addCommand("CLONES", &CommandParser::cmdClones, UserFlags::OPER);
+  this->addCommand("VCLONES", &CommandParser::cmdClones, UserFlags::OPER);
   this->addCommand("SEEDRAND", &CommandParser::cmdSeedrand, UserFlags::OPER);
   this->addCommand("DRONES", &CommandParser::cmdSeedrand, UserFlags::OPER);
 
@@ -1103,7 +1104,14 @@ void
 CommandParser::cmdClones(BotClient * from, const std::string & command,
   std::string parameters)
 {
-  users.reportClones(from);
+  if (0 == command.compare("vclones"))
+  {
+    users.reportVClones(from);
+  }
+  else
+  {
+    users.reportClones(from);
+  }
 }
 
 
