@@ -166,8 +166,6 @@ Vars::Vars(void) : vec(VAR_COUNT)
     SettingPtr(new IntSetting("FLOODER_MAX_TIME", DEFAULT_FLOODER_MAX_TIME, 1));
   this->vec[VAR_FLOODER_REASON] =
     SettingPtr(new StrSetting("FLOODER_REASON", DEFAULT_FLOODER_REASON));
-  this->vec[VAR_GLIST_FORMAT] =
-    SettingPtr(new StrSetting("GLIST_FORMAT", DEFAULT_GLIST_FORMAT));
   this->vec[VAR_IGNORE_UNKNOWN_COMMAND] =
     SettingPtr(new BoolSetting("IGNORE_UNKNOWN_COMMAND",
     DEFAULT_IGNORE_UNKNOWN_COMMAND));
@@ -230,8 +228,6 @@ Vars::Vars(void) : vec(VAR_COUNT)
   this->vec[VAR_LINKS_FLOOD_REASON] =
     SettingPtr(new StrSetting("LINKS_FLOOD_REASON",
     DEFAULT_LINKS_FLOOD_REASON));
-  this->vec[VAR_LIST_FORMAT] =
-    SettingPtr(new StrSetting("LIST_FORMAT", DEFAULT_LIST_FORMAT));
   this->vec[VAR_MOTD_FLOOD_ACTION] =
     SettingPtr(new ActionSetting("MOTD_FLOOD_ACTION",
     DEFAULT_MOTD_FLOOD_ACTION));
@@ -245,8 +241,6 @@ Vars::Vars(void) : vec(VAR_COUNT)
     SettingPtr(new StrSetting("MOTD_FLOOD_REASON", DEFAULT_MOTD_FLOOD_REASON));
   this->vec[VAR_MULTI_MIN] = SettingPtr(new IntSetting("MULTI_MIN",
     DEFAULT_MULTI_MIN, 1));
-  this->vec[VAR_NFIND_FORMAT] =
-    SettingPtr(new StrSetting("NFIND_FORMAT", DEFAULT_NFIND_FORMAT));
   this->vec[VAR_NICK_CHANGE_MAX_COUNT] =
     SettingPtr(new IntSetting("NICK_CHANGE_MAX_COUNT",
     DEFAULT_NICK_CHANGE_MAX_COUNT, 1));
