@@ -107,12 +107,8 @@ public:
   void resetUserCountDelta(void);
 
 private:
-  class HashRec
-  {
-  public:
-    UserEntryPtr info;
-    HashRec * collision;
-  };
+  typedef std::list<UserEntryPtr> UserEntryList;
+  typedef std::vector<UserEntryList> UserEntryTable;
 
   class ScoreNode
   {
@@ -138,27 +134,27 @@ private:
   static int hashFunc(const BotSock::Address & key);
   static int hashFunc(const std::string & key);
 
-  static void addToHash(HashRec *table[], const BotSock::Address & key,
+  static void addToHash(UserEntryTable & table, const BotSock::Address & key,
     UserEntryPtr item);
-  static void addToHash(HashRec *table[], const std::string & key,
+  static void addToHash(UserEntryTable & table, const std::string & key,
     UserEntryPtr item);
 
-  static bool removeFromHashEntry(HashRec * table[], const int index,
+  static bool removeFromHashEntry(UserEntryList & list,
     const std::string & host, const std::string & user,
     const std::string & nick);
-  static bool removeFromHash(HashRec * table[], const std::string & key,
+  static bool removeFromHash(UserEntryTable & table, const std::string & key,
     const std::string & host, const std::string & user,
     const std::string & nick);
-  static bool removeFromHash(HashRec * table[], const BotSock::Address & key,
-    const std::string & host, const std::string & user,
-    const std::string & nick);
+  static bool removeFromHash(UserEntryTable & table,
+    const BotSock::Address & key, const std::string & host,
+    const std::string & user, const std::string & nick);
 
-  static void clearHash(HashRec * table[]);
+  static void clearHash(UserEntryTable & table);
 
-  HashRec *hosttable[HASHTABLESIZE];
-  HashRec *domaintable[HASHTABLESIZE];
-  HashRec *usertable[HASHTABLESIZE];
-  HashRec *iptable[HASHTABLESIZE];
+  UserEntryTable hosttable;
+  UserEntryTable domaintable;
+  UserEntryTable usertable;
+  UserEntryTable iptable;
   std::string maskNick, maskRealHost, maskFakeHost;
   int userCount, previousCount;
 };

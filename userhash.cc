@@ -291,15 +291,12 @@ UserHash::checkVersionTimeout(void)
   {
     std::time_t now = std::time(0);
 
-    for (int i = 0; i < HASHTABLESIZE; ++i)
+    for (UserEntryTable::iterator i = usertable.begin(); i != usertable.end();
+      ++i)
     {
-      HashRec *hp = usertable[i];
-
-      while (hp)
+      for (UserEntryList::iterator hp = i->begin(); hp != i->end(); ++hp)
       {
-        hp->info->checkVersionTimeout(now, timeout);
-
-	hp = hp->collision;
+        (*hp)->checkVersionTimeout(now, timeout);
       }
     }
   }
@@ -442,91 +439,60 @@ UserHash::remove(const std::string & nick, const std::string & userhost,
 
 
 void
-UserHash::addToHash(HashRec *table[], const std::string & key,
+UserHash::addToHash(UserEntryTable & table, const std::string & key,
   UserEntryPtr item)
 {
   int index = UserHash::hashFunc(key);
 
-  UserHash::HashRec *newhashrec = new UserHash::HashRec;
-
-  if (newhashrec == NULL)
-  {
-    ::SendAll("Ran out of memory in UserHash::addToHash()", UserFlags::OPER);
-    Log::Write("Ran out of memory in UserHash::addToHash()");
-    gracefuldie(SIGABRT);
-  }
-
-  newhashrec->info = item;
-  newhashrec->collision = table[index];
-  table[index] = newhashrec;
+  table[index].push_back(item);
 }
 
 
 void
-UserHash::addToHash(HashRec *table[], const BotSock::Address & key,
+UserHash::addToHash(UserEntryTable & table, const BotSock::Address & key,
   UserEntryPtr item)
 {
   int index = UserHash::hashFunc(key);
 
-  UserHash::HashRec *newhashrec = new UserHash::HashRec;
-
-  if (newhashrec == NULL)
-  {
-    ::SendAll("Ran out of memory in UserHash::addToHash()", UserFlags::OPER);
-    Log::Write("Ran out of memory in UserHash::addToHash()");
-    gracefuldie(SIGABRT);
-  }
-
-  newhashrec->info = item;
-  newhashrec->collision = table[index];
-  table[index] = newhashrec;
+  table[index].push_back(item);
 }
 
 
 bool
-UserHash::removeFromHashEntry(HashRec *table[], const int index,
-  const std::string & host, const std::string & user, const std::string & nick)
+UserHash::removeFromHashEntry(UserEntryList & list, const std::string & host,
+  const std::string & user, const std::string & nick)
 {
-  UserHash::HashRec *find = table[index];
+  bool result = false;
 
-  UserHash::HashRec *prev = NULL;
+  UserEntryList::iterator find = std::find_if(list.begin(), list.end(),
+    boost::bind(&UserEntry::same, _1, nick, user, host));
 
-  while (find)
+  if (find != list.end())
   {
-    if ((host.empty() || (server.same(find->info->getHost(), host))) &&
-      (user.empty() || (server.same(find->info->getUser(), user))) &&
-      (nick.empty() || (server.same(find->info->getNick(), nick))))
-    {
-      if (prev)
-	prev->collision = find->collision;
-      else
-	table[index] = find->collision;
-
-      delete find;
-      return true;
-    }
-    prev = find;
-    find = find->collision;
+    list.erase(find);
+    result = true;
   }
-  return false;
+
+  return result;
 }
 
 
 bool
-UserHash::removeFromHash(HashRec *table[], const std::string & key,
+UserHash::removeFromHash(UserEntryTable & table, const std::string & key,
   const std::string & host, const std::string & user, const std::string & nick)
 {
   if (key.length() > 0)
   {
     int index = UserHash::hashFunc(key);
 
-    return removeFromHashEntry(table, index, host, user, nick);
+    return removeFromHashEntry(table[index], host, user, nick);
   }
   else
   {
-    for (int index = 0; index < HASHTABLESIZE; ++index)
+    for (UserEntryTable::iterator pos = table.begin(); pos != table.end();
+      ++pos)
     {
-      if (removeFromHashEntry(table, index, host, user, nick))
+      if (removeFromHashEntry(*pos, host, user, nick))
       {
 	return true;
       }
@@ -537,12 +503,12 @@ UserHash::removeFromHash(HashRec *table[], const std::string & key,
 
 
 bool
-UserHash::removeFromHash(HashRec *table[], const BotSock::Address & key,
+UserHash::removeFromHash(UserEntryTable & table, const BotSock::Address & key,
   const std::string & host, const std::string & user, const std::string & nick)
 {
   int index = UserHash::hashFunc(key);
 
-  if (removeFromHashEntry(table, index, host, user, nick))
+  if (removeFromHashEntry(table[index], host, user, nick))
   {
     return true;
   }
@@ -560,20 +526,9 @@ UserHash::removeFromHash(HashRec *table[], const BotSock::Address & key,
 
 
 void
-UserHash::clearHash(HashRec *table[])
+UserHash::clearHash(UserEntryTable & table)
 {
-  for (int i = 0; i < HASHTABLESIZE; ++i)
-  {
-    HashRec *hp = table[i];
-    while (hp)
-    {
-      HashRec *next_hp = hp->collision;
-
-      delete hp;
-      hp = next_hp;
-    } 
-    table[i] = NULL;
-  }
+  table.clear();
 }
 
 
@@ -612,33 +567,32 @@ UserHash::listUsers(BotClient * client, const PatternPtr userhost,
     // Convert our class name to uppercase now
     className = server.downCase(className);
 
-    for (int index = 0; index < HASHTABLESIZE; ++index)
+    for (UserEntryTable::const_iterator index = this->domaintable.begin();
+      index != this->domaintable.end(); ++index)
     {
-      UserHash::HashRec *userptr = this->domaintable[index];
-
-      while (userptr)
+      for (UserEntryList::const_iterator userptr = index->begin();
+        userptr != index->end(); ++userptr)
       {
-	bool matchesUH = userhost->match(userptr->info->getUserHost());
+	bool matchesUH = userhost->match((*userptr)->getUserHost());
 	bool matchesUIP = false;
-	if (INADDR_NONE != userptr->info->getIP())
+	if (INADDR_NONE != (*userptr)->getIP())
 	{
-	  matchesUIP = userhost->match(userptr->info->getUserIP());
+	  matchesUIP = userhost->match((*userptr)->getUserIP());
 	}
 	if ((matchesUH || matchesUIP) && ((0 == className.length()) ||
-	  (0 == className.compare(userptr->info->getClass()))))
+	  (0 == className.compare((*userptr)->getClass()))))
 	{
 	  ++numfound;
-	  std::string outmsg(userptr->info->output(vars[VAR_LIST_FORMAT]->getString()));
+	  std::string outmsg((*userptr)->output(vars[VAR_LIST_FORMAT]->getString()));
 	  if (action == UserHash::LIST_KILL)
 	  {
-	    server.kill(from, userptr->info->getNick(), reason);
+	    server.kill(from, (*userptr)->getNick(), reason);
 	  }
 	  if (action == UserHash::LIST_VIEW)
 	  {
 	    client->send(outmsg);
 	  }
 	}
-	userptr = userptr->collision;
       }
     }
 
@@ -674,26 +628,25 @@ UserHash::listNicks(BotClient * client, const PatternPtr nick,
   // Convert class name to uppercase now
   className = server.downCase(className);
 
-  for (int index = 0; index < HASHTABLESIZE; ++index)
+  for (UserEntryTable::const_iterator index = this->domaintable.begin();
+    index != this->domaintable.end(); ++index)
   {
-    UserHash::HashRec *userptr = this->domaintable[index];
-
-    while (userptr)
+    for (UserEntryList::const_iterator userptr = index->begin();
+      userptr != index->end(); ++index)
     {
-      if (nick->match(userptr->info->getNick()) && (className.empty() ||
-	(0 == className.compare(userptr->info->getClass()))))
+      if (nick->match((*userptr)->getNick()) && (className.empty() ||
+	(0 == className.compare((*userptr)->getClass()))))
       {
         ++numfound;
 	if (action == UserHash::LIST_KILL)
 	{
-	  server.kill(from, userptr->info->getNick(), reason);
+	  server.kill(from, (*userptr)->getNick(), reason);
 	}
 	if (action == UserHash::LIST_VIEW)
 	{
-	  client->send(userptr->info->output(vars[VAR_NFIND_FORMAT]->getString()));
+	  client->send((*userptr)->output(vars[VAR_NFIND_FORMAT]->getString()));
 	}
       }
-      userptr = userptr->collision;
     }
   }
 
@@ -722,14 +675,14 @@ UserHash::listGecos(BotClient * client, const PatternPtr gecos,
   // Convert class name to uppercase now
   className = server.downCase(className);
 
-  for (int index = 0; index < HASHTABLESIZE; ++index)
+  for (UserEntryTable::const_iterator index = this->domaintable.begin();
+    index != this->domaintable.end(); ++index)
   {
-    UserHash::HashRec *userptr = this->domaintable[index];
-
-    while (userptr)
+    for (UserEntryList::const_iterator userptr = index->begin();
+      userptr != index->end(); ++index)
     {
-      if (gecos->match(userptr->info->getGecos()) && (className.empty() ||
-	(0 == className.compare(userptr->info->getClass()))))
+      if (gecos->match((*userptr)->getGecos()) && (className.empty() ||
+	(0 == className.compare((*userptr)->getClass()))))
       {
         if (!numfound++)
         {
@@ -740,10 +693,9 @@ UserHash::listGecos(BotClient * client, const PatternPtr gecos,
         }
 	if (!count)
 	{
-          client->send(userptr->info->output(vars[VAR_GLIST_FORMAT]->getString()));
+          client->send((*userptr)->output(vars[VAR_GLIST_FORMAT]->getString()));
 	}
       }
-      userptr = userptr->collision;
     }
   }
 
@@ -776,14 +728,14 @@ UserHash::findUser(const std::string & nick) const
   std::string lcNick(server.downCase(nick));
   UserEntryPtr result;
 
-  for (int hashIndex = 0; hashIndex < HASHTABLESIZE; ++hashIndex)
+  for (UserEntryTable::const_iterator i = this->hosttable.begin();
+    i != this->hosttable.end(); ++i)
   {
-    for (UserHash::HashRec *find = this->hosttable[hashIndex]; 0 != find;
-      find = find->collision)
+    for (UserEntryList::const_iterator find = i->begin(); find != i->end(); ++i)
     {
-      if (find->info->matches(lcNick))
+      if ((*find)->matches(lcNick))
       {
-	result = find->info;
+	result = *find;
       }
     }
   }
@@ -806,12 +758,12 @@ UserHash::findUser(const std::string & nick, const std::string & userhost) const
 
     const int hashIndex = UserHash::hashFunc(lcUser);
 
-    for (UserHash::HashRec *find = this->usertable[hashIndex]; NULL != find;
-      find = find->collision)
+    for (UserEntryList::const_iterator f = this->usertable[hashIndex].begin();
+        f != this->usertable[hashIndex].end(); ++f)
     {
-      if (find->info->matches(lcNick, lcUser, lcHost))
+      if ((*f)->matches(lcNick, lcUser, lcHost))
       {
-	result = find->info;
+	result = *f;
       }
     }
   }
@@ -826,13 +778,12 @@ UserHash::reportClasses(BotClient * client, const std::string & className)
   typedef std::map<std::string,int> ClassType;
   ClassType Classes;
 
-  for (int i = 0; i < HASHTABLESIZE; ++i)
+  for (UserEntryTable::iterator i = this->domaintable.begin();
+    i != this->domaintable.end(); ++i)
   {
-    UserHash::HashRec *userptr = this->domaintable[i];
-    while (userptr)
+    for (UserEntryList::iterator userptr = i->begin(); userptr != i->end(); ++i)
     {
-      Classes[server.downCase(userptr->info->getClass())]++;
-      userptr = userptr->collision;
+      Classes[server.downCase((*userptr)->getClass())]++;
     }
   }
 
@@ -867,16 +818,16 @@ UserHash::reportSeedrand(BotClient * client, const PatternPtr mask,
 
   std::list<UserHash::ScoreNode> scores;
 
-  for (int temp = 0; temp < HASHTABLESIZE; ++temp)
+  for (UserEntryTable::const_iterator i = this->usertable.begin();
+    i != this->usertable.end(); ++i)
   {
-    for (UserHash::HashRec *find = this->usertable[temp]; find;
-      find = find->collision)
+    for (UserEntryList::const_iterator find = i->begin(); find != i->end(); ++i)
     {
-      if (mask->match(find->info->getNick()))
+      if (mask->match((*find)->getNick()))
       {
-	if (find->info->getScore() >= threshold)
+	if ((*find)->getScore() >= threshold)
         {
-	  UserHash::ScoreNode tmp(find->info, find->info->getScore());
+	  UserHash::ScoreNode tmp(*find, (*find)->getScore());
 	  scores.push_back(tmp);
         }
       }
@@ -887,7 +838,7 @@ UserHash::reportSeedrand(BotClient * client, const PatternPtr mask,
   {
     scores.sort();
 
-    for (std::list<UserHash::ScoreNode>::iterator pos = scores.begin();
+    for (std::list<UserHash::ScoreNode>::const_iterator pos = scores.begin();
       pos != scores.end(); ++pos)
     {
       UserEntryPtr info(pos->getInfo());
@@ -930,18 +881,17 @@ UserHash::reportDomains(BotClient * client, const int num)
     return;
   }
 
-  for (int i = 0; i < HASHTABLESIZE; ++i)
+  for (UserEntryTable::iterator i = this->hosttable.begin();
+    i != this->hosttable.end(); ++i)
   {
-    HashRec *userptr = this->hosttable[i];
-
-    while (NULL != userptr)
+    for (UserEntryList::iterator userptr = i->begin(); userptr != i->end(); ++i)
     {
       bool found = false;
 
       for (std::list<UserHash::SortEntry>::iterator pos = sort.begin();
 	pos != sort.end(); ++pos)
       {
-        if (server.same(userptr->info->getDomain(), pos->rec->getDomain()))
+        if (server.same((*userptr)->getDomain(), pos->rec->getDomain()))
 	{
 	  found = true;
           if (++(pos->count) > maxCount)
@@ -955,13 +905,11 @@ UserHash::reportDomains(BotClient * client, const int num)
       {
 	UserHash::SortEntry newEntry;
 
-        newEntry.rec = userptr->info;
+        newEntry.rec = *userptr;
         newEntry.count = 1;
 
 	sort.push_back(newEntry);
       }
-
-      userptr = userptr->collision;
     }
   }
 
@@ -1020,20 +968,19 @@ UserHash::reportNets(BotClient * client, const int num)
     return;
   }
 
-  for (int i = 0; i < HASHTABLESIZE; ++i)
+  for (UserEntryTable::iterator i = this->hosttable.begin();
+    i != this->hosttable.end(); ++i)
   {
-    HashRec *userptr = this->hosttable[i];
-
-    while (NULL != userptr)
+    for (UserEntryList::iterator userptr = i->begin(); userptr != i->end(); ++i)
     {
-      if (userptr->info->getIP() != INADDR_NONE)
+      if ((*userptr)->getIP() != INADDR_NONE)
       {
         bool found = false;
 
         for (std::list<UserHash::SortEntry>::iterator pos = sort.begin();
 	  pos != sort.end(); ++pos)
         {
-          if ((userptr->info->getIP() & BotSock::ClassCNetMask) ==
+          if (((*userptr)->getIP() & BotSock::ClassCNetMask) ==
 	    (pos->rec->getIP() & BotSock::ClassCNetMask))
 	  {
 	    found = true;
@@ -1048,14 +995,12 @@ UserHash::reportNets(BotClient * client, const int num)
         {
 	  UserHash::SortEntry newEntry;
 
-          newEntry.rec = userptr->info;
+          newEntry.rec = *userptr;
           newEntry.count = 1;
 
 	  sort.push_back(newEntry);
         }
       }
-
-      userptr = userptr->collision;
     }
   }
 
@@ -1107,24 +1052,17 @@ UserHash::reportClones(BotClient * client)
 {
   bool foundany = false;
 
-  for (int i = 0; i < HASHTABLESIZE; ++i)
+  for (UserEntryTable::iterator i = this->hosttable.begin();
+    i != this->hosttable.end(); ++i)
   {
-    HashRec *top = this->hosttable[i];
-    HashRec *userptr = this->hosttable[i];
-
-    while (userptr)
+    for (UserEntryList::iterator userptr = i->begin(); userptr != i->end(); ++i)
     {
-      HashRec *temp = top;
-
-      while (temp != userptr)
+      UserEntryList::iterator temp = i->begin();
+      for (; temp != userptr; ++temp)
       {
-        if (server.same(temp->info->getHost(), userptr->info->getHost()))
+        if (server.same((*temp)->getHost(), (*userptr)->getHost()))
 	{
 	  break;
-	}
-        else
-	{
-	  temp = temp->collision;
 	}
       }
 
@@ -1134,17 +1072,17 @@ UserHash::reportClones(BotClient * client)
 	connfromhost.reserve(100);
 
         int numfound = 1;
-        connfromhost.push_back(temp->info->getConnectTime());
+        connfromhost.push_back((*temp)->getConnectTime());
 
-        temp = temp->collision;
-        while (temp)
+        ++temp;
+        while (temp != i->end())
 	{
-          if (server.same(temp->info->getHost(), userptr->info->getHost()))
+          if (server.same((*temp)->getHost(), (*userptr)->getHost()))
 	  {
 	    ++numfound;
-            connfromhost.push_back(temp->info->getConnectTime());
+            connfromhost.push_back((*temp)->getConnectTime());
 	  }
-          temp = temp->collision;
+          ++temp;
         }
 
         if (numfound > 2)
@@ -1180,13 +1118,12 @@ UserHash::reportClones(BotClient * client)
             sprintf(outmsg,
 	      "  %2d connections in %3ld seconds (%2d total) from %s", k + 1,
 	      connfromhost[j] - connfromhost[j + k], numfound,
-	      userptr->info->getHost().c_str());
+	      (*userptr)->getHost().c_str());
 
             client->send(outmsg);
           }   
         } 
       }     
-      userptr = userptr->collision;
     }
   }
   if (!foundany)
@@ -1199,8 +1136,7 @@ UserHash::reportClones(BotClient * client)
 void
 UserHash::reportMulti(BotClient * client, const int minimum)
 {
-  HashRec *userptr,*top,*temp;
-  int numfound,i;
+  int numfound;
   char notip, foundany = 0;
   char outmsg[MAX_BUFF];
   int minclones = vars[VAR_MULTI_MIN]->getInt();
@@ -1208,40 +1144,36 @@ UserHash::reportMulti(BotClient * client, const int minimum)
   if (minimum > 0)
     minclones = minimum;
 
-  for (i=0;i<HASHTABLESIZE;++i) {
-    top = userptr = this->domaintable[i];
-    while (userptr)
+  for (UserEntryTable::iterator i = this->domaintable.begin();
+    i != this->domaintable.end(); ++i)
+  {
+    for (UserEntryList::iterator userptr = i->begin(); userptr != i->end();
+      ++userptr)
     {
       numfound = 0;
       /* Ensure we haven't already checked this user & domain */
-      temp = top;
-      while (temp != userptr)
+      UserEntryList::iterator temp = i->begin();
+      for (; temp != userptr; ++temp)
       {
-        if (server.same(temp->info->getUser(), userptr->info->getUser()) &&
-          server.same(temp->info->getDomain(), userptr->info->getDomain()))
+        if (server.same((*temp)->getUser(), (*userptr)->getUser()) &&
+          server.same((*temp)->getDomain(), (*userptr)->getDomain()))
 	{
           break;
-	}
-        else
-	{
-          temp = temp->collision;
 	}
       }
       if (temp == userptr)
       {
-        temp = temp->collision;
-        while (temp)
+        for (++temp; temp != i->end(); ++temp)
 	{
-          if (server.same(temp->info->getUser(), userptr->info->getUser()) &&
-            server.same(temp->info->getDomain(), userptr->info->getDomain()))
+          if (server.same((*temp)->getUser(), (*userptr)->getUser()) &&
+            server.same((*temp)->getDomain(), (*userptr)->getDomain()))
 	  {
-            if (vars[VAR_OPER_IN_MULTI]->getBool() || (!temp->info->getOper() &&
-	      !Config::IsOper(temp->info->getUserHost(), temp->info->getIP())))
+            if (vars[VAR_OPER_IN_MULTI]->getBool() || (!(*temp)->getOper() &&
+	      !Config::IsOper((*temp)->getUserHost(), (*temp)->getIP())))
             {
               numfound++;       /* - zaph & Dianora :-) */
 	    }
 	  }
-          temp = temp->collision;
         }
         if (numfound >= (minclones - 1))
 	{
@@ -1250,21 +1182,20 @@ UserHash::reportMulti(BotClient * client, const int minimum)
             client->send("Multiple clients from the following userhosts:");
 	  }
 
-          notip = strncmp(userptr->info->getDomain().c_str(),
-	    userptr->info->getHost().c_str(),
-            strlen(userptr->info->getDomain().c_str())) ||
-            (strlen(userptr->info->getDomain().c_str()) ==
-	    strlen(userptr->info->getHost().c_str()));
+          notip = strncmp((*userptr)->getDomain().c_str(),
+	    (*userptr)->getHost().c_str(),
+            strlen((*userptr)->getDomain().c_str())) ||
+            (strlen((*userptr)->getDomain().c_str()) ==
+	    strlen((*userptr)->getHost().c_str()));
           numfound++; /* - zaph and next line*/
           sprintf(outmsg, " %s %2d -- %s@%s%s",
             (numfound > minclones) ? "==>" : "   ", numfound,
-	    userptr->info->getUser().c_str(),
-	    notip ? "*" : userptr->info->getDomain().c_str(),
-	    notip ? userptr->info->getDomain().c_str() : "*");
+	    (*userptr)->getUser().c_str(),
+	    notip ? "*" : (*userptr)->getDomain().c_str(),
+	    notip ? (*userptr)->getDomain().c_str() : "*");
           client->send(outmsg);
         }
       }  
-      userptr = userptr->collision;
     }
   }         
   if (!foundany)
@@ -1276,8 +1207,7 @@ UserHash::reportMulti(BotClient * client, const int minimum)
 void
 UserHash::reportHMulti(BotClient * client, const int minimum)
 {
-  HashRec *userptr,*top,*temp;
-  int numfound,i;
+  int numfound;
   char foundany = 0;
   char outmsg[MAX_BUFF];
   int minclones = vars[VAR_MULTI_MIN]->getInt();
@@ -1285,30 +1215,34 @@ UserHash::reportHMulti(BotClient * client, const int minimum)
   if (minimum > 0)
     minclones = minimum;
 
-  for (i=0;i<HASHTABLESIZE;++i) {
-    top = userptr = this->domaintable[i];
-    while (userptr)
+  for (UserEntryTable::iterator i = this->domaintable.begin();
+    i != this->domaintable.end(); ++i)
+  {
+    for (UserEntryList::iterator userptr = i->begin(); userptr != i->end();
+      ++userptr)
     {
       numfound = 0;
       // Ensure we haven't already checked this hostname
-      temp = top;
-      while (temp != userptr)
-        if (server.same(temp->info->getHost(), userptr->info->getHost()))
+      UserEntryList::iterator temp = i->begin();
+      for (; temp != userptr; ++temp)
+      {
+        if (server.same((*temp)->getHost(), (*userptr)->getHost()))
+        {
           break;
-        else
-          temp = temp->collision;
-      if (temp == userptr) {
-        temp = temp->collision;
-        while (temp) {
-          if (server.same(temp->info->getHost(), userptr->info->getHost()))
+        }
+      }
+      if (temp == userptr)
+      {
+        for (++temp; temp != i->end(); ++temp)
+        {
+          if (server.same((*temp)->getHost(), (*userptr)->getHost()))
 	  {
-            if (vars[VAR_OPER_IN_MULTI]->getBool() || (!temp->info->getOper() &&
-	      !Config::IsOper(temp->info->getUserHost(), temp->info->getIP())))
+            if (vars[VAR_OPER_IN_MULTI]->getBool() || (!(*temp)->getOper() &&
+	      !Config::IsOper((*temp)->getUserHost(), (*temp)->getIP())))
             {
               numfound++;       /* - zaph & Dianora :-) */
 	    }
 	  }
-          temp = temp->collision;
         }
         if (numfound >= (minclones - 1))
 	{
@@ -1320,11 +1254,10 @@ UserHash::reportHMulti(BotClient * client, const int minimum)
           numfound++; /* - zaph and next line*/
           sprintf(outmsg, " %s %2d -- *@%s",
 	    (numfound > minclones) ? "==>" : "   ", numfound,
-	    userptr->info->getHost().c_str());
+	    (*userptr)->getHost().c_str());
           client->send(outmsg);
         }
       }  
-      userptr = userptr->collision;
     }
   }         
   if (!foundany)
@@ -1336,8 +1269,7 @@ UserHash::reportHMulti(BotClient * client, const int minimum)
 void
 UserHash::reportUMulti(BotClient * client, const int minimum)
 {
-  HashRec *userptr,*top,*temp;
-  int numfound,i;
+  int numfound;
   char foundany = 0;
   char outmsg[MAX_BUFF];
   int minclones = vars[VAR_MULTI_MIN]->getInt();
@@ -1345,30 +1277,34 @@ UserHash::reportUMulti(BotClient * client, const int minimum)
   if (minimum > 0)
     minclones = minimum;
 
-  for (i=0;i<HASHTABLESIZE;++i) {
-    top = userptr = this->usertable[i];
-    while (userptr)
+  for (UserEntryTable::iterator i = this->usertable.begin();
+    i != this->usertable.end(); ++i)
+  {
+    for (UserEntryList::iterator userptr = i->begin(); userptr != i->end();
+      ++userptr)
     {
       numfound = 0;
       // Ensure we haven't already checked this username
-      temp = top;
-      while (temp != userptr)
-        if (server.same(temp->info->getUser(), userptr->info->getUser()))
+      UserEntryList::iterator temp = i->begin();
+      for (; temp != userptr; ++temp)
+      {
+        if (server.same((*temp)->getUser(), (*userptr)->getUser()))
+        {
           break;
-        else
-          temp = temp->collision;
-      if (temp == userptr) {
-        temp = temp->collision;
-        while (temp) {
-          if (server.same(temp->info->getUser(), userptr->info->getUser()))
+        }
+      }
+      if (temp == userptr)
+      {
+        for (++temp; temp != i->end(); ++temp)
+        {
+          if (server.same((*temp)->getUser(), (*userptr)->getUser()))
 	  {
-            if (vars[VAR_OPER_IN_MULTI]->getBool() || (!temp->info->getOper() &&
-	      !Config::IsOper(temp->info->getUserHost(), temp->info->getIP())))
+            if (vars[VAR_OPER_IN_MULTI]->getBool() || (!(*temp)->getOper() &&
+	      !Config::IsOper((*temp)->getUserHost(), (*temp)->getIP())))
             {
-              numfound++;       /* - zaph & Dianora :-) */
+              ++numfound;       /* - zaph & Dianora :-) */
 	    }
 	  }
-          temp = temp->collision;
         }
         if (numfound >= (minclones - 1))
 	{
@@ -1377,14 +1313,13 @@ UserHash::reportUMulti(BotClient * client, const int minimum)
             client->send("Multiple clients from the following usernames:");
 	  }
 
-          numfound++; /* - zaph and next line*/
+          ++numfound; /* - zaph and next line*/
           sprintf(outmsg, " %s %2d -- %s@*",
 	    (numfound > minclones) ? "==>" : "   ", numfound,
-	    userptr->info->getUser().c_str());
+	    (*userptr)->getUser().c_str());
           client->send(outmsg);
         }
       }  
-      userptr = userptr->collision;
     }
   }         
   if (!foundany)
@@ -1396,8 +1331,7 @@ UserHash::reportUMulti(BotClient * client, const int minimum)
 void
 UserHash::reportVMulti(BotClient * client, const int minimum)
 {
-  HashRec *userptr,*top,*temp;
-  int numfound,i;
+  int numfound;
   char foundany = 0;
   char outmsg[MAX_BUFF];
   int minclones = vars[VAR_MULTI_MIN]->getInt();
@@ -1405,38 +1339,38 @@ UserHash::reportVMulti(BotClient * client, const int minimum)
   if (minimum > 0)
     minclones = minimum;
 
-  for (i=0;i<HASHTABLESIZE;++i) {
-    top = userptr = this->iptable[i];
-    while (userptr)
+  for (UserEntryTable::iterator i = this->iptable.begin();
+    i != this->iptable.end(); ++i)
+  {
+    for (UserEntryList::iterator userptr = i->begin(); userptr != i->end();
+      ++userptr)
     {
       numfound = 0;
       /* Ensure we haven't already checked this user & domain */
-      temp = top;
-      while (temp != userptr)
-        if (server.same(temp->info->getUser(), userptr->info->getUser()) &&
-          ((userptr->info->getIP() & BotSock::ClassCNetMask) ==
-	  (userptr->info->getIP() & BotSock::ClassCNetMask)))
+      UserEntryList::iterator temp = i->begin();
+      for (; temp != userptr; ++temp)
+      {
+        if (server.same((*temp)->getUser(), (*userptr)->getUser()) &&
+          (((*userptr)->getIP() & BotSock::ClassCNetMask) ==
+	  ((*userptr)->getIP() & BotSock::ClassCNetMask)))
 	{
           break;
 	}
-        else
-	{
-          temp = temp->collision;
-	}
-      if (temp == userptr) {
-        temp = temp->collision;
-        while (temp) {
-          if (server.same(temp->info->getUser(), userptr->info->getUser()) &&
-            ((userptr->info->getIP() & BotSock::ClassCNetMask) ==
-	    (userptr->info->getIP() & BotSock::ClassCNetMask)))
+      }
+      if (temp == userptr)
+      {
+        for (++temp; temp != i->end(); ++temp)
+        {
+          if (server.same((*temp)->getUser(), (*userptr)->getUser()) &&
+            (((*userptr)->getIP() & BotSock::ClassCNetMask) ==
+	    ((*userptr)->getIP() & BotSock::ClassCNetMask)))
 	  {
-            if (vars[VAR_OPER_IN_MULTI]->getBool() || (!temp->info->getOper() &&
-	      !Config::IsOper(temp->info->getUserHost(), temp->info->getIP())))
+            if (vars[VAR_OPER_IN_MULTI]->getBool() || (!(*temp)->getOper() &&
+	      !Config::IsOper((*temp)->getUserHost(), (*temp)->getIP())))
             {
-              numfound++;       /* - zaph & Dianora :-) */
+              ++numfound;       /* - zaph & Dianora :-) */
 	    }
 	  }
-          temp = temp->collision;
         }
         if (numfound >= (minclones - 1))
 	{
@@ -1445,8 +1379,8 @@ UserHash::reportVMulti(BotClient * client, const int minimum)
             client->send("Multiple clients from the following vhosts:");
 	  }
 
-          numfound++; /* - zaph and next line*/
-	  std::string IP = BotSock::inet_ntoa(userptr->info->getIP());
+          ++numfound; /* - zaph and next line*/
+	  std::string IP = BotSock::inet_ntoa((*userptr)->getIP());
 	  std::string::size_type lastDot = IP.rfind('.');
 	  if (std::string::npos != lastDot)
 	  {
@@ -1454,11 +1388,10 @@ UserHash::reportVMulti(BotClient * client, const int minimum)
 	  }
           sprintf(outmsg, " %s %2d -- %s@%s.*",
 	    (numfound > minclones) ? "==>" : "   ", numfound,
-	    userptr->info->getUser().c_str(), IP.c_str());
+	    (*userptr)->getUser().c_str(), IP.c_str());
           client->send(outmsg);
         }
       }  
-      userptr = userptr->collision;
     }
   }         
   if (!foundany)
@@ -1472,7 +1405,6 @@ void
 UserHash::checkHostClones(const std::string & host)
 {
   const int index = UserHash::hashFunc(host);
-  UserHash::HashRec *find = this->hosttable[index];
   
   std::time_t now = std::time(NULL);
   std::time_t oldest = now;
@@ -1481,32 +1413,31 @@ UserHash::checkHostClones(const std::string & host)
   int cloneCount = 0; 
   int reportedClones = 0;
 
-  while (NULL != find)
+  for (UserEntryList::iterator find = this->hosttable[index].begin();
+    find != this->hosttable[index].end(); ++find)
   {
-    if (server.same(find->info->getHost(), host) &&
-      ((now - find->info->getConnectTime()) <=
-      vars[VAR_CLONE_MAX_TIME]->getInt()))
+    if (server.same((*find)->getHost(), host) &&
+      ((now - (*find)->getConnectTime()) <= vars[VAR_CLONE_MAX_TIME]->getInt()))
     {
-      if (find->info->getReportTime() > 0)
+      if ((*find)->getReportTime() > 0)
       {
         ++reportedClones;
 
-        if (lastReport < find->info->getReportTime())
+        if (lastReport < (*find)->getReportTime())
 	{
-          lastReport = find->info->getReportTime();
+          lastReport = (*find)->getReportTime();
 	}
       }
       else
       {
         ++cloneCount;
 
-        if (find->info->getConnectTime() < oldest)
+        if ((*find)->getConnectTime() < oldest)
         {
-          oldest = find->info->getConnectTime();
+          oldest = (*find)->getConnectTime();
         }
       }
     }
-    find = find->collision;
   }
   
   if (((reportedClones == 0) &&
@@ -1552,7 +1483,6 @@ UserHash::checkHostClones(const std::string & host)
   Log::Write(notice);
             
   cloneCount = 0;
-  find = this->hosttable[index];
     
   std::string lastUser;
   bool lastIdentd, currentIdentd;
@@ -1560,29 +1490,30 @@ UserHash::checkHostClones(const std::string & host)
 
   std::string notice1;
 
-  while (find)
+  for (UserEntryList::iterator find = this->hosttable[index].begin();
+    find != this->hosttable[index].end(); ++find)
   {
-    if (server.same(find->info->getHost(), host) &&
-      ((now - find->info->getConnectTime()) <=
-      vars[VAR_CLONE_MAX_TIME]->getInt()) &&
-      (find->info->getReportTime() == 0))
+    if (server.same((*find)->getHost(), host) &&
+      ((now - (*find)->getConnectTime()) <=
+       vars[VAR_CLONE_MAX_TIME]->getInt()) &&
+      ((*find)->getReportTime() == 0))
     {
       ++cloneCount;
 
 #ifdef USERHASH_DEBUG
       std::cout << "clone(" << cloneCount << "): " <<
-	find->info->output("%n %@ %i") << std::endl;
+	(*find)->output("%n %@ %i") << std::endl;
 #endif
 
       std::string notice;
       if (cloneCount == 1)  
       {
-	notice1 = find->info->output(
+	notice1 = (*find)->output(
 	  vars[VAR_CLONE_REPORT_FORMAT]->getString());
       }
       else
       {
-	notice = find->info->output(vars[VAR_CLONE_REPORT_FORMAT]->getString());
+	notice = (*find)->output(vars[VAR_CLONE_REPORT_FORMAT]->getString());
       }
   
       lastIdentd = currentIdentd = true;
@@ -1590,7 +1521,7 @@ UserHash::checkHostClones(const std::string & host)
         
       if (1 == cloneCount)
       {
-        lastUser = find->info->getUser();
+        lastUser = (*find)->getUser();
       }
       else if (2 == cloneCount)
       {
@@ -1602,7 +1533,7 @@ UserHash::checkHostClones(const std::string & host)
           lastIdentd = false;
         }
 
-        currentUser = find->info->getUser();
+        currentUser = (*find)->getUser();
         if (currentUser[0] == '~')
         {
           currentUser = currentUser.substr(1);
@@ -1614,12 +1545,11 @@ UserHash::checkHostClones(const std::string & host)
           differentUser = true;
         }
 
-        klineClones(true, rate, currentUser, find->info->getHost(),
-	  find->info->getIP(), differentUser, false,
-	  lastIdentd | currentIdentd);
+        klineClones(true, rate, currentUser, (*find)->getHost(),
+          (*find)->getIP(), differentUser, false, lastIdentd | currentIdentd);
       }
 
-      find->info->setReportTime(now);
+      (*find)->setReportTime(now);
       if (cloneCount == 1)
       {
 	// do nothing
@@ -1642,7 +1572,6 @@ UserHash::checkHostClones(const std::string & host)
         Log::Write(notice);
       }
     }
-    find = find->collision;
   }
 }
 
@@ -1651,7 +1580,6 @@ void
 UserHash::checkIpClones(const BotSock::Address & ip)
 {
   const int index = UserHash::hashFunc(ip);
-  UserHash::HashRec *find = this->iptable[index];
   
   std::time_t now = std::time(NULL);
   std::time_t oldest = now;
@@ -1660,32 +1588,31 @@ UserHash::checkIpClones(const BotSock::Address & ip)
   int cloneCount = 0; 
   int reportedClones = 0;
 
-  while (NULL != find)
+  for (UserEntryList::iterator find = this->iptable[index].begin();
+    find != this->iptable[index].end(); ++find)
   {
-    if (BotSock::sameClassC(find->info->getIP(), ip) &&
-      ((now - find->info->getConnectTime()) <=
-      vars[VAR_CLONE_MAX_TIME]->getInt()))
+    if (BotSock::sameClassC((*find)->getIP(), ip) &&
+      ((now - (*find)->getConnectTime()) <= vars[VAR_CLONE_MAX_TIME]->getInt()))
     {
-      if (find->info->getReportTime() > 0)
+      if ((*find)->getReportTime() > 0)
       {
         ++reportedClones;
 
-        if (lastReport < find->info->getReportTime())
+        if (lastReport < (*find)->getReportTime())
 	{
-          lastReport = find->info->getReportTime();
+          lastReport = (*find)->getReportTime();
 	}
       }
       else
       {
         ++cloneCount;
 
-        if (find->info->getConnectTime() < oldest)
+        if ((*find)->getConnectTime() < oldest)
         {
-          oldest = find->info->getConnectTime();
+          oldest = (*find)->getConnectTime();
         }
       }
     }
-    find = find->collision;
   }
   
   if (((reportedClones == 0) &&
@@ -1731,7 +1658,6 @@ UserHash::checkIpClones(const BotSock::Address & ip)
   Log::Write(notice);
             
   cloneCount = 0;
-  find = this->iptable[index];
 
   BotSock::Address lastIp = 0;
   std::string lastUser;
@@ -1740,28 +1666,30 @@ UserHash::checkIpClones(const BotSock::Address & ip)
 
   std::string notice1;
 
-  while (find)
+  for (UserEntryList::iterator find = this->iptable[index].begin();
+    find != this->iptable[index].end(); ++find)
   {
-    if (BotSock::sameClassC(find->info->getIP(), ip) &&
-      ((now - find->info->getConnectTime()) <=
-      vars[VAR_CLONE_MAX_TIME]->getInt()) && (find->info->getReportTime() == 0))
+    if (BotSock::sameClassC((*find)->getIP(), ip) &&
+      ((now - (*find)->getConnectTime()) <=
+       vars[VAR_CLONE_MAX_TIME]->getInt()) &&
+      ((*find)->getReportTime() == 0))
     {
       ++cloneCount;
 
 #ifdef USERHASH_DEBUG
       std::cout << "clone(" << cloneCount << "): " <<
-	find->info->output("%n %@ %i") << std::endl;
+	(*find)->output("%n %@ %i") << std::endl;
 #endif
 
       std::string notice;
       if (cloneCount == 1)  
       {
-	notice1 = find->info->output(
+	notice1 = (*find)->output(
 	  vars[VAR_CLONE_REPORT_FORMAT]->getString());
       }
       else
       {
-	notice = find->info->output(vars[VAR_CLONE_REPORT_FORMAT]->getString());
+	notice = (*find)->output(vars[VAR_CLONE_REPORT_FORMAT]->getString());
       }
   
       lastIdentd = currentIdentd = true;
@@ -1770,8 +1698,8 @@ UserHash::checkIpClones(const BotSock::Address & ip)
         
       if (1 == cloneCount)
       {
-        lastUser = find->info->getUser();
-        lastIp = find->info->getIP();
+        lastUser = (*find)->getUser();
+        lastIp = (*find)->getIP();
       }
       else if (2 == cloneCount)
       {
@@ -1784,14 +1712,14 @@ UserHash::checkIpClones(const BotSock::Address & ip)
           lastIdentd = false;
         }
 
-        currentUser = find->info->getUser();
+        currentUser = (*find)->getUser();
         if (currentUser[0] == '~')
         {
           currentUser = currentUser.substr(1);
           currentIdentd = false;
         }
 
-	currentIp = find->info->getIP();
+	currentIp = (*find)->getIP();
 
         if (!server.same(lastUser, currentUser))
         {
@@ -1803,12 +1731,12 @@ UserHash::checkIpClones(const BotSock::Address & ip)
 	  differentIp = true;
 	}
 
-        klineClones(true, rate, currentUser, find->info->getHost(),
-	  find->info->getIP(), differentUser, differentIp,
-	  lastIdentd | currentIdentd);
+        klineClones(true, rate, currentUser, (*find)->getHost(),
+          (*find)->getIP(), differentUser, differentIp,
+          lastIdentd | currentIdentd);
       }
 
-      find->info->setReportTime(now);
+      (*find)->setReportTime(now);
       if (cloneCount == 1)
       {
 	// do nothing
@@ -1831,7 +1759,6 @@ UserHash::checkIpClones(const BotSock::Address & ip)
         Log::Write(notice);
       }
     }
-    find = find->collision;
   }
 }
 
@@ -1847,13 +1774,14 @@ UserHash::status(BotClient * client)
 
   int userHashCount = 0;
   long scoreSum = 0;
-  for (int index = 0; index < HASHTABLESIZE; ++index)
+  for (UserEntryTable::iterator index = this->usertable.begin();
+    index != this->usertable.end(); ++index)
   {
-    for (UserHash::HashRec *pos = this->usertable[index]; NULL != pos;
-      pos = pos->collision)
+    for (UserEntryList::iterator pos = index->begin(); pos != index->end();
+      ++pos)
     {
-      scoreSum += pos->info->getScore();
-      userHashCount++;
+      scoreSum += (*pos)->getScore();
+      ++userHashCount;
     }
   }
   if (userHashCount != this->userCount)
@@ -1863,12 +1791,13 @@ UserHash::status(BotClient * client)
   }
 
   int hostHashCount = 0;
-  for (int index = 0; index < HASHTABLESIZE; ++index)
+  for (UserEntryTable::iterator index = this->hosttable.begin();
+    index != this->hosttable.end(); ++index)
   {
-    for (UserHash::HashRec *pos = this->hosttable[index]; NULL != pos;
-      pos = pos->collision)
+    for (UserEntryList::iterator pos = index->begin(); pos != index->end();
+      ++pos)
     {
-      hostHashCount++;
+      ++hostHashCount;
     }
   }
   if (hostHashCount != this->userCount)
@@ -1878,12 +1807,13 @@ UserHash::status(BotClient * client)
   }
 
   int domainHashCount = 0;
-  for (int index = 0; index < HASHTABLESIZE; ++index)
+  for (UserEntryTable::iterator index = this->domaintable.begin();
+    index != this->domaintable.end(); ++index)
   {
-    for (UserHash::HashRec *pos = this->domaintable[index]; NULL != pos;
-      pos = pos->collision)
+    for (UserEntryList::iterator pos = index->begin(); pos != index->end();
+      ++pos)
     {
-      domainHashCount++;
+      ++domainHashCount;
     }
   }
   if (domainHashCount != this->userCount)
@@ -1893,12 +1823,13 @@ UserHash::status(BotClient * client)
   }
 
   int ipHashCount = 0;
-  for (int index = 0; index < HASHTABLESIZE; ++index)
+  for (UserEntryTable::iterator index = this->iptable.begin();
+    index != this->iptable.end(); ++index)
   {
-    for (UserHash::HashRec *pos = this->iptable[index]; NULL != pos;
-      pos = pos->collision)
+    for (UserEntryList::iterator pos = index->begin(); pos != index->end();
+      ++pos)
     {
-      ipHashCount++;
+      ++ipHashCount;
     }
   }
   if (ipHashCount != this->userCount)
