@@ -275,3 +275,12 @@ doAction(const std::string & nick, const std::string & userhost,
   }
 }
 
+
+void
+doAction(const UserEntryPtr & user, const AutoAction & action,
+    int duration, const std::string & reason, bool suggestKlineAfterKill)
+{
+  doAction(user->getNick(), user->getUserHost(), user->getIP(), action,
+      duration, reason, suggestKlineAfterKill);
+}
+

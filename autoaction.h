@@ -26,6 +26,7 @@
 
 // OOMon Headers
 #include "botsock.h"
+#include "userentry.h"
 
 
 enum AutoAction
@@ -37,10 +38,11 @@ enum AutoAction
 };
 
 
-void
-doAction(const std::string & nick, const std::string & userhost,
-  BotSock::Address ip, const AutoAction & action, int duration,
-  const std::string & reason, bool suggestKlineAfterKill);
+void doAction(const std::string & nick, const std::string & userhost,
+    BotSock::Address ip, const AutoAction & action, int duration,
+    const std::string & reason, bool suggestKlineAfterKill);
+void doAction(const UserEntryPtr & user, const AutoAction & action,
+    int duration, const std::string & reason, bool suggestKlineAfterKill);
 
 
 #endif /* __AUTOACTION_H__ */
