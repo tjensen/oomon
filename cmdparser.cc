@@ -239,6 +239,7 @@ CommandParser::cmdStatus(BotClient * from, const std::string & command,
   proxies.status(from);
   dnsbl.status(from);
   patternStatus(from);
+  botSockStatus(from);
 }
 
 

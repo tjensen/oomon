@@ -179,5 +179,8 @@ private:
 };
 
 
+void botSockStatus(class BotClient * client);
+
+
 #endif /* __BOTSOCK_H__ */
 

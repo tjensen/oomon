@@ -38,6 +38,7 @@
 #include "oomon.h"
 #include "botsock.h"
 #include "botexcept.h"
+#include "botclient.h"
 #include "util.h"
 
 
@@ -45,9 +46,18 @@
 # define BOTSOCK_DEBUG
 #endif
 
+#ifdef BOTSOCK_DEBUG
+# include <boost/lexical_cast.hpp>
+#endif
+
 
 const BotSock::Address BotSock::ClassCNetMask =
   BotSock::inet_addr("255.255.255.0");
+
+
+#ifdef BOTSOCK_DEBUG
+static unsigned long botSockCount = 0;
+#endif
 
 
 BotSock::BotSock(const bool blocking_, const bool lineBuffered)
@@ -66,6 +76,10 @@ BotSock::BotSock(const bool blocking_, const bool lineBuffered)
 
   this->setBuffering(lineBuffered);
   this->gotActivity();
+
+#ifdef BOTSOCK_DEBUG
+  ++botSockCount;
+#endif
 }
 
 
@@ -93,14 +107,22 @@ BotSock::BotSock(const BotSock *listener, const bool blocking,
   this->setBinary(listener->isBinary());
 
   this->gotActivity();
+
+#ifdef BOTSOCK_DEBUG
+  ++botSockCount;
+#endif
 }
 
 
 BotSock::~BotSock(void)
 {
+#ifdef BOTSOCK_DEBUG
+  --botSockCount;
+#endif
+
   if (0 != ::close(this->plug))
   {
-    throw OOMon::close_error("close() failed");
+    std::cerr << "OMG!  WTF?  close() failed?!" << std::endl;
   }
 }
 
@@ -785,4 +807,13 @@ BotSock::onRead(const char *data, const int size)
   return result;
 }
 
+
+
+void
+botSockStatus(BotClient * client)
+{
+#ifdef BOTSOCK_DEBUG
+  client->send("Sockets: " + boost::lexical_cast<std::string>(botSockCount));
+#endif
+}
 
