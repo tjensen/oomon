@@ -1354,7 +1354,13 @@ set jupe_join_reason
 .s.set jupe_join_reason [<text>]
 .d.This setting determines the kill, k-line, or
 .d.d-line reason to use when a client repeatedly
-.d.attempts to join a juped channel.
+.d.attempts to join a juped channel.  Instances
+.d.of "%n" will be replaced by the client's
+.d.nick, "%u" will be replaced by the client's
+.d.userhost, "%i" will be replaced by the
+.d.client's IP address, "%c" will be replaced by
+.d.the juped channel name, and "%r" will be
+.d.replaced by the server's jupe reason.
 .f.mo
 .l.set jupe_join_action
 .l.set jupe_join_max_count

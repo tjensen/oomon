@@ -33,6 +33,7 @@
 #include "userhash.h"
 #include "botclient.h"
 #include "config.h"
+#include "format.h"
 
 
 JupeJoinList jupeJoiners;
@@ -64,10 +65,17 @@ JupeJoinList::checkJupe(const std::string & nick,
     if (!Config::IsOper(entry.userhost, ip) &&
       !Config::IsOKHost(entry.userhost, ip))
     {
+      Format reason;
+      reason.setStringToken('n', nick);
+      reason.setStringToken('u', entry.userhost);
+      reason.setStringToken('i', BotSock::inet_ntoa(ip));
+      reason.setStringToken('c', entry.channel);
+      reason.setStringToken('r', entry.reason);
+
       doAction(nick, entry.userhost, ip,
         vars[VAR_JUPE_JOIN_ACTION]->getAction(),
         vars[VAR_JUPE_JOIN_ACTION]->getInt(),
-        vars[VAR_JUPE_JOIN_REASON]->getString(), false);
+        reason.format(vars[VAR_JUPE_JOIN_REASON]->getString()), false);
     }
   }
 }
@@ -75,7 +83,8 @@ JupeJoinList::checkJupe(const std::string & nick,
 
 void
 JupeJoinList::add(const std::string & nick, const std::string & userhost,
-  const std::string & channel, std::time_t now)
+  const std::string & channel, const std::string & reason,
+  std::time_t now)
 {
   bool foundEntry = false;
 
@@ -87,6 +96,9 @@ JupeJoinList::add(const std::string & nick, const std::string & userhost,
       server.same(pos->channel, channel)))
     {
       foundEntry = true;
+
+      pos->channel = channel;
+      pos->reason = reason;
   
       if ((pos->last + vars[VAR_JUPE_JOIN_MAX_TIME]->getInt()) < now)
       {
@@ -121,6 +133,7 @@ JupeJoinList::add(const std::string & nick, const std::string & userhost,
 
     pos.userhost = userhost;
     pos.channel = channel;
+    pos.reason = reason;
     pos.last = now;
     pos.count = 1;
 
@@ -146,7 +159,8 @@ JupeJoinList::onNotice(const std::string & notice)
 
   if (userhost.length() >= 2)
   {
-    userhost = userhost.substr(1, userhost.length() - 2);
+    userhost.erase(userhost.begin());
+    userhost.erase(userhost.end() - 1);
   }
 
   if (0 != server.downCase(FirstWord(text)).compare("is"))
@@ -166,10 +180,17 @@ JupeJoinList::onNotice(const std::string & notice)
 
   std::string channel = FirstWord(text);
 
+  std::string reason(text);
+  if (reason.length() > 2)
+  {
+    reason.erase(reason.begin());
+    reason.erase(reason.end() - 1);
+  }
+
   ::SendAll("*** " + notice, UserFlags::OPER, WATCH_JUPES);
   Log::Write(notice);
 
-  this->add(nick, userhost, channel, std::time(NULL));
+  this->add(nick, userhost, channel, reason, std::time(NULL));
 
   return true;
 }

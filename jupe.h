@@ -48,6 +48,7 @@ private:
   public:
     std::string	userhost;
     std::string	channel;
+    std::string	reason;
     int		count;
     std::time_t	last;
   };
@@ -57,7 +58,8 @@ private:
   void checkJupe(const std::string & nick, const JupeJoinEntry & entry) const;
 
   void add(const std::string & nick, const std::string & userhost,
-    const std::string & channel, std::time_t now);
+    const std::string & channel, const std::string & reason,
+    std::time_t now);
 };
 
 
