@@ -1,6 +1,6 @@
 # ===========================================================================
 # OOMon - Objected Oriented Monitor Bot
-# Copyright (C) 2003  Timothy L. Jensen
+# Copyright (C) 2004  Timothy L. Jensen
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -589,14 +589,8 @@ nfind
 .f.o
 .l.list
 op
-.s.op <#channel> [<nickname>]
-.d.Ops a user in the channel.  If no nickname
-.d.is provided, the bot will attempt to op
-.d.you.  Note, if you have changed your IRC
-.d.nick since you connected to the bot via
-.d.DCC, this command might not work without a
-.d.nickname.
-.e.> .op #monitors
+.s.op <#channel> <nickname>
+.d.Ops a user in the channel.
 .e.> .op #oomon Toast
 .f.c
 .l.join

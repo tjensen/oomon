@@ -1,5 +1,5 @@
-#ifndef __SOCKS5_H__
-#define __SOCKS5_H__
+#ifndef __BOTCLIENT_H__
+#define __BOTCLIENT_H__
 // ===========================================================================
 // OOMon - Objected Oriented Monitor Bot
 // Copyright (C) 2004  Timothy L. Jensen
@@ -21,38 +21,58 @@
 
 // $Id$
 
+// Std C++ Headers
 #include <string>
+#include <algorithm>
+#include <functional>
 
+// Boost C++ Headers
+#include <boost/shared_ptr.hpp>
+
+// OOMon Headers
 #include "oomon.h"
-#include "proxy.h"
-#include "proxylist.h"
+#include "strtype"
+#include "botsock.h"
 
-class Socks5 : public Proxy
+
+class BotClient
 {
 public:
-  Socks5(const std::string & hostname, const std::string & nick,
-    const std::string & userhost)
-    : Proxy(hostname, nick, userhost), state(STATE_WAIT1)
+  typedef boost::shared_ptr<BotClient> ptr;
+
+  BotClient(void) { }
+  virtual ~BotClient(void) { }
+
+  virtual void send(const std::string & text) = 0;
+  virtual bool remote(void) const = 0;
+  virtual int flags(void) const = 0;
+  virtual std::string handle(void) const = 0;
+  virtual std::string bot(void) const = 0;
+  virtual BotSock *id(void) const = 0;
+
+private:
+  class sender
   {
-    this->setBinary(true);
-  }
-  virtual ~Socks5(void)
-  {
-    if (!this->_detectedProxy)
+  public:
+    sender(BotClient *target) : _target(target) { }
+    void operator()(const std::string & text)
     {
-      proxies.addToCache(this->address(), this->port(), Proxy::SOCKS5);
+      _target->send(text);
     }
+  private:
+    BotClient *_target;
+  };
+
+public:
+  void send(const StrList & text)
+  {
+    std::for_each(text.begin(), text.end(), BotClient::sender(this));
   }
-
-  virtual bool onConnect();
-
-protected:
-  virtual bool onRead(const char *text, const int size);
-  virtual std::string typeName(void) const { return "SOCKS5"; };
-  virtual Proxy::Protocol type(void) const { Proxy::SOCKS5; };
-
-  enum { STATE_WAIT1, STATE_WAIT2 } state;
+  std::string handleAndBot(void) const
+  {
+    return (this->handle() + '@' + this->bot());
+  }
 };
 
-#endif /* __SOCKS5_H__ */
+#endif /* __BOTCLIENT_H__ */
 

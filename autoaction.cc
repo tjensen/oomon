@@ -1,6 +1,6 @@
 // ===========================================================================
 // OOMon - Objected Oriented Monitor Bot
-// Copyright (C) 2003  Timothy L. Jensen
+// Copyright (C) 2004  Timothy L. Jensen
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -24,6 +24,7 @@
 
 // OOMon Headers
 #include "autoaction.h"
+#include "userhash.h"
 #include "irc.h"
 #include "util.h"
 #include "vars.h"

@@ -2,7 +2,7 @@
 #define __DCCLIST_H__
 // ===========================================================================
 // OOMon - Objected Oriented Monitor Bot
-// Copyright (C) 2003  Timothy L. Jensen
+// Copyright (C) 2004  Timothy L. Jensen
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -34,6 +34,7 @@
 #include "config.h"
 #include "dcc.h"
 #include "watch.h"
+#include "botclient.h"
 
 
 class DCCList
@@ -45,15 +46,12 @@ public:
   void setAllFD(fd_set & readset, fd_set & writeset);
   void processAll(const fd_set & readset, const fd_set & writeset);
   void sendAll(const std::string & message, const int flags = UF_NONE,
-    const WatchSet & watches = WatchSet(), const DCC *exception = NULL);
-  void sendAll(const std::string & message, const int flags,
-    const Watch watch, const DCC *exception = NULL);
+    const WatchSet & watches = WatchSet(),
+    const BotClient::ptr exception = BotClient::ptr());
   bool sendTo(const std::string & handle, const std::string & message,
     const int flags = UF_NONE, const WatchSet & watches = WatchSet());
-  bool sendTo(const std::string & handle, const std::string & message,
-    const int flags, const Watch watch);
   bool sendChat(const std::string & from, std::string message,
-    const DCC *exception = (DCC *) 0);
+    const BotClient::ptr exception = BotClient::ptr());
   void who(StrList &);
   void statsP(StrList &);
 
@@ -116,12 +114,16 @@ private:
   {
   public:
     SendFilter(const std::string & message, const int flags, 
-      const WatchSet & watches, const DCC *exception) : _message(message),
-      _flags(flags), _watches(watches), _exception(exception) { }
+      const WatchSet & watches, const BotClient::ptr exception)
+      : _message(message), _flags(flags), _watches(watches),
+      _exception(exception) { }
+    SendFilter(const std::string & message, const int flags, 
+      const WatchSet & watches) : _message(message), _flags(flags),
+      _watches(watches) { }
 
     void operator()(DCCPtr client)
     {
-      if (this->_exception != client.get())
+      if (!this->_exception.get() || (this->_exception->id() != client.get()))
       {
         client->send(this->_message, this->_flags, this->_watches);
       }
@@ -131,7 +133,7 @@ private:
     const std::string _message;
     const int _flags;
     const WatchSet _watches;
-    const DCC *_exception;
+    const BotClient::ptr _exception;
   };
 
   class SendToFilter

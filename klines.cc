@@ -1,6 +1,6 @@
 // ===========================================================================
 // OOMon - Objected Oriented Monitor Bot
-// Copyright (C) 2003  Timothy L. Jensen
+// Copyright (C) 2004  Timothy L. Jensen
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -199,11 +199,11 @@ KlineList::ParseAndAdd(std::string Text)
   Log::Write(msg);
   if (lineType == 'K')
   {
-    ::SendAll(msg, UF_OPER, WATCH_KLINES, NULL);
+    ::SendAll(msg, UF_OPER, WATCH_KLINES);
   }
   else if (lineType == 'D')
   {
-    ::SendAll(msg, UF_OPER, WATCH_DLINES, NULL);
+    ::SendAll(msg, UF_OPER, WATCH_DLINES);
   }
   else
   {
@@ -315,11 +315,11 @@ KlineList::ParseAndRemove(std::string Text)
   Log::Write(msg);
   if (lineType == 'K')
   {
-    ::SendAll(msg, UF_OPER, WATCH_KLINES, NULL);
+    ::SendAll(msg, UF_OPER, WATCH_KLINES);
   }
   else if (lineType == 'D')
   {
-    ::SendAll(msg, UF_OPER, WATCH_DLINES, NULL);
+    ::SendAll(msg, UF_OPER, WATCH_DLINES);
   }
   else
   {

@@ -2,7 +2,7 @@
 #define __REMOTELIST_H__
 // ===========================================================================
 // OOMon - Objected Oriented Monitor Bot
-// Copyright (C) 2003  Timothy L. Jensen
+// Copyright (C) 2004  Timothy L. Jensen
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -29,6 +29,7 @@
 #include "strtype"
 #include "remote.h"
 #include "botsock.h"
+#include "botclient.h"
 #include "links.h"
 
 
@@ -58,11 +59,11 @@ public:
     const Remote *exception = (Remote *) 0);
   void sendBotPart(const std::string & from, const std::string & node,
     const Remote *exception = (Remote *) 0);
+  void sendCommand(const BotClient::ptr client, const std::string & bot,
+    const std::string & command, const std::string & parameters);
 
-  void conn(const std::string & From, const std::string & To,
-    const std::string & Target);
-  void disconn(const std::string & From, const std::string & To,
-    const std::string & Target);
+  void conn(const std::string & from, const std::string & target);
+  void disconn(const std::string & from, const std::string & target);
 
   void getLinks(StrList & Output);
   void getBotNet(BotLinkList & list, const Remote *exception = (Remote *) 0);

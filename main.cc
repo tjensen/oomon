@@ -1,6 +1,6 @@
 // ===========================================================================
 // OOMon - Objected Oriented Monitor Bot
-// Copyright (C) 2003  Timothy L. Jensen
+// Copyright (C) 2004  Timothy L. Jensen
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -72,19 +72,9 @@ static time_t startTime = 0;
 
 
 void
-SendAll(const std::string & message, const int flags,
-  const WatchSet & watches, const DCC *exception)
+SendAll(const std::string & message, const int flags, const WatchSet & watches,
+  const BotClient::ptr exception)
 {
-  clients.sendAll(message, flags, watches, exception);
-}
-
-
-void
-SendAll(const std::string & message, const int flags, Watch watch,
-  const DCC *exception)
-{
-  WatchSet watches;
-  watches.add(watch);
   clients.sendAll(message, flags, watches, exception);
 }
 

@@ -1,6 +1,6 @@
 // ===========================================================================
 // OOMon - Objected Oriented Monitor Bot
-// Copyright (C) 2003  Timothy L. Jensen
+// Copyright (C) 2004  Timothy L. Jensen
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -32,6 +32,7 @@
 #include "dcclist.h"
 #include "util.h"
 #include "config.h"
+#include "botclient.h"
 #include "botexcept.h"
 #include "log.h"
 
@@ -221,19 +222,22 @@ RemoteList::sendBotPart(const std::string & from, const std::string & node,
 
 
 void
-RemoteList::conn(const std::string & from, const std::string & to,
-  const std::string & target)
+RemoteList::sendCommand(const BotClient::ptr from, const std::string & to,
+  const std::string & command, const std::string & parameters)
 {
-  if (to.empty() || Same(to, Config::GetNick()))
-  {
-    this->connect(target);
-  }
+  from->send("*** Remote commands aren't implemented yet!");
 }
 
 
 void
-RemoteList::disconn(const std::string & From, const std::string & To,
-  const std::string & Target)
+RemoteList::conn(const std::string & from, const std::string & target)
+{
+  this->connect(target);
+}
+
+
+void
+RemoteList::disconn(const std::string & from, const std::string & target)
 {
 }
 

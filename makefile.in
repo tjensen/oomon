@@ -43,14 +43,14 @@ logdir = @localstatedir@/logs
 
 CXXFLAGS = @CXXFLAGS@ -I./libs
 
-OBJS =	arglist.o autoaction.o botdb.o botsock.o config.o dcc.o dcclist.o \
-	engine.o flood.o help.o helptopic.o http.o irc.o jupe.o klines.o \
-	links.o log.o main.o pattern.o proxy.o proxylist.o remote.o \
+OBJS =	arglist.o autoaction.o botdb.o botsock.o cmdparser.o config.o dcc.o \
+	dcclist.o engine.o flood.o help.o helptopic.o http.o irc.o jupe.o \
+	klines.o links.o log.o main.o pattern.o proxy.o proxylist.o remote.o \
 	remotelist.o seedrand.o services.o socks4.o socks5.o trap.o userdb.o \
 	userhash.o util.o vars.o watch.o wingate.o
-SRCS =	arglist.cc autoaction.cc botdb.cc botsock.cc config.cc dcc.cc \
-	dcclist.cc engine.cc flood.cc help.cc helptopic.cc http.cc irc.cc \
-	jupe.cc klines.cc links.cc log.cc main.cc pattern.cc proxy.cc \
+SRCS =	arglist.cc autoaction.cc botdb.cc botsock.cc cmdparser.cc config.cc \
+	dcc.cc dcclist.cc engine.cc flood.cc help.cc helptopic.cc http.cc \
+	irc.cc jupe.cc klines.cc links.cc log.cc main.cc pattern.cc proxy.cc \
 	proxylist.cc remote.cc remotelist.cc seedrand.cc services.cc \
 	socks4.cc socks5.cc trap.cc userdb.cc userhash.cc util.cc vars.cc \
 	watch.cc wingate.cc

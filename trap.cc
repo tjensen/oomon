@@ -1,6 +1,6 @@
 // ===========================================================================
 // OOMon - Objected Oriented Monitor Bot
-// Copyright (C) 2003  Timothy L. Jensen
+// Copyright (C) 2004  Timothy L. Jensen
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -443,7 +443,7 @@ Trap::doAction(const std::string & nick, const std::string & userhost,
   switch (this->getAction())
   {
     case TRAP_ECHO:
-      ::SendAll(notice, UF_OPER, WATCH_TRAPS, NULL);
+      ::SendAll(notice, UF_OPER, WATCH_TRAPS);
       break;
     case TRAP_KILL:
       server.kill("Auto-Kill", nick, this->getReason());
@@ -618,8 +618,7 @@ TrapList::cmd(StrList & output, std::string line, const bool master,
         modified = true;
         if (handle.size() > 0)
         {
-          ::SendAll(handle + " removed trap: " + line, UF_OPER,
-	    WATCH_TRAPS, NULL);
+          ::SendAll(handle + " removed trap: " + line, UF_OPER, WATCH_TRAPS);
           Log::Write(handle + " removed trap: " + line);
         }
       }

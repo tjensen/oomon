@@ -2,7 +2,7 @@
 #define _MAIN_H_
 // ===========================================================================
 // OOMon - Objected Oriented Monitor Bot
-// Copyright (C) 2003  Timothy L. Jensen
+// Copyright (C) 2004  Timothy L. Jensen
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -30,8 +30,9 @@
 
 // OOMon Headers
 #include "strtype"
-#include "dcc.h"
 #include "watch.h"
+#include "config.h"
+#include "botclient.h"
 
 enum OOMonExitCode
 {
@@ -42,9 +43,8 @@ enum OOMonExitCode
 void gracefuldie(int sig);
 void ReloadConfig(const std::string &);
 void SendAll(const std::string & message, const int flags = UF_NONE,
-  const WatchSet & watches = WatchSet(), const DCC *exception = NULL);
-void SendAll(const std::string & message, const int flags, Watch watch,
-  const DCC *exception = NULL);
+  const WatchSet & watches = WatchSet(),
+  const BotClient::ptr exception = BotClient::ptr());
 void motd(StrList &);
 std::string getUptime(void);
 

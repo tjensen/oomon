@@ -1,6 +1,6 @@
 // ===========================================================================
 // OOMon - Objected Oriented Monitor Bot
-// Copyright (C) 2003  Timothy L. Jensen
+// Copyright (C) 2004  Timothy L. Jensen
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -279,7 +279,7 @@ klineClones(const bool kline, const std::string & User,
 
   if (Notice.length() > 0)
   {
-    ::SendAll(Notice, UF_OPER, WATCH_KLINES, NULL);
+    ::SendAll(Notice, UF_OPER, WATCH_KLINES);
   }
 }
 
@@ -707,11 +707,11 @@ void Kill_Add_Report(std::string Text)
       Global = !users.have(Killer);
       if (Global) {
         ::SendAll("Global kill for " + Nick + " by " + Killer + " " + Text,
-	  UF_OPER, WATCH_KILLS, NULL);
+	  UF_OPER, WATCH_KILLS);
 	Log::Write("Global kill for " + Nick + " by " + Killer + " " + Text);
       } else {
         ::SendAll("Local kill for " + Nick + " by " + Killer + " " + Text,
-	  UF_OPER, WATCH_KILLS, NULL);
+	  UF_OPER, WATCH_KILLS);
 	Log::Write("Local kill for " + Nick + " by " + Killer + " " + Text);
       }
     }

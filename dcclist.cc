@@ -1,6 +1,6 @@
 // ===========================================================================
 // OOMon - Objected Oriented Monitor Bot
-// Copyright (C) 2003  Timothy L. Jensen
+// Copyright (C) 2004  Timothy L. Jensen
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -21,7 +21,6 @@
 
 // Std C++ headers
 #include <iostream>
-#include <fstream>
 #include <string>
 #include <list>
 #include <algorithm>
@@ -236,14 +235,13 @@ DCCList::processAll(const fd_set & readset, const fd_set & writeset)
 //
 bool
 DCCList::sendChat(const std::string & From, std::string Text,
-  const class DCC *exception)
+  const BotClient::ptr exception)
 {
   if (Text != "")
   {
     if (Text[0] != '\001')
     {
-      this->sendAll("<" + From + "> " + Text, UF_AUTHED, WATCH_CHAT,
-        exception);
+      this->sendAll("<" + From + "> " + Text, UF_AUTHED, WATCH_CHAT, exception);
     }
     else
     {
@@ -310,7 +308,7 @@ DCCList::StatsPList::operator()(DCCPtr client)
 
   if (client->isConnected() && client->isOper())
   {
-    std::string notice(client->getHandle(false));
+    std::string notice(client->getHandle());
 
     if (vars[VAR_STATSP_SHOW_USERHOST]->getBool())
     {
@@ -353,27 +351,11 @@ DCCList::statsP(StrList & output)
 //
 void
 DCCList::sendAll(const std::string & message, const int flags,
-  const WatchSet & watches, const DCC *exception)
+  const WatchSet & watches, const BotClient::ptr exception)
 {
   SendFilter filter(message, flags, watches, exception);
 
   std::for_each(this->connections.begin(), this->connections.end(), filter);
-}
-
-
-// sendAll()
-//
-// Writes a status message to all connections with the required flags and
-// watches.
-//
-void
-DCCList::sendAll(const std::string & message, const int flags,
-  const Watch watch, const DCC *exception)
-{
-  WatchSet watches;
-  watches.add(watch);
-
-  this->sendAll(message, flags, watches, exception);
 }
 
 
@@ -387,20 +369,6 @@ DCCList::sendTo(const std::string & handle, const std::string & message,
 {
   return (0 != std::count_if(this->connections.begin(), this->connections.end(),
     SendToFilter(handle, message, flags, watches)));
-}
-
-
-// SendTo()
-//
-// Writes a status message to all connections matching the nickname.
-//
-bool
-DCCList::sendTo(const std::string & handle, const std::string & message,
-  const int flags, const Watch watch)
-{
-  WatchSet watches;
-  watches.add(watch);
-  return this->sendTo(handle, message, flags, watches);
 }
 
 

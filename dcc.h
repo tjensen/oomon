@@ -2,7 +2,7 @@
 #define __DCC_H__
 // ===========================================================================
 // OOMon - Objected Oriented Monitor Bot
-// Copyright (C) 2003  Timothy L. Jensen
+// Copyright (C) 2004  Timothy L. Jensen
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -21,19 +21,17 @@
 
 // $Id$
 
-#include <sys/types.h>
-#include <unistd.h>
-
+// Std C++ Headers
 #include <string>
-#include <list>
-#include <set>
 
+// OOMon Headers
 #include "strtype"
 #include "oomon.h"
 #include "config.h"
 #include "botsock.h"
 #include "watch.h"
-#include "userhash.h"
+#include "cmdparser.h"
+#include "botclient.h"
 
 
 class DCC : public BotSock
@@ -48,113 +46,98 @@ public:
   bool listen(const std::string nick, const std::string userhost,
     const BotSock::Port port = 0, const int backlog = 1);
 
+  void motd(void);
+
   void chat(const std::string & text);
   void send(const std::string & message, const int flags = UF_NONE,
     const WatchSet & watches = WatchSet());
   void send(StrList & message, const int flags = UF_NONE,
     const WatchSet & watches = WatchSet());
 
-  std::string getUserhost() const { return UserHost; };
-  std::string getHandle(const bool atBot = true) const;
-  std::string getNick() const { return Nick; };
-  std::string getFlags() const;
+  std::string getUserhost(void) const { return UserHost; }
+  std::string getNick(void) const { return Nick; }
 
-  bool isOper() const { return ((this->Flags & UF_OPER) != 0); };
-  bool isAuthed() const { return ((this->Flags & UF_AUTHED) != 0); };
+  bool isOper(void) const { return (this->client->flags() & UF_OPER); }
+  bool isAuthed(void) const { return (this->client->flags() & UF_AUTHED); }
+  std::string getFlags(void) const;
+  std::string getHandle(void) const { return this->client->handle(); }
 
-  virtual bool onConnect();
+  virtual bool onConnect(void);
 
 protected:
   virtual bool onRead(std::string text);
 
-private:
-  bool echoMyChatter;
-  std::string UserHost, Nick, Handle;
-  int Flags;
-  WatchSet watches;
+  typedef void (DCC::*CommandFunc)(BotClient::ptr from,
+    const std::string & command, std::string parameters);
 
-  bool parse(std::string text);
-  void motd();
-  void kline(const int Minutes, const std::string & Target,
-    const std::string & Reason);
-
-  void list(const std::string & to, std::string text);
-  void glist(const std::string & to, std::string text);
-  void killList(const std::string & to, std::string text);
-  void nFind(const std::string & to, std::string text);
-  void killNFind(const std::string & to, std::string text);
-  void findK(const std::string & to, std::string text);
-  void findD(const std::string & to, std::string text);
-  void seedrand(const std::string & to, std::string text);
-  void status(const std::string & to, std::string text);
-  void watch(const std::string & to, std::string text);
-  void trap(const std::string & to, std::string text);
-  void save(const std::string & to, std::string text);
-  void load(const std::string & to, std::string text);
-  void set(const std::string & to, std::string text);
-  void spamsub(const std::string & to, std::string text);
-  void spamunsub(const std::string & to, std::string text);
-  void locops(const std::string & to, std::string text);
-
-  void kClone(const int Minutes, const std::string & Target);
-  void kFlood(const int Minutes, const std::string & Target);
-  void kBot(const int Minutes, const std::string & Target);
-  void kSpam(const int Minutes, const std::string & Target);
-  void kLink(const int Minutes, const std::string & Target);
-  void kTrace(const int Minutes, const std::string & Target);
-  void kMotd(const int Minutes, const std::string & Target);
-  void kInfo(const int Minutes, const std::string & Target);
-  void kWingate(const int Minutes, const std::string & Target);
-  void kProxy(const int Minutes, const std::string & Target);
-  void kPerm(const std::string & Target, const std::string & Reason);
-  void unkline(const std::string & Target);
-  void dline(const int Minutes, const std::string & Target,
-    const std::string & Reason);
-  void undline(const std::string & Target);
-  void help(std::string);
-  void doEcho(const std::string & text);
-  void loadConfig();
-  void noAccess();
-  void notRemote();
-  void notAuthed();
-
-  enum DccCommand
+  class CommandFunctor : public CommandParser::CommandFunctor
   {
-    // Unknown command
-    DCC_UNKNOWN,
-
-    // Generic commands
-    DCC_AUTH, DCC_QUIT, DCC_CHAT, DCC_WHO, DCC_LINKS, DCC_HELP, DCC_WATCH,
-    DCC_MOTD, DCC_ECHO, DCC_INFO, DCC_STATUS,
-
-    // +K commands
-    DCC_KLINE, DCC_UNKLINE, DCC_KCLONE, DCC_KFLOOD, DCC_KBOT, DCC_KLINK,
-    DCC_KSPAM, DCC_KPERM, DCC_KTRACE, DCC_KMOTD, DCC_KINFO, DCC_KPROXY,
-
-    // +G commands
-    DCC_GLINE, DCC_UNGLINE,
-
-    // +D commands
-    DCC_DLINE, DCC_UNDLINE,
-
-    // +O commands
-    DCC_KILL, DCC_KILLLIST, DCC_KILLNFIND, DCC_MULTI, DCC_NFIND, DCC_TRACE,
-    DCC_CLONES, DCC_GLIST, DCC_LIST, DCC_FINDK, DCC_RELOAD, DCC_DOMAINS,
-    DCC_CLASS, DCC_HMULTI, DCC_UMULTI, DCC_VMULTI, DCC_FINDD, DCC_SEEDRAND,
-    DCC_NETS, DCC_TRAP, DCC_SET,
-
-    // +W commands
-    DCC_LOCOPS,
-
-    // +M commands
-    DCC_DIE, DCC_CONN, DCC_DISCONN, DCC_RAW, DCC_TEST, DCC_SAVE, DCC_LOAD,
-    DCC_SPAMSUB, DCC_SPAMUNSUB,
-
-    // +C commands
-    DCC_OP, DCC_JOIN, DCC_PART,
+  public:
+    CommandFunctor(DCC *owner, DCC::CommandFunc func) : _owner(owner),
+      _func(func) { }
+    virtual void operator()(BotClient::ptr from, const std::string & command,
+      const std::string & parameters)
+    {
+      (this->_owner->*(this->_func))(from, command, parameters);
+    }
+  private:
+    DCC *_owner;
+    DCC::CommandFunc _func;
   };
 
-  static DccCommand getCommand(const std::string & text);
+  class Client : public BotClient
+  {
+  public:
+    Client(DCC *owner) : _owner(owner), _handle(), _flags(UF_NONE) { }
+    ~Client(void) { }
+
+    virtual void send(const std::string & text)
+    {
+      this->_owner->write(text + '\n');
+    }
+    virtual bool remote(void) const { return false; }
+    virtual int flags(void) const { return this->_flags; }
+    virtual std::string handle(void) const { return this->_handle; }
+    virtual std::string bot(void) const { return Config::GetNick(); }
+    virtual BotSock *id(void) const { return this->_owner; }
+
+    void flags(const int f) { this->_flags = f; }
+    void handle(const std::string & h) { this->_handle = h; }
+
+  private:
+    DCC *_owner;
+    std::string _handle;
+    int _flags;
+  };
+  typedef boost::shared_ptr<Client> ClientPtr;
+
+private:
+  bool echoMyChatter;
+  std::string UserHost, Nick;
+  WatchSet watches;
+  CommandParser parser;
+  ClientPtr client;
+
+  bool parse(std::string text);
+
+  void cmdAuth(BotClient::ptr from, const std::string & command,
+    std::string parameters);
+  void cmdQuit(BotClient::ptr from, const std::string & command,
+    std::string parameters);
+  void cmdEcho(BotClient::ptr from, const std::string & command,
+    std::string parameters);
+  void cmdWatch(BotClient::ptr from, const std::string & command,
+    std::string parameters);
+  void cmdChat(BotClient::ptr from, const std::string & command,
+    std::string parameters);
+
+  void loadConfig(void);
+
+  class quit : public OOMon::oomon_error
+  {
+  public:
+    quit(const std::string & arg) : oomon_error(arg) { };
+  };
 };
 
 
