@@ -148,7 +148,7 @@ AutoAction::set(AutoAction * value, const std::string & newValue)
   std::string dur = FirstWord(copy);
   try
   {
-    value->duration_ = boost::lexical_cast<unsigned int>(copy);
+    value->duration_ = boost::lexical_cast<unsigned int>(dur);
   }
   catch (boost::bad_lexical_cast)
   {
