@@ -51,9 +51,13 @@ const BotSock::Address BotSock::ClassCNetMask =
 
 
 BotSock::BotSock(const bool blocking_, const bool lineBuffered)
-  : buffer(""), bindAddress(INADDR_ANY), timeout(0), connected(false),
-  connecting(false), listening(false), blocking(blocking_), binary(false),
-  backlog(1)
+#ifdef OLD_BOTSOCK_LINEBUFFER
+  : buffer(""),
+#else
+  : bufferPos(0),
+#endif
+  bindAddress(INADDR_ANY), timeout(0), connected(false), connecting(false),
+  listening(false), blocking(blocking_), binary(false), backlog(1)
 {
   if ((this->plug = ::socket(AF_INET, SOCK_STREAM, 0)) < 0)
   {
@@ -67,7 +71,12 @@ BotSock::BotSock(const bool blocking_, const bool lineBuffered)
 
 BotSock::BotSock(const BotSock *listener, const bool blocking,
   const bool lineBuffered)
-  : buffer(""), bindAddress(listener->bindAddress), timeout(listener->timeout),
+#ifdef OLD_BOTSOCK_LINEBUFFER
+  : buffer(""),
+#else
+  : bufferPos(0),
+#endif
+  bindAddress(listener->bindAddress), timeout(listener->timeout),
   connected(true), connecting(false), listening(false),
   backlog(listener->backlog)
 {
@@ -232,18 +241,26 @@ BotSock::process(const fd_set & readset, const fd_set & writeset)
   {
     if (FD_ISSET(this->plug, &readset))
     {
+#ifdef OLD_BOTSOCK_LINEBUFFER
       static char buff[2048];
 
       memset(buff, 0, sizeof(buff));
+#endif
 
 #ifdef BOTSOCK_DEBUG
       std::cout << "BotSock::process(): this->read()" << std::endl;
 #endif
 
+#ifdef OLD_BOTSOCK_LINEBUFFER
       int n = this->read(buff, sizeof(buff) - 1);
+#else
+      int n = this->read(this->buffer + this->bufferPos,
+        sizeof(this->buffer) - this->bufferPos);
+#endif
 
       if (n > 0)
       {
+#ifdef OLD_BOTSOCK_LINEBUFFER
 	buff[n] = '\0';		// Make sure it is null terminated!
 
         this->gotActivity();
@@ -284,6 +301,91 @@ BotSock::process(const fd_set & readset, const fd_set & writeset)
 	    return result;
 	  }
 	}
+#else
+        this->bufferPos += n;
+
+        this->gotActivity();
+
+        if (this->isBinary())
+	{
+          return this->onRead(this->buffer, this->bufferPos);
+	}
+	else if (this->isBuffering())
+	{
+          char * cr;
+          char * nl;
+          do {
+            int eol = -1;
+
+            // find first end-of-line character
+            cr = reinterpret_cast<char *>(memchr(this->buffer, '\r',
+              this->bufferPos));
+            nl = reinterpret_cast<char *>(memchr(this->buffer, '\n',
+              this->bufferPos));
+            if (cr && nl)
+            {
+              if (cr < nl)
+              {
+                eol = cr - this->buffer;
+              }
+              else
+              {
+                eol = nl - this->buffer;
+              }
+            }
+            else if (cr)
+            {
+              eol = cr - this->buffer;
+            }
+            else if (nl)
+            {
+              eol = nl - this->buffer;
+            }
+
+            if (eol >= 0)
+            {
+              std::string line(this->buffer, eol);
+              if (this->bufferPos > (eol + 1))
+              {
+                memmove(this->buffer, this->buffer + eol + 1,
+                  this->bufferPos - (eol + 1));
+                this->bufferPos -= (eol + 1);
+              }
+              else
+              {
+                this->bufferPos = 0;
+              }
+
+              if (!this->onRead(line))
+              {
+                return false;
+              }
+            }
+            else if (this->bufferPos == sizeof(this->buffer))
+            {
+              std::string line(this->buffer, sizeof(this->buffer));
+              this->bufferPos = 0;
+
+              if (!this->onRead(line))
+              {
+                return false;
+              }
+            }
+          } while (cr || nl);
+
+	  return true;
+	}
+        else
+        {
+          std::string line(this->buffer, this->bufferPos);
+          this->bufferPos = 0;
+
+          if (!this->onRead(line))
+          {
+            return false;
+          }
+        }
+#endif
       }
       else if (n == 0)
       {

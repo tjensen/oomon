@@ -148,7 +148,12 @@ private:
   OnConnectHandler onConnectHandler;
   OnReadHandler onReadHandler;
   OnBinaryReadHandler onBinaryReadHandler;
+#ifdef OLD_BOTSOCK_LINEBUFFER
   std::string buffer;
+#else
+  char buffer[2048];
+  int bufferPos;
+#endif
   Address bindAddress;
   std::time_t timeout, lastActivity, connectTime;
   bool connected, connecting, listening, blocking, lineBuffered, binary;
