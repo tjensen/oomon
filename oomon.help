@@ -248,6 +248,9 @@ info actions
 .d. - KLINE_USERNET [<time>]:  K-line *user@net*
 .d. - SMART_KLINE [<time>]:  If hostname appears
 .d.   dynamic, K-line *@hostname.  Otherwise, K-line
+.d.   *user@net* or *user@*domain.
+.d. - SMART_KLINE_HOST [<time>]:  If hostname appears
+.d.   dynamic, K-line *@hostname.  Otherwise, K-line
 .d.   *user@*domain.
 .d. - SMART_KLINE_IP [<time>]:  If hostname appears
 .d.   dynamic, K-line *@ipaddress.  Otherwise, K-line

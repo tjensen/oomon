@@ -222,6 +222,8 @@ public:
 	return "KLINE_NET" + duration;
       case ACTION_SMART_KLINE:
 	return "SMART_KLINE" + duration;
+      case ACTION_SMART_KLINE_HOST:
+	return "SMART_KLINE_HOST" + duration;
       case ACTION_SMART_KLINE_IP:
 	return "SMART_KLINE_IP" + duration;
       case ACTION_DLINE_IP:
@@ -254,6 +256,8 @@ public:
       this->_value = ACTION_KLINE_NET;
     else if (action == "SMART_KLINE")
       this->_value = ACTION_SMART_KLINE;
+    else if (action == "SMART_KLINE_HOST")
+      this->_value = ACTION_SMART_KLINE_HOST;
     else if (action == "SMART_KLINE_IP")
       this->_value = ACTION_SMART_KLINE_IP;
     else if (action == "DLINE_IP")
@@ -261,7 +265,7 @@ public:
     else if (action == "DLINE_NET")
       this->_value = ACTION_DLINE_NET;
     else
-      return "*** NOTHING, KILL, KLINE, KLINE_HOST, KLINE_DOMAIN, DLINE_IP, or DLINE_NET expected!";
+      return "*** NOTHING, KILL, KLINE, KLINE_HOST, KLINE_DOMAIN, KLINE_IP, KLINE_USERNET, KLINE_NET, SMART_KLINE, SMART_KLINE_HOST, SMART_KLINE_IP, DLINE_IP, or DLINE_NET expected!";
 
     this->_duration = 0;
 

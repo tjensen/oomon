@@ -203,6 +203,22 @@ doAction(const std::string & nick, const std::string & userhost,
     {
       doKline("*@" + host, duration, reason);
     }
+    else if (INADDR_NONE == ip)
+    {
+      doKline("*" + ident + "@" + domain, duration, reason);
+    }
+    else
+    {
+      doKline("*" + ident + "@" + classCMask(BotSock::inet_ntoa(ip)),
+        duration, reason);
+    }
+    break;
+
+  case ACTION_SMART_KLINE_HOST:
+    if (isDynamic(user, host))
+    {
+      doKline("*@" + host, duration, reason);
+    }
     else
     {
       doKline("*" + ident + "@" + domain, duration, reason);
