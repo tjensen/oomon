@@ -44,10 +44,12 @@ public:
   void onIson(const std::string & text);
 
 private:
-  std::string cloningHost;
-  std::string userCount;
+  // XO services parameters
+  std::string cloningUserhost;
+  int cloneCount;
+  bool suggestKline;
+
   time_t lastCheckedTime;
-  bool klineSuggested;
   bool gettingCaReports;
 };
 

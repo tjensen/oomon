@@ -165,14 +165,16 @@ UserHash::add(const std::string & nick, const std::string & userhost,
 #endif
           }
 
+	  BotSock::Address ipAddr = BotSock::inet_addr(ip);
+
           // Clonebot check
-	  if (ip.empty())
+	  if (INADDR_NONE == ipAddr)
 	  {
             this->checkHostClones(host);
 	  }
 	  else
 	  {
-            this->checkIpClones(BotSock::inet_addr(ip));
+            this->checkIpClones(ipAddr);
 	  }
         }
       }

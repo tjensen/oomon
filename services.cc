@@ -70,94 +70,43 @@ Services::check()
 
 
 void
-Services::onXoNotice(std::string Text)
+Services::onXoNotice(std::string text)
 {
   if (!vars[VAR_XO_SERVICES_ENABLE]->getBool())
   {
     return;
   }
 
-  char text[MAX_BUFF];
-  char *body;
-  char *parm1;
-  char *parm2;
-  char *parm3;
-  char dccbuff[MAX_BUFF];
-  char userathost[MAX_HOST];
-  bool identd;
+  StrVector parms;
+  StrSplit(parms, text, " ", true);
 
-  strncpy(text, Text.c_str(), sizeof(text));
-  text[sizeof(text) - 1] = 0;
-  body = text;
-
-  while(*body == ' ')
-    body++;
-
-  parm1 = strtok(body, " ");
-  if(parm1 == NULL)
-    return;
-
-  parm2 = strtok(NULL, " ");
-  if(parm2 == NULL)
-    return;
-
-  parm3 = strtok(NULL, ""); 
-  if(parm3 == NULL)
-    return;
-  
-  if (strstr(parm3,"users"))
-    {
-      this->cloningHost = parm1;
-      this->userCount = parm3;
-      this->klineSuggested = false;
-      return;
-    }
-    
-  if ((strcasecmp("on", parm2) == 0) &&
-    (strcasecmp(server.getServerName().c_str(), parm3) == 0))
+  if ((parms.size() > 3) && server.same("users", parms[3]))
   {
-    sprintf(dccbuff, "%s reports %s cloning %s nick %s",
-      vars[VAR_XO_SERVICES_RESPONSE]->getString().c_str(),
-      this->userCount.c_str(), this->cloningHost.c_str(), parm1);
+    this->cloningUserhost = parms[0];
+    this->cloneCount = atoi(parms[2].c_str());
+    this->suggestKline = true;
+  }
+  else if ((parms.size() > 2) && server.same("on", parms[1]) &&
+    server.same(server.getServerName(), parms[2]))
+  {
+    std::string nick = parms[0];
 
-    ::SendAll(dccbuff, UF_OPER);
-    Log::Write(dccbuff);
-  
-    if (!this->klineSuggested)
-    {
-          char *user;
-          char *host;
-          char user_host[MAX_HOST+1];
-      
-          strncpy(userathost, this->cloningHost.c_str(), MAX_HOST);
-	  userathost[MAX_HOST - 1] = 0;
-      
-          /* strtok is going to destroy the original userathost,
-             so save a copy for our own uses */
-  
-          strncpy(user_host, userathost, sizeof(user_host));
-	  user_host[sizeof(user_host) - 1] = 0;
-      
-          user = strtok(userathost,"@");
-          if(user == NULL)
-            return; 
-                    
-          identd = true;
-          if(*user == '~')
-            identd = false;
-  
-          host = strtok(NULL, "");
-          if(host == NULL)
-            return;  
-          
-          
-          klineClones(true, user, host,
-	    users.getIP("", std::string(user) + "@" + host), false, false,
-	    identd);
-            
-          this->klineSuggested = true;
-        }     
-    }         
+    std::string notice = vars[VAR_XO_SERVICES_RESPONSE]->getString() +
+      " reports " + IntToStr(this->cloneCount) + " cloning " +
+      this->cloningUserhost + " nick " + nick;
+
+    ::SendAll(notice, UF_OPER);
+    Log::Write(notice);
+
+    BotSock::Address ip = users.getIP(nick, this->cloningUserhost);
+
+    doAction(nick, this->cloningUserhost, ip,
+      vars[VAR_XO_SERVICES_CLONE_ACTION]->getAction(),
+      vars[VAR_XO_SERVICES_CLONE_ACTION]->getInt(),
+      vars[VAR_XO_SERVICES_CLONE_REASON]->getString(), this->suggestKline);
+
+    this->suggestKline = false;
+  }
 }
 
 

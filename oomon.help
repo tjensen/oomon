@@ -781,6 +781,8 @@ set
 .t.watch_spambot_notices
 .t.watch_stats_notices
 .t.watch_trace_notices
+.t.xo_services_clone_action
+.t.xo_services_clone_reason
 .t.xo_services_enable
 .t.xo_services_request
 .t.xo_services_response
@@ -1538,6 +1540,7 @@ set services_check_interval
 .d.services for clones.
 .f.mo
 .l.clones
+.l.set xo_services_enable
 set services_clone_limit
 .s.set services_clone_limit [<integer>]
 .d.This setting determines the minimum number of
@@ -1545,6 +1548,7 @@ set services_clone_limit
 .d.for them to be considered clones.
 .f.mo
 .l.clones
+.l.set xo_services_enable
 set spambot_action
 .s.set spambot_action [<action>]
 .d.This setting determines how the monitor bot
@@ -1998,11 +2002,33 @@ set watch_trace_notices
 .l.set watch_motd_notices
 .l.set watch_spambot_notices
 .l.set watch_stats_notices
+set xo_services_clone_action
+.s.set xo_services_clone_action [<action>]
+.d.This setting determines how the monitor bot
+.d.should respond when XO-style services
+.d.reports a clone on the local server.
+.f.mo
+.l.set xo_services_clone_reason
+.l.set xo_services_enable
+.l.set xo_services_request
+.l.set xo_services_response
+set xo_services_clone_reason
+.s.set xo_services_clone_reason [<text>]
+.d.This setting determines the kill, k-line, or
+.d.d-line reason to use when XO-style services
+.d.reports a clone the local server.
+.f.mo
+.l.set xo_services_clone_action
+.l.set xo_services_enable
+.l.set xo_services_request
+.l.set xo_services_response
 set xo_services_enable
 .s.set xo_services_enable [ON|OFF]
 .d.When ON, the monitor bot will periodically
 .d.check XO-style services for clones.
 .f.mo
+.l.set xo_services_clone_action
+.l.set xo_services_clone_reason
 .l.set xo_services_request
 .l.set xo_services_response
 set xo_services_request
@@ -2012,6 +2038,8 @@ set xo_services_request
 .d.Typically, this is the XO-style services
 .d.user@host.
 .f.mo
+.l.set xo_services_clone_action
+.l.set xo_services_clone_reason
 .l.set xo_services_enable
 .l.set xo_services_response
 set xo_services_response
@@ -2021,6 +2049,8 @@ set xo_services_response
 .d.XO-style services commands.  Typically, this
 .d.is the XO-style services server name.
 .f.mo
+.l.set xo_services_clone_action
+.l.set xo_services_clone_reason
 .l.set xo_services_enable
 .l.set xo_services_request
 spamsub
