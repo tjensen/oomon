@@ -215,10 +215,13 @@ gline
 .f.g
 .l.ungline
 glist
-.s.glist [-class <name>] [-count] [-r] <pattern>
+.s.glist [-count] [-class <name>] <pattern>
 .d.Searches clients' GECOS fields for a
-.d.particular pattern.  Matching clients are
-.d.displayed.
+.d.particular pattern and displays matching
+.d.clients.  Use the "-count" argument to
+.d.display the number of matching clients.
+.d.Use the "-class" argument to search only
+.d.clients in matching user classes.
 .e.> .glist *chalupa*
 .e.The following clients match *chalupa*:
 .e.  bob (bob@bag.wu) [1.2.3.20] <drop the chalupa!>
@@ -360,16 +363,9 @@ info regex
 .d.one flag, "i", which causes the regex to be case-
 .d.insensitive.
 .d.
-.d.Almost all pattern matching OOMon commands support
-.d.the use of regular expressions.  Some commands, such
-.d.as ".nfind" and ".list", will accept a "-r"
-.d.parameter, which tells OOMon that you are using a
-.d.regular expression (allowing you to drop the
-.d.surrounding "/" characters), however it is optional
-.d.and regex may be used without "-r".
-.d.
 .d.For more information about regular expressions and
-.d.how to use the effectively, see the web tutorial at:
+.d.how to use them effectively, see the web tutorial
+.d.at:
 .d.        http://www.regular-expressions.info/
 .d.
 .d.Note that it is important to know which regex engine
@@ -602,13 +598,13 @@ links
 .l.conn
 .l.disconn
 list
-.s.list [-count] [-class <name>] <mask>
+.s.list [-count] [-class <pattern>] <mask>
 .s.iplist [-count] [-class <name>] <mask>
 .d.Lists all users whose user@host match the mask
 .d.parameter.  Use the "-count" argument to display
 .d.the number of matching clients.  Use the
-.d."-class" argument to search only clients in a
-.d.particular user class.
+.d."-class" argument to search only clients with
+.d.matching user classes.
 .e.> .list *@*.phx.slimenet.com
 .e.  madox (reining@ip20.tuc.slimenet.com) [1.2.3.20]
 .e.  Ter|away (~J@ip24.phx.slimenet.com) [1.2.17.24]
@@ -684,15 +680,15 @@ nets
 .l.list
 .l.multi
 nfind
-.s.nfind [-class <name>] [-count] [-r] <pattern>
+.s.nfind [-count] [-class <name>] <pattern>
 .d.Lists all users whose nicknames match the
 .d.pattern parameter.  Use the "-class" argument
-.d.to only match nicks in the specified class
-.d.name.  Wildcard characters: ? = 1 character of
-.d.any type. & = 1 alphabetical character.  # = 1
-.d.numerical character. % = 1 alphabetical or
-.d.numerical character. * = 0 or more characters
-.d.of any type.
+.d.to only match clients with matching class
+.d.names.  Wildcard characters: ? = 1 character
+.d.of any type. & = 1 alphabetical character.
+.d.# = 1 numerical character. % = 1 alphabetical
+.d.or numerical character. * = 0 or more
+.d.characters of any type.
 .e.> .nfind *bot*
 .e.The following clients match *bot*:
 .e.  Bebot (st0rm@sydney.shells.nu) [4.16.8.1]
@@ -743,14 +739,12 @@ save
 .l.load
 .l.trap
 seedrand.drones
-.s.seedrand [-min <threshold>] [-count] [-r] [<pattern>]
-.s.drones [-min <threshold>] [-count] [-r] [<pattern>]
+.s.seedrand [-min <threshold>] [-count] [<pattern>]
+.s.drones [-min <threshold>] [-count] [<pattern>]
 .d.Searches currently connected client nicknames
 .d.that match the "nickmask" for possibly random
 .d.generated characters.  This command may be
-.d.useful for detecting drones, etc.  Use the
-.d."-r" parameter to force the pattern to be a
-.d.regular expression.
+.d.useful for detecting drones, etc.
 .e.> .seedrand -min 2500 *
 .e.Searching *.  Threshold is 2500
 .e.  3500 -- AIFGQMIU (toast@plasma.toast.pc) [192.168.1.1]

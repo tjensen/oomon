@@ -152,12 +152,6 @@ private:
     std::string parameters);
   void cmdSet(class BotClient *from, const std::string & command,
     std::string parameters);
-  void cmdNfind(class BotClient *from, const std::string & command,
-    std::string parameters);
-  void cmdList(class BotClient *from, const std::string & command,
-    std::string parameters);
-  void cmdGlist(class BotClient *from, const std::string & command,
-    std::string parameters);
   void cmdFindu(class BotClient *from, const std::string & command,
     std::string parameters);
   void cmdFindk(class BotClient *from, const std::string & command,

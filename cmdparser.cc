@@ -98,9 +98,9 @@ CommandParser::CommandParser(void)
   this->addCommand("TRACE", &CommandParser::cmdReload, UserFlags::OPER);
   this->addCommand("TRAP", &CommandParser::cmdTrap, UserFlags::OPER);
   this->addCommand("SET", &CommandParser::cmdSet, UserFlags::OPER);
-  this->addCommand("NFIND", &CommandParser::cmdNfind, UserFlags::OPER);
-  this->addCommand("LIST", &CommandParser::cmdList, UserFlags::OPER);
-  this->addCommand("GLIST", &CommandParser::cmdGlist, UserFlags::OPER);
+  this->addCommand("NFIND", &CommandParser::cmdFindu, UserFlags::OPER);
+  this->addCommand("LIST", &CommandParser::cmdFindu, UserFlags::OPER);
+  this->addCommand("GLIST", &CommandParser::cmdFindu, UserFlags::OPER);
   this->addCommand("ULIST", &CommandParser::cmdFindu, UserFlags::OPER);
   this->addCommand("HLIST", &CommandParser::cmdFindu, UserFlags::OPER);
   this->addCommand("IPLIST", &CommandParser::cmdFindu, UserFlags::OPER);
@@ -514,7 +514,7 @@ CommandParser::cmdKilllist(BotClient * from, const std::string & command,
 
   if (mask.empty())
   {
-    CommandParser::syntax(command, "[-class <name>] [-r] <pattern> [<reason>]");
+    CommandParser::syntax(command, "[-class <name>] <pattern> [<reason>]");
   }
   else
   {
@@ -580,7 +580,7 @@ CommandParser::cmdKillnfind(BotClient * from, const std::string & command,
 
   if (mask.empty())
   {
-    CommandParser::syntax(command, "[-class <name>] [-r] <pattern> [<reason>]");
+    CommandParser::syntax(command, "[-class <name>] <pattern> [<reason>]");
   }
   else
   {
@@ -714,141 +714,6 @@ CommandParser::cmdSet(BotClient * from, const std::string & command,
 
 
 void
-CommandParser::cmdNfind(BotClient * from, const std::string & command,
-  std::string parameters)
-{
-  ArgList args("-r -count", "-class");
-
-  if (-1 == args.parseCommand(parameters))
-  {
-    throw CommandParser::exception("*** Invalid parameter: " +
-      args.getInvalid());
-  }
-
-  std::string className;
-  args.haveBinary("-class", className);
-
-  if (parameters.empty())
-  {
-    CommandParser::syntax(command, "[-count] [-class <name>] [-r] <pattern>");
-  }
-  else
-  {
-    try
-    {
-      PatternPtr pattern;
-
-      if (args.haveUnary("-r"))
-      {
-        pattern.reset(new RegExPattern(parameters));
-      }
-      else
-      {
-        pattern = smartPattern(parameters, true);
-      }
-
-      users.listNicks(from, pattern, className,
-        args.haveUnary("-count") ? UserHash::LIST_COUNT : UserHash::LIST_VIEW);
-    }
-    catch (OOMon::regex_error & e)
-    {
-      throw CommandParser::exception("*** RegEx error: " + e.what());
-    }
-  }
-}
-
-
-void
-CommandParser::cmdList(BotClient * from, const std::string & command,
-  std::string parameters)
-{
-  ArgList args("-r -count", "-class");
-
-  if (-1 == args.parseCommand(parameters))
-  {
-    throw CommandParser::exception("*** Invalid parameter: " +
-      args.getInvalid());
-  }
-
-  std::string className;
-  args.haveBinary("-class", className);
-
-  if (parameters.empty())
-  {
-    CommandParser::syntax(command, "[-count] [-class <name>] [-r] <pattern>");
-  }
-  else
-  {
-    try
-    {
-      PatternPtr pattern;
-
-      if (args.haveUnary("-r"))
-      {
-        pattern.reset(new RegExPattern(parameters));
-      }
-      else
-      {
-        pattern = smartPattern(parameters, false);
-      }
-
-      users.listUsers(from, pattern, className,
-        args.haveUnary("-count") ? UserHash::LIST_COUNT : UserHash::LIST_VIEW);
-    }
-    catch (OOMon::regex_error & e)
-    {
-      throw CommandParser::exception("*** RegEx error: " + e.what());
-    }
-  }
-}
-
-
-void
-CommandParser::cmdGlist(BotClient * from, const std::string & command,
-  std::string parameters)
-{
-  ArgList args("-r -count", "-class");
-
-  if (-1 == args.parseCommand(parameters))
-  {
-    throw CommandParser::exception("*** Invalid parameter: " +
-      args.getInvalid());
-  }
-
-  std::string className;
-  args.haveBinary("-class", className);
-
-  if (parameters.empty())
-  {
-    CommandParser::syntax(command, "[-class <name>] [-count] [-r] <pattern>");
-  }
-  else
-  {
-    try
-    {
-      PatternPtr pattern;
-
-      if (args.haveUnary("-r"))
-      {
-        pattern.reset(new RegExPattern(parameters));
-      }
-      else
-      {
-        pattern = smartPattern(parameters, false);
-      }
-
-      users.listGecos(from, pattern, className,
-	args.haveUnary("-count"));
-    }
-    catch (OOMon::regex_error & e)
-    {
-      throw CommandParser::exception("*** RegEx error: " + e.what());
-    }
-  }
-}
-
-
-void
 CommandParser::cmdFindu(BotClient * from, const std::string & command,
   std::string parameters)
 {
@@ -886,17 +751,30 @@ CommandParser::cmdFindu(BotClient * from, const std::string & command,
       {
         std::string pattern(grabPattern(parameters));
 
-        Filter::Field field(Filter::FIELD_USER);
-        if (0 == command.compare("hlist"))
+        Filter::Field field(Filter::FIELD_NICK);
+        if (0 == command.compare("ulist"))
+        {
+          field = Filter::FIELD_USER;
+        }
+        else if (0 == command.compare("hlist"))
         {
           field = Filter::FIELD_HOST;
+        }
+        else if (0 == command.compare("list"))
+        {
+          field = Filter::FIELD_UH;
         }
         else if (0 == command.compare("iplist"))
         {
           field = Filter::FIELD_IP;
         }
+        else if (0 == command.compare("glist"))
+        {
+          field = Filter::FIELD_GECOS;
+        }
 
-        Filter filter(field, smartPattern(pattern, false));
+        Filter filter(field, smartPattern(pattern,
+              Filter::FIELD_NICK == field));
 
         PatternPtr classPattern;
         if (args.havePattern("-class", classPattern))
@@ -953,7 +831,7 @@ CommandParser::cmdFindk(BotClient * from, const std::string & command,
   if (parameters.empty())
   {
     CommandParser::syntax(command,
-      "[-count|-remove] [-reason] [-temp] [-perm] [-r] <pattern>");
+      "[-count|-remove] [-reason] [-temp] [-perm] <pattern>");
   }
   else
   {
@@ -1025,7 +903,7 @@ CommandParser::cmdFindd(BotClient * from, const std::string & command,
   if (parameters.empty())
   {
     CommandParser::syntax(command,
-      "[-count|-remove] [-reason] [-temp] [-perm] [-r] <pattern>");
+      "[-count|-remove] [-reason] [-temp] [-perm] <pattern>");
   }
   else
   {
