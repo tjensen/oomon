@@ -26,6 +26,14 @@
 #                       scanner to declare that an open proxy has
 #                       been detected.  Multiple proxy-match lines
 #                       may be specified.
+#
+#                       Use caution when defining proxy-match
+#                       patterns.  Patterns that are too broad will
+#                       likely produce false positives.  In addition,
+#                       keep in mind that the colon (:) character is
+#                       used as a field delimiter, so don't use it in
+#                       your patterns.
+#
 #                       NOTE: This setting only applies to "HTTP POST"
 #                       proxy scanners!
 #
@@ -35,6 +43,7 @@
 # pattern - A mask or regular expression to match against incoming
 #           data.
 # ====================================================================
+proxy-match:/^NOTICE AUTH .\*\*\* Looking up your hostname\.\.\./
 proxy-match:*Welcome to the* Internet Relay Chat Network*
 proxy-match:NOTICE *
 proxy-match:ERROR *
