@@ -740,8 +740,17 @@ IRC::onNotice(const std::string & from, const std::string & userhost,
     }
     else if (userhost.length() > 0)
     {
-      // Log all non-server notices
-      Log::Write("-" + from + "- " + text + " <" + userhost + ">");
+      // Process all non-server notices
+      std::string notice("-");
+      notice += from;
+      notice += "- ";
+      notice += text;
+      notice += " <";
+      notice += userhost;
+      notice += '>';
+
+      Log::Write(notice);
+      ::SendAll("(IRC) " + notice, UserFlags::OPER, WATCH_NOTICES);
       users.onNotice(from, userhost, text);
     }
   }
