@@ -24,9 +24,7 @@
 // Std C++ Headers
 #include <string>
 #include <stdexcept>
-
-// Std C Headers
-#include <errno.h>
+#include <cerrno>
 
 // OOMon Headers
 #include "oomon.h"

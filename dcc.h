@@ -23,9 +23,7 @@
 
 // Std C++ Headers
 #include <string>
-
-// Std C Headers
-#include <time.h>
+#include <ctime>
 
 // OOMon Headers
 #include "strtype"
@@ -83,7 +81,7 @@ public:
     { return this->_sock.process(readset, writeset); }
   void setFD(fd_set & readset, fd_set & writeset)
     { this->_sock.setFD(readset, writeset); }
-  time_t idleTime(void) const { return this->_sock.getIdle(); }
+  std::time_t idleTime(void) const { return this->_sock.getIdle(); }
 
 protected:
   bool onRead(std::string text);

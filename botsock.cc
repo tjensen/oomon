@@ -21,6 +21,8 @@
 
 // Std C++ headers
 #include <string>
+#include <cerrno>
+#include <ctime>
 
 // Std C headers
 #include <stdio.h>
@@ -30,9 +32,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <unistd.h>
-#include <time.h>
 #include <fcntl.h>
-#include <errno.h>
 
 // OOMon headers
 #include "oomon.h"
@@ -142,7 +142,7 @@ BotSock::connect(const BotSock::Address address, const BotSock::Port port)
 
   this->gotActivity();
   
-  this->connectTime = ::time(NULL);
+  this->connectTime = std::time(NULL);
 
   return this->onConnect();
 }
@@ -306,7 +306,7 @@ BotSock::process(const fd_set & readset, const fd_set & writeset)
 	this->connecting = false;
         this->connected = true;
 
-        this->connectTime = ::time(NULL);
+        this->connectTime = std::time(NULL);
 
         if (!this->onConnect())
         {
@@ -571,7 +571,7 @@ BotSock::reset(void)
 std::string
 BotSock::getUptime(void) const
 {
-  return timeDiff(::time(NULL) - this->connectTime);
+  return timeDiff(std::time(NULL) - this->connectTime);
 }
 
 

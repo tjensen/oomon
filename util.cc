@@ -24,12 +24,12 @@
 #include <cctype>
 #include <algorithm>
 #include <functional>
+#include <ctime>
 
 // C headers
 #include <stdio.h>
 #include <sys/time.h>
 #include <unistd.h>
-#include <time.h>
 
 #include "strtype"
 #include "oomon.h"
@@ -454,12 +454,12 @@ ChkPass(std::string CORRECT, std::string TEST)
 //  of the current date and time.
 //////////////////////////////////////////////////////////////////////
 std::string
-timeStamp(const TimeStampFormat format, time_t when)
+timeStamp(const TimeStampFormat format, std::time_t when)
 {
   char ts_holder[MAX_BUFF];
-  struct tm *time_val;
+  struct std::tm *time_val;
 
-  time_val = localtime(&when);
+  time_val = std::localtime(&when);
 
   switch (format)
   {
@@ -1018,7 +1018,7 @@ isDynamic(const std::string & user, const std::string & host)
 //  A string containing the textual representation.
 //////////////////////////////////////////////////////////////////////
 std::string
-timeDiff(time_t diff)
+timeDiff(std::time_t diff)
 {
   if (diff == 0)
  {

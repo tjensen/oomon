@@ -24,9 +24,7 @@
 // Std C++ Headers
 #include <string>
 #include <list>
-
-// Std C Headers
-#include <time.h>
+#include <ctime>
 
 // OOMon Headers
 #include "engine.h"
@@ -55,7 +53,7 @@ public:
   Watch getWatch() const { return this->_watch; };
 
   bool onNotice(const std::string & notice, std::string text,
-    time_t now = time(NULL));
+    std::time_t now = std::time(NULL));
 
   int size() const { return this->list.size(); };
 
@@ -65,7 +63,7 @@ private:
   public:
     std::string	userhost;
     int		count;
-    time_t	last;
+    std::time_t	last;
   };
 
   std::list<FloodEntry> list;
@@ -78,7 +76,7 @@ private:
   Watch _watch;
 
   void addFlood(const std::string & nick, const std::string & userhost,
-    time_t now, bool local);
+    std::time_t now, bool local);
 };
 
 #endif /* __FLOOD_H__ */

@@ -47,12 +47,10 @@
 #include <string>
 #include <list>
 #include <algorithm>
+#include <ctime>
 
 // Boost C++ Headers
 #include <boost/bind.hpp>
-
-// Std C Headers
-#include <time.h>
 
 // OOMon Headers
 #include "strtype"
@@ -70,12 +68,12 @@ private:
   class NoticeEntry
   {
   public:
-    NoticeEntry(const T & special, const int & count, const time_t & last)
+    NoticeEntry(const T & special, const int & count, const std::time_t & last)
     : _special(special), _count(count), _last(last) { }
 
     bool operator==(const NoticeEntry & rhs) const { return (this->_special == rhs._special); }
 
-    void update(const time_t & now, const T & data)
+    void update(const std::time_t & now, const T & data)
     {
       this->_special.update(data);
 
@@ -90,19 +88,19 @@ private:
       this->_last = now;
     }
 
-    bool expired(const time_t now) const
+    bool expired(const std::time_t now) const
     {
       return this->_special.expired(now - this->_last);
     }
 
     T getSpecial(void) const { return this->_special; }
     int getCount(void) const { return this->_count; }
-    time_t getLast(void) const { return this->_last; }
+    std::time_t getLast(void) const { return this->_last; }
 
   private:
     T		_special;
     int		_count;
-    time_t	_last;
+    std::time_t	_last;
   };
 
   std::list<NoticeEntry> list;
@@ -117,7 +115,7 @@ public:
 
   bool onNotice(const std::string & notice)
   {
-    time_t now = time(NULL);
+    std::time_t now = std::time(NULL);
     bool result = false;
 
     this->expire(now);
@@ -149,7 +147,7 @@ public:
   }
 
 private:
-  void expire(const time_t now)
+  void expire(const std::time_t now)
   {
     this->list.remove_if(boost::bind(&NoticeEntry::expired, _1, now));
   }
@@ -167,7 +165,7 @@ public:
   // parameters, count and interval, indicate an action should be
   // taken.  They may also want to call this function to determine
   // if the user should be excluded from actions.
-  bool triggered(const int & count, const time_t & interval) const
+  bool triggered(const int & count, const std::time_t & interval) const
   {
     // Return true if the user is not an Oper and is not E: lined.
     return (!Config::IsOKHost(this->userhost) &&
@@ -180,7 +178,7 @@ public:
 
   // Derived classes should implement expired to return true if
   // the interval parameter indicates the entry has expired.
-  virtual bool expired(const time_t interval) const = 0;
+  virtual bool expired(const std::time_t interval) const = 0;
 
   // Derived classes may want to implement update to refresh their
   // private data.
@@ -234,7 +232,7 @@ public:
     ::SendAll("*** " + notice, UserFlags::OPER, WATCH_FLOODERS);
   }
 
-  bool triggered(const int & count, const time_t & interval) const
+  bool triggered(const int & count, const std::time_t & interval) const
   {
     return (SimpleNoticeEntry::triggered(count, interval) &&
       (count > vars[VAR_FLOODER_MAX_COUNT]->getInt()) &&
@@ -253,7 +251,7 @@ public:
       vars[VAR_FLOODER_REASON]->getString(), true);
   }
 
-  bool expired(const time_t interval) const
+  bool expired(const std::time_t interval) const
   {
     return (interval > vars[VAR_FLOODER_MAX_TIME]->getInt());
   }
@@ -323,7 +321,7 @@ public:
     ::SendAll("*** " + notice, UserFlags::OPER, WATCH_SPAMBOTS);
   }
 
-  bool triggered(const int & count, const time_t & interval) const
+  bool triggered(const int & count, const std::time_t & interval) const
   {
     return (SimpleNoticeEntry::triggered(count, interval) &&
       (count > vars[VAR_SPAMBOT_MAX_COUNT]->getInt()) &&
@@ -342,7 +340,7 @@ public:
       vars[VAR_SPAMBOT_REASON]->getString(), true);
   }
 
-  bool expired(const time_t interval) const
+  bool expired(const std::time_t interval) const
   {
     return (interval > vars[VAR_SPAMBOT_MAX_TIME]->getInt());
   }
@@ -398,7 +396,7 @@ public:
     ::SendAll("*** " + notice, UserFlags::OPER, WATCH_TOOMANYS);
   }
 
-  bool triggered(const int & count, const time_t & interval) const
+  bool triggered(const int & count, const std::time_t & interval) const
   {
     return (SimpleNoticeEntry::triggered(count, interval) &&
       (count > vars[VAR_TOOMANY_MAX_COUNT]->getInt()) &&
@@ -417,7 +415,7 @@ public:
       vars[VAR_TOOMANY_REASON]->getString(), true);
   }
 
-  bool expired(const time_t interval) const
+  bool expired(const std::time_t interval) const
   {
     return (interval > vars[VAR_TOOMANY_MAX_TIME]->getInt());
   }
@@ -472,7 +470,7 @@ public:
     this->ip = BotSock::inet_addr(FirstWord(text));
   }
 
-  bool triggered(const int & count, const time_t & interval) const
+  bool triggered(const int & count, const std::time_t & interval) const
   {
     return (SimpleNoticeEntry::triggered(count, interval) &&
       (count > vars[VAR_CONNECT_FLOOD_MAX_COUNT]->getInt()) &&
@@ -491,7 +489,7 @@ public:
       vars[VAR_CONNECT_FLOOD_REASON]->getString(), true);
   }
 
-  bool expired(const time_t interval) const
+  bool expired(const std::time_t interval) const
   {
     return (interval > vars[VAR_CONNECT_FLOOD_MAX_TIME]->getInt());
   }
@@ -564,7 +562,7 @@ public:
     ::SendAll("*** " + notice, UserFlags::OPER, WATCH_OPERFAILS);
   }
 
-  bool triggered(const int & count, const time_t & interval) const
+  bool triggered(const int & count, const std::time_t & interval) const
   {
     return (SimpleNoticeEntry::triggered(count, interval) &&
       (count > vars[VAR_OPERFAIL_MAX_COUNT]->getInt()) &&
@@ -583,7 +581,7 @@ public:
       vars[VAR_OPERFAIL_REASON]->getString(), true);
   }
 
-  bool expired(const time_t interval) const
+  bool expired(const std::time_t interval) const
   {
     return (interval > vars[VAR_OPERFAIL_MAX_TIME]->getInt());
   }

@@ -25,9 +25,7 @@
 
 // Std C++ Headers
 #include <string>
-
-// Std C Headers
-#include <time.h>
+#include <ctime>
 
 // OOMon Headers
 #include "botsock.h"
@@ -39,18 +37,18 @@ public:
   UserEntry(const std::string & aNick, const std::string & aUser,
     const std::string & aHost, const std::string & aUserClass,
     const std::string & aGecos, const BotSock::Address anIp,
-    const time_t aConnectTime, const bool oper);
+    const std::time_t aConnectTime, const bool oper);
   virtual ~UserEntry() {};
 
   void setNick(const std::string & aNick);
   void setOper(const bool oper) { this->isOper = oper; };
-  void setReportTime(const time_t t) { this->reportTime = t; };
+  void setReportTime(const std::time_t t) { this->reportTime = t; };
   void incLinkCount() { ++this->linkCount; };
   void decLinkCount() { --this->linkCount; };
   void version(void);
   void hasVersion(const std::string & version);
 
-  void checkVersionTimeout(const time_t now, const time_t timeout);
+  void checkVersionTimeout(const std::time_t now, const std::time_t timeout);
 
   std::string getNick() const { return this->nick; };
   std::string getUser() const { return this->user; };
@@ -64,9 +62,9 @@ public:
   std::string getUserHost() const { return this->user + '@' + this->host; };
   std::string getUserIP() const
     { return this->user + '@' + BotSock::inet_ntoa(this->ip); };
-  time_t getConnectTime() const { return this->connectTime; };
-  time_t getReportTime() const { return this->reportTime; };
-  time_t getLinkCount() const { return this->linkCount; };
+  std::time_t getConnectTime() const { return this->connectTime; };
+  std::time_t getReportTime() const { return this->reportTime; };
+  std::time_t getLinkCount() const { return this->linkCount; };
 
   std::string output(const std::string & format) const;
 
@@ -78,9 +76,9 @@ private:
   std::string userClass;
   std::string gecos;
   BotSock::Address ip;
-  time_t connectTime;
-  time_t reportTime;
-  time_t versioned;
+  std::time_t connectTime;
+  std::time_t reportTime;
+  std::time_t versioned;
   bool isOper;
   int randScore;
   int linkCount;

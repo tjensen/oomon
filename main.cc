@@ -24,17 +24,17 @@
 #include <fstream>
 #include <string>
 #include <list>
+#include <cerrno>
+#include <ctime>
+#include <csignal>
 
 // Std C Headers
 #include <sys/types.h>
 #include <sys/time.h>
-#include <signal.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
-#include <errno.h>
 
 // OOMon Headers
 #include "oomon.h"
@@ -71,7 +71,7 @@ static bool forkme = false;
 static std::string configFile = DEFAULT_CFGFILE;
 static std::string pidFile = DEFAULT_PIDFILE;
 
-static time_t startTime = 0;
+static std::time_t startTime = 0;
 
 
 void
@@ -95,7 +95,7 @@ SendAll(const std::string & message, const UserFlags flags,
 }
 
 
-void
+RETSIGTYPE
 gracefuldie(int sig)
 {
   if (sig == SIGTERM)
@@ -132,7 +132,7 @@ gracefuldie(int sig)
 
 
 void
-reload()
+reload(void)
 {
   Config::Clear();
   Config::Load(configFile);
@@ -151,15 +151,16 @@ ReloadConfig(const std::string & from)
 }
 
 
-void
+RETSIGTYPE
 hangup(int sig)
 {
-  if (sig != SIGHUP)
-    return;
-  Log::Write("Caught SIGHUP -- Reloading config");
-  ::SendAll("*** Caught SIGHUP.", UserFlags::OPER);
-  reload();
-  signal(SIGHUP, hangup);
+  if (sig == SIGHUP)
+  {
+    Log::Write("Caught SIGHUP -- Reloading config");
+    ::SendAll("*** Caught SIGHUP.", UserFlags::OPER);
+    reload();
+    std::signal(SIGHUP, hangup);
+  }
 }
 
 
@@ -278,7 +279,7 @@ motd(BotClient * client)
 std::string
 getUptime(void)
 {
-  return timeDiff(::time(NULL) - startTime);
+  return timeDiff(std::time(NULL) - startTime);
 }
 
 
@@ -352,7 +353,7 @@ parseargs(int argc, char **argv)
 int
 main(int argc, char **argv)
 {
-  startTime = ::time(NULL);
+  startTime = std::time(NULL);
 
   if (parseargs(argc, argv))
   {
@@ -399,12 +400,12 @@ main(int argc, char **argv)
     }
   }
 
-  signal(SIGSEGV, gracefuldie);
-  signal(SIGBUS, gracefuldie);
-  signal(SIGTERM, gracefuldie);
-  signal(SIGINT, gracefuldie);
-  signal(SIGHUP, hangup);
-  signal(SIGPIPE, SIG_IGN);
+  std::signal(SIGSEGV, gracefuldie);
+  std::signal(SIGBUS, gracefuldie);
+  std::signal(SIGTERM, gracefuldie);
+  std::signal(SIGINT, gracefuldie);
+  std::signal(SIGHUP, hangup);
+  std::signal(SIGPIPE, SIG_IGN);
 
   std::ofstream PIDfile;
   PIDfile.open(pidFile.c_str());

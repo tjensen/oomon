@@ -22,9 +22,7 @@
 // Std C++ Headers
 #include <fstream>
 #include <string>
-
-// Std C Headers
-#include <time.h>
+#include <ctime>
 
 // OOMon Headers
 #include "strtype"
@@ -110,7 +108,7 @@ void
 Trap::updateStats(void)
 {
   ++this->_matchCount;
-  this->_lastMatch = time(NULL);
+  this->_lastMatch = std::time(NULL);
 }
 
 

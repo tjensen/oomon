@@ -24,11 +24,10 @@
 
 // Std C++ Headers
 #include <string>
-
-// Std C Headers
-#include <signal.h>
+#include <csignal>
 
 // OOMon Headers
+#include "oomon.h"
 #include "userflags.h"
 #include "watch.h"
 
@@ -40,7 +39,7 @@ enum OOMonExitCode
 };
 
 
-void gracefuldie(int sig);
+RETSIGTYPE gracefuldie(int sig);
 void ReloadConfig(const std::string & from);
 void SendAll(const std::string & message,
   const class UserFlags flags = UserFlags::NONE(),
@@ -50,3 +49,4 @@ void motd(class BotClient * client);
 std::string getUptime(void);
 
 #endif
+

@@ -22,9 +22,7 @@
 
 // Std C++ Headers
 #include <string>
-
-// Std C Headers
-#include <time.h>
+#include <ctime>
 
 // OOMon Headers
 #include "userentry.h"
@@ -43,7 +41,7 @@
 UserEntry::UserEntry(const std::string & aNick,
   const std::string & aUser, const std::string & aHost,
   const std::string & aUserClass, const std::string & aGecos,
-  const BotSock::Address anIp, const time_t aConnectTime, const bool oper)
+  const BotSock::Address anIp, const std::time_t aConnectTime, const bool oper)
   : user(aUser), host(aHost), domain(::getDomain(aHost, false)),
   userClass(::server.downCase(aUserClass)), gecos(aGecos), ip(anIp),
   connectTime(aConnectTime), reportTime(0), versioned(0), isOper(oper),
@@ -56,7 +54,7 @@ UserEntry::UserEntry(const std::string & aNick,
 void
 UserEntry::version(void)
 {
-  this->versioned = time(NULL);
+  this->versioned = std::time(NULL);
   server.ctcp(this->nick, "VERSION");
 }
 
@@ -71,11 +69,11 @@ UserEntry::hasVersion(const std::string & version)
 
 
 void
-UserEntry::checkVersionTimeout(const time_t now, const time_t timeout)
+UserEntry::checkVersionTimeout(const std::time_t now, const std::time_t timeout)
 {
   if (this->versioned > 0)
   {
-    time_t elapsed = now - this->versioned;
+    std::time_t elapsed = now - this->versioned;
 
     if (elapsed > timeout)
     {

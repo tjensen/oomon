@@ -22,13 +22,11 @@
 // Std C++ Headers
 #include <iostream>
 #include <string>
+#include <cerrno>
+#include <ctime>
 
 // Boost C++ Headers
 #include <boost/bind.hpp>
-
-// Std C Headers
-#include <errno.h>
-#include <time.h>
 
 // OOMon Headers
 #include "strtype"
@@ -127,7 +125,7 @@ IRC::IRC(): BotSock(false, true), supportETrace(false), supportKnock(false),
 bool
 IRC::process(const fd_set & readset, const fd_set & writeset)
 {
-  time_t now = time(0);
+  std::time_t now = std::time(0);
 
   // If we've been idle for half the timeout period, send a PING to make
   // sure the connection is still good!
@@ -181,7 +179,7 @@ IRC::write(const std::string & text)
   std::cout << "IRC << " << text;
 #endif
 
-  this->lastWrite = time(NULL);
+  this->lastWrite = std::time(NULL);
 
   return BotSock::write(text);
 }
@@ -1128,8 +1126,8 @@ IRC::locops(const std::string & text)
 void
 IRC::checkUserDelta(void)
 {
-  time_t now = ::time(NULL);
-  time_t lapse = now - this->lastUserDeltaCheck;
+  std::time_t now = std::time(NULL);
+  std::time_t lapse = now - this->lastUserDeltaCheck;
 
   if (lapse >= 10)
   {

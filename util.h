@@ -23,9 +23,7 @@
 
 // C++ Headers
 #include <string>
-
-// C Headers
-#include <time.h>
+#include <ctime>
 
 // OOMon Headers
 #include "strtype"
@@ -75,7 +73,7 @@ bool ChkPass(std::string, std::string);
 
 // Returns a representation of the date and time
 std::string timeStamp(const TimeStampFormat format = TIMESTAMP_LOG,
-  time_t when = time(NULL));
+  std::time_t when = std::time(NULL));
 
 // Returns a string representation of an integer
 std::string IntToStr(int i, std::string::size_type len = 0);
@@ -98,7 +96,7 @@ std::string classCMask(const std::string & ip);
 bool isNumeric(const std::string & text);
 bool isDynamic(const std::string & user, const std::string & host);
 
-std::string timeDiff(time_t diff);
+std::string timeDiff(std::time_t diff);
 
 std::string trimLeft(const std::string & text);
 

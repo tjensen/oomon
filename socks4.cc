@@ -23,6 +23,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <cerrno>
 
 // Boost C++ Headers
 #include <boost/bind.hpp>
@@ -31,7 +32,6 @@
 #include <stdio.h>				// for sprintf(4)
 #include <sys/types.h> 				// for getpwuid(3)
 #include <pwd.h>				// for getpwuid(3)
-#include <errno.h>				// for errno
 
 // OOMon Headers
 #include "oomon.h"

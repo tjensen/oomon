@@ -25,6 +25,7 @@
 #include <string>
 #include <list>
 #include <algorithm>
+#include <ctime>
 
 // Boost C++ Headers
 #include <boost/bind.hpp>
@@ -35,12 +36,10 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <fcntl.h>
-#include <time.h>
 #include <netdb.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <signal.h>
 #include <pwd.h>
 
 // OOMon headers
@@ -68,7 +67,7 @@
 
 ProxyList proxies;
 
-const time_t ProxyList::CACHE_EXPIRE = (60 * 60); /* 1 hour */
+const std::time_t ProxyList::CACHE_EXPIRE = (60 * 60); /* 1 hour */
 const ProxyList::SockList::size_type ProxyList::CACHE_SIZE = 5000;
 
 
@@ -209,7 +208,7 @@ void
 ProxyList::processAll(const fd_set & readset, const fd_set & writeset)
 {
   // Expire any old proxy cache entries
-  time_t now = time(NULL);
+  std::time_t now = std::time(NULL);
   ProxyList::CacheEntry empty;
   std::replace_if(this->safeHosts.begin(), this->safeHosts.end(),
     boost::bind(&ProxyList::CacheEntry::isExpired, _1, now), empty);

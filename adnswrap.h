@@ -62,7 +62,7 @@ public:
   public:
     Query(void);
     ~Query(void);
-    friend Adns;
+    friend class Adns;
   private:
     adns_query _query;
   };
@@ -77,7 +77,7 @@ public:
   public:
     Answer(void) { }
     ~Answer(void) { }
-    friend Adns;
+    friend class Adns;
     bool valid(void) const;
     adns_status status(void) const;
   private:

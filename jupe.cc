@@ -21,9 +21,7 @@
 
 // Std C++ Headers
 #include <string>
-
-// Std C Headers
-#include <time.h>
+#include <ctime>
 
 // OOMon Headers
 #include "strtype"
@@ -77,7 +75,7 @@ JupeJoinList::checkJupe(const std::string & nick,
 
 void
 JupeJoinList::add(const std::string & nick, const std::string & userhost,
-  const std::string & channel, time_t now)
+  const std::string & channel, std::time_t now)
 {
   bool foundEntry = false;
 
@@ -171,7 +169,7 @@ JupeJoinList::onNotice(const std::string & notice)
   ::SendAll("*** " + notice, UserFlags::OPER, WATCH_JUPES);
   Log::Write(notice);
 
-  this->add(nick, userhost, channel, time(NULL));
+  this->add(nick, userhost, channel, std::time(NULL));
 
   return true;
 }

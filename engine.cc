@@ -22,11 +22,10 @@
 // Std C++ headers
 #include <string>
 #include <map>
+#include <ctime>
 
 // Std C headers
 #include <stdio.h>
-#include <signal.h>
-#include <time.h>
 #include <netdb.h>
 
 // OOMon Headers
@@ -64,8 +63,8 @@ public:
   std::string	userhost;
   std::string	lastNick;
   int		nickChangeCount;
-  time_t	firstNickChange;
-  time_t	lastNickChange;
+  std::time_t	firstNickChange;
+  std::time_t	lastNickChange;
   bool		noticed;
 };
 
@@ -318,14 +317,14 @@ static void
 addToNickChangeList(const std::string & userhost, const std::string & oldNick,
   const std::string & lastNick)
 {
-  time_t currentTime = time(NULL);
+  std::time_t currentTime = std::time(NULL);
    
   bool foundEntry = false;
    
   for (std::list<NickChangeEntry>::iterator ncp = nickChanges.begin();
     ncp != nickChanges.end(); ++ncp)
   {         
-    time_t timeDifference = currentTime - ncp->lastNickChange;
+    std::time_t timeDifference = currentTime - ncp->lastNickChange;
 
     /* is it stale ? */
     if (timeDifference >= vars[VAR_NICK_CHANGE_T2_TIME]->getInt())

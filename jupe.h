@@ -24,9 +24,7 @@
 // Std C++ Headers
 #include <string>
 #include <list>
-
-// Std C Headers
-#include <time.h>
+#include <ctime>
 
 // OOMon Headers
 #include "strtype"
@@ -51,7 +49,7 @@ private:
     std::string	userhost;
     std::string	channel;
     int		count;
-    time_t	last;
+    std::time_t	last;
   };
 
   std::list<JupeJoinEntry> list;
@@ -59,7 +57,7 @@ private:
   void checkJupe(const std::string & nick, const JupeJoinEntry & entry) const;
 
   void add(const std::string & nick, const std::string & userhost,
-    const std::string & channel, time_t now);
+    const std::string & channel, std::time_t now);
 };
 
 

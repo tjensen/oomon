@@ -23,12 +23,10 @@
 
 // Std C++ Headers
 #include <string>
+#include <ctime>
 
 // Boost C++ Headers
 #include <boost/function.hpp>
-
-// Std C Headers
-#include <time.h>
 
 // OOMon Headers
 #include "strtype"
@@ -106,7 +104,7 @@ public:
   void subSpamTrap(const bool sub);
 
   std::string getServerName(void) const { return serverName; };
-  time_t getWriteIdle(void) const { return time(NULL) - this->lastWrite; };
+  std::time_t getWriteIdle(void) const { return time(NULL) - this->lastWrite; };
 
   void checkUserDelta(void);
 
@@ -154,9 +152,9 @@ private:
   std::string serverName;
   KlineList klines;
   KlineList dlines;
-  time_t lastUserDeltaCheck;
-  time_t lastWrite;
-  time_t lastCtcpVersionTimeoutCheck;
+  std::time_t lastUserDeltaCheck;
+  std::time_t lastWrite;
+  std::time_t lastCtcpVersionTimeoutCheck;
 
   void onCtcp(const std::string & from, const std::string & userhost,
     const std::string & to, std::string text);

@@ -292,7 +292,7 @@ Config::addRemoteClient(const std::string & mask, const std::string & flags)
   }
   catch (UserFlags::invalid_flag & e)
   {
-    std::cerr << e.what() << endl;
+    std::cerr << e.what() << std::endl;
   }
 }
 

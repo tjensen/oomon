@@ -25,6 +25,7 @@
 #include <string>
 #include <list>
 #include <algorithm>
+#include <ctime>
 
 // Std C headers
 #include <sys/types.h>
@@ -32,12 +33,10 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <fcntl.h>
-#include <time.h>
 #include <netdb.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <signal.h>
 #include <pwd.h>
 
 // OOMon headers

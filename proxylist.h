@@ -68,7 +68,7 @@ public:
 
   void status(class BotClient * client) const;
 
-  static const time_t CACHE_EXPIRE;
+  static const std::time_t CACHE_EXPIRE;
 
 private:
   typedef std::list<ProxyPtr> SockList;
@@ -104,7 +104,7 @@ private:
     CacheEntry(void) : _ip(INADDR_NONE) { };
     CacheEntry(const BotSock::Address & ip, const BotSock::Port & port,
       const Proxy::Protocol & type)
-      : _ip(ip), _port(port), _type(type), _checked(time(NULL)) { };
+      : _ip(ip), _port(port), _type(type), _checked(std::time(NULL)) { };
 
     bool isEmpty(void) const { return (INADDR_NONE == _ip); };
     bool operator==(const CacheEntry & rhs) const
@@ -130,7 +130,7 @@ private:
 	return (_checked < rhs._checked);
       }
     }
-    bool isExpired(const time_t now) const
+    bool isExpired(const std::time_t now) const
     {
       if (!this->isEmpty() && ((now - _checked) > ProxyList::CACHE_EXPIRE))
       {
@@ -145,7 +145,7 @@ private:
     BotSock::Address _ip;
     BotSock::Port _port;
     Proxy::Protocol _type;
-    time_t _checked;
+    std::time_t _checked;
   };
 
   typedef std::vector<CacheEntry> Cache;

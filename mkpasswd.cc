@@ -22,11 +22,11 @@
 // Std C++ Headers
 #include <iostream>
 #include <string>
+#include <cstdlib>
+#include <ctime>
 
 // Std C Headers
-#include <stdlib.h>
 #include <unistd.h>
-#include <time.h>
 
 // OOMon Headers
 #include "oomon.h"
@@ -39,11 +39,11 @@ static char saltChars[] =
 static	char	*
 makeSalt(char *salt, int size)
 {
-  srandom(time(NULL));
+  std::srand(std::time(NULL));
 
   for(int i = 0; i < size; ++i)
   {
-    salt[i] = saltChars[random() % 64];
+    salt[i] = saltChars[std::rand() % 64];
   }
   return(salt);
 }
@@ -56,12 +56,12 @@ main(void)
 	std::cout << "Plaintext: ";
 
 	std::string plaintext;
-	std::getline(cin, plaintext);
+	std::getline(std::cin, plaintext);
 
 	char salt[2];
 	makeSalt(salt, 2);
 
-	std::cout << "Encrypted: " << crypt(plaintext.c_str(), salt) <<
+	std::cout << "Encrypted: " << ::crypt(plaintext.c_str(), salt) <<
 	  std::endl;
 
 	return 0;

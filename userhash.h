@@ -23,9 +23,7 @@
 
 // Std C++ Headers
 #include <string>
-
-// Std C Headers
-#include <time.h>
+#include <ctime>
 
 // OOMon Headers
 #include "strtype"

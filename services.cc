@@ -21,10 +21,10 @@
 
 // Std C++ Headers
 #include <string>
+#include <ctime>
 
 // Std C Headers
 #include <stdio.h>
-#include <time.h>
 
 // OOMon Headers
 #include "oomon.h"
@@ -44,7 +44,7 @@ Services services;
 void
 Services::check()
 {
-  time_t now = time(NULL);
+  std::time_t now = std::time(NULL);
 
   if ((this->lastCheckedTime +
     (vars[VAR_SERVICES_CHECK_INTERVAL]->getInt() * 60)) < now)

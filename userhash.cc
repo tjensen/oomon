@@ -26,10 +26,10 @@
 #include <vector>
 #include <map>
 #include <algorithm>
+#include <ctime>
 
 // Std C Headers
 #include <stdio.h>
-#include <time.h>
 
 // OOMon Headers
 #include "strtype"
@@ -112,7 +112,7 @@ UserHash::add(const std::string & nick, const std::string & userhost,
 
       UserEntry * newuser = new UserEntry(nick, user, host, userClass, gecos,
 	(ip.length() > 0) ? BotSock::inet_addr(ip) : INADDR_NONE, 
-	(fromTrace ? 0 : time(NULL)), isOper);
+	(fromTrace ? 0 : std::time(NULL)), isOper);
 
       // Add it to the hash tables
       UserHash::addToHash(this->hosttable, newuser->getHost(), newuser);
@@ -248,11 +248,11 @@ UserHash::onVersionReply(const std::string & nick, const std::string & userhost,
 void
 UserHash::checkVersionTimeout(void)
 {
-  time_t timeout = vars[VAR_CTCPVERSION_TIMEOUT]->getInt();
+  std::time_t timeout = vars[VAR_CTCPVERSION_TIMEOUT]->getInt();
 
   if (timeout > 0)
   {
-    time_t now = time(0);
+    std::time_t now = std::time(0);
 
     for (int i = 0; i < HASHTABLESIZE; ++i)
     {
@@ -1083,7 +1083,7 @@ UserHash::reportClones(BotClient * client)
 
       if (temp == userptr)
       {
-        std::vector<time_t> connfromhost;
+        std::vector<std::time_t> connfromhost;
 	connfromhost.reserve(100);
 
         int numfound = 1;
@@ -1104,7 +1104,7 @@ UserHash::reportClones(BotClient * client)
 	{
 	  // sort connect times in decreasing order
 	  std::sort(connfromhost.begin(), connfromhost.end(),
-	    std::greater<time_t>());
+	    std::greater<std::time_t>());
 
 	  int j, k;
 
@@ -1427,9 +1427,9 @@ UserHash::checkHostClones(const std::string & host)
   const int index = UserHash::hashFunc(host);
   UserHash::HashRec *find = this->hosttable[index];
   
-  time_t now = time(NULL);
-  time_t oldest = now;
-  time_t lastReport = 0;
+  std::time_t now = std::time(NULL);
+  std::time_t oldest = now;
+  std::time_t lastReport = 0;
   
   int cloneCount = 0; 
   int reportedClones = 0;
@@ -1586,9 +1586,9 @@ UserHash::checkIpClones(const BotSock::Address & ip)
   const int index = UserHash::hashFunc(ip);
   UserHash::HashRec *find = this->iptable[index];
   
-  time_t now = time(NULL);
-  time_t oldest = now;
-  time_t lastReport = 0;
+  std::time_t now = std::time(NULL);
+  std::time_t oldest = now;
+  std::time_t lastReport = 0;
   
   int cloneCount = 0; 
   int reportedClones = 0;

@@ -21,9 +21,7 @@
 
 // Std C++ Headers
 #include <string>
-
-// Std C Headers
-#include <time.h>
+#include <ctime>
 
 // OOMon Headers
 #include "flood.h"
@@ -38,7 +36,7 @@
 
 void
 FloodList::addFlood(const std::string & nick, const std::string & userhost,
-  time_t now, bool local)
+  std::time_t now, bool local)
 {
   bool foundEntry = false;
 
@@ -105,7 +103,7 @@ FloodList::addFlood(const std::string & nick, const std::string & userhost,
 
 bool
 FloodList::onNotice(const std::string & notice, std::string text,
-  time_t now)
+  std::time_t now)
 {
   if (server.downCase(FirstWord(text)) != "requested")
   {

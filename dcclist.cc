@@ -24,9 +24,7 @@
 #include <string>
 #include <list>
 #include <algorithm>
-
-// Std C headers
-#include <errno.h>
+#include <cerrno>
 
 // OOMon Headers
 #include "strtype"

@@ -24,6 +24,7 @@
 // Std C++ headers
 #include <string>
 #include <list>
+#include <ctime>
 
 // Boost C++ headers
 #include <boost/shared_ptr.hpp>
@@ -35,7 +36,6 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <time.h>
 
 // OOMon C++ headers
 #include "oomon.h"
@@ -99,10 +99,11 @@ public:
   void setBinary(const bool value) { this->binary = value; };
   bool isBinary(void) const { return this->binary; };
 
-  void setTimeout(const time_t value) { this->timeout = value; };
-  time_t getTimeout(void) const { return this->timeout; };
-  time_t getIdle(void) const { return (time(NULL) - this->lastActivity); };
-  void gotActivity(void) { this->lastActivity = time(NULL); };
+  void setTimeout(const std::time_t value) { this->timeout = value; };
+  std::time_t getTimeout(void) const { return this->timeout; };
+  std::time_t getIdle(void) const
+    { return (std::time(NULL) - this->lastActivity); };
+  void gotActivity(void) { this->lastActivity = std::time(NULL); };
 
   std::string getUptime(void) const;
 
@@ -149,7 +150,7 @@ private:
   OnBinaryReadHandler onBinaryReadHandler;
   std::string buffer;
   Address bindAddress;
-  time_t timeout, lastActivity, connectTime;
+  std::time_t timeout, lastActivity, connectTime;
   bool connected, connecting, listening, blocking, lineBuffered, binary;
   int plug, backlog;
 };

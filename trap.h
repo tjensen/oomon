@@ -25,12 +25,10 @@
 #include <fstream>
 #include <string>
 #include <list>
+#include <ctime>
 
 // Boost C++ Headers
 #include <boost/shared_ptr.hpp>
-
-// Std C Headers
-#include <time.h>
 
 // OOMon Headers
 #include "strtype"
@@ -69,7 +67,7 @@ public:
   std::string getPattern(void) const;
   std::string getReason(void) const { return this->_reason; }
   std::string getString(bool showCount = false, bool showTime = false) const;
-  time_t getLastMatch(void) const { return this->_lastMatch; };
+  std::time_t getLastMatch(void) const { return this->_lastMatch; };
   unsigned long getMatchCount(void) const { return this->_matchCount; };
 
 private:
@@ -83,7 +81,7 @@ private:
   PatternPtr	_version;
   RegExPatternPtr	_rePattern;
   std::string	_reason;	// For Kills, K-Lines, and D-Lines only
-  time_t	_lastMatch;
+  std::time_t	_lastMatch;
   unsigned long	_matchCount;
 
   static void split(const std::string & pattern, std::string & nick,

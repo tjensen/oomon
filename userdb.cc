@@ -21,9 +21,7 @@
 
 // Std C++ Headers
 #include <string>
-
-// Std C Headers
-#include <errno.h>
+#include <cerrno>
 
 // Boost C++ Headers
 #include <boost/shared_ptr.hpp>

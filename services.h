@@ -23,11 +23,7 @@
 
 // Std C++ Headers
 #include <string>
-
-// Std C Headers
-#include <time.h>
-
-// OOMon Headers
+#include <ctime>
 
 
 class Services
@@ -49,7 +45,7 @@ private:
   int cloneCount;
   bool suggestKline;
 
-  time_t lastCheckedTime;
+  std::time_t lastCheckedTime;
   bool gettingCaReports;
 };
 
