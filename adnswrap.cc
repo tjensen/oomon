@@ -35,9 +35,11 @@ Adns adns;
 Adns::Adns(void)
 {
 #ifdef HAVE_LIBADNS
-  if (adns_init(&this->_state, adns_if_nosigpipe, 0))
+  int ret = adns_init(&this->_state, adns_if_nosigpipe, 0);
+
+  if (0 != ret)
   {
-    throw std::string("Unable to initialize adns");
+    throw Adns::adns_error("Unable to initialize adns", ret);
   }
 #endif /* HAVE_LIBADNS */
 }
@@ -52,16 +54,45 @@ Adns::~Adns(void)
 
 
 #ifdef HAVE_LIBADNS
-int
-Adns::submit(const std::string & name, adns_query & query)
+Adns::Query::Query(void) : _query(0)
 {
-  return adns_submit(this->_state, name.c_str(), adns_r_addr,
-    static_cast<adns_queryflags>(adns_qf_owner | adns_qf_search), 0, &query);
+}
+
+
+Adns::Query::~Query(void)
+{
+  if (this->_query)
+  {
+    adns_cancel(this->_query);
+  }
+}
+
+
+bool
+Adns::Answer::valid(void) const
+{
+  return (0 != this->_answer.get());
+}
+
+
+adns_status
+Adns::Answer::status(void) const
+{
+  return this->_answer->status;
 }
 
 
 int
-Adns::submit_reverse(const BotSock::Address & addr, adns_query & query)
+Adns::submit(const std::string & name, Adns::Query & query)
+{
+  return adns_submit(this->_state, name.c_str(), adns_r_addr,
+    static_cast<adns_queryflags>(adns_qf_owner | adns_qf_search), 0,
+    &query._query);
+}
+
+
+int
+Adns::submit_reverse(const BotSock::Address & addr, Adns::Query & query)
 {
   struct sockaddr_in saddr;
 
@@ -71,13 +102,13 @@ Adns::submit_reverse(const BotSock::Address & addr, adns_query & query)
 
   return adns_submit_reverse(this->_state,
     reinterpret_cast<struct sockaddr *>(&saddr), adns_r_ptr,
-    static_cast<adns_queryflags>(adns_qf_owner), 0, &query);
+    static_cast<adns_queryflags>(adns_qf_owner), 0, &query._query);
 }
 
 
 int
 Adns::submit_rbl(const BotSock::Address & addr, const std::string & zone,
-  adns_query & query)
+  Adns::Query & query)
 {
   struct sockaddr_in saddr;
 
@@ -87,16 +118,32 @@ Adns::submit_rbl(const BotSock::Address & addr, const std::string & zone,
 
   return adns_submit_reverse_any(this->_state,
     reinterpret_cast<struct sockaddr *>(&saddr), zone.c_str(), adns_r_addr,
-    static_cast<adns_queryflags>(adns_qf_owner), 0, &query);
+    static_cast<adns_queryflags>(adns_qf_owner), 0, &query._query);
 }
 
 
-int
-Adns::check(adns_query & query, adns_answer * & answer)
+Adns::Answer
+Adns::check(Adns::Query & query)
 {
   void *context;
 
-  return adns_check(this->_state, &query, &answer, &context);
+  adns_answer * reply;
+
+  int ret = adns_check(this->_state, &query._query, &reply, &context);
+
+  Adns::Answer result;
+  if (0 == ret)
+  {
+    query._query = 0;
+
+    result._answer.reset(reply, free);
+  }
+  else
+  {
+    throw Adns::adns_error("adns_check failed", ret);
+  }
+
+  return result;
 }
 #endif /* HAVE_LIBADNS */
 

@@ -25,8 +25,15 @@
 // Std C++ Headers
 #include <string>
 
+// Boost C++ Headers
+#include <boost/utility.hpp>
+#include <boost/shared_ptr.hpp>
+
 // OOMon Headers
+#include "oomon.h"
 #include "botsock.h"
+#include "botexcept.h"
+
 
 #ifdef HAVE_LIBADNS
 # include <adns.h>
@@ -39,13 +46,45 @@ public:
   Adns(void);
   ~Adns(void);
 
-#ifdef HAVE_LIBADNS
-  int submit(const std::string & name, adns_query & query);
-  int submit_reverse(const BotSock::Address & addr, adns_query & query);
-  int submit_rbl(const BotSock::Address & addr, const std::string & zone,
-    adns_query & query);
+  class adns_error : public OOMon::oomon_error
+  {
+  public:
+    adns_error(const std::string & arg, const int error) : oomon_error(arg),
+      _errno(error) { };
+    int error(void) const { return this->_errno; }
+  private:
+    int _errno;
+  };
 
-  int check(adns_query & query, adns_answer * & answer);
+#ifdef HAVE_LIBADNS
+  class Query : boost::noncopyable
+  {
+  public:
+    Query(void);
+    ~Query(void);
+    friend Adns;
+  private:
+    adns_query _query;
+  };
+
+  int submit(const std::string & name, Adns::Query & query);
+  int submit_reverse(const BotSock::Address & addr, Adns::Query & query);
+  int submit_rbl(const BotSock::Address & addr, const std::string & zone,
+    Adns::Query & query);
+
+  class Answer
+  {
+  public:
+    Answer(void) { }
+    ~Answer(void) { }
+    friend Adns;
+    bool valid(void) const;
+    adns_status status(void) const;
+  private:
+    boost::shared_ptr<adns_answer> _answer;
+  };
+
+  Adns::Answer check(Adns::Query & query);
 #endif /* HAVE_LIBADNS */
 
   void beforeselect(int & maxfd, fd_set & readfds, fd_set & writefds,

@@ -120,14 +120,12 @@ Dnsbl::Query::process(void)
 {
   bool finished = false;
 
-  adns_answer * answer;
-
-  int ret = adns.check(this->query, answer);
-
-  if (0 == ret)
+  try
   {
+    Adns::Answer answer = adns.check(this->query);
+
     // Request completed successfully
-    if (0 == answer->status)
+    if (0 == answer.status())
     {
 #ifdef DNSBL_DEBUG
       std::cout << "DNSBL query succeeded!" << std::endl;
@@ -140,14 +138,16 @@ Dnsbl::Query::process(void)
       std::cout << "DNSBL query failed!" << std::endl;
 #endif /* DNSBL_DEBUG */
     }
-    free(answer);
     finished = true;
   }
-  else if (ESRCH == ret)
+  catch (Adns::adns_error & e)
   {
-    // No appropriate requests are outstanding!
-    std::cerr << "adns.check() returned ESRCH!" << std::endl;
-    finished = true;
+    if (ESRCH == e.error())
+    {
+      // No appropriate requests are outstanding!
+      std::cerr << "adns.check() returned ESRCH!" << std::endl;
+      finished = true;
+    }
   }
 
   return finished;

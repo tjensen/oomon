@@ -65,7 +65,7 @@ private:
 
     bool process(void);
 
-    adns_query query;
+    Adns::Query query;
 
   private:
     const BotSock::Address _addr;
