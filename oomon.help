@@ -218,12 +218,6 @@ findu
 .l.kill
 .l.list
 .l.nfind
-gline
-.s.gline [<duration>] <nick|mask> <reason>
-.d.Adds a K: line (ban) for a particular nick
-.d.or user@host mask on all linked bots.
-.f.g
-.l.ungline
 glist
 .s.glist [-count] [-class <name>] <pattern>
 .d.Searches clients' GECOS fields for a
@@ -2672,14 +2666,6 @@ umulti
 .l.multi
 .l.set multi_min
 .l.vmulti
-ungline
-.s.ungline <mask>
-.d.Removes a server K: line (ban) for a
-.d.particular user@host mask on all linked
-.d.monitor bots.
-.f.g
-.l.gline
-.l.unkline
 undline
 .s.undline <mask>
 .d.Removes a server D: line (ban) for a
@@ -2763,8 +2749,8 @@ watch
 .l.echo
 who
 .s.who
-.d.Lists the currently connected users, their
-.d.flags, and their idle times.
+.d.Lists all users connected to the OOMon, along
+.d.with their flags, and their idle times.
 .e.> .who
 .e.Client connections:
 .e.DGKMOR Toast (toast@lalalala.Cheese.EDU) 0
@@ -2773,3 +2759,4 @@ who
 .e.  K O  xer (xer@friends.of.polofool.org) 6536
 .e. GK OR moogle (lb@invalid.fqdn.net) 43449
 .e.  K O  sublimez (sublimez@cheap.beer.com) 4
+.l.links
