@@ -122,8 +122,8 @@ Services::onXoNotice(std::string text)
     if (find)
     {
       ip = find->getIP();
-      excluded = config.isExcluded(find) ||
-        config.isOper(this->cloningUserhost, find->getIP());
+      excluded = find->getOper() || config.isExcluded(find) ||
+        config.isOper(find);
     }
     else
     {

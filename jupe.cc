@@ -69,8 +69,8 @@ JupeJoinList::checkJupe(const std::string & nick,
     if (find)
     {
       ip = find->getIP();
-      excluded = config.isExcluded(find) ||
-        config.isOper(entry.userhost, find->getIP());
+      excluded = find->getOper() || config.isExcluded(find) ||
+        config.isOper(find);
     }
     else
     {

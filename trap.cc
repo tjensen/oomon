@@ -559,8 +559,7 @@ void
 TrapList::match(const UserEntryPtr user, const std::string & version,
   const std::string & privmsg, const std::string & notice)
 {
-  if (!config.isExcluded(user) &&
-    !config.isOper(user->getUserHost(), user->getIP()))
+  if (!user->getOper() && !config.isExcluded(user) && !config.isOper(user))
   {
     for (TrapMap::iterator pos = traps.begin(); pos != traps.end(); ++pos)
     {

@@ -71,8 +71,8 @@ FloodList::addFlood(const std::string & nick, const std::string & userhost,
         if (find)
         {
           ip = find->getIP();
-          excluded = config.isExcluded(find) ||
-            config.isOper(userhost, find->getIP());
+          excluded = find->getOper() || config.isExcluded(find) ||
+            config.isOper(find);
         }
         else
         {
@@ -159,7 +159,7 @@ FloodList::onNotice(const std::string & notice, std::string text,
 
   /* Don't complain about opers */
   if (!config.isOper(userhost, users.getIP(nick, userhost)) &&
-    !users.isOper(nick, userhost))
+      !users.isOper(nick, userhost))
   {
     ::SendAll(notice, UserFlags::OPER, this->getWatch());
 

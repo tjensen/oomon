@@ -744,6 +744,13 @@ Config::isOper(const std::string & userhost, const BotSock::Address & ip) const
 
 
 bool
+Config::isOper(const UserEntryPtr & user) const
+{
+  return this->isOper(user->getUserHost(), user->getIP());
+}
+
+
+bool
 Config::linkable(const std::string & host) const
 {
   bool result(false);

@@ -437,8 +437,8 @@ addToNickChangeList(const std::string & userhost, const std::string & oldNick,
       if (user)
       {
         ip = user->getIP();
-        excluded = config.isExcluded(user) ||
-          config.isOper(userhost, user->getIP());
+        excluded = user->getOper() || config.isExcluded(user) ||
+          config.isOper(user);
       }
       else
       {
@@ -731,8 +731,8 @@ onCsNickFlood(std::string text)
   if (user)
   {
     ip = user->getIP();
-    excluded = config.isExcluded(user) ||
-      config.isOper(userhost, user->getIP());
+    excluded = user->getOper() || config.isExcluded(user) ||
+      config.isOper(user);
   }
   else
   {

@@ -156,7 +156,7 @@ UserHash::add(const std::string & nick, const std::string & userhost,
       // Don't check for wingate or clones when doing a TRACE
       if (!fromTrace)
       {
-        if (!config.isExcluded(newuser) && !config.isOper(userhost, ip))
+        if (!config.isExcluded(newuser) && !config.isOper(newuser))
         {
           // Check if this client matches any traps
           if (vars[VAR_TRAP_CONNECTS]->getBool())
@@ -276,7 +276,7 @@ UserHash::onPrivmsg(const std::string & nick, const std::string & userhost,
 
     if (find)
     {
-	TrapList::matchPrivmsg(find, privmsg);
+      TrapList::matchPrivmsg(find, privmsg);
     }
   }
 }
@@ -292,7 +292,7 @@ UserHash::onNotice(const std::string & nick, const std::string & userhost,
 
     if (find)
     {
-	TrapList::matchNotice(find, notice);
+      TrapList::matchNotice(find, notice);
     }
   }
 }
@@ -358,8 +358,7 @@ UserHash::updateNick(const std::string & oldNick, const std::string & userhost,
     }
 
     if ((find->getScore() >= vars[VAR_SEEDRAND_REPORT_MIN]->getInt()) &&
-      !config.isOper(userhost, find->getIP()) && !config.isExcluded(find) &&
-      !find->getOper())
+        !find->getOper() && !config.isOper(find) && !config.isExcluded(find))
     {
       std::string scoreStr(
 	boost::lexical_cast<std::string>(find->getScore()));
@@ -1302,12 +1301,14 @@ void
 UserHash::reportMulti(BotClient * client, const int minimum) const
 {
   int numfound;
-  char notip, foundany = 0;
+  char foundany = 0;
   char outmsg[MAX_BUFF];
   int minclones = vars[VAR_MULTI_MIN]->getInt();
 
   if (minimum > 0)
     minclones = minimum;
+
+  bool operInMulti(vars[VAR_OPER_IN_MULTI]->getBool());
 
   for (UserEntryTable::const_iterator i = this->domaintable.begin();
       i != this->domaintable.end(); ++i)
@@ -1333,8 +1334,7 @@ UserHash::reportMulti(BotClient * client, const int minimum) const
           if (server.same((*temp)->getUser(), (*userptr)->getUser()) &&
             server.same((*temp)->getDomain(), (*userptr)->getDomain()))
 	  {
-            if (vars[VAR_OPER_IN_MULTI]->getBool() || (!(*temp)->getOper() &&
-	      !config.isOper((*temp)->getUserHost(), (*temp)->getIP())))
+            if (operInMulti || (!(*temp)->getOper() && !config.isOper(*temp)))
             {
               ++numfound;       /* - zaph & Dianora :-) */
 	    }
@@ -1347,7 +1347,7 @@ UserHash::reportMulti(BotClient * client, const int minimum) const
             client->send("Multiple clients from the following userhosts:");
 	  }
 
-          notip = strncmp((*userptr)->getDomain().c_str(),
+          char notip = strncmp((*userptr)->getDomain().c_str(),
 	    (*userptr)->getHost().c_str(),
             strlen((*userptr)->getDomain().c_str())) ||
             (strlen((*userptr)->getDomain().c_str()) ==
@@ -1381,6 +1381,8 @@ UserHash::reportHMulti(BotClient * client, const int minimum) const
   if (minimum > 0)
     minclones = minimum;
 
+  bool operInMulti(vars[VAR_OPER_IN_MULTI]->getBool());
+
   for (UserEntryTable::const_iterator i = this->domaintable.begin();
       i != this->domaintable.end(); ++i)
   {
@@ -1403,8 +1405,7 @@ UserHash::reportHMulti(BotClient * client, const int minimum) const
         {
           if (server.same((*temp)->getHost(), (*userptr)->getHost()))
 	  {
-            if (vars[VAR_OPER_IN_MULTI]->getBool() || (!(*temp)->getOper() &&
-	      !config.isOper((*temp)->getUserHost(), (*temp)->getIP())))
+            if (operInMulti || (!(*temp)->getOper() && !config.isOper(*temp)))
             {
               ++numfound;       /* - zaph & Dianora :-) */
 	    }
@@ -1443,6 +1444,8 @@ UserHash::reportUMulti(BotClient * client, const int minimum) const
   if (minimum > 0)
     minclones = minimum;
 
+  bool operInMulti(vars[VAR_OPER_IN_MULTI]->getBool());
+
   for (UserEntryTable::const_iterator i = this->usertable.begin();
       i != this->usertable.end(); ++i)
   {
@@ -1465,8 +1468,7 @@ UserHash::reportUMulti(BotClient * client, const int minimum) const
         {
           if (server.same((*temp)->getUser(), (*userptr)->getUser()))
 	  {
-            if (vars[VAR_OPER_IN_MULTI]->getBool() || (!(*temp)->getOper() &&
-	      !config.isOper((*temp)->getUserHost(), (*temp)->getIP())))
+            if (operInMulti || (!(*temp)->getOper() && !config.isOper(*temp)))
             {
               ++numfound;       /* - zaph & Dianora :-) */
 	    }
@@ -1505,6 +1507,8 @@ UserHash::reportVMulti(BotClient * client, const int minimum) const
   if (minimum > 0)
     minclones = minimum;
 
+  bool operInMulti(vars[VAR_OPER_IN_MULTI]->getBool());
+
   for (UserEntryTable::const_iterator i = this->iptable.begin();
       i != this->iptable.end(); ++i)
   {
@@ -1531,8 +1535,7 @@ UserHash::reportVMulti(BotClient * client, const int minimum) const
             (((*userptr)->getIP() & BotSock::ClassCNetMask) ==
 	    ((*userptr)->getIP() & BotSock::ClassCNetMask)))
 	  {
-            if (vars[VAR_OPER_IN_MULTI]->getBool() || (!(*temp)->getOper() &&
-	      !config.isOper((*temp)->getUserHost(), (*temp)->getIP())))
+            if (operInMulti || (!(*temp)->getOper() && !config.isOper(*temp)))
             {
               ++numfound;       /* - zaph & Dianora :-) */
 	    }
