@@ -26,6 +26,9 @@
 #include <string>
 #include <list>
 
+// Std C Headers
+#include <time.h>
+
 // OOMon Headers
 #include "strtype"
 #include "botsock.h"
@@ -54,11 +57,15 @@ public:
   void doAction(const std::string & nick, const std::string & userhost,
     const std::string & ip, const std::string & gecos) const;
 
-  TrapAction getAction() const { return this->_action; }
-  long getTimeout() const { return this->_timeout; }
-  std::string getPattern() const;
-  std::string getReason() const { return this->_reason; }
-  std::string getString() const;
+  void updateStats(void);
+
+  TrapAction getAction(void) const { return this->_action; }
+  long getTimeout(void) const { return this->_timeout; }
+  std::string getPattern(void) const;
+  std::string getReason(void) const { return this->_reason; }
+  std::string getString(bool showCount = false, bool showTime = false) const;
+  time_t getLastMatch(void) const { return this->_lastMatch; };
+  unsigned long getMatchCount(void) const { return this->_matchCount; };
 
 private:
   TrapAction	_action;
@@ -67,7 +74,9 @@ private:
   Pattern	*_userhost;
   Pattern	*_gecos;
   RegExPattern	*_rePattern;
-  std::string	_reason;		// For Kills, K-Lines, and D-Lines only
+  std::string	_reason;	// For Kills, K-Lines, and D-Lines only
+  time_t	_lastMatch;
+  unsigned long	_matchCount;
 
   static void split(const std::string & pattern, std::string & nick,
     std::string & userhost);
@@ -93,7 +102,7 @@ public:
     TrapList::match(nick, userhost, BotSock::inet_ntoa(ip), gecos);
   };
 
-  static void list(StrList & output);
+  static void list(StrList & output, bool showCounts, bool showTimes);
 
   static void save(std::ofstream & file);
 

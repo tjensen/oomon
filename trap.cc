@@ -23,6 +23,9 @@
 #include <fstream>
 #include <string>
 
+// Std C Headers
+#include <time.h>
+
 // OOMon Headers
 #include "strtype"
 #include "botexcept.h"
@@ -34,6 +37,7 @@
 #include "config.h"
 #include "vars.h"
 #include "pattern.h"
+#include "arglist.h"
 
 
 std::list<Trap> TrapList::traps;
@@ -42,7 +46,7 @@ std::list<Trap> TrapList::traps;
 Trap::Trap(const TrapAction action, const long timeout,
   const std::string & line)
   : _action(action), _timeout(timeout), _nick(0), _userhost(0), _gecos(0),
-  _rePattern(0)
+  _rePattern(0), _lastMatch(0), _matchCount(0)
 {
   if ((line.length() > 0) && (line[0] == '/'))
   {
@@ -102,7 +106,8 @@ Trap::Trap(const TrapAction action, const long timeout,
 
 Trap::Trap(const Trap & copy)
   : _action(copy._action), _timeout(copy._timeout), _nick(0), _userhost(0),
-  _gecos(0), _rePattern(0), _reason(copy._reason)
+  _gecos(0), _rePattern(0), _reason(copy._reason), _lastMatch(copy._lastMatch),
+  _matchCount(copy._matchCount)
 {
   if (NULL != copy._rePattern)
   {
@@ -141,6 +146,15 @@ Trap::~Trap(void)
     delete this->_gecos;
   }
 }
+
+
+void
+Trap::updateStats(void)
+{
+  ++this->_matchCount;
+  this->_lastMatch = time(NULL);
+}
+
 
 bool
 Trap::matches(const std::string & nick, const std::string & userhost,
@@ -246,17 +260,29 @@ Trap::operator==(const std::string & pattern) const
 
 
 std::string
-Trap::getString() const
+Trap::getString(bool showCount, bool showTime) const
 {
-  std::string text = TrapList::actionString(this->getAction()) + ": ";
+  std::string result;
+
+  if (showCount)
+  {
+    result += ULongToStr(this->getMatchCount()) + " ";
+  }
+
+  if (showTime && (0 != this->getLastMatch()))
+  {
+    result += timeStamp(TIMESTAMP_LOG, this->getLastMatch()) + " ";
+  }
+
+  result += TrapList::actionString(this->getAction()) + ": ";
   TrapAction action = this->getAction();
   switch (action)
   {
     case TRAP_ECHO:
-      text += this->getPattern();
+      result += this->getPattern();
       break;
     case TRAP_KILL:
-      text += this->getPattern() + " (" + this->getReason() + ")";
+      result += this->getPattern() + " (" + this->getReason() + ")";
       break;
     case TRAP_DLINE_IP:
     case TRAP_DLINE_NET:
@@ -268,20 +294,20 @@ Trap::getString() const
     case TRAP_KLINE_NET:
       if (this->getTimeout() > 0)
       {
-        text += ULongToStr(this->getTimeout()) + " " + this->getPattern() +
+        result += ULongToStr(this->getTimeout()) + " " + this->getPattern() +
 	  " (" + this->getReason() + ")";
       }
       else
       {
-        text += this->getPattern() + " (" + this->getReason() + ")";
+        result += this->getPattern() + " (" + this->getReason() + ")";
       }
       break;
     default:
-      text = "Unknown TRAP type!";
+      result = "Unknown TRAP type!";
       break;
   }
 
-  return text;
+  return result;
 }
 
 std::string
@@ -344,7 +370,7 @@ TrapList::actionType(const std::string & text)
 
 
 std::string
-Trap::getPattern() const
+Trap::getPattern(void) const
 {
   std::string result;
 
@@ -556,6 +582,17 @@ void
 TrapList::cmd(StrList & output, std::string line, const bool master,
   const std::string & handle)
 {
+  ArgList args("-a -t", "");
+
+  if (-1 == args.parseCommand(line))
+  {
+    output.push_back("*** Invalid parameter: " + args.getInvalid());
+    return;
+  }
+
+  bool showCounts = args.haveUnary("-a");
+  bool showTimes = args.haveUnary("-t");
+
   std::string flag = UpCase(FirstWord(line));
   long timeout = 0;
   bool modified = false;
@@ -570,7 +607,7 @@ TrapList::cmd(StrList & output, std::string line, const bool master,
 
   if (flag == "" || flag == "LIST")
   {
-    TrapList::list(output);
+    TrapList::list(output, showCounts, showTimes);
   }
   else if (flag == "REMOVE")
   {
@@ -683,6 +720,7 @@ TrapList::match(const std::string & nick, const std::string & userhost,
       {
         if (pos->matches(nick, userhost, ip, gecos))
         {
+	  pos->updateStats();
 	  pos->doAction(nick, userhost, ip, gecos);
         }
       }
@@ -697,13 +735,13 @@ TrapList::match(const std::string & nick, const std::string & userhost,
 }
 
 void
-TrapList::list(StrList & output)
+TrapList::list(StrList & output, bool showCounts, bool showTimes)
 {
   int count = 0;
 
   for (std::list<Trap>::iterator pos = traps.begin(); pos != traps.end(); ++pos)
   {
-    output.push_back(pos->getString());
+    output.push_back(pos->getString(showCounts, showTimes));
     count++;
   }
   if (count > 0)

@@ -1891,7 +1891,7 @@ trace
 .f.o
 .l.reload
 trap
-.s.trap [list]
+.s.trap [-a] [-t] [list]
 .s.trap remove <rules>
 .s.trap <action> [<timeout>] <rules> [<reason>]
 .d.Watches client connects and nick changes and
@@ -1912,6 +1912,10 @@ trap
 .d. kline_net - k-line the client's /24 network
 .d. dline - d-line the client's IP
 .d. dline_net - d-line the client's /24 network
+.d.When listing traps, the "-a" argument will display
+.d.the number of times the trap has made a match.
+.d.The "-t" argument will display a timestamp of the
+.d.most recent match for each trap.
 .e.> .trap kline_host nick=pK-????? pK drone
 .e.Toast@OOMon added trap KLINE_HOST: nick=pK-????? (pK drone)
 .e.> .trap dline_net userhost=*rolex*@* packet monkey

@@ -443,7 +443,7 @@ ChkPass(std::string CORRECT, std::string TEST)
 
 
 //////////////////////////////////////////////////////////////////////
-// timeStamp(format)
+// timeStamp(format, when)
 //
 // Description:
 //  Produces a string containing a textual representation of the
@@ -451,20 +451,19 @@ ChkPass(std::string CORRECT, std::string TEST)
 //
 // Parameters:
 //  format - Either TIMESTAMP_KLINE or TIMESTAMP_LOG.
+//  when   - Date/Time of the timestamp to be displayed.
 //
 // Return Value:
 //  The function returns a string containing a textual representation
 //  of the current date and time.
 //////////////////////////////////////////////////////////////////////
 std::string
-timeStamp(const TimeStampFormat format)
+timeStamp(const TimeStampFormat format, time_t when)
 {
   char ts_holder[MAX_BUFF];
   struct tm *time_val;
-  time_t t;
-  
-  t = time(NULL);
-  time_val = localtime(&t);
+
+  time_val = localtime(&when);
 
   switch (format)
   {

@@ -74,7 +74,8 @@ bool Same(const std::string & Text1, const std::string & Text2,
 bool ChkPass(std::string, std::string);
 
 // Returns a representation of the date and time
-std::string timeStamp(const TimeStampFormat format = TIMESTAMP_LOG);
+std::string timeStamp(const TimeStampFormat format = TIMESTAMP_LOG,
+  time_t when = time(NULL));
 
 // Returns a string representation of an integer
 std::string IntToStr(int i, std::string::size_type len = 0);
