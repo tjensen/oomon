@@ -36,9 +36,9 @@
 #include "log.h"
 
 
-//#ifdef DEBUG
+#ifdef DEBUG
 # define REMOTELIST_DEBUG
-//#endif /* DEBUG */
+#endif /* DEBUG */
 
 
 RemoteList remotes;
@@ -167,7 +167,8 @@ RemoteList::RemoteProcess::operator()(RemotePtr r)
   if (remove && r->ready())
   {
     remotes.sendBotPart(Config::GetNick(), r->getHandle());
-    clients.sendAll("*** Bot " + r->getHandle() + " has disconnected", UF_OPER);
+    clients.sendAll("*** Bot " + r->getHandle() + " has disconnected",
+      UserFlags::OPER);
   }
 
   return remove;
@@ -188,35 +189,35 @@ RemoteList::processAll(const fd_set & readset, const fd_set & writeset)
 void
 RemoteList::send(const std::string & From, const std::string & Command,
   const std::string & To, const std::string & Params,
-  const class Remote *exception)
+  const class Remote *skip)
 {
 }
 
 
 void
 RemoteList::sendChat(const std::string & from, const std::string & text,
-  const Remote *exception)
+  const Remote *skip)
 {
   std::for_each(this->_connections.begin(), this->_connections.end(),
-    RemoteList::SendChat(from, text, exception));
+    RemoteList::SendChat(from, text, skip));
 }
 
 
 void
 RemoteList::sendBotJoin(const std::string & oldnode,
-  const std::string & newnode, const Remote *exception)
+  const std::string & newnode, const Remote *skip)
 {
   std::for_each(this->_connections.begin(), this->_connections.end(),
-    SendBotJoinPart(true, oldnode, newnode, exception));
+    SendBotJoinPart(true, oldnode, newnode, skip));
 }
 
 
 void
 RemoteList::sendBotPart(const std::string & from, const std::string & node,
-  const Remote *exception)
+  const Remote *skip)
 {
   std::for_each(this->_connections.begin(), this->_connections.end(),
-    SendBotJoinPart(false, from, node, exception));
+    SendBotJoinPart(false, from, node, skip));
 }
 
 
@@ -266,7 +267,7 @@ RemoteList::getLinks(StrList & Output)
 
 
 void
-RemoteList::getBotNet(BotLinkList & list, const Remote *exception)
+RemoteList::getBotNet(BotLinkList & list, const Remote *skip)
 {
   list.clear();
 
@@ -275,7 +276,7 @@ RemoteList::getBotNet(BotLinkList & list, const Remote *exception)
   {
     RemotePtr copy(*pos);
 
-    if ((copy.get() != exception) && copy->ready())
+    if ((copy.get() != skip) && copy->ready())
     {
       list.push_back(BotLink(Config::GetNick(), copy->getHandle()));
       copy->getBotNetBranch(list);
@@ -323,10 +324,9 @@ RemoteList::connect(const std::string & handle)
   std::string host;
   BotSock::Port port;
   std::string password;
-  int flags;
   bool result = false;
 
-  if (Config::GetConn(_handle, host, port, password, flags))
+  if (Config::GetConn(_handle, host, port, password))
   {
     RemotePtr temp(new Remote(_handle));
 

@@ -51,84 +51,89 @@
 
 CommandParser::CommandParser(void)
 {
-  // UF_AUTHED commands
-  this->addCommand("WHO", &CommandParser::cmdWho, UF_AUTHED);
-  this->addCommand("LINKS", &CommandParser::cmdLinks, UF_AUTHED);
-  this->addCommand("MOTD", &CommandParser::cmdMotd, UF_AUTHED);
-  this->addCommand("STATUS", &CommandParser::cmdStatus, UF_AUTHED);
+  // UserFlags::AUTHED commands
+  this->addCommand("WHO", &CommandParser::cmdWho, UserFlags::AUTHED);
+  this->addCommand("LINKS", &CommandParser::cmdLinks, UserFlags::AUTHED);
+  this->addCommand("MOTD", &CommandParser::cmdMotd, UserFlags::AUTHED);
+  this->addCommand("STATUS", &CommandParser::cmdStatus, UserFlags::AUTHED);
 
-  // UF_CHANOP commands
-  this->addCommand("JOIN", &CommandParser::cmdJoin, UF_CHANOP);
-  this->addCommand("OP", &CommandParser::cmdOp, UF_CHANOP);
-  this->addCommand("PART", &CommandParser::cmdPart, UF_CHANOP);
+  // UserFlags::CHANOP commands
+  this->addCommand("JOIN", &CommandParser::cmdJoin, UserFlags::CHANOP);
+  this->addCommand("OP", &CommandParser::cmdOp, UserFlags::CHANOP);
+  this->addCommand("PART", &CommandParser::cmdPart, UserFlags::CHANOP);
 
-  // UF_KLINE commands
-  this->addCommand("KLINE", &CommandParser::cmdKline, UF_KLINE);
-  this->addCommand("KBOT", &CommandParser::cmdKline, UF_KLINE);
-  this->addCommand("KCLONE", &CommandParser::cmdKline, UF_KLINE);
-  this->addCommand("KFLOOD", &CommandParser::cmdKline, UF_KLINE);
-  this->addCommand("KINFO", &CommandParser::cmdKline, UF_KLINE);
-  this->addCommand("KLINK", &CommandParser::cmdKline, UF_KLINE);
-  this->addCommand("KMOTD", &CommandParser::cmdKline, UF_KLINE);
-  this->addCommand("KPERM", &CommandParser::cmdKline, UF_KLINE);
-  this->addCommand("KPROXY", &CommandParser::cmdKline, UF_KLINE);
-  this->addCommand("KWINGATE", &CommandParser::cmdKline, UF_KLINE);
-  this->addCommand("KSPAM", &CommandParser::cmdKline, UF_KLINE);
-  this->addCommand("KTRACE", &CommandParser::cmdKline, UF_KLINE);
-  this->addCommand("UNKLINE", &CommandParser::cmdUnkline, UF_KLINE);
+  // UserFlags::KLINE commands
+  this->addCommand("KLINE", &CommandParser::cmdKline, UserFlags::KLINE);
+  this->addCommand("KBOT", &CommandParser::cmdKline, UserFlags::KLINE);
+  this->addCommand("KCLONE", &CommandParser::cmdKline, UserFlags::KLINE);
+  this->addCommand("KFLOOD", &CommandParser::cmdKline, UserFlags::KLINE);
+  this->addCommand("KINFO", &CommandParser::cmdKline, UserFlags::KLINE);
+  this->addCommand("KLINK", &CommandParser::cmdKline, UserFlags::KLINE);
+  this->addCommand("KMOTD", &CommandParser::cmdKline, UserFlags::KLINE);
+  this->addCommand("KPERM", &CommandParser::cmdKline, UserFlags::KLINE);
+  this->addCommand("KPROXY", &CommandParser::cmdKline, UserFlags::KLINE);
+  this->addCommand("KWINGATE", &CommandParser::cmdKline, UserFlags::KLINE);
+  this->addCommand("KSPAM", &CommandParser::cmdKline, UserFlags::KLINE);
+  this->addCommand("KTRACE", &CommandParser::cmdKline, UserFlags::KLINE);
+  this->addCommand("UNKLINE", &CommandParser::cmdUnkline, UserFlags::KLINE);
 
-  // UF_DLINED commands
-  this->addCommand("DLINE", &CommandParser::cmdDline, UF_DLINE);
-  this->addCommand("UNDLINE", &CommandParser::cmdUndline, UF_DLINE);
+  // UserFlags::DLINED commands
+  this->addCommand("DLINE", &CommandParser::cmdDline, UserFlags::DLINE);
+  this->addCommand("UNDLINE", &CommandParser::cmdUndline, UserFlags::DLINE);
 
-  // UF_OPER commands
-  this->addCommand("KILL", &CommandParser::cmdKill, UF_OPER);
-  this->addCommand("KILLLIST", &CommandParser::cmdKilllist, UF_OPER,
+  // UserFlags::OPER commands
+  this->addCommand("KILL", &CommandParser::cmdKill, UserFlags::OPER);
+  this->addCommand("KILLLIST", &CommandParser::cmdKilllist, UserFlags::OPER,
     EXACT_ONLY);
-  this->addCommand("KL", &CommandParser::cmdKilllist, UF_OPER, EXACT_ONLY);
-  this->addCommand("KILLNFIND", &CommandParser::cmdKillnfind, UF_OPER,
+  this->addCommand("KL", &CommandParser::cmdKilllist, UserFlags::OPER,
     EXACT_ONLY);
-  this->addCommand("KN", &CommandParser::cmdKillnfind, UF_OPER, EXACT_ONLY);
-  this->addCommand("RELOAD", &CommandParser::cmdReload, UF_OPER);
-  this->addCommand("TRACE", &CommandParser::cmdReload, UF_OPER);
-  this->addCommand("TRAP", &CommandParser::cmdTrap, UF_OPER);
-  this->addCommand("SET", &CommandParser::cmdSet, UF_OPER);
-  this->addCommand("NFIND", &CommandParser::cmdNfind, UF_OPER);
-  this->addCommand("LIST", &CommandParser::cmdList, UF_OPER);
-  this->addCommand("IPLIST", &CommandParser::cmdList, UF_OPER);
-  this->addCommand("GLIST", &CommandParser::cmdGlist, UF_OPER);
-  this->addCommand("FINDK", &CommandParser::cmdFindk, UF_OPER);
-  this->addCommand("FINDD", &CommandParser::cmdFindd, UF_OPER);
-  this->addCommand("CLASS", &CommandParser::cmdClass, UF_OPER);
-  this->addCommand("DOMAINS", &CommandParser::cmdDomains, UF_OPER);
-  this->addCommand("NETS", &CommandParser::cmdDomains, UF_OPER);
-  this->addCommand("MULTI", &CommandParser::cmdMulti, UF_OPER);
-  this->addCommand("BOTS", &CommandParser::cmdMulti, UF_OPER);
-  this->addCommand("HMULTI", &CommandParser::cmdMulti, UF_OPER);
-  this->addCommand("UMULTI", &CommandParser::cmdMulti, UF_OPER);
-  this->addCommand("VMULTI", &CommandParser::cmdMulti, UF_OPER);
-  this->addCommand("VBOTS", &CommandParser::cmdMulti, UF_OPER);
-  this->addCommand("CLONES", &CommandParser::cmdClones, UF_OPER);
-  this->addCommand("SEEDRAND", &CommandParser::cmdSeedrand, UF_OPER);
-  this->addCommand("DRONES", &CommandParser::cmdSeedrand, UF_OPER);
+  this->addCommand("KILLNFIND", &CommandParser::cmdKillnfind, UserFlags::OPER,
+    EXACT_ONLY);
+  this->addCommand("KN", &CommandParser::cmdKillnfind, UserFlags::OPER,
+    EXACT_ONLY);
+  this->addCommand("RELOAD", &CommandParser::cmdReload, UserFlags::OPER);
+  this->addCommand("TRACE", &CommandParser::cmdReload, UserFlags::OPER);
+  this->addCommand("TRAP", &CommandParser::cmdTrap, UserFlags::OPER);
+  this->addCommand("SET", &CommandParser::cmdSet, UserFlags::OPER);
+  this->addCommand("NFIND", &CommandParser::cmdNfind, UserFlags::OPER);
+  this->addCommand("LIST", &CommandParser::cmdList, UserFlags::OPER);
+  this->addCommand("IPLIST", &CommandParser::cmdList, UserFlags::OPER);
+  this->addCommand("GLIST", &CommandParser::cmdGlist, UserFlags::OPER);
+  this->addCommand("FINDK", &CommandParser::cmdFindk, UserFlags::OPER);
+  this->addCommand("FINDD", &CommandParser::cmdFindd, UserFlags::OPER);
+  this->addCommand("CLASS", &CommandParser::cmdClass, UserFlags::OPER);
+  this->addCommand("DOMAINS", &CommandParser::cmdDomains, UserFlags::OPER);
+  this->addCommand("NETS", &CommandParser::cmdDomains, UserFlags::OPER);
+  this->addCommand("MULTI", &CommandParser::cmdMulti, UserFlags::OPER);
+  this->addCommand("BOTS", &CommandParser::cmdMulti, UserFlags::OPER);
+  this->addCommand("HMULTI", &CommandParser::cmdMulti, UserFlags::OPER);
+  this->addCommand("UMULTI", &CommandParser::cmdMulti, UserFlags::OPER);
+  this->addCommand("VMULTI", &CommandParser::cmdMulti, UserFlags::OPER);
+  this->addCommand("VBOTS", &CommandParser::cmdMulti, UserFlags::OPER);
+  this->addCommand("CLONES", &CommandParser::cmdClones, UserFlags::OPER);
+  this->addCommand("SEEDRAND", &CommandParser::cmdSeedrand, UserFlags::OPER);
+  this->addCommand("DRONES", &CommandParser::cmdSeedrand, UserFlags::OPER);
 
-  // UF_MASTER commands
-  this->addCommand("DIE", &CommandParser::cmdDie, UF_MASTER, EXACT_ONLY);
-  this->addCommand("CONN", &CommandParser::cmdConn, UF_MASTER);
-  this->addCommand("DISCONN", &CommandParser::cmdDisconn, UF_MASTER);
-  this->addCommand("RAW", &CommandParser::cmdRaw, UF_MASTER, EXACT_ONLY);
-  this->addCommand("SAVE", &CommandParser::cmdSave, UF_MASTER);
-  this->addCommand("LOAD", &CommandParser::cmdLoad, UF_MASTER);
-  this->addCommand("SPAMSUB", &CommandParser::cmdSpamsub, UF_MASTER);
+  // UserFlags::MASTER commands
+  this->addCommand("DIE", &CommandParser::cmdDie, UserFlags::MASTER,
+    EXACT_ONLY);
+  this->addCommand("CONN", &CommandParser::cmdConn, UserFlags::MASTER);
+  this->addCommand("DISCONN", &CommandParser::cmdDisconn, UserFlags::MASTER);
+  this->addCommand("RAW", &CommandParser::cmdRaw, UserFlags::MASTER,
+    EXACT_ONLY);
+  this->addCommand("SAVE", &CommandParser::cmdSave, UserFlags::MASTER);
+  this->addCommand("LOAD", &CommandParser::cmdLoad, UserFlags::MASTER);
+  this->addCommand("SPAMSUB", &CommandParser::cmdSpamsub, UserFlags::MASTER);
 #ifdef CMDPARSER_DEBUG
-  this->addCommand("TEST", &CommandParser::cmdTest, UF_MASTER, EXACT_ONLY);
+  this->addCommand("TEST", &CommandParser::cmdTest, UserFlags::MASTER,
+    EXACT_ONLY);
 #endif /* CMDPARSER_DEBUG */
 }
 
 
 void
 CommandParser::addCommand(const std::string & command, 
-  CommandParser::CommandFunction func, const int flags,
+  CommandParser::CommandFunction func, const UserFlags flags,
   const int options)
 {
   this->commands.push_back(Command(command, flags, options, func));
@@ -138,7 +143,7 @@ CommandParser::addCommand(const std::string & command,
 void
 CommandParser::addCommand(const std::string & command,
   void (CommandParser::*func)(BotClient::ptr from, const std::string & command,
-  std::string parameters), const int flags, const int options)
+  std::string parameters), const UserFlags flags, const int options)
 {
   this->commands.push_back(Command(command, flags, options,
     boost::bind(func, this, _1, _2, _3)));
@@ -309,12 +314,13 @@ CommandParser::cmdKline(BotClient::ptr from, const std::string & command,
       if (minutes)
       {
         ::SendAll("KLINE " + IntToStr(minutes) + " " + parm + " (" + reason +
-          " [" + from->handleAndBot() + "])", UF_OPER, WATCH_KLINES, from);
+          " [" + from->handleAndBot() + "])", UserFlags::OPER, WATCH_KLINES,
+	  from);
       }
       else
       {
         ::SendAll("KLINE " + parm + " (" + reason + " [" +
-	  from->handleAndBot() + "])", UF_OPER, WATCH_KLINES, from);
+	  from->handleAndBot() + "])", UserFlags::OPER, WATCH_KLINES, from);
       }
       server.kline(from->handleAndBot(), minutes, parm, reason);
     }
@@ -338,8 +344,8 @@ CommandParser::cmdUnkline(BotClient::ptr from, const std::string & command,
 
   if (!target.empty())
   {
-    ::SendAll("UNKLINE " + target + " [" + from->handleAndBot() + "]", UF_OPER,
-      WATCH_KLINES, from);
+    ::SendAll("UNKLINE " + target + " [" + from->handleAndBot() + "]",
+      UserFlags::OPER, WATCH_KLINES, from);
     server.unkline(from->handleAndBot(), target);
   }
   else
@@ -369,13 +375,13 @@ CommandParser::cmdDline(BotClient::ptr from, const std::string & command,
       if (minutes)
       {
         ::SendAll("DLINE " + IntToStr(minutes) + " " + parm + " (" +
-	  parameters + " [" + from->handleAndBot() + "])", UF_OPER,
+	  parameters + " [" + from->handleAndBot() + "])", UserFlags::OPER,
 	  WATCH_DLINES, from);
       }
       else
       {
         ::SendAll("DLINE " + parm + " (" + parameters + " [" +
-	  from->handleAndBot() + "])", UF_OPER, WATCH_DLINES, from);
+	  from->handleAndBot() + "])", UserFlags::OPER, WATCH_DLINES, from);
       }
       server.dline(from->handleAndBot(), minutes, parm, parameters);
     }
@@ -399,8 +405,8 @@ CommandParser::cmdUndline(BotClient::ptr from, const std::string & command,
 
   if (!target.empty())
   {
-    ::SendAll("UNDLINE " + target + " [" + from->handleAndBot() + "]", UF_OPER,
-      WATCH_KLINES, from);
+    ::SendAll("UNDLINE " + target + " [" + from->handleAndBot() + "]",
+      UserFlags::OPER, WATCH_KLINES, from);
     server.undline(from->handleAndBot(), target);
   }
   else
@@ -475,7 +481,7 @@ CommandParser::cmdKill(BotClient::ptr from, const std::string & command,
   else
   {
     ::SendAll("KILL " + nick + " ((" + from->handleAndBot() + ") " +
-      parameters + ")", UF_OPER, WATCH_KILLS, from);
+      parameters + ")", UserFlags::OPER, WATCH_KILLS, from);
     server.kill(from->handleAndBot(), nick, parameters);
   }
 }
@@ -528,14 +534,14 @@ CommandParser::cmdKilllist(BotClient::ptr from, const std::string & command,
       if (parameters.empty())
       {
         ::SendAll("KILLLIST " + mask + " [" + from->handleAndBot() + "]",
-          UF_OPER, WATCH_KILLS, from);
+          UserFlags::OPER, WATCH_KILLS, from);
         users.listUsers(output, pattern.get(), className, UserHash::LIST_KILL,
           from->handleAndBot(), vars[VAR_KILLLIST_REASON]->getString());
       }
       else
       {
         ::SendAll("KILLLIST " + mask + " (" + parameters + ") [" +
-          from->handleAndBot() + "]", UF_OPER, WATCH_KILLS, from);
+          from->handleAndBot() + "]", UserFlags::OPER, WATCH_KILLS, from);
         users.listUsers(output, pattern.get(), className, UserHash::LIST_KILL,
 	  from->handleAndBot(), parameters);
       }
@@ -595,14 +601,14 @@ CommandParser::cmdKillnfind(BotClient::ptr from, const std::string & command,
       if (parameters.empty())
       {
         ::SendAll("KILLNFIND " + mask + " [" + from->handleAndBot() + "]",
-          UF_OPER, WATCH_KILLS, from);
+          UserFlags::OPER, WATCH_KILLS, from);
         users.listNicks(output, pattern.get(), className, UserHash::LIST_KILL,
           from->handleAndBot(), vars[VAR_KILLNFIND_REASON]->getString());
       }
       else
       {
         ::SendAll("KILLNFIND " + mask + " (" + parameters + ") [" +
-          from->handleAndBot() + "]", UF_OPER, WATCH_KILLS, from);
+          from->handleAndBot() + "]", UserFlags::OPER, WATCH_KILLS, from);
         users.listNicks(output, pattern.get(), className, UserHash::LIST_KILL,
 	  from->handleAndBot(), parameters);
       }
@@ -660,7 +666,7 @@ CommandParser::cmdTrap(BotClient::ptr from, const std::string & command,
   std::string parameters)
 {
   StrList output;
-  TrapList::cmd(output, parameters, from->flags() & UF_MASTER,
+  TrapList::cmd(output, parameters, from->flags().has(UserFlags::MASTER),
     from->handleAndBot());
   from->send(output);
 }
@@ -693,7 +699,7 @@ CommandParser::cmdSet(BotClient::ptr from, const std::string & command,
   }
   else
   {
-    if (UF_MASTER == (from->flags() & UF_MASTER))
+    if (from->flags().has(UserFlags::MASTER))
     {
       std::string error = vars.set(varName, parameters, from->handleAndBot());
       if (error.length() > 0)
@@ -875,7 +881,7 @@ CommandParser::cmdFindk(BotClient::ptr from, const std::string & command,
 
   if (args.haveUnary("-remove"))
   {
-    if (0 == (from->flags() & UF_KLINE))
+    if (!from->flags().has(UserFlags::KLINE))
     {
       CommandParser::insufficient_privileges();
     }
@@ -948,7 +954,7 @@ CommandParser::cmdFindd(BotClient::ptr from, const std::string & command,
 
   if (args.haveUnary("-remove"))
   {
-    if (0 == (from->flags() & UF_DLINE))
+    if (!from->flags().has(UserFlags::DLINE))
     {
       CommandParser::insufficient_privileges();
     }
@@ -1134,15 +1140,15 @@ CommandParser::cmdDie(BotClient::ptr from, const std::string & command,
   if (!parameters.empty())
   {
     ::SendAll(from->handleAndBot() + " says I have to die now... (" +
-      parameters + ")", UF_NONE, WatchSet(), from);
+      parameters + ")", UserFlags::NONE, WatchSet(), from);
     Log::Write("DIE requested by " + from->handleAndBot() + " (" +
       parameters + ")");
     server.quit(parameters);
   }
   else
   {
-    ::SendAll(from->handleAndBot() + " says I have to die now...", UF_NONE,
-      WatchSet(), from);
+    ::SendAll(from->handleAndBot() + " says I have to die now...",
+      UserFlags::NONE, WatchSet(), from);
     Log::Write("DIE requested by " + from->handleAndBot());
   }
   ::gracefuldie(SIGTERM); 
@@ -1197,7 +1203,7 @@ CommandParser::cmdSave(BotClient::ptr from, const std::string & command,
   if (Config::saveSettings())
   {
     std::string notice("*** Saved settings to file.");
-    ::SendAll(notice, UF_OPER);
+    ::SendAll(notice, UserFlags::OPER);
     Log::Write(notice);
   }
   else
@@ -1214,7 +1220,7 @@ CommandParser::cmdLoad(BotClient::ptr from, const std::string & command,
   if (Config::loadSettings())
   {
     std::string notice("*** Loaded settings from file.");
-    ::SendAll(notice, UF_OPER);
+    ::SendAll(notice, UserFlags::OPER);
     Log::Write(notice);
   }
   else
@@ -1231,7 +1237,7 @@ CommandParser::cmdSpamsub(BotClient::ptr from, const std::string & command,
   std::string notice("*** " + from->handleAndBot() +
     " subscribing to SpamTrap");
 
-  ::SendAll(notice, UF_OPER);
+  ::SendAll(notice, UserFlags::OPER);
   Log::Write(notice);
 
   server.subSpamTrap(true);
@@ -1245,7 +1251,7 @@ CommandParser::cmdSpamunsub(BotClient::ptr from, const std::string & command,
   std::string notice("*** " + from->handleAndBot() +
     " unsubscribing from SpamTrap");
 
-  ::SendAll(notice, UF_OPER);
+  ::SendAll(notice, UserFlags::OPER);
   Log::Write(notice);
 
   server.subSpamTrap(false);

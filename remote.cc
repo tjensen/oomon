@@ -36,9 +36,9 @@
 #include "log.h"
 
 
-//#ifdef DEBUG
+#ifdef DEBUG
 # define REMOTE_DEBUG
-//#endif
+#endif
 
 
 const std::string Remote::PROTOCOL_NAME("OOMon");
@@ -333,7 +333,8 @@ Remote::onBotJoin(const std::string & from, const std::string & node)
 
   if (this->ready())
   {
-    clients.sendAll("*** Bot " + node + " has connected to " + from, UF_OPER);
+    clients.sendAll("*** Bot " + node + " has connected to " + from,
+      UserFlags::OPER);
     remotes.sendBotJoin(from, node, this);
   }
   else if (node.empty())
@@ -342,7 +343,8 @@ Remote::onBotJoin(const std::string & from, const std::string & node)
     this->setTimeout(0);
 
     remotes.sendBotJoin(Config::GetNick(), this->getHandle(), this);
-    clients.sendAll("*** Bot " + this->getHandle() + " has connected", UF_OPER);
+    clients.sendAll("*** Bot " + this->getHandle() + " has connected",
+      UserFlags::OPER);
 
     if (this->isServer())
     {
@@ -371,7 +373,7 @@ Remote::onBotPart(const std::string & from, const std::string & node)
     remotes.sendBotPart(from, node, this);
 
     clients.sendAll("*** Bot " + node + " has disconnected from " + from,
-      UF_OPER);
+      UserFlags::OPER);
 
     result = true;
   }
@@ -528,9 +530,8 @@ Remote::sendAuth(void)
   std::string hostname;
   BotSock::Port port;
   std::string password;
-  int flags;
 
-  Config::GetConn(handle, hostname, port, password, flags);
+  Config::GetConn(handle, hostname, port, password);
 
   return this->sendCommand("", "AUTH", Config::GetNick() + " " + password);
 }

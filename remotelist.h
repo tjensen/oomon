@@ -51,14 +51,14 @@ public:
 
   void send(const std::string &, const std::string &,
     const std::string &, const std::string &,
-    const class Remote *exception = 0);
+    const class Remote *skip = 0);
 
   void sendChat(const std::string & from, const std::string & text,
-    const Remote *exception = (Remote *) 0);
+    const Remote *skip = (Remote *) 0);
   void sendBotJoin(const std::string & oldnode, const std::string & newnode,
-    const Remote *exception = (Remote *) 0);
+    const Remote *skip = (Remote *) 0);
   void sendBotPart(const std::string & from, const std::string & node,
-    const Remote *exception = (Remote *) 0);
+    const Remote *skip = (Remote *) 0);
   void sendCommand(const BotClient::ptr client, const std::string & bot,
     const std::string & command, const std::string & parameters);
 
@@ -66,7 +66,7 @@ public:
   void disconn(const std::string & from, const std::string & target);
 
   void getLinks(StrList & Output);
-  void getBotNet(BotLinkList & list, const Remote *exception = (Remote *) 0);
+  void getBotNet(BotLinkList & list, const Remote *skip = (Remote *) 0);
 
   bool isLinkedDirectlyToMe(const std::string &) const;
   RemotePtr findBot(const std::string &) const;
@@ -106,11 +106,11 @@ private:
   {
   public:
     SendChat(const std::string & from, const std::string & text,
-      const Remote *exception = (Remote *) 0) : _from(from), _text(text),
-      _exception(exception) { }
+      const Remote *skip = (Remote *) 0) : _from(from), _text(text),
+      _skip(skip) { }
     void operator()(RemotePtr r)
     {
-      if (r.get() != this->_exception)
+      if (r.get() != this->_skip)
       {
         r->sendChat(this->_from, this->_text);
       }
@@ -118,18 +118,18 @@ private:
   private:
     const std::string & _from;
     const std::string & _text;
-    const Remote *_exception;
+    const Remote *_skip;
   };
 
   class SendBotJoinPart
   {
   public:
     SendBotJoinPart(const bool join, const std::string node1,
-      const std::string node2, const Remote *exception = (Remote *) 0)
-      : _join(join), _node1(node1), _node2(node2), _exception(exception) { }
+      const std::string node2, const Remote *skip = (Remote *) 0)
+      : _join(join), _node1(node1), _node2(node2), _skip(skip) { }
     void operator()(RemotePtr r)
     {
-      if (r.get() != this->_exception)
+      if (r.get() != this->_skip)
       {
 	if (this->_join)
 	{
@@ -145,7 +145,7 @@ private:
     const bool _join;
     const std::string & _node1;
     const std::string & _node2;
-    const Remote *_exception;
+    const Remote *_skip;
   };
 
   ListenerList _listeners;

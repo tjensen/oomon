@@ -46,6 +46,7 @@
 #include "jupe.h"
 #include "userhash.h"
 #include "pattern.h"
+#include "botclient.h"
 
 
 #ifdef DEBUG
@@ -291,7 +292,7 @@ IRC::onRead(std::string text)
         {
           this->gettingTrace = false;
 	  users.resetUserCountDelta();
-          ::SendAll("TRACE complete.", UF_OPER);
+          ::SendAll("TRACE complete.", UserFlags::OPER);
         }
         break;
       case 216:
@@ -518,7 +519,7 @@ IRC::onRead(std::string text)
 	  }
 
           clients.sendAll("[" + from + ":" + wallopsType + "] " + text,
-	    UF_WALLOPS, WATCH_WALLOPS);
+	    UserFlags::WALLOPS, WATCH_WALLOPS);
         }
         break;
       case IRC_ERROR:
@@ -624,7 +625,7 @@ IRC::onPrivmsg(const std::string & from, const std::string & userhost,
       std::string msg("*" + from + "* " + text + " <" + userhost + ">");
 
       Log::Write(msg);
-      ::SendAll("(IRC) " + msg, UF_OPER, WATCH_MSGS);
+      ::SendAll("(IRC) " + msg, UserFlags::OPER, WATCH_MSGS);
       if (vars[VAR_RELAY_MSGS_TO_LOCOPS]->getBool())
       {
 	this->locops(msg);
@@ -846,7 +847,7 @@ IRC::statsL(const std::string & nick)
 void
 IRC::retrace(const std::string & from)
 {
-  ::SendAll("Reload USERS requested by " + from, UF_OPER);
+  ::SendAll("Reload USERS requested by " + from, UserFlags::OPER);
   this->trace();
 }
 
@@ -871,7 +872,7 @@ IRC::reloadKlines(void)
 void
 IRC::reloadKlines(const std::string & from)
 {
-    ::SendAll("Reload KLINES requested by " + from, UF_OPER);
+    ::SendAll("Reload KLINES requested by " + from, UserFlags::OPER);
     this->reloadKlines();
 }
 
@@ -896,7 +897,7 @@ IRC::reloadDlines(void)
 void
 IRC::reloadDlines(const std::string & from)
 {
-  ::SendAll("Reload DLINES requested by " + from, UF_OPER);
+  ::SendAll("Reload DLINES requested by " + from, UserFlags::OPER);
   this->reloadDlines();
 }
 
@@ -1098,7 +1099,7 @@ IRC::checkUserDelta(void)
     {
       std::string msg("*** User count increased by " + IntToStr(delta) +
 	" in " + IntToStr(lapse) + " seconds.");
-      clients.sendAll(msg, UF_OPER);
+      clients.sendAll(msg, UserFlags::OPER);
       Log::Write(msg);
     }
     this->lastUserDeltaCheck = now;

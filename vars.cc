@@ -493,7 +493,7 @@ Vars::set(const std::string & name, const std::string & value,
         notice = "*** " + handle + " cleared " + this->vec[idx]->getName();
       }
       Log::Write(notice);
-      ::SendAll(notice, UF_OPER);
+      ::SendAll(notice, UserFlags::OPER);
       
       if (vars[VAR_AUTO_SAVE]->getBool())
       {

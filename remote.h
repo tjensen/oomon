@@ -29,6 +29,8 @@
 #include "strtype"
 #include "links.h"
 #include "botsock.h"
+#include "botclient.h"
+#include "cmdparser.h"
 
 class Remote : public BotSock
 {
@@ -67,6 +69,35 @@ public:
 protected:
   virtual bool onRead(std::string text);
 
+  class Client : public BotClient
+  {
+  public:
+    Client(Remote *owner) : _owner(owner) { }
+    ~Client(void) { }
+
+    virtual void send(const std::string & text)
+    {
+      this->_owner->write(text + '\n');
+    }
+    virtual UserFlags flags(void) const { return this->_flags; }
+    virtual std::string handle(void) const { return this->_handle; }
+    virtual std::string bot(void) const { return this->_bot; }
+    virtual std::string id(void) const { return this->_id; }
+
+    void flags(const UserFlags f) { this->_flags = f; }
+    void handle(const std::string & h) { this->_handle = h; }
+    void bot(const std::string & h) { this->_bot = h; }
+    void id(const std::string & id) { this->_id = id; }
+
+  private:
+    Remote *_owner;
+    std::string _handle;
+    std::string _bot;
+    std::string _id;
+    UserFlags _flags;
+  };
+  typedef boost::shared_ptr<Client> ClientPtr;
+
 private:
   bool isAuthorized(void) const;
   bool authenticate(std::string text);
@@ -101,6 +132,7 @@ private:
   Stage _stage;
   bool _client;
   std::string _sendQ;
+  CommandParser parser;
 
   static const std::string PROTOCOL_NAME;
   static const int PROTOCOL_VERSION_MAJOR, PROTOCOL_VERSION_MINOR;

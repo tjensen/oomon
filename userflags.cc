@@ -1,5 +1,3 @@
-#ifndef __HELPTOPIC_H__
-#define __HELPTOPIC_H__
 // ===========================================================================
 // OOMon - Objected Oriented Monitor Bot
 // Copyright (C) 2004  Timothy L. Jensen
@@ -21,40 +19,68 @@
 
 // $Id$
 
-// C++ Headers
-#include <string>
 
-// OOMon Headers
-#include "strtype"
 #include "userflags.h"
 
-class HelpTopic
+
+const UserFlags UserFlags::NONE;
+
+
+UserFlags::UserFlags(void) : bits(0)
 {
-private:
-  StrVector topics;
-  StrList syntax;
-  StrList description;
-  StrList example;
-  StrList helpLink;
-  StrList subTopic;
-  UserFlags flags;
-  bool error;
+}
 
-public:
-  HelpTopic(void);
-  HelpTopic(const HelpTopic &);
-  virtual ~HelpTopic(void);
 
-  bool operator==(const std::string & topic) const;
-  bool operator!=(const std::string & topic) const
-  {
-    return !operator==(topic);
-  }
+UserFlags::UserFlags(const Bit b) : bits(1 << b)
+{
+}
 
-  bool hadError(void) const { return error; }
-  StrList getHelp(void);
-  StrList getHelp(const std::string &);
-};
 
-#endif /* __HELPTOPIC_H__ */
+UserFlags::UserFlags(const Bit b1, const Bit b2)
+{
+  this->bits = UserFlags(b1).bits;
+  this->bits |= UserFlags(b2).bits;
+}
+
+
+UserFlags &
+UserFlags::operator |= (const UserFlags & flags)
+{
+	this->bits |= flags.bits;
+
+	return *this;
+}
+
+
+UserFlags &
+UserFlags::operator &= (const UserFlags & flags)
+{
+	this->bits &= flags.bits;
+
+	return *this;
+}
+
+UserFlags
+UserFlags::operator & (const UserFlags & flags) const
+{
+	UserFlags tmp(flags);
+
+	tmp.bits &= this->bits;
+
+	return tmp;
+}
+
+
+bool
+UserFlags::operator == (const UserFlags & flags) const
+{
+	return (this->bits == flags.bits);
+}
+
+
+bool
+UserFlags::has(const Bit b) const
+{
+	return (this->bits.test(b));
+}
 

@@ -96,7 +96,7 @@ Services::onXoNotice(std::string text)
       " reports " + IntToStr(this->cloneCount) + " users cloning " +
       this->cloningUserhost + " nick " + nick;
 
-    ::SendAll(notice, UF_OPER);
+    ::SendAll(notice, UserFlags::OPER);
     Log::Write(notice);
 
     BotSock::Address ip = users.getIP(nick, this->cloningUserhost);
@@ -157,7 +157,7 @@ Services::onCaNotice(std::string Text)
 //            sprintf(dccbuff,
 //              "AutoKilled %s %s for CaSvcs-Reported Nick Flooding", parm3,
 //              parm4);
-//            ::SendAll(dccbuff, UF_OPER, WATCH_KILLS, NULL);
+//            ::SendAll(dccbuff, UserFlags::OPER, WATCH_KILLS, NULL);
 //            Log::Write(dccbuff);
 //          }
 //          else
@@ -165,14 +165,14 @@ Services::onCaNotice(std::string Text)
 //          { 
 //            sprintf(dccbuff, "CaSvcs-Reported Nick flooding %s %s", parm3,
 //              parm4);
-//	      ::SendAll(dccbuff, UF_OPER, WATCH_KILLS, NULL);
+//	      ::SendAll(dccbuff, UserFlags::OPER, WATCH_KILLS, NULL);
 //	      Log::Write(dccbuff);
 //          }
         }
             
         sprintf(dccbuff,"%s: %s %s %s %s", CA_SERVICES_RESPONSE, parm1, parm2,
 	  parm3, strtok(NULL, ""));
-        ::SendAll(dccbuff, UF_OPER); 
+        ::SendAll(dccbuff, UserFlags::OPER); 
 	Log::Write(dccbuff);
         
         /*              
@@ -266,7 +266,7 @@ Services::onSpamtrapMessage(const std::string & text)
         std::string notice("*** SpamTrap report: " + nick + " (" + userhost +
           ") Score: " + IntToStr(score) + " [" + copy + "]");
 
-        ::SendAll(notice, UF_OPER, WATCH_SPAMTRAP);
+        ::SendAll(notice, UserFlags::OPER, WATCH_SPAMTRAP);
         Log::Write(notice);
 
         doAction(nick, userhost, users.getIP(nick, userhost),
@@ -279,7 +279,7 @@ Services::onSpamtrapMessage(const std::string & text)
 
   std::string notice("*** SpamTrap message: " + text);
 
-  ::SendAll(notice, UF_OPER, WATCH_SPAMTRAP);
+  ::SendAll(notice, UserFlags::OPER, WATCH_SPAMTRAP);
   Log::Write(notice);
 }
 
@@ -335,7 +335,7 @@ Services::onSpamtrapNotice(const std::string & text)
               std::string notice("*** SpamTrap report: " + nick + " (" +
 	        userhost + ") Score: " + IntToStr(score));
 
-              ::SendAll(notice, UF_OPER, WATCH_SPAMTRAP);
+              ::SendAll(notice, UserFlags::OPER, WATCH_SPAMTRAP);
               Log::Write(notice);
 
               doAction(nick, userhost, users.getIP(nick, userhost),
@@ -359,7 +359,7 @@ Services::onSpamtrapNotice(const std::string & text)
 
   std::string notice("*** SpamTrap notice: " + text);
 
-  ::SendAll(notice, UF_OPER, WATCH_SPAMTRAP);
+  ::SendAll(notice, UserFlags::OPER, WATCH_SPAMTRAP);
   Log::Write(notice);
 }
 

@@ -31,7 +31,7 @@
 // OOMon Headers
 #include "oomon.h"
 #include "strtype"
-#include "botsock.h"
+#include "userflags.h"
 
 
 class BotClient
@@ -43,10 +43,10 @@ public:
   virtual ~BotClient(void) { }
 
   virtual void send(const std::string & text) = 0;
-  virtual int flags(void) const = 0;
+  virtual UserFlags flags(void) const = 0;
   virtual std::string handle(void) const = 0;
   virtual std::string bot(void) const = 0;
-  virtual BotSock *id(void) const = 0;
+  virtual std::string id(void) const = 0;
 
 private:
   class sender

@@ -48,6 +48,7 @@
 #include "userhash.h"
 #include "notice.h"
 #include "botexcept.h"
+#include "botclient.h"
 
 
 #ifdef DEBUG
@@ -128,7 +129,7 @@ klineClones(const bool kline, const std::string & User,
 
   if (std::string::npos != UserAtHost.find_first_of("*?"))
   {
-    ::SendAll("Bogus DNS spoofed host " + UserAtHost, UF_OPER);
+    ::SendAll("Bogus DNS spoofed host " + UserAtHost, UserFlags::OPER);
     return;
   }
 
@@ -142,36 +143,57 @@ klineClones(const bool kline, const std::string & User,
   {
     if (differentUser)
     {
-      if (vars[VAR_AUTO_KLINE_NET]->getBool() &&
-	vars[VAR_AUTO_PILOT]->getBool() && kline)
+      if (identd)
       {
-        Notice = "Adding auto-kline for *@" + Net + " :" +
-	  vars[VAR_AUTO_KLINE_NET_REASON]->getString();
-        server.kline("Auto-Kline", vars[VAR_AUTO_KLINE_NET_TIME]->getInt(),
-          "*@" + Net, vars[VAR_AUTO_KLINE_NET_REASON]->getString());
+        if (vars[VAR_AUTO_KLINE_NET]->getBool() &&
+	  vars[VAR_AUTO_PILOT]->getBool() && kline)
+        {
+          Notice = "Adding auto-kline for *@" + Net + " :" +
+	    vars[VAR_AUTO_KLINE_NET_REASON]->getString();
+          server.kline("Auto-Kline", vars[VAR_AUTO_KLINE_NET_TIME]->getInt(),
+            "*@" + Net, vars[VAR_AUTO_KLINE_NET_REASON]->getString());
+        }
+        else
+        {
+          Notice = makeKline("*@" + Net,
+	    vars[VAR_AUTO_KLINE_NET_REASON]->getString(),
+            vars[VAR_AUTO_KLINE_NET_TIME]->getInt());
+        }
       }
       else
       {
-        Notice = makeKline("*@" + Net,
-	  vars[VAR_AUTO_KLINE_NET_REASON]->getString(),
-          vars[VAR_AUTO_KLINE_NET_TIME]->getInt());
+        if (vars[VAR_AUTO_KLINE_NOIDENT]->getBool() &&
+          vars[VAR_AUTO_PILOT]->getBool() && kline)
+        {
+          Notice = "Adding auto-kline for ~*@" + Net + " :" +
+            vars[VAR_AUTO_KLINE_NOIDENT_REASON]->getString();
+          server.kline("Auto-Kline",
+	    vars[VAR_AUTO_KLINE_NOIDENT_TIME]->getInt(), "~*@" + Net,
+	    vars[VAR_AUTO_KLINE_NOIDENT_REASON]->getString());
+        }
+        else
+        {
+          Notice = makeKline("~*@" + Net,
+	    vars[VAR_AUTO_KLINE_NOIDENT_REASON]->getString(),
+            vars[VAR_AUTO_KLINE_NOIDENT_TIME]->getInt());
+        }
       }
     }
     else
     {
       if (vars[VAR_AUTO_KLINE_USERNET]->getBool() &&
-	vars[VAR_AUTO_PILOT]->getBool() && kline)
+        vars[VAR_AUTO_PILOT]->getBool() && kline)
       {
         Notice = "Adding auto-kline for *" + User + "@" + Net + " :" +
-	  vars[VAR_AUTO_KLINE_USERNET_REASON]->getString();
+          vars[VAR_AUTO_KLINE_USERNET_REASON]->getString();
         server.kline("Auto-Kline", vars[VAR_AUTO_KLINE_USERNET_TIME]->getInt(),
-          "*" + User + "@" + Net,
+	  "*" + User + "@" + Net,
 	  vars[VAR_AUTO_KLINE_USERNET_REASON]->getString());
       }
       else
       {
         Notice = makeKline("*" + User + "@" + Net,
-	  vars[VAR_AUTO_KLINE_USERNET_REASON]->getString(),
+          vars[VAR_AUTO_KLINE_USERNET_REASON]->getString(),
           vars[VAR_AUTO_KLINE_USERNET_TIME]->getInt());
       }
     }
@@ -279,7 +301,7 @@ klineClones(const bool kline, const std::string & User,
 
   if (Notice.length() > 0)
   {
-    ::SendAll(Notice, UF_OPER, WATCH_KLINES);
+    ::SendAll(Notice, UserFlags::OPER, WATCH_KLINES);
   }
 }
 
@@ -342,7 +364,7 @@ addToNickChangeList(const std::string & userhost, const std::string & oldNick,
 	    ncp->lastNick + ") " + IntToStr(ncp->nickChangeCount) + " in " +
 	    IntToStr(ncp->lastNickChange - ncp->firstNickChange) + " seconds");
 
-          ::SendAll(notice, UF_OPER);
+          ::SendAll(notice, UserFlags::OPER);
 	  Log::Write(notice);
 
 	  BotSock::Address ip = users.getIP(oldNick, userhost);
@@ -509,7 +531,7 @@ onClientConnect(std::string text)
 
   users.add(nick, userhost, ipString, false, false, classString, gecos);
 
-  ::SendAll("Connected: " + copy, UF_OPER, WATCH_CONNECTS);
+  ::SendAll("Connected: " + copy, UserFlags::OPER, WATCH_CONNECTS);
 
   return true;
 }
@@ -548,7 +570,7 @@ onClientExit(std::string text)
   }
 
   users.remove(nick, userhost, ip);
-  ::SendAll("Disconnected: " + copy, UF_CONN, WATCH_DISCONNECTS);
+  ::SendAll("Disconnected: " + copy, UserFlags::CONN, WATCH_DISCONNECTS);
 
   return true;
 }
@@ -590,7 +612,12 @@ onCsClones(std::string text)
 
     bool identd = (0 != user.find('~'));
 
-    ::SendAll("CS clones: " + userhost, UF_OPER);
+    if (identd)
+    {
+      user.erase(user.begin());
+    }
+
+    ::SendAll("CS clones: " + userhost, UserFlags::OPER);
     Log::Write("CS clones: " + userhost);
 
     klineClones(false, user, host, users.getIP(nick, userhost), false, false,
@@ -622,7 +649,7 @@ onCsNickFlood(std::string text)
     userhost.erase(userhost.end() - 1);
   }
 
-  ::SendAll(notice, UF_OPER);
+  ::SendAll(notice, UserFlags::OPER);
   Log::Write(notice);
 
   BotSock::Address ip = users.getIP(nick, userhost);
@@ -664,7 +691,7 @@ onNickChange(std::string text)
   }
 
   ::SendAll("Nick change: " + nick1 + " -> " + nick2 + " (" + userhost + ")",
-    UF_NICK, WATCH_NICK_CHANGES);
+    UserFlags::NICK, WATCH_NICK_CHANGES);
 
   addToNickChangeList(server.downCase(userhost), nick1, nick2);
   users.updateNick(nick1, userhost, nick2);
@@ -735,7 +762,7 @@ onKillNotice(std::string text)
         notice += reason;
       }
 
-      ::SendAll(notice, UF_OPER, WATCH_KILLS);
+      ::SendAll(notice, UserFlags::OPER, WATCH_KILLS);
       Log::Write(notice);
     }
   }
@@ -886,7 +913,7 @@ onStatsNotice(std::string text)
 
       if (!vars[VAR_WATCH_STATS_NOTICES]->getBool())
       {
-        ::SendAll(notice, UF_OPER);
+        ::SendAll(notice, UserFlags::OPER);
       }
 
       // Assume this is a server with "/stats p" support.  Only report
@@ -965,7 +992,7 @@ onDetectDNSBLOpenProxy(const std::string & ip, const std::string & nick,
   std::string notice = std::string("DNSBL Open Proxy detected for ") +
     nick + "!" + userhost + " [" + ip + "]";
   Log::Write(notice);
-  ::SendAll(notice, UF_OPER);
+  ::SendAll(notice, UserFlags::OPER);
 
   doAction(nick, userhost, BotSock::inet_addr(ip),
     vars[VAR_DNSBL_PROXY_ACTION]->getAction(),
@@ -1131,7 +1158,7 @@ checkForSpoof(const std::string & nick, const std::string & user,
             std::string notice("Fake IP Spoof: " + nick + " (" + userhost +
 	      ") [" + ip + "]");
 	    Log::Write(notice);
-	    ::SendAll(notice, UF_OPER);
+	    ::SendAll(notice, UserFlags::OPER);
 	    doAction(nick, userhost, BotSock::inet_addr(ip),
 	      vars[VAR_FAKE_IP_SPOOF_ACTION]->getAction(),
 	      vars[VAR_FAKE_IP_SPOOF_ACTION]->getInt(),
@@ -1179,7 +1206,7 @@ checkForSpoof(const std::string & nick, const std::string & user,
 	    std::string notice("Illegal TLD Spoof: " + nick + " (" + userhost +
 	      ") [" + ip + "]");
 	    Log::Write(notice);
-	    ::SendAll(notice, UF_OPER);
+	    ::SendAll(notice, UserFlags::OPER);
 	    doAction(nick, userhost, BotSock::inet_addr(ip),
 	      vars[VAR_ILLEGAL_TLD_SPOOF_ACTION]->getAction(),
 	      vars[VAR_ILLEGAL_TLD_SPOOF_ACTION]->getInt(),
@@ -1192,7 +1219,7 @@ checkForSpoof(const std::string & nick, const std::string & user,
 	  std::string notice("Illegal Character Spoof: " + nick + " (" +
 	    userhost + ") [" + ip + "]");
 	  Log::Write(notice);
-	  ::SendAll(notice, UF_OPER);
+	  ::SendAll(notice, UserFlags::OPER);
 	  doAction(nick, userhost, BotSock::inet_addr(ip),
 	    vars[VAR_ILLEGAL_CHAR_SPOOF_ACTION]->getAction(),
 	    vars[VAR_ILLEGAL_CHAR_SPOOF_ACTION]->getInt(),
@@ -1243,7 +1270,7 @@ onClearTempKlines(std::string text)
 
     if (0 == text.compare("is clearing temp klines"))
     {
-      ::SendAll(notice, UF_OPER, WATCH_KLINES);
+      ::SendAll(notice, UserFlags::OPER, WATCH_KLINES);
       Log::Write(notice);
       server.reloadKlines();
       result = true;
@@ -1268,7 +1295,7 @@ onClearTempDlines(std::string text)
 
     if (0 == text.compare("is clearing temp dlines"))
     {
-      ::SendAll(notice, UF_OPER, WATCH_KLINES);
+      ::SendAll(notice, UserFlags::OPER, WATCH_KLINES);
       Log::Write(notice);
       server.reloadDlines();
       result = true;
@@ -1340,7 +1367,7 @@ onGlineRequest(std::string text)
   msg += reason;
   msg += ')';
 
-  ::SendAll(msg, UF_OPER, WATCH_GLINES);
+  ::SendAll(msg, UserFlags::OPER, WATCH_GLINES);
   Log::Write(msg);
 
   return true;
@@ -1373,7 +1400,7 @@ onLineActive(std::string text)
     return false;
   }
 
-  ::SendAll(notice, UF_OPER, w);
+  ::SendAll(notice, UserFlags::OPER, w);
   Log::Write(notice);
 
   return true;

@@ -31,84 +31,15 @@
 #include "botsock.h"
 #include "pattern.h"
 
-// User flags
-enum UserFlags
-{
-  UF_NONE	= 0x000,
-  UF_AUTHED	= 0x001,
-  UF_CHANOP	= 0x002,
-  UF_OPER	= 0x004,
-  UF_WALLOPS	= 0x008,
-  UF_CONN	= 0x010,
-  UF_NICK	= 0x020,
-  UF_KLINE	= 0x040,
-  UF_GLINE	= 0x080,
-  UF_DLINE	= 0x100,
-  UF_REMOTE	= 0x200,
-  UF_MASTER	= 0x400,
-  UF_ALL	= 0x7FF
-};
-
-// Link flags
-enum LinkFlags
-{
-  LF_NONE	= 0x0000
-};
-
-// Connect flags
-enum ConnectFlags
-{
-  CF_NONE	= 0x0000
-};
-
-struct OperDef
-{
-  OperDef() { };
-  OperDef(const OperDef & copy);
-  virtual ~OperDef() { delete this->pattern; };
-
-  std::string Handle, Passwd;
-  Pattern *pattern;
-  int Flags;
-};
-
-struct LinkDef
-{
-  LinkDef() { };
-  LinkDef(const LinkDef & copy);
-  virtual ~LinkDef() { delete this->pattern; };
-
-  std::string Handle, Passwd;
-  Pattern *pattern;
-  int Flags;
-};
-
-struct ConnDef
-{
-  ConnDef() { };
-
-  std::string Handle, Hostname, Passwd;
-  int Flags;
-  BotSock::Port port;
-};
-
-struct YLine
-{
-  YLine() { };
-
-  std::string YClass;
-  std::string Description;
-};
-
 struct server {
   std::string Hostname, Password, Channels;
   BotSock::Port port;
 };
 
-typedef std::list<OperDef> OperList;
-typedef std::list<LinkDef> LinkList;
-typedef std::list<ConnDef> ConnList;
-typedef std::list<YLine> YLineList;
+typedef std::list<class OperDef> OperList;
+typedef std::list<class LinkDef> LinkList;
+typedef std::list<class ConnDef> ConnList;
+typedef std::list<class YLine> YLineList;
 
 class Config
 {
@@ -135,17 +66,17 @@ private:
   static void AddException(const std::string & pattern);
   static void AddSpoofer(const std::string & pattern);
   static void AddLink(const std::string & Handle, const std::string & pattern,
-    const std::string & Passwd, const std::string & Flags);
+    const std::string & Passwd);
   static void AddConn(const std::string & Handle, const std::string & Hostname,
-    const std::string & Passwd, const std::string & Flags,
-    const BotSock::Port port);
+    const std::string & Passwd, const BotSock::Port port);
   static void AddYLine(const std::string & YClass,
     const std::string & Description);
 public:
   static void Clear();
   static void Load(const std::string filename = DEFAULT_CFGFILE);
   static bool Auth(const std::string & Handle, const std::string & UserName,
-    const std::string & Password, int & Flags, std::string & NewHandle);
+    const std::string & Password, class UserFlags & Flags,
+    std::string & NewHandle);
   static std::string GetHostName();
   static std::string GetUserName();
   static std::string GetNick() { return Nick; }
@@ -169,7 +100,7 @@ public:
   static bool IsOper(const std::string & userhost, const BotSock::Address & ip);
   static bool IsLinkable(const std::string &);
   static bool GetConn(std::string &, std::string &, BotSock::Port &,
-    std::string &, int &);
+    std::string &);
   static bool AuthBot(const std::string &, const std::string &,
     const std::string &);
   static std::string GetYLineDescription(const std::string &);

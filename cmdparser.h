@@ -68,14 +68,14 @@ public:
 private:
   struct Command
   {
-    Command(const std::string & _name, const int _flags, const int _options,
-      CommandParser::CommandFunction _func) : name(DownCase(_name)),
-      flags(_flags), func(_func)
+    Command(const std::string & _name, const UserFlags _flags,
+      const int _options, CommandParser::CommandFunction _func)
+      : name(DownCase(_name)), flags(_flags), func(_func)
     {
       this->exactOnly = (_options & EXACT_ONLY);
     }
     std::string name;
-    int flags;
+    UserFlags flags;
     bool exactOnly;
     CommandFunction func;
   };
@@ -114,13 +114,13 @@ private:
 
 public:
   void addCommand(const std::string & command, 
-    CommandParser::CommandFunction func, const int flags,
+    CommandParser::CommandFunction func, const UserFlags flags,
     const int options = NONE);
 
 private:
   void addCommand(const std::string & command,
     void (CommandParser::*)(BotClient::ptr from, const std::string & command,
-    std::string parameters), const int flags, const int options = NONE);
+    std::string parameters), const UserFlags flags, const int options = NONE);
 
   void cmdWho(BotClient::ptr from, const std::string & command,
     std::string parameters);

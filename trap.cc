@@ -443,7 +443,7 @@ Trap::doAction(const std::string & nick, const std::string & userhost,
   switch (this->getAction())
   {
     case TRAP_ECHO:
-      ::SendAll(notice, UF_OPER, WATCH_TRAPS);
+      ::SendAll(notice, UserFlags::OPER, WATCH_TRAPS);
       break;
     case TRAP_KILL:
       server.kill("Auto-Kill", nick, this->getReason());
@@ -618,7 +618,8 @@ TrapList::cmd(StrList & output, std::string line, const bool master,
         modified = true;
         if (handle.size() > 0)
         {
-          ::SendAll(handle + " removed trap: " + line, UF_OPER, WATCH_TRAPS);
+          ::SendAll(handle + " removed trap: " + line, UserFlags::OPER,
+	    WATCH_TRAPS);
           Log::Write(handle + " removed trap: " + line);
         }
       }
@@ -647,7 +648,7 @@ TrapList::cmd(StrList & output, std::string line, const bool master,
         if (handle.length() > 0)
         {
           std::string notice(handle + " added trap " + node.getString());
-          ::SendAll(notice, UF_OPER, WATCH_TRAPS);
+          ::SendAll(notice, UserFlags::OPER, WATCH_TRAPS);
           Log::Write(notice);
         }
       }

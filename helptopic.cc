@@ -27,6 +27,7 @@
 #include "helptopic.h"
 #include "config.h"
 #include "util.h"
+#include "botclient.h"
 
 HelpTopic::HelpTopic(void)
 {
@@ -36,7 +37,7 @@ HelpTopic::HelpTopic(void)
   example.clear();
   helpLink.clear();
   subTopic.clear();
-  flags = UF_NONE;
+  flags = UserFlags::NONE;
   error = 0;
 }
 
@@ -134,41 +135,41 @@ HelpTopic::getHelp(void)
   }
 
   result.push_back("\002Required Flags:\002");
-  if (flags == UF_NONE)
+  if (flags == UserFlags::NONE)
   {
     result.push_back("  None");
   }
   else
   {
-    if (flags & UF_CHANOP)
+    if (flags.has(UserFlags::CHANOP))
     {
       result.push_back("  C - Chanop");
     }
-    if (flags & UF_DLINE)
+    if (flags.has(UserFlags::DLINE))
     {
       result.push_back("  D - Dline");
     }
-    if (flags & UF_GLINE)
+    if (flags.has(UserFlags::GLINE))
     {
       result.push_back("  G - Gline");
     }
-    if (flags & UF_KLINE)
+    if (flags.has(UserFlags::KLINE))
     {
       result.push_back("  K - Kline");
     }
-    if (flags & UF_MASTER)
+    if (flags.has(UserFlags::MASTER))
     {
       result.push_back("  M - Master");
     }
-    if (flags & UF_OPER)
+    if (flags.has(UserFlags::OPER))
     {
       result.push_back("  O - Oper");
     }
-    if (flags & UF_REMOTE)
+    if (flags.has(UserFlags::REMOTE))
     {
       result.push_back("  R - Remote");
     }
-    if (flags & UF_WALLOPS)
+    if (flags.has(UserFlags::WALLOPS))
     {
       result.push_back("  W - Wallops");
     }
@@ -303,35 +304,35 @@ HelpTopic::getHelp(const std::string & topic)
 	{
 	  if (value.find('c') != std::string::npos)
 	  {
-	    flags |= UF_CHANOP;
+	    flags |= UserFlags::CHANOP;
 	  }
 	  if (value.find('d') != std::string::npos)
 	  {
-	    flags |= UF_DLINE;
+	    flags |= UserFlags::DLINE;
 	  }
 	  if (value.find('g') != std::string::npos)
 	  {
-	    flags |= UF_GLINE;
+	    flags |= UserFlags::GLINE;
 	  }
 	  if (value.find('k') != std::string::npos)
 	  {
-	    flags |= UF_KLINE;
+	    flags |= UserFlags::KLINE;
 	  }
 	  if (value.find('m') != std::string::npos)
 	  {
-	    flags |= UF_MASTER;
+	    flags |= UserFlags::MASTER;
 	  }
 	  if (value.find('o') != std::string::npos)
 	  {
-	    flags |= UF_OPER;
+	    flags |= UserFlags::OPER;
 	  }
 	  if (value.find('r') != std::string::npos)
 	  {
-	    flags |= UF_REMOTE;
+	    flags |= UserFlags::REMOTE;
 	  }
 	  if (value.find('w') != std::string::npos)
 	  {
-	    flags |= UF_WALLOPS;
+	    flags |= UserFlags::WALLOPS;
 	  }
 	}
 

@@ -64,7 +64,7 @@ FloodList::addFlood(const std::string & nick, const std::string & userhost,
       {
 	std::string msg("Possible " + this->getType() + " flooder: " +
 	  nick + " (" + userhost + ")");
-        ::SendAll(msg, UF_OPER);
+        ::SendAll(msg, UserFlags::OPER);
 	Log::Write(msg);
 
 	BotSock::Address ip = users.getIP(nick, userhost);
@@ -149,7 +149,7 @@ FloodList::onNotice(const std::string & notice, std::string text,
   if (!Config::IsOper(userhost, users.getIP(nick, userhost)) &&
     !users.isOper(nick, userhost))
   {
-    ::SendAll(notice, UF_OPER, this->getWatch());
+    ::SendAll(notice, UserFlags::OPER, this->getWatch());
 
     this->addFlood(nick, userhost, now, server.same(serverName,
       server.getServerName()));

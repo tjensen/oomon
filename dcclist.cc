@@ -204,7 +204,7 @@ DCCList::ClientProcessor::operator()(DCCPtr client)
 
   if (remove && client->isConnected())
   {
-    ::SendAll(client->getUserhost() + " has disconnected", UF_AUTHED);
+    ::SendAll(client->getUserhost() + " has disconnected", UserFlags::AUTHED);
   }
 
   return remove;
@@ -228,20 +228,21 @@ DCCList::processAll(const fd_set & readset, const fd_set & writeset)
 }
 
 
-// sendChat(From, Text, exception)
+// sendChat(From, Text, skip)
 //
-// Writes a chat message to all DCC connections who don't match the
-// exception.  Returns false if user doesn't exist.
+// Writes a chat message to all DCC connections who don't match skip.
+// Returns false if user doesn't exist.
 //
 bool
 DCCList::sendChat(const std::string & From, std::string Text,
-  const BotClient::ptr exception)
+  const BotClient::ptr skip)
 {
   if (Text != "")
   {
     if (Text[0] != '\001')
     {
-      this->sendAll("<" + From + "> " + Text, UF_AUTHED, WATCH_CHAT, exception);
+      this->sendAll("<" + From + "> " + Text, UserFlags::AUTHED, WATCH_CHAT,
+	skip);
     }
     else
     {
@@ -253,8 +254,8 @@ DCCList::sendChat(const std::string & From, std::string Text,
       std::string Command = FirstWord(Text);
       if ((Command == "ACTION") && (Text != ""))
       {
-        this->sendAll("<-> " + From + " " + Text, UF_AUTHED, WATCH_CHAT,
-	  exception);
+        this->sendAll("<-> " + From + " " + Text, UserFlags::AUTHED, WATCH_CHAT,
+	  skip);
       }
     }  
   }
@@ -350,25 +351,12 @@ DCCList::statsP(StrList & output)
 // watches.
 //
 void
-DCCList::sendAll(const std::string & message, const int flags,
-  const WatchSet & watches, const BotClient::ptr exception)
+DCCList::sendAll(const std::string & message, const UserFlags flags,
+  const WatchSet & watches, const BotClient::ptr skip)
 {
-  SendFilter filter(message, flags, watches, exception);
+  SendFilter filter(message, flags, watches, skip);
 
   std::for_each(this->connections.begin(), this->connections.end(), filter);
-}
-
-
-// sendTo()
-//
-// Writes a status message to all connections matching the nickname.
-//
-bool
-DCCList::sendTo(const std::string & handle, const std::string & message,
-  const int flags, const WatchSet & watches)
-{
-  return (0 != std::count_if(this->connections.begin(), this->connections.end(),
-    SendToFilter(handle, message, flags, watches)));
 }
 
 

@@ -1,5 +1,5 @@
-#ifndef __HELPTOPIC_H__
-#define __HELPTOPIC_H__
+#ifndef __USERFLAGS_H__
+#define __USERFLAGS_H__
 // ===========================================================================
 // OOMon - Objected Oriented Monitor Bot
 // Copyright (C) 2004  Timothy L. Jensen
@@ -21,40 +21,40 @@
 
 // $Id$
 
-// C++ Headers
-#include <string>
+// Std C++ Headers
+#include <bitset>
 
-// OOMon Headers
-#include "strtype"
-#include "userflags.h"
 
-class HelpTopic
+class UserFlags
 {
-private:
-  StrVector topics;
-  StrList syntax;
-  StrList description;
-  StrList example;
-  StrList helpLink;
-  StrList subTopic;
-  UserFlags flags;
-  bool error;
-
 public:
-  HelpTopic(void);
-  HelpTopic(const HelpTopic &);
-  virtual ~HelpTopic(void);
-
-  bool operator==(const std::string & topic) const;
-  bool operator!=(const std::string & topic) const
+  enum Bit
   {
-    return !operator==(topic);
-  }
+    AUTHED, CHANOP, OPER, WALLOPS, CONN, NICK, KLINE, GLINE, DLINE, REMOTE,
+    MASTER,
 
-  bool hadError(void) const { return error; }
-  StrList getHelp(void);
-  StrList getHelp(const std::string &);
+    MAX_UF_BITS
+  };
+
+  UserFlags(void);
+  UserFlags(const Bit b);
+  UserFlags(const Bit b, const Bit b);
+
+  ~UserFlags() { }
+
+  UserFlags & operator |= (const UserFlags & flags);
+  UserFlags & operator &= (const UserFlags & flags);
+  UserFlags operator & (const UserFlags & flags) const;
+  bool operator == (const UserFlags & flags) const;
+
+  bool has(const Bit b) const;
+
+  const static UserFlags NONE;
+
+private:
+  std::bitset<MAX_UF_BITS> bits;
 };
 
-#endif /* __HELPTOPIC_H__ */
+
+#endif /* __USERFLAGS_H__ */
 

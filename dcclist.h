@@ -45,13 +45,12 @@ public:
   bool listen(const std::string & nick, const std::string & userhost);
   void setAllFD(fd_set & readset, fd_set & writeset);
   void processAll(const fd_set & readset, const fd_set & writeset);
-  void sendAll(const std::string & message, const int flags = UF_NONE,
+  void sendAll(const std::string & message,
+    const UserFlags flags = UserFlags::NONE,
     const WatchSet & watches = WatchSet(),
-    const BotClient::ptr exception = BotClient::ptr());
-  bool sendTo(const std::string & handle, const std::string & message,
-    const int flags = UF_NONE, const WatchSet & watches = WatchSet());
+    const BotClient::ptr skip = BotClient::ptr());
   bool sendChat(const std::string & from, std::string message,
-    const BotClient::ptr exception = BotClient::ptr());
+    const BotClient::ptr skip = BotClient::ptr());
   void who(StrList &);
   void statsP(StrList &);
 
@@ -113,17 +112,23 @@ private:
   class SendFilter
   {
   public:
-    SendFilter(const std::string & message, const int flags, 
-      const WatchSet & watches, const BotClient::ptr exception)
-      : _message(message), _flags(flags), _watches(watches),
-      _exception(exception) { }
-    SendFilter(const std::string & message, const int flags, 
+    SendFilter(const std::string & message, const UserFlags flags, 
+      const WatchSet & watches, const BotClient::ptr skip)
+      : _message(message), _flags(flags), _watches(watches)
+    {
+      if (skip.get())
+      {
+	this->_skip = skip->id();
+      }
+    }
+    SendFilter(const std::string & message, const UserFlags flags, 
       const WatchSet & watches) : _message(message), _flags(flags),
       _watches(watches) { }
 
     void operator()(DCCPtr client)
     {
-      if (!this->_exception.get() || (this->_exception->id() != client.get()))
+      if (this->_skip.empty() ||
+	(0 != this->_skip.compare(ptrToStr(client.get()))))
       {
         client->send(this->_message, this->_flags, this->_watches);
       }
@@ -131,16 +136,16 @@ private:
 
   private:
     const std::string _message;
-    const int _flags;
+    const UserFlags _flags;
     const WatchSet _watches;
-    const BotClient::ptr _exception;
+    std::string _skip;
   };
 
   class SendToFilter
   {
   public:
     SendToFilter(const std::string & handle, const std::string & message,
-      const int flags, const WatchSet & watches) : _handle(handle),
+      const UserFlags flags, const WatchSet & watches) : _handle(handle),
       _message(message), _flags(flags), _watches(watches) { }
 
     bool operator()(DCCPtr client)
@@ -157,7 +162,7 @@ private:
   private:
     const std::string _handle;
     const std::string _message;
-    const int _flags;
+    const UserFlags _flags;
     const WatchSet _watches;
   };
 };

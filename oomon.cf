@@ -61,13 +61,13 @@ F:192.168.*.*
 
 # Links (server)
 #:Handle:hostmask:password:flags:
-L:OOMon2:rye.toast.pc:botsecret:K:
-L:OOMon3:wheat.toast.pc:botsecret:K:
+L:OOMon2:rye.toast.pc:botsecret:
+L:OOMon3:wheat.toast.pc:botsecret:
 
 # Connections (client)
 #:Handle:hostname:passowrd:flags:port:
-C:OOMon2:rye.toast.pc:botsecret:K:4000:
-C:OOMon3:wheat.toast.pc:botsecret:K:9000:
+C:OOMon2:rye.toast.pc:botsecret:4000:
+C:OOMon3:wheat.toast.pc:botsecret:9000:
 
 # Y-line descriptions go here (see .class command)
 Y:1:Blah users

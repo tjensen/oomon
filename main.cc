@@ -51,6 +51,7 @@
 #include "vars.h"
 #include "remotelist.h"
 #include "botexcept.h"
+#include "botclient.h"
 #include "userdb.h"
 
 
@@ -72,10 +73,10 @@ static time_t startTime = 0;
 
 
 void
-SendAll(const std::string & message, const int flags, const WatchSet & watches,
-  const BotClient::ptr exception)
+SendAll(const std::string & message, const UserFlags flags,
+  const WatchSet & watches, const BotClient::ptr skip)
 {
-  clients.sendAll(message, flags, watches, exception);
+  clients.sendAll(message, flags, watches, skip);
 }
 
 
@@ -135,7 +136,7 @@ reload()
 void
 ReloadConfig(const std::string & From)
 {
-  ::SendAll("Reload CONFIG requested by " + From, UF_OPER);
+  ::SendAll("Reload CONFIG requested by " + From, UserFlags::OPER);
   reload();
 }
 
@@ -146,7 +147,7 @@ hangup(int sig)
   if (sig != SIGHUP)
     return;
   Log::Write("Caught SIGHUP -- Reloading config");
-  ::SendAll("*** Caught SIGHUP.", UF_OPER);
+  ::SendAll("*** Caught SIGHUP.", UserFlags::OPER);
   reload();
   signal(SIGHUP, hangup);
 }

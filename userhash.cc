@@ -45,6 +45,7 @@
 #include "log.h"
 #include "engine.h"
 #include "pattern.h"
+#include "botclient.h"
 
 
 const static int CLONE_DETECT_INC = 15;
@@ -114,7 +115,7 @@ UserHash::add(const std::string & nick, const std::string & userhost,
 
       if (newuser == NULL)
       {
-        ::SendAll("Ran out of memory in UserHash::add()", UF_OPER);
+        ::SendAll("Ran out of memory in UserHash::add()", UserFlags::OPER);
         Log::Write("Ran out of memory in UserHash::add()");
         gracefuldie(SIGABRT);
       }
@@ -147,7 +148,7 @@ UserHash::add(const std::string & nick, const std::string & userhost,
 	      notice = notice + " [" + ip + "]";
 	    }
 
-	    ::SendAll(notice, UF_OPER, WATCH_SEEDRAND);
+	    ::SendAll(notice, UserFlags::OPER, WATCH_SEEDRAND);
 	    Log::Write(notice);
 
 	    doAction(nick, userhost, BotSock::inet_addr(ip),
@@ -252,7 +253,7 @@ UserHash::updateNick(const std::string & oldNick, const std::string & userhost,
 	    notice = notice + " [" + BotSock::inet_ntoa(find->info->getIp()) +
 	      "]";
 	  }
-	  ::SendAll(notice, UF_OPER, WATCH_SEEDRAND);
+	  ::SendAll(notice, UserFlags::OPER, WATCH_SEEDRAND);
 	  Log::Write(notice);
 
 	  doAction(find->info->getNick(), userhost, find->info->getIp(),
@@ -361,7 +362,7 @@ UserHash::addToHash(HashRec *table[], const std::string & key, UserEntry *item)
 
   if (newhashrec == NULL)
   {
-    ::SendAll("Ran out of memory in UserHash::addToHash()", UF_OPER);
+    ::SendAll("Ran out of memory in UserHash::addToHash()", UserFlags::OPER);
     Log::Write("Ran out of memory in UserHash::addToHash()");
     gracefuldie(SIGABRT);
   }
@@ -386,7 +387,7 @@ UserHash::addToHash(HashRec *table[], const BotSock::Address & key,
 
   if (newhashrec == NULL)
   {
-    ::SendAll("Ran out of memory in UserHash::addToHash()", UF_OPER);
+    ::SendAll("Ran out of memory in UserHash::addToHash()", UserFlags::OPER);
     Log::Write("Ran out of memory in UserHash::addToHash()");
     gracefuldie(SIGABRT);
   }
@@ -1402,7 +1403,7 @@ UserHash::checkHostClones(const std::string & host)
       IntToStr(cloneCount) + " connects in " + IntToStr(now - oldest) +
       " seconds";
   }
-  ::SendAll(notice, UF_OPER);
+  ::SendAll(notice, UserFlags::OPER);
   Log::Write(notice);
             
   cloneCount = 0;
@@ -1468,7 +1469,7 @@ UserHash::checkHostClones(const std::string & host)
           differentUser = true;
         }
 
-        klineClones(true, find->info->getUser(), find->info->getHost(),
+        klineClones(true, currentUser, find->info->getHost(),
 	  find->info->getIp(), differentUser, false,
 	  lastIdentd | currentIdentd);
       }
@@ -1480,19 +1481,19 @@ UserHash::checkHostClones(const std::string & host)
       }
       else if (cloneCount == 2) 
       {
-        ::SendAll(notice1, UF_OPER);
-        ::SendAll(notice, UF_OPER);
+        ::SendAll(notice1, UserFlags::OPER);
+        ::SendAll(notice, UserFlags::OPER);
         Log::Write(notice1);
         Log::Write(notice);
       }
       else if (cloneCount < 5)
       {
-        ::SendAll(notice, UF_OPER);
+        ::SendAll(notice, UserFlags::OPER);
         Log::Write(notice);
       }
       else if (cloneCount == 5)
       {
-        ::SendAll(notice, UF_OPER);
+        ::SendAll(notice, UserFlags::OPER);
         Log::Write(notice);
       }
     }
@@ -1562,7 +1563,7 @@ UserHash::checkIpClones(const BotSock::Address & ip)
       IntToStr(cloneCount) + " connects in " + IntToStr(now - oldest) +
       " seconds";
   }
-  ::SendAll(notice, UF_OPER);
+  ::SendAll(notice, UserFlags::OPER);
   Log::Write(notice);
             
   cloneCount = 0;
@@ -1638,7 +1639,7 @@ UserHash::checkIpClones(const BotSock::Address & ip)
 	  differentIp = true;
 	}
 
-        klineClones(true, find->info->getUser(), find->info->getHost(),
+        klineClones(true, currentUser, find->info->getHost(),
 	  find->info->getIp(), differentUser, differentIp,
 	  lastIdentd | currentIdentd);
       }
@@ -1650,19 +1651,19 @@ UserHash::checkIpClones(const BotSock::Address & ip)
       }
       else if (cloneCount == 2) 
       {
-        ::SendAll(notice1, UF_OPER);
-        ::SendAll(notice, UF_OPER);
+        ::SendAll(notice1, UserFlags::OPER);
+        ::SendAll(notice, UserFlags::OPER);
         Log::Write(notice1);
         Log::Write(notice);
       }
       else if (cloneCount < 5)
       {
-        ::SendAll(notice, UF_OPER);
+        ::SendAll(notice, UserFlags::OPER);
         Log::Write(notice);
       }
       else if (cloneCount == 5)
       {
-        ::SendAll(notice, UF_OPER);
+        ::SendAll(notice, UserFlags::OPER);
         Log::Write(notice);
       }
     }

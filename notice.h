@@ -231,7 +231,7 @@ public:
     this->target = FirstWord(text);
 
     Log::Write("*** " + notice);
-    ::SendAll("*** " + notice, UF_OPER, WATCH_FLOODERS);
+    ::SendAll("*** " + notice, UserFlags::OPER, WATCH_FLOODERS);
   }
 
   bool triggered(const int & count, const time_t & interval) const
@@ -244,7 +244,7 @@ public:
   virtual void execute(void) const
   {
     ::SendAll("*** Flooder detected: " + this->nick + " (" +
-      this->userhost + ")", UF_OPER, WATCH_FLOODERS);
+      this->userhost + ")", UserFlags::OPER, WATCH_FLOODERS);
 
     doAction(this->nick, this->userhost,
       ::users.getIP(this->nick, this->userhost),
@@ -320,7 +320,7 @@ public:
       throw OOMon::notice_parse_error("spambot notice");
 
     Log::Write("*** " + notice);
-    ::SendAll("*** " + notice, UF_OPER, WATCH_SPAMBOTS);
+    ::SendAll("*** " + notice, UserFlags::OPER, WATCH_SPAMBOTS);
   }
 
   bool triggered(const int & count, const time_t & interval) const
@@ -333,7 +333,7 @@ public:
   virtual void execute(void) const
   {
     ::SendAll("*** Spambot detected: " + this->nick + " (" +
-      this->userhost + ")", UF_OPER, WATCH_SPAMBOTS);
+      this->userhost + ")", UserFlags::OPER, WATCH_SPAMBOTS);
 
     doAction(this->nick, this->userhost,
       ::users.getIP(this->nick, this->userhost),
@@ -395,7 +395,7 @@ public:
     this->host = userhost.substr(at + 1);
 
     Log::Write("*** " + notice);
-    ::SendAll("*** " + notice, UF_OPER, WATCH_TOOMANYS);
+    ::SendAll("*** " + notice, UserFlags::OPER, WATCH_TOOMANYS);
   }
 
   bool triggered(const int & count, const time_t & interval) const
@@ -408,7 +408,7 @@ public:
   virtual void execute(void) const
   {
     ::SendAll("*** Too many connect attempts detected: " + this->nick + " (" +
-      this->userhost + ")", UF_OPER, WATCH_TOOMANYS);
+      this->userhost + ")", UserFlags::OPER, WATCH_TOOMANYS);
 
     doAction(this->nick, this->userhost,
       ::users.getIP(this->nick, this->userhost),
@@ -482,7 +482,7 @@ public:
   virtual void execute(void) const
   {
     ::SendAll("*** Connect flooder detected: " + this->nick + " (" +
-      this->userhost + ")", UF_OPER, WATCH_CONNFLOOD);
+      this->userhost + ")", UserFlags::OPER, WATCH_CONNFLOOD);
 
     doAction(this->nick, this->userhost,
       ::users.getIP(this->nick, this->userhost),
@@ -561,7 +561,7 @@ public:
     }
 
     Log::Write("*** " + notice);
-    ::SendAll("*** " + notice, UF_OPER, WATCH_OPERFAILS);
+    ::SendAll("*** " + notice, UserFlags::OPER, WATCH_OPERFAILS);
   }
 
   bool triggered(const int & count, const time_t & interval) const
@@ -574,7 +574,7 @@ public:
   virtual void execute(void) const
   {
     ::SendAll("*** Too many failed oper attempts detected: " + this->nick +
-      " (" + this->userhost + ")", UF_OPER, WATCH_OPERFAILS);
+      " (" + this->userhost + ")", UserFlags::OPER, WATCH_OPERFAILS);
 
     doAction(this->nick, this->userhost,
       ::users.getIP(this->nick, this->userhost),

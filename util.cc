@@ -587,6 +587,35 @@ ULongToStr(unsigned long i, std::string::size_type len)
 
 
 //////////////////////////////////////////////////////////////////////
+// ptrToStr(ptr)
+//
+// Description:
+//  Converts an int to a string.
+//
+// Parameters:
+//  ptr - The pointer to convert.
+//
+// Return Value:
+//  The function returns string containing the representation of the
+//  pointer.
+//////////////////////////////////////////////////////////////////////
+std::string
+ptrToStr(void *ptr)
+{
+  char buffer[64];
+
+#ifdef HAVE_SNPRINTF
+  ::snprintf(buffer, sizeof(buffer),
+#else
+  ::sprintf(buffer,
+#endif
+    "%p", ptr);
+
+  return std::string(reinterpret_cast<char *>(buffer));
+}
+
+
+//////////////////////////////////////////////////////////////////////
 // GetHandleHB(text)
 //
 // Description:

@@ -87,7 +87,7 @@ Proxy::detectedProxy(void)
   std::string notice = std::string("Open ") + this->typeName() +
     " proxy detected for " + this->nick() + "!" + this->userhost() +
     " [" + this->address() + ":" + IntToStr(this->port()) + "]";
-  ::SendAll(notice, UF_OPER);
+  ::SendAll(notice, UserFlags::OPER);
   Log::Write(notice);
 
   doAction(this->nick(), this->userhost(),

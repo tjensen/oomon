@@ -42,9 +42,10 @@ enum OOMonExitCode
 
 void gracefuldie(int sig);
 void ReloadConfig(const std::string &);
-void SendAll(const std::string & message, const int flags = UF_NONE,
+void SendAll(const std::string & message,
+  const UserFlags flags = UserFlags::NONE,
   const WatchSet & watches = WatchSet(),
-  const BotClient::ptr exception = BotClient::ptr());
+  const BotClient::ptr skip = BotClient::ptr());
 void motd(StrList &);
 std::string getUptime(void);
 

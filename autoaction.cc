@@ -30,6 +30,7 @@
 #include "vars.h"
 #include "main.h"
 #include "botsock.h"
+#include "botclient.h"
 
 
 static void
@@ -41,7 +42,7 @@ doKill(const std::string & nick, const std::string & reason)
   }
   else
   {
-    ::SendAll(".kill " + nick + " " + reason, UF_OPER);
+    ::SendAll(".kill " + nick + " " + reason, UserFlags::OPER);
   }
 }
 
@@ -58,11 +59,12 @@ doKline(const std::string & mask, int duration, const std::string & reason)
     if (duration > 0)
     {
       ::SendAll(".kline " + IntToStr(duration) + " " + mask + " " + reason,
-	UF_OPER | UF_KLINE);
+	UserFlags(UserFlags::OPER, UserFlags::KLINE));
     }
     else
     {
-      ::SendAll(".kline " + mask + " " + reason, UF_OPER | UF_KLINE);
+      ::SendAll(".kline " + mask + " " + reason,
+	UserFlags(UserFlags::OPER, UserFlags::KLINE));
     }
   }
 }
@@ -81,11 +83,12 @@ doDline(const std::string & mask, const int duration,
     if (duration > 0)
     {
       ::SendAll(".dline " + IntToStr(duration) + " " + mask + " " + reason,
-	UF_OPER | UF_DLINE);
+	UserFlags(UserFlags::OPER, UserFlags::DLINE));
     }
     else
     {
-      ::SendAll(".dline " + mask + " " + reason, UF_OPER | UF_DLINE);
+      ::SendAll(".dline " + mask + " " + reason,
+	UserFlags(UserFlags::OPER, UserFlags::DLINE));
     }
   }
 }
@@ -149,7 +152,8 @@ doAction(const std::string & nick, const std::string & userhost,
     if (suggestKlineAfterKill && vars[VAR_AUTO_PILOT]->getBool())
     {
       std::string mask("*" + ident + "@" + domain);
-      ::SendAll(".kline " + mask + " " + reason, UF_OPER | UF_KLINE);
+      ::SendAll(".kline " + mask + " " + reason,
+	UserFlags(UserFlags::OPER, UserFlags::KLINE));
     }
     break;
 

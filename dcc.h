@@ -49,16 +49,19 @@ public:
   void motd(void);
 
   void chat(const std::string & text);
-  void send(const std::string & message, const int flags = UF_NONE,
+  void send(const std::string & message,
+    const UserFlags flags = UserFlags::NONE,
     const WatchSet & watches = WatchSet());
-  void send(StrList & message, const int flags = UF_NONE,
+  void send(StrList & message, const UserFlags flags = UserFlags::NONE,
     const WatchSet & watches = WatchSet());
 
   std::string getUserhost(void) const { return UserHost; }
   std::string getNick(void) const { return Nick; }
 
-  bool isOper(void) const { return (this->client->flags() & UF_OPER); }
-  bool isAuthed(void) const { return (this->client->flags() & UF_AUTHED); }
+  bool isOper(void) const
+    { return (this->client->flags().has(UserFlags::OPER)); }
+  bool isAuthed(void) const
+    { return (this->client->flags().has(UserFlags::AUTHED)); }
   std::string getFlags(void) const;
   std::string getHandle(void) const { return this->client->handle(); }
 
@@ -70,25 +73,29 @@ protected:
   class Client : public BotClient
   {
   public:
-    Client(DCC *owner) : _owner(owner), _handle(), _flags(UF_NONE) { }
+    Client(DCC *owner) : _owner(owner), _handle(), _flags(UserFlags::NONE)
+    {
+      _id = ptrToStr(owner);
+    }
     ~Client(void) { }
 
     virtual void send(const std::string & text)
     {
       this->_owner->write(text + '\n');
     }
-    virtual int flags(void) const { return this->_flags; }
+    virtual UserFlags flags(void) const { return this->_flags; }
     virtual std::string handle(void) const { return this->_handle; }
     virtual std::string bot(void) const { return Config::GetNick(); }
-    virtual BotSock *id(void) const { return this->_owner; }
+    virtual std::string id(void) const { return this->_id; }
 
-    void flags(const int f) { this->_flags = f; }
+    void flags(const UserFlags f) { this->_flags = f; }
     void handle(const std::string & h) { this->_handle = h; }
 
   private:
     DCC *_owner;
     std::string _handle;
-    int _flags;
+    std::string _id;
+    UserFlags _flags;
   };
   typedef boost::shared_ptr<Client> ClientPtr;
 
@@ -103,7 +110,7 @@ private:
 
   void addCommand(const std::string & command,
     void (DCC::*)(BotClient::ptr from, const std::string & command,
-    std::string parameters), const int flags,
+    std::string parameters), const UserFlags flags,
     const int options = CommandParser::NONE);
 
   void cmdHelp(BotClient::ptr from, const std::string & command,

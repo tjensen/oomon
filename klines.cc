@@ -33,6 +33,7 @@
 #include "log.h"
 #include "vars.h"
 #include "pattern.h"
+#include "botclient.h"
 
 
 #ifdef DEBUG
@@ -200,15 +201,15 @@ KlineList::parseAndAdd(std::string text)
   Log::Write(msg);
   if (lineType == 'K')
   {
-    ::SendAll(msg, UF_OPER, WATCH_KLINES);
+    ::SendAll(msg, UserFlags::OPER, WATCH_KLINES);
   }
   else if (lineType == 'D')
   {
-    ::SendAll(msg, UF_OPER, WATCH_DLINES);
+    ::SendAll(msg, UserFlags::OPER, WATCH_DLINES);
   }
   else
   {
-    ::SendAll(msg, UF_OPER);
+    ::SendAll(msg, UserFlags::OPER);
   }
 
   if (vars[VAR_EXTRA_KLINE_INFO]->getBool())
@@ -322,15 +323,15 @@ KlineList::parseAndRemove(std::string text)
   Log::Write(msg);
   if (lineType == 'K')
   {
-    ::SendAll(msg, UF_OPER, WATCH_KLINES);
+    ::SendAll(msg, UserFlags::OPER, WATCH_KLINES);
   }
   else if (lineType == 'D')
   {
-    ::SendAll(msg, UF_OPER, WATCH_DLINES);
+    ::SendAll(msg, UserFlags::OPER, WATCH_DLINES);
   }
   else
   {
-    ::SendAll(msg, UF_OPER);
+    ::SendAll(msg, UserFlags::OPER);
   }
 
   if (!temporary ||

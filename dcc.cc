@@ -62,19 +62,19 @@ DCC::DCC(const std::string & nick, const std::string & userhost)
   this->watches = WatchSet::defaults();
 
   // anonymous commands
-  this->addCommand("HELP", &DCC::cmdHelp, UF_NONE);
-  this->addCommand("INFO", &DCC::cmdHelp, UF_NONE);
-  this->addCommand("AUTH", &DCC::cmdAuth, UF_NONE);
-  this->addCommand("ECHO", &DCC::cmdEcho, UF_NONE);
-  this->addCommand("QUIT", &DCC::cmdQuit, UF_NONE,
+  this->addCommand("HELP", &DCC::cmdHelp, UserFlags::NONE);
+  this->addCommand("INFO", &DCC::cmdHelp, UserFlags::NONE);
+  this->addCommand("AUTH", &DCC::cmdAuth, UserFlags::NONE);
+  this->addCommand("ECHO", &DCC::cmdEcho, UserFlags::NONE);
+  this->addCommand("QUIT", &DCC::cmdQuit, UserFlags::NONE,
     CommandParser::EXACT_ONLY);
 
-  // UF_AUTHED commands
-  this->addCommand("WATCH", &DCC::cmdWatch, UF_AUTHED);
-  this->addCommand("CHAT", &DCC::cmdChat, UF_NONE);
+  // UserFlags::AUTHED commands
+  this->addCommand("WATCH", &DCC::cmdWatch, UserFlags::AUTHED);
+  this->addCommand("CHAT", &DCC::cmdChat, UserFlags::NONE);
 
-  // UF_WALLOPS commands
-  this->addCommand("LOCOPS", &DCC::cmdLocops, UF_WALLOPS);
+  // UserFlags::WALLOPS commands
+  this->addCommand("LOCOPS", &DCC::cmdLocops, UserFlags::WALLOPS);
 }
 
 
@@ -93,7 +93,7 @@ DCC::DCC(DCC *listener, const std::string & nick, const std::string & userhost)
 void
 DCC::addCommand(const std::string & command,
   void (DCC::*func)(BotClient::ptr from, const std::string & command,
-  std::string parameters), const int flags, const int options)
+  std::string parameters), const UserFlags flags, const int options)
 {
   this->parser.addCommand(command, boost::bind(func, this, _1, _2, _3), flags,
     options);
@@ -136,7 +136,7 @@ DCC::onConnect(void)
   std::cout << "DCC::onConnect()" << std::endl;
 #endif
   this->send("OOMon-" + std::string(OOMON_VERSION) + " by Timothy L. Jensen");
-  clients.sendAll(this->getUserhost() + " has connected", UF_AUTHED,
+  clients.sendAll(this->getUserhost() + " has connected", UserFlags::AUTHED,
     WatchSet(), this->client);
   this->motd();
   this->setTimeout(DCC_IDLE_MAX);
@@ -189,7 +189,7 @@ DCC::parse(std::string text)
       if (at != std::string::npos)
       {
 	// Yes! Do I have permission?
-        if ((this->client->flags() & UF_REMOTE) == 0)
+        if (!this->client->flags().has(UserFlags::REMOTE))
         {
           this->send("*** You can't use remote commands!");
 	  return true;
@@ -238,7 +238,7 @@ DCC::cmdAuth(BotClient::ptr from, const std::string & command,
 {
   std::string authHandle = FirstWord(parameters);
   std::string handle;
-  int flags;
+  UserFlags flags;
 
   if (Config::Auth(authHandle, this->UserHost, parameters, flags,
     handle))
@@ -250,7 +250,7 @@ DCC::cmdAuth(BotClient::ptr from, const std::string & command,
 
     std::string notice(this->client->handle() + " (" + this->UserHost +
       ") has been authorized");
-    ::SendAll(notice, UF_AUTHED, WatchSet(), this->client);
+    ::SendAll(notice, UserFlags::AUTHED, WatchSet(), this->client);
     Log::Write(notice);
 
     this->loadConfig();
@@ -258,7 +258,7 @@ DCC::cmdAuth(BotClient::ptr from, const std::string & command,
   else
   {
     this->send("*** Authorization denied!");
-    ::SendAll(this->UserHost + " has failed authorization!", UF_AUTHED,
+    ::SendAll(this->UserHost + " has failed authorization!", UserFlags::AUTHED,
       WatchSet(), this->client);
     Log::Write(this->UserHost + " has failed authorization!");
   }
@@ -281,7 +281,8 @@ void
 DCC::cmdChat(BotClient::ptr from, const std::string & command,
   std::string parameters)
 {
-  if ((from->flags() & UF_AUTHED) || vars[VAR_UNAUTHED_MAY_CHAT]->getBool())
+  if (from->flags().has(UserFlags::AUTHED) ||
+    vars[VAR_UNAUTHED_MAY_CHAT]->getBool())
   {
     if (this->echoMyChatter)
     {
@@ -323,18 +324,18 @@ DCC::getFlags(void) const
   std::string temp = "";
   if (this->isAuthed())
   {
-    int flags = this->client->flags();
+    UserFlags flags = this->client->flags();
 
-    if (flags & UF_CHANOP) temp += "C"; else temp += " ";
-    if (flags & UF_DLINE) temp += "D"; else temp += " ";
-    if (flags & UF_GLINE) temp += "G"; else temp += " ";
-    if (flags & UF_KLINE) temp += "K"; else temp += " ";
-    if (flags & UF_MASTER) temp += "M"; else temp += " ";
-    if (flags & UF_NICK) temp += "N"; else temp += " ";
-    if (flags & UF_OPER) temp += "O"; else temp += " ";
-    if (flags & UF_REMOTE) temp += "R"; else temp += " ";
-    if (flags & UF_WALLOPS) temp += "W"; else temp += " ";
-    if (flags & UF_CONN) temp += "X"; else temp += " ";
+    if (flags.has(UserFlags::CHANOP)) temp += "C"; else temp += " ";
+    if (flags.has(UserFlags::DLINE)) temp += "D"; else temp += " ";
+    if (flags.has(UserFlags::GLINE)) temp += "G"; else temp += " ";
+    if (flags.has(UserFlags::KLINE)) temp += "K"; else temp += " ";
+    if (flags.has(UserFlags::MASTER)) temp += "M"; else temp += " ";
+    if (flags.has(UserFlags::NICK)) temp += "N"; else temp += " ";
+    if (flags.has(UserFlags::OPER)) temp += "O"; else temp += " ";
+    if (flags.has(UserFlags::REMOTE)) temp += "R"; else temp += " ";
+    if (flags.has(UserFlags::WALLOPS)) temp += "W"; else temp += " ";
+    if (flags.has(UserFlags::CONN)) temp += "X"; else temp += " ";
   }
   else
   {
@@ -345,11 +346,11 @@ DCC::getFlags(void) const
 
 
 void
-DCC::send(const std::string & message, const int flags,
+DCC::send(const std::string & message, const UserFlags flags,
   const WatchSet & watches)
 {
   if (this->isConnected() &&
-    ((flags == UF_NONE) || (flags == (this->client->flags() & flags))))
+    ((flags == UserFlags::NONE) || (flags == (this->client->flags() & flags))))
   {
     if (!this->watches.has(watches))
     {
@@ -379,7 +380,7 @@ DCC::send(const std::string & message, const int flags,
 // Sends a list of strings to the DCC connection
 //
 void
-DCC::send(StrList & messages, const int flags, const WatchSet & watches)
+DCC::send(StrList & messages, const UserFlags flags, const WatchSet & watches)
 {
   for (StrList::iterator pos = messages.begin(); pos != messages.end(); ++pos)
   {

@@ -28,6 +28,7 @@
 #include <arpa/inet.h>
 
 #include "oomon.h"
+#include "botclient.h"
 
 // C++ headers
 #include <algorithm>
@@ -46,6 +47,7 @@
 #include "irc.h"
 #include "log.h"
 #include "botexcept.h"
+#include "userflags.h"
 
 
 #ifdef DEBUG
@@ -57,6 +59,46 @@
 # define MAXHOSTNAMELEN 256
 #endif
 
+
+struct OperDef
+{
+  OperDef() { };
+  OperDef(const OperDef & copy);
+  virtual ~OperDef() { delete this->pattern; };
+
+  std::string Handle, Passwd;
+  Pattern *pattern;
+  class UserFlags Flags;
+};
+
+
+struct LinkDef
+{
+  LinkDef() { };
+  LinkDef(const LinkDef & copy);
+  virtual ~LinkDef() { delete this->pattern; };
+
+  std::string Handle, Passwd;
+  Pattern *pattern;
+};
+
+
+struct ConnDef
+{
+  ConnDef() { };
+
+  std::string Handle, Hostname, Passwd;
+  BotSock::Port port;
+};
+
+
+struct YLine
+{
+  YLine() { };
+
+  std::string YClass;
+  std::string Description;
+};
 
 
 OperDef::OperDef(const OperDef & copy)
@@ -73,7 +115,6 @@ LinkDef::LinkDef(const LinkDef & copy)
   this->pattern = smartPattern(copy.pattern->get(), false);
   this->Handle = copy.Handle;
   this->Passwd = copy.Passwd;
-  this->Flags = copy.Flags;
 }
 
 
@@ -121,27 +162,27 @@ void Config::AddOper(const std::string & Handle, const std::string & pattern,
     temp.Handle = Handle;
     temp.pattern = smartPattern(pattern, false);
     temp.Passwd = Passwd;
-    temp.Flags = UF_NONE;
+    temp.Flags = UserFlags::NONE;
     if (Flags.find('C') != std::string::npos)
-      temp.Flags |= UF_CHANOP;
+      temp.Flags |= UserFlags::CHANOP;
     if (Flags.find('D') != std::string::npos)
-      temp.Flags |= UF_DLINE;
+      temp.Flags |= UserFlags::DLINE;
     if (Flags.find('G') != std::string::npos)
-      temp.Flags |= UF_GLINE;
+      temp.Flags |= UserFlags::GLINE;
     if (Flags.find('K') != std::string::npos)
-      temp.Flags |= UF_KLINE;
+      temp.Flags |= UserFlags::KLINE;
     if (Flags.find('M') != std::string::npos)
-      temp.Flags |= UF_MASTER;
+      temp.Flags |= UserFlags::MASTER;
     if (Flags.find('N') != std::string::npos)
-      temp.Flags |= UF_NICK;
+      temp.Flags |= UserFlags::NICK;
     if (Flags.find('O') != std::string::npos)
-      temp.Flags |= UF_OPER;
+      temp.Flags |= UserFlags::OPER;
     if (Flags.find('R') != std::string::npos)
-      temp.Flags |= UF_REMOTE;
+      temp.Flags |= UserFlags::REMOTE;
     if (Flags.find('W') != std::string::npos)
-      temp.Flags |= UF_WALLOPS;
+      temp.Flags |= UserFlags::WALLOPS;
     if (Flags.find('X') != std::string::npos)
-      temp.Flags |= UF_CONN;
+      temp.Flags |= UserFlags::CONN;
     Opers.push_back(temp);
 #ifdef CONFIG_DEBUG
     std::cout << "Oper: " << Handle << ", " << pattern << ", " << Passwd <<
@@ -195,7 +236,7 @@ void Config::AddSpoofer(const std::string & pattern)
 }
 
 
-// AddLink(Handle, pattern, Passwd, Flags)
+// AddLink(Handle, pattern, Passwd)
 //
 // Adds a link definition to the list.
 // A handle and host pattern are required! Passwords are highly recommended!
@@ -203,7 +244,7 @@ void Config::AddSpoofer(const std::string & pattern)
 //
 //
 void Config::AddLink(const std::string & Handle, const std::string & pattern,
-	const std::string & Passwd, const std::string & Flags)
+	const std::string & Passwd)
 {
   if (Handle != "")
   {
@@ -213,11 +254,10 @@ void Config::AddLink(const std::string & Handle, const std::string & pattern,
       temp.Handle = Handle;
       temp.pattern = smartPattern(pattern, false);
       temp.Passwd = Passwd;
-      //temp.Flags = Flags;
       Links.push_back(temp);
 #ifdef CONFIG_DEBUG
       std::cout << "Link: " << Handle << ", " << pattern << ", " << Passwd <<
-        ", " << Flags << std::endl;
+        std::endl;
 #endif
     }
     catch (OOMon::regex_error & e)
@@ -228,7 +268,7 @@ void Config::AddLink(const std::string & Handle, const std::string & pattern,
 }
 
 
-// AddConn(Handle, Hostname, Passwd, Flags, port)
+// AddConn(Handle, Hostname, Passwd, port)
 //
 // Adds a connection definition to the list
 // A handle, hostname, and port number are required! Password requirements
@@ -236,20 +276,18 @@ void Config::AddLink(const std::string & Handle, const std::string & pattern,
 // Supported flags are the same as for AddLink()
 //
 void Config::AddConn(const std::string & Handle, const std::string & Hostname,
-  const std::string & Passwd, const std::string & Flags,
-  const BotSock::Port port)
+  const std::string & Passwd, const BotSock::Port port)
 {
   if ((Handle != "") && (Hostname != "") && (port != 0)) {
     ConnDef temp;
     temp.Handle = Handle;
     temp.Hostname = Hostname;
     temp.Passwd = Passwd;
-    //temp.Flags = Flags;
     temp.port = port;
     Connections.push_back(temp);
     #ifdef CONFIG_DEBUG
       std::cout << "Conn: " << Handle << ", " << Hostname << ", " << Passwd <<
-	", " << Flags << ", " << port << std::endl;
+	", " << port << std::endl;
     #endif
   }
 }
@@ -350,9 +388,8 @@ void Config::Load(const std::string filename)
 	  handle = Parameters[0];
 	  hostname = Parameters[1];
 	  passwd = Parameters[2];
-	  flags = Parameters[3];
-	  port = atoi(Parameters[4].c_str());
-	  AddConn(handle, hostname, passwd, UpCase(flags), port);
+	  port = atoi(Parameters[3].c_str());
+	  AddConn(handle, hostname, passwd, port);
 	}
 	break;
       case 'e':
@@ -403,8 +440,7 @@ void Config::Load(const std::string filename)
 	  handle = Parameters[0];
 	  mask = Parameters[1];
 	  passwd = Parameters[2];
-	  flags = Parameters[3];
-	  AddLink(handle, mask, passwd, UpCase(flags));
+	  AddLink(handle, mask, passwd);
 	}
 	break;
       case 'm':
@@ -541,7 +577,7 @@ void Config::Clear()
 // Note that Flags and NewHandle are NOT modified if authorization fails.
 //
 bool Config::Auth(const std::string & Handle, const std::string & UserHost,
-	const std::string & Password, int & Flags, std::string & NewHandle)
+	const std::string & Password, UserFlags & Flags, std::string & NewHandle)
 {
 #ifdef CONFIG_DEBUG
   std::cout << "Config::Auth(Handle = \"" << Handle << "\", UserHost = \"" <<
@@ -566,13 +602,14 @@ bool Config::Auth(const std::string & Handle, const std::string & UserHost,
 	    // Only people with registered handles should be allowed to do
 	    // anything
             NewHandle = pos->Handle;
-            Flags = pos->Flags | UF_AUTHED;
+	    Flags = UserFlags::AUTHED;
+            Flags |= pos->Flags;
           }
 	  else
 	  {
 	    // You might want to set up an open O: line *@* in the config file
 	    // (with no nick) to allow anyone to chat
-	    Flags = UF_AUTHED;
+	    Flags = UserFlags::AUTHED;
           }
           return true;
         }
@@ -668,7 +705,7 @@ bool Config::IsOper(const std::string & userhost)
     {
       if (pos->pattern->match(userhost))
       {
-        return (pos->Flags & UF_OPER);
+        return pos->Flags.has(UserFlags::OPER);
       }
     }
   }
@@ -725,7 +762,7 @@ bool Config::IsLinkable(const std::string & host)
 }
 
 bool Config::GetConn(std::string & BotHandle, std::string & Host,
-  BotSock::Port & port, std::string & Passwd, int & Flags)
+  BotSock::Port & port, std::string & Passwd)
 {
   for (ConnList::iterator pos = Connections.begin(); pos != Connections.end();
     ++pos)
@@ -736,7 +773,6 @@ bool Config::GetConn(std::string & BotHandle, std::string & Host,
       Host = pos->Hostname;
       port = pos->port;
       Passwd = pos->Passwd;
-      Flags = pos->Flags;
       return true;
     }
   }

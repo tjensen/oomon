@@ -33,6 +33,7 @@
 #include "log.h"
 #include "vars.h"
 #include "userhash.h"
+#include "botclient.h"
 
 
 JupeJoinList jupeJoiners;
@@ -56,7 +57,7 @@ JupeJoinList::checkJupe(const std::string & nick,
       msg = "Possible juped channel (" + entry.channel + ") auto-joiner: " +
 	nick + " (" + entry.userhost + ")";
     }
-    ::SendAll(msg, UF_OPER, WATCH_JUPES);
+    ::SendAll(msg, UserFlags::OPER, WATCH_JUPES);
     Log::Write(msg);
 
     BotSock::Address ip = users.getIP(nick, entry.userhost);
@@ -166,7 +167,7 @@ JupeJoinList::onNotice(const std::string & notice)
 
   std::string channel = FirstWord(text);
 
-  ::SendAll("*** " + notice, UF_OPER, WATCH_JUPES);
+  ::SendAll("*** " + notice, UserFlags::OPER, WATCH_JUPES);
   Log::Write(notice);
 
   this->add(nick, userhost, channel, time(NULL));
