@@ -67,7 +67,7 @@ public:
 
   void status(class BotClient * client) const;
 
-  static const std::time_t CACHE_EXPIRE;
+  static int cacheExpire;
 
 private:
   bool initiateCheck(const UserEntryPtr user, const BotSock::Port port,
@@ -139,7 +139,7 @@ private:
     }
     bool isExpired(const std::time_t now) const
     {
-      if (!this->isEmpty() && ((now - checked_) > ProxyList::CACHE_EXPIRE))
+      if (!this->isEmpty() && ((now - checked_) > ProxyList::cacheExpire))
       {
 	return true;
       }
@@ -194,13 +194,18 @@ private:
   static std::string setPorts(ProxyList::PortList * ports,
       const std::string & newValue);
 
+  static std::string getCacheSize(void);
+  static std::string setCacheSize(const std::string & newValue);
+
   static bool enable;
+  static bool cacheEnable;
   static int maxCount;
   static ProxyList::PortList httpConnectPorts;
   static ProxyList::PortList httpPostPorts;
   static ProxyList::PortList socks4Ports;
   static ProxyList::PortList socks5Ports;
   static ProxyList::PortList wingatePorts;
+  static ProxyList::Cache::size_type cacheSize;
 };
 
 

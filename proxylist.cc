@@ -70,22 +70,21 @@
 
 
 bool ProxyList::enable(DEFAULT_SCAN_FOR_PROXIES);
+bool ProxyList::cacheEnable(DEFAULT_SCAN_CACHE);
+int ProxyList::cacheExpire(DEFAULT_SCAN_CACHE_EXPIRE);
 int ProxyList::maxCount(DEFAULT_SCAN_MAX_COUNT);
 ProxyList::PortList ProxyList::httpConnectPorts;
 ProxyList::PortList ProxyList::httpPostPorts;
 ProxyList::PortList ProxyList::socks4Ports;
 ProxyList::PortList ProxyList::socks5Ports;
 ProxyList::PortList ProxyList::wingatePorts;
+ProxyList::Cache::size_type ProxyList::cacheSize(DEFAULT_SCAN_CACHE_SIZE);
 
 
 ProxyList proxies;
 
 
-const std::time_t ProxyList::CACHE_EXPIRE = (60 * 60); /* 1 hour */
-const ProxyList::SockList::size_type ProxyList::CACHE_SIZE = 5000;
-
-
-ProxyList::ProxyList(void) : safeHosts(ProxyList::CACHE_SIZE), cacheHits(0),
+ProxyList::ProxyList(void) : safeHosts(ProxyList::cacheSize), cacheHits(0),
   cacheMisses(0)
 {
 }
@@ -315,22 +314,25 @@ void
 ProxyList::addToCache(const BotSock::Address & address,
     const BotSock::Port port, const Proxy::Protocol type)
 {
-  ProxyList::CacheEntry newEntry(address, port, type);
-  ProxyList::CacheEntry empty;
-
-  ProxyList::Cache::iterator findEmpty = std::find(this->safeHosts.begin(),
-    this->safeHosts.end(), empty);
-  if (findEmpty != this->safeHosts.end())
+  if (ProxyList::cacheEnable)
   {
-    // Found an empty slot!  Now use it!
-    *findEmpty = newEntry;
-  }
-  else if (!this->safeHosts.empty())
-  {
-    // No empty slot found!  Find the oldest entry and replace it.
-    std::sort(this->safeHosts.begin(), this->safeHosts.end());
+    ProxyList::CacheEntry newEntry(address, port, type);
+    ProxyList::CacheEntry empty;
 
-    this->safeHosts[0] = newEntry;
+    ProxyList::Cache::iterator findEmpty = std::find(this->safeHosts.begin(),
+      this->safeHosts.end(), empty);
+    if (findEmpty != this->safeHosts.end())
+    {
+      // Found an empty slot!  Now use it!
+      *findEmpty = newEntry;
+    }
+    else if (!this->safeHosts.empty())
+    {
+      // No empty slot found!  Find the oldest entry and replace it.
+      std::sort(this->safeHosts.begin(), this->safeHosts.end());
+
+      this->safeHosts[0] = newEntry;
+    }
   }
 }
 
@@ -348,31 +350,34 @@ bool
 ProxyList::isVerifiedClean(const BotSock::Address & address,
     const BotSock::Port port, const Proxy::Protocol type)
 {
-  const ProxyList::CacheEntry tmp(address, port, type);
+  bool result(false);
 
-  ProxyList::Cache::iterator pos = std::find(this->safeHosts.begin(),
-    this->safeHosts.end(), tmp);
-
-  bool result;
-
-  if (this->safeHosts.end() == pos)
+  if (ProxyList::cacheEnable)
   {
-    result = false;
-    ++this->cacheMisses;
-  }
-  else
-  {
-    result = true;
-    ++this->cacheHits;
-    pos->update();
+    const ProxyList::CacheEntry tmp(address, port, type);
+
+    ProxyList::Cache::iterator pos = std::find(this->safeHosts.begin(),
+      this->safeHosts.end(), tmp);
+
+    if (this->safeHosts.end() == pos)
+    {
+      result = false;
+      ++this->cacheMisses;
+    }
+    else
+    {
+      result = true;
+      ++this->cacheHits;
+      pos->update();
 
 #ifdef PROXYLIST_DEBUG
-    if (result)
-    {
-      std::cout << "Verified clean: " << address << ":" << port << " (" <<
-        type << ")" << std::endl;
-    }
+      if (result)
+      {
+        std::cout << "Verified clean: " << address << ":" << port << " (" <<
+          type << ")" << std::endl;
+      }
 #endif
+    }
   }
 
   return result;
@@ -403,16 +408,19 @@ ProxyList::status(BotClient * client) const
         ++cacheCount;
       }
     }
-    std::string cache("Proxy cache: ");
-    cache += boost::lexical_cast<std::string>(cacheCount);
-    cache += '/';
-    cache += boost::lexical_cast<std::string>(this->safeHosts.size());
-    cache += " (";
-    cache += boost::lexical_cast<std::string>(this->cacheHits);
-    cache += " hits, ";
-    cache += boost::lexical_cast<std::string>(this->cacheMisses);
-    cache += " misses)";
-    client->send(cache);
+    if (ProxyList::cacheEnable)
+    {
+      std::string cache("Proxy cache: ");
+      cache += boost::lexical_cast<std::string>(cacheCount);
+      cache += '/';
+      cache += boost::lexical_cast<std::string>(this->safeHosts.size());
+      cache += " (";
+      cache += boost::lexical_cast<std::string>(this->cacheHits);
+      cache += " hits, ";
+      cache += boost::lexical_cast<std::string>(this->cacheMisses);
+      cache += " misses)";
+      client->send(cache);
+    }
   }
 }
 
@@ -469,6 +477,41 @@ ProxyList::setPorts(ProxyList::PortList * ports, const std::string & newValue)
 }
 
 
+std::string
+ProxyList::getCacheSize(void)
+{
+  return boost::lexical_cast<std::string>(proxies.safeHosts.size());
+}
+
+
+std::string
+ProxyList::setCacheSize(const std::string & newValue)
+{
+  std::string result;
+
+  try
+  {
+    Cache::size_type newSize = boost::lexical_cast<Cache::size_type>(newValue);
+
+    if (newSize > 0)
+    {
+      ProxyList::cacheSize = newSize;
+      proxies.safeHosts.resize(ProxyList::cacheSize);
+    }
+    else
+    {
+      result = "*** Cache size must be 1 or higher!";
+    }
+  }
+  catch (boost::bad_lexical_cast)
+  {
+    result = "*** Numeric value expected!";
+  }
+
+  return result;
+}
+
+
 void
 ProxyList::init(void)
 {
@@ -485,6 +528,11 @@ ProxyList::init(void)
   ProxyList::setPorts(&ProxyList::wingatePorts,
       DEFAULT_SCAN_WINGATE_PORTS);
 
+  vars.insert("SCAN_CACHE", Setting::BooleanSetting(ProxyList::cacheEnable));
+  vars.insert("SCAN_CACHE_EXPIRE",
+      Setting::IntegerSetting(ProxyList::cacheExpire, 0));
+  vars.insert("SCAN_CACHE_SIZE", Setting(boost::bind(ProxyList::getCacheSize),
+        boost::bind(ProxyList::setCacheSize, _1)));
   vars.insert("SCAN_FOR_PROXIES", Setting::BooleanSetting(ProxyList::enable));
   vars.insert("SCAN_HTTP_CONNECT_PORTS",
       Setting(boost::bind(ProxyList::getPorts, &ProxyList::httpConnectPorts),

@@ -856,6 +856,8 @@ set
 .t.operfail_max_time
 .t.operfail_reason
 .t.relay_msgs_to_locops
+.t.scan_cache
+.t.scan_cache_size
 .t.scan_for_proxies
 .t.scan_http_connect_ports
 .t.scan_http_post_ports
@@ -1722,12 +1724,46 @@ set relay_msgs_to_locops
 .d.server command.  This setting may be useful
 .d.for assisting users.
 .f.mo
+set scan_cache
+.s.set scan_cache [ON|OFF]
+.d.When ON, the monitor bot will cache
+.d.the results of proxy scans to cut down on
+.d.the number of scans it has to perform.  If
+.d.you believe your OOMon is missing some open
+.d.proxies, you may want to decrease
+.d.SCAN_CACHE_EXPIRE or disable this setting.
+.f.mo
+.l.set scan_cache_expire
+.l.set scan_cache_size
+set scan_cache_expire
+.s.set scan_cache_expire [<integer>]
+.d.If SCAN_CACHE is ON, OOMon will cache proxy
+.d.scan results for up to this many seconds.
+.d.Larger values will help eliminate redundant
+.d.scans while smaller values will prevent
+.d.false negatives.  If you believe your OOMon
+.d.is not detecting some open proxies, you may
+.d.want to decrease this setting or disable
+.d.SCAN_CACHE.
+.f.mo
+.l.set scan_cache
+.l.set scan_cache_size
+set scan_cache_size
+.s.set scan_cache_size [<integer>]
+.d.If SCAN_CACHE is ON, OOMon will cache up to
+.d.this many proxy scan results.
+.f.mo
+.l.set scan_cache
+.l.set scan_cache_expire
 set scan_for_proxies
 .s.set scan_for_proxies [ON|OFF]
 .d.When ON, the monitor bot will scan all
 .d.connecting clients for open proxies.  When
 .d.OFF, no scanning will be performed.
 .f.mo
+.l.set scan_cache
+.l.set scan_cache_expire
+.l.set scan_cache_size
 .l.set scan_http_connect_ports
 .l.set scan_http_post_ports
 .l.set scan_max_count
