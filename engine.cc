@@ -1077,14 +1077,18 @@ onTooManyConnNotice(const std::string & text)
 
 
 void
+notListedByDnsbl(const UserEntryPtr user)
+{
+  proxies.check(user);
+}
+
+
+void
 checkProxy(const UserEntryPtr user)
 {
   // If the IP is listed by the DNSBL, there's no reason to do a scan
   // of our own!
-  if (!dnsbl.check(user))
-  {
-    proxies.check(user);
-  }
+  dnsbl.check(user, notListedByDnsbl);
 }
 
 

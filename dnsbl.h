@@ -28,8 +28,10 @@
 
 // Boost C++ Headers
 #include <boost/shared_ptr.hpp>
+#include <boost/function.hpp>
 
 // OOMon Headers
+#include "strtype"
 #include "adnswrap.h"
 #include "userentry.h"
 
@@ -40,7 +42,9 @@ public:
   Dnsbl(void) { }
   virtual ~Dnsbl(void) { }
 
-  bool check(const UserEntryPtr user);
+  typedef boost::function<void(const UserEntryPtr)> CleanFunction;
+
+  void check(const UserEntryPtr user, CleanFunction cleanFunction);
 
   static void openProxyDetected(const UserEntryPtr user,
       const std::string & zone);
@@ -52,14 +56,20 @@ public:
   void status(class BotClient * client) const;
 
 private:
-  bool checkZone(const UserEntryPtr user, const std::string & zone);
+  typedef boost::function<void(const UserEntryPtr, std::string,
+      StrVector, CleanFunction)> CheckerFunction;
+
+  void checkZone(const UserEntryPtr user, std::string zone,
+      StrVector otherZones, CleanFunction cleanFunction);
 
 #ifdef HAVE_LIBADNS
   class Query
   {
   public:
-    Query(const UserEntryPtr user, const std::string & zone)
-      : user_(user), zone_(zone) { }
+    Query(const UserEntryPtr user, const std::string & zone,
+        StrVector otherZones, CleanFunction cleanFunction,
+        CheckerFunction checker) : user_(user), zone_(zone), other_(otherZones),
+                                   clean_(cleanFunction), checker_(checker) { }
 
     bool process(void);
 
@@ -68,6 +78,9 @@ private:
   private:
     const UserEntryPtr user_;
     const std::string zone_;
+    StrVector other_;
+    CleanFunction clean_;
+    CheckerFunction checker_;
   };
 
   typedef boost::shared_ptr<Query> QueryPtr;

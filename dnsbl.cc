@@ -50,75 +50,124 @@
 Dnsbl dnsbl;
 
 
-bool
-Dnsbl::checkZone(const UserEntryPtr user, const std::string & zone)
+void
+Dnsbl::checkZone(const UserEntryPtr user, std::string zone,
+    StrVector otherZones, CleanFunction cleanFunction)
 {
-  if (!zone.empty())
+  bool clean = true;
+
+  do
   {
+    if (!zone.empty())
+    {
+
 #ifdef HAVE_LIBADNS
 
-    QueryPtr temp(new Query(user, zone));
+      QueryPtr temp(new Query(user, zone, otherZones, cleanFunction,
+            boost::bind(&Dnsbl::checkZone, this, _1, _2, _3, _4)));
 
-    int ret = adns.submit_rbl(user->getIP(), zone, temp->query);
+      int ret = adns.submit_rbl(user->getIP(), zone, temp->query);
 
-    if (0 == ret)
-    {
-      this->queries_.push_back(temp);
-    }
-    else
-    {
-      std::cerr << "adns.submit_rbl() returned error: " << ret << std::endl;
-    }
+      if (0 == ret)
+      {
+        this->queries_.push_back(temp);
+        otherZones.clear();
+        clean = false;
+      }
+      else
+      {
+        std::cerr << "adns.submit_rbl() returned error: " << ret << std::endl;
+        clean = true;
+      }
 
 #else
 
-    std::string::size_type pos = 0;
-    std::string ip(user->getTextIP());
+      std::string::size_type pos = 0;
+      std::string ip(user->getTextIP());
 
-    std::string lookup(zone);
+      std::string lookup(zone);
 
-    // Reverse the order of the octets and use them to prefix the blackhole
-    // zone.
-    int dots = CountChars(ip, '.');
-    while (dots >= 0)
-    {
-      std::string::size_type nextDot = ip.find('.', pos);
-      lookup = ip.substr(pos, nextDot - pos) + "." + lookup;
-      pos = nextDot + 1;
-      dots--;
-    }
+      // Reverse the order of the octets and use them to prefix the blackhole
+      // zone.
+      int dots = CountChars(ip, '.');
+      while (dots >= 0)
+      {
+        std::string::size_type nextDot = ip.find('.', pos);
+        lookup = ip.substr(pos, nextDot - pos) + "." + lookup;
+        pos = nextDot + 1;
+        dots--;
+      }
 
-    struct hostent *result = gethostbyname(lookup.c_str());
+      struct hostent *result = gethostbyname(lookup.c_str());
 
-    if (NULL != result)
-    {
-      Dnsbl::openProxyDetected(user, zone);
+      if (NULL == result)
+      {
+# ifdef DNSBL_DEBUG
+        std::cout << "DNSBL query (zone: " << zone << ") failed!" <<
+          std::endl;
+# endif /* DNSBL_DEBUG */
+        clean = true;
+      }
+      else
+      {
+# ifdef DNSBL_DEBUG
+        std::cout << "DNSBL query (zone: " << zone << ") succeeded!" <<
+          std::endl;
+# endif /* DNSBL_DEBUG */
 
-      return true;
-    }
+        Dnsbl::openProxyDetected(user, zone);
+        otherZones.clear();
+        clean = false;
+      }
 
 #endif /* HAVE_LIBADNS */
-  }
 
-  return false;
+    }
+
+    if (otherZones.empty())
+    {
+      zone.erase();
+    }
+    else
+    {
+      zone = otherZones.front();
+      otherZones.erase(otherZones.begin());
+    }
+
+  } while (!zone.empty() || !otherZones.empty());
+
+  if (clean)
+  {
+    cleanFunction(user);
+  }
 }
 
-bool
-Dnsbl::check(const UserEntryPtr user)
-{
-  bool result = false;
 
+void
+Dnsbl::check(const UserEntryPtr user, CleanFunction cleanFunction)
+{
   if (vars[VAR_DNSBL_PROXY_ENABLE]->getBool())
   {
     StrVector zones;
 
     StrSplit(zones, vars[VAR_DNSBL_PROXY_ZONE]->getString(), " ,", true);
 
-    result = (zones.end() != std::find_if(zones.begin(), zones.end(),
-          boost::bind(&Dnsbl::checkZone, this, user, _1)));
-  }
+    if (zones.empty())
+    {
+      cleanFunction(user);
+    }
+    else
+    {
+      std::string zone(zones.front());
+      zones.erase(zones.begin());
 
-  return result;
+      this->checkZone(user, zone, zones, cleanFunction);
+    }
+  }
+  else
+  {
+    cleanFunction(user);
+  }
 }
 
 
@@ -136,15 +185,30 @@ Dnsbl::Query::process(void)
     if (0 == answer.status())
     {
 #ifdef DNSBL_DEBUG
-      std::cout << "DNSBL query succeeded!" << std::endl;
+      std::cout << "DNSBL query (zone: " << this->zone_ << ") succeeded!" <<
+        std::endl;
 #endif /* DNSBL_DEBUG */
       Dnsbl::openProxyDetected(this->user_, this->zone_);
     }
     else
     {
 #ifdef DNSBL_DEBUG
-      std::cout << "DNSBL query failed!" << std::endl;
+      std::cout << "DNSBL query (zone: " << this->zone_ << ") failed!" <<
+        std::endl;
 #endif /* DNSBL_DEBUG */
+      if (this->other_.empty())
+      {
+        // No more zones to check -- host is not listed in DNSBL
+        this->clean_(this->user_);
+      }
+      else
+      {
+        // Check other zones
+        std::string zone(this->other_.front());
+        this->other_.erase(this->other_.begin());
+
+        this->checker_(this->user_, zone, this->other_, this->clean_);
+      }
     }
     finished = true;
   }

@@ -72,6 +72,7 @@ void klineClones(const bool kline, const std::string & rate,
   const bool differentUser, const bool differentIp,
   const bool identd);
 
+void notListedByDnsbl(const UserEntryPtr user);
 void checkProxy(const UserEntryPtr user);
 
 bool checkForSpoof(const std::string & nick, const std::string & user, 
