@@ -1,5 +1,9 @@
 OOMon-2.3                                                (?? Oct 2004)
 ---------
+        * Added the "SCAN_MAX_COUNT" setting to limit the number of
+          simultaneous open proxy scans to help prevent resource
+          starvation.
+
         * Added an open HTTP POST proxy scanner.
 
         * Added config file "proxy-send:" and "proxy-match:" lines to
