@@ -254,7 +254,7 @@ Config::parse(const std::string & filename)
     {
       std::string result("Failed to open ");
       result += filename;
-      result = " for reading!";
+      result += " for reading!";
       throw Config::parse_failed(result);
     }
   }
