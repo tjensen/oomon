@@ -1951,6 +1951,9 @@ watch
 .d.the list, otherwise the type will be added to
 .d.the list.  Use "ALL" to add all watch types.
 .d.Use "NONE" or "-ALL" to remove all watch types.
+.d.Use "DEFAULTS" to restore the default watches,
+.d."-DEFAULTS" to remove the default watches, or
+.d."+DEFAULTS" to add the default watches.
 .e.> .watch
 .e.Watching: CHAT DLINES KILLS KLINES TRAPS WALLOPS
 .e.> .watch -CHAT

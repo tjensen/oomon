@@ -154,6 +154,25 @@ WatchSet::set(StrList & output, std::string line)
       this->clear();
       output.push_back("*** Removed ALL watches.");
     }
+    else if ((word == "DEFAULT") || (word == "DEFAULTS"))
+    {
+      if (minus)
+      {
+        this->remove(WatchSet::defaults());
+        output.push_back("*** Removed DEFAULT watches.");
+      }
+      else if (plus)
+      {
+        this->add(WatchSet::defaults());
+        output.push_back("*** Added DEFAULT watches.");
+      }
+      else
+      {
+        this->clear();
+        this->add(WatchSet::defaults());
+        output.push_back("*** Set DEFAULT watches.");
+      }
+    }
     else if (word == "ALL")
     {
       this->add(WatchSet::all());
@@ -187,7 +206,7 @@ WatchSet::set(StrList & output, std::string line)
 
 
 WatchSet
-WatchSet::all()
+WatchSet::all(void)
 {
   WatchSet result;
 
@@ -201,7 +220,7 @@ WatchSet::all()
 
 
 WatchSet
-WatchSet::defaults()
+WatchSet::defaults(void)
 {
   WatchSet result;
 
