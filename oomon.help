@@ -1745,6 +1745,7 @@ set scan_http_connect_ports
 .f.mo
 .l.set scan_for_proxies
 .l.set scan_http_post_ports
+.l.set scan_max_count
 .l.set scan_socks4_ports
 .l.set scan_socks5_ports
 .l.set scan_wingate_ports
@@ -1757,17 +1758,28 @@ set scan_http_post_ports
 .f.mo
 .l.set scan_for_proxies
 .l.set scan_http_connect_ports
+.l.set scan_max_count
 .l.set scan_socks4_ports
 .l.set scan_socks5_ports
 .l.set scan_wingate_ports
 set scan_max_count
-.s.set scan_proxy_action [<integer>]
+.s.set scan_max_count [<integer>]
 .d.When actively scanning for open proxies,
 .d.OOMon will limit the number of simultaneous
 .d.scans to this value.  Higher values will
 .d.improve proxy detection time, but lower
 .d.values will help prevent resource
 .d.starvation.
+.d.
+.d.Note:  If SCAN_MAX_COUNT is too low, OOMon's
+.d.internal queue will grow until it runs out of
+.d.memory.  Avoid this situation by adjusting
+.d.the value until OOMon is comfortably keeping
+.d.up with connecting clients.  The right value
+.d.for your OOMon will depend on the number of
+.d.ports it scans, the rate at which clients
+.d.connect to the IRC server, and the value of
+.d.SCAN_TIMEOUT.
 .f.mo
 .l.set scan_for_proxies
 .l.set scan_timeout
@@ -1801,6 +1813,7 @@ set scan_socks4_ports
 .l.set scan_for_proxies
 .l.set scan_http_connect_ports
 .l.set scan_http_post_ports
+.l.set scan_max_count
 .l.set scan_socks5_ports
 .l.set scan_wingate_ports
 set scan_socks5_ports
@@ -1813,6 +1826,7 @@ set scan_socks5_ports
 .l.set scan_for_proxies
 .l.set scan_http_connect_ports
 .l.set scan_http_post_ports
+.l.set scan_max_count
 .l.set scan_socks4_ports
 .l.set scan_wingate_ports
 set scan_timeout
@@ -1820,6 +1834,9 @@ set scan_timeout
 .d.This setting determines the maximum number of
 .d.seconds an open proxy scanner will remain
 .d.connected.
+.d.
+.d.Note: If the value of this setting is too
+.d.low, OOMon may fail to detect some proxies.
 .f.mo
 .l.set scan_for_proxies
 .l.set scan_max_count
@@ -1833,6 +1850,7 @@ set scan_wingate_ports
 .l.set scan_for_proxies
 .l.set scan_http_connect_ports
 .l.set scan_http_post_ports
+.l.set scan_max_count
 .l.set scan_socks4_ports
 .l.set scan_socks5_ports
 set seedrand_command_min
