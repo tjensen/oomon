@@ -177,20 +177,23 @@ RegExPattern::match(const std::string & text) const
 }
 
 
-Pattern *
+PatternPtr
 smartPattern(const std::string & text, const bool nick)
 {
   if ((text.length() > 0) && (text[0] == '/'))
   {
-    return new RegExPattern(text);
+    PatternPtr tmp(new RegExPattern(text));
+    return tmp;
   }
   else if (nick)
   {
-    return new NickClusterPattern(text);
+    PatternPtr tmp(new NickClusterPattern(text));
+    return tmp;
   }
   else
   {
-    return new ClusterPattern(text);
+    PatternPtr tmp(new ClusterPattern(text));
+    return tmp;
   }
 }
 

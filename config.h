@@ -47,9 +47,6 @@ typedef std::list<class RemoteClient> RemoteClientList;
 
 class Config
 {
-public:
-  typedef boost::shared_ptr<Pattern> PatternPtr;
-
 private:
   typedef std::list<PatternPtr> PatternList;
   static OperList Opers;

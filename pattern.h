@@ -24,6 +24,9 @@
 // Std C++ Headers
 #include <string>
 
+// Boost C++ Headers
+#include <boost/shared_ptr.hpp>
+
 // Std C Headers
 #include <sys/types.h>
 
@@ -35,6 +38,9 @@
 #elif defined(HAVE_POSIX_REGEX)
 # include <regex.h>
 #endif
+
+
+typedef boost::shared_ptr<class Pattern> PatternPtr;
 
 
 bool MatchesMask(std::string TEST, std::string MASK, bool special = false);
@@ -91,15 +97,15 @@ public:
 
 private:
 #if defined(HAVE_LIBPCRE)
-  pcre *regex;
-  pcre_extra *extra;
+  pcre * regex;
+  pcre_extra * extra;
 #elif defined(HAVE_POSIX_REGEX)
   regex_t regex;
 #endif
 };
 
 
-Pattern *smartPattern(const std::string & text, const bool nick);
+PatternPtr smartPattern(const std::string & text, const bool nick);
 
 std::string grabPattern(std::string & input,
   const std::string & delimiters = " ");

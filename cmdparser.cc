@@ -23,7 +23,6 @@
 #include <iostream>
 #include <string>
 #include <algorithm>
-#include <memory>
 
 #include <boost/bind.hpp>
 
@@ -502,7 +501,7 @@ CommandParser::cmdKilllist(BotClient * from, const std::string & command,
   }
   else
   {
-    std::auto_ptr<Pattern> pattern;
+    PatternPtr pattern;
 
     try
     {
@@ -512,7 +511,7 @@ CommandParser::cmdKilllist(BotClient * from, const std::string & command,
       }
       else
       {
-        pattern.reset(smartPattern(mask, false));
+        pattern = smartPattern(mask, false);
       }
     }
     catch (OOMon::regex_error & e)
@@ -568,7 +567,7 @@ CommandParser::cmdKillnfind(BotClient * from, const std::string & command,
   }
   else
   {
-    std::auto_ptr<Pattern> pattern;
+    PatternPtr pattern;
 
     try
     {
@@ -578,7 +577,7 @@ CommandParser::cmdKillnfind(BotClient * from, const std::string & command,
       }
       else
       {
-        pattern.reset(smartPattern(mask, true));
+        pattern = smartPattern(mask, true);
       }
     }
     catch (OOMon::regex_error & e)
@@ -720,7 +719,7 @@ CommandParser::cmdNfind(BotClient * from, const std::string & command,
   {
     try
     {
-      std::auto_ptr<Pattern> pattern;
+      PatternPtr pattern;
 
       if (args.haveUnary("-r"))
       {
@@ -728,7 +727,7 @@ CommandParser::cmdNfind(BotClient * from, const std::string & command,
       }
       else
       {
-        pattern.reset(smartPattern(parameters, true));
+        pattern = smartPattern(parameters, true);
       }
 
       users.listNicks(from, pattern.get(), className,
@@ -765,7 +764,7 @@ CommandParser::cmdList(BotClient * from, const std::string & command,
   {
     try
     {
-      std::auto_ptr<Pattern> pattern;
+      PatternPtr pattern;
 
       if (args.haveUnary("-r"))
       {
@@ -773,7 +772,7 @@ CommandParser::cmdList(BotClient * from, const std::string & command,
       }
       else
       {
-        pattern.reset(smartPattern(parameters, false));
+        pattern = smartPattern(parameters, false);
       }
 
       users.listUsers(from, pattern.get(), className,
@@ -810,7 +809,7 @@ CommandParser::cmdGlist(BotClient * from, const std::string & command,
   {
     try
     {
-      std::auto_ptr<Pattern> pattern;
+      PatternPtr pattern;
 
       if (args.haveUnary("-r"))
       {
@@ -818,7 +817,7 @@ CommandParser::cmdGlist(BotClient * from, const std::string & command,
       }
       else
       {
-        pattern.reset(smartPattern(parameters, false));
+        pattern = smartPattern(parameters, false);
       }
 
       users.listGecos(from, pattern.get(), className,
@@ -872,7 +871,7 @@ CommandParser::cmdFindk(BotClient * from, const std::string & command,
   {
     try
     {
-      std::auto_ptr<Pattern> pattern;
+      PatternPtr pattern;
 
       if (args.haveUnary("-r"))
       {
@@ -880,7 +879,7 @@ CommandParser::cmdFindk(BotClient * from, const std::string & command,
       }
       else
       {
-        pattern.reset(smartPattern(parameters, false));
+        pattern = smartPattern(parameters, false);
       }
 
       if (args.haveUnary("-remove"))
@@ -943,7 +942,7 @@ CommandParser::cmdFindd(BotClient * from, const std::string & command,
   {
     try
     {
-      std::auto_ptr<Pattern> pattern;
+      PatternPtr pattern;
 
       if (args.haveUnary("-r"))
       {
@@ -951,7 +950,7 @@ CommandParser::cmdFindd(BotClient * from, const std::string & command,
       }
       else
       {
-        pattern.reset(smartPattern(parameters, false));
+        pattern = smartPattern(parameters, false);
       }
 
       if (args.haveUnary("-remove"))
@@ -1069,7 +1068,7 @@ CommandParser::cmdSeedrand(BotClient * from, const std::string & command,
 
   try
   {
-    std::auto_ptr<Pattern> pattern;
+    PatternPtr pattern;
 
     if (parameters.empty())
     {
@@ -1081,7 +1080,7 @@ CommandParser::cmdSeedrand(BotClient * from, const std::string & command,
     }
     else
     {
-      pattern.reset(smartPattern(parameters, true));
+      pattern = smartPattern(parameters, true);
     }
 
     users.reportSeedrand(from, pattern.get(), threshhold,

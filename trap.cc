@@ -46,8 +46,7 @@ std::list<Trap> TrapList::traps;
 
 Trap::Trap(const TrapAction action, const long timeout,
   const std::string & line)
-  : _action(action), _timeout(timeout), _nick(0), _userhost(0), _gecos(0),
-  _rePattern(0), _lastMatch(0), _matchCount(0)
+  : _action(action), _timeout(timeout), _matchCount(0)
 {
   if ((line.length() > 0) && (line[0] == '/'))
   {
@@ -56,7 +55,7 @@ Trap::Trap(const TrapAction action, const long timeout,
     std::string pattern = grabPattern(this->_reason);
     this->_reason = trimLeft(this->_reason);
 
-    this->_rePattern = new RegExPattern(pattern);
+    this->_rePattern.reset(new RegExPattern(pattern));
   }
   else
   {
@@ -71,21 +70,9 @@ Trap::Trap(const TrapAction action, const long timeout,
     {
       copy = line;
 
-      if (this->_nick)
-      {
-	delete this->_nick;
-	this->_nick = 0;
-      }
-      if (this->_userhost)
-      {
-	delete this->_userhost;
-	this->_userhost = 0;
-      }
-      if (this->_gecos)
-      {
-	delete this->_gecos;
-	this->_gecos = 0;
-      }
+      this->_nick.reset();
+      this->_userhost.reset();
+      this->_gecos.reset();
 
       std::string pattern = FirstWord(copy);
       std::string nick, userhost;
@@ -93,11 +80,11 @@ Trap::Trap(const TrapAction action, const long timeout,
 
       if (nick != "*")
       {
-        this->_nick = new NickClusterPattern(nick);
+        this->_nick.reset(new NickClusterPattern(nick));
       }
       if (userhost != "*@*")
       {
-        this->_userhost = new ClusterPattern(userhost);
+        this->_userhost.reset(new ClusterPattern(userhost));
       }
       this->_reason = copy;
     }
@@ -106,46 +93,15 @@ Trap::Trap(const TrapAction action, const long timeout,
 
 
 Trap::Trap(const Trap & copy)
-  : _action(copy._action), _timeout(copy._timeout), _nick(0), _userhost(0),
-  _gecos(0), _rePattern(0), _reason(copy._reason), _lastMatch(copy._lastMatch),
+  : _action(copy._action), _timeout(copy._timeout), _nick(copy._nick),
+  _userhost(copy._userhost), _gecos(copy._gecos), _rePattern(copy._rePattern),
+  _reason(copy._reason), _lastMatch(copy._lastMatch),
   _matchCount(copy._matchCount)
 {
-  if (NULL != copy._rePattern)
-  {
-    this->_rePattern = new RegExPattern(copy._rePattern->get());
-  }
-  if (NULL != copy._nick)
-  {
-    this->_nick = smartPattern(copy._nick->get(), true);
-  }
-  if (NULL != copy._userhost)
-  {
-    this->_userhost = smartPattern(copy._userhost->get(), false);
-  }
-  if (NULL != copy._gecos)
-  {
-    this->_gecos = smartPattern(copy._gecos->get(), false);
-  }
 }
 
 Trap::~Trap(void)
 {
-  if (NULL != this->_rePattern)
-  {
-    delete this->_rePattern;
-  }
-  if (NULL != this->_nick)
-  {
-    delete this->_nick;
-  }
-  if (NULL != this->_userhost)
-  {
-    delete this->_userhost;
-  }
-  if (NULL != this->_gecos)
-  {
-    delete this->_gecos;
-  }
 }
 
 
@@ -775,8 +731,8 @@ TrapList::save(std::ofstream & file)
 
 
 bool
-Trap::parsePattern(std::string & pattern, Pattern* & nick,
-  Pattern* & userhost, Pattern* & gecos)
+Trap::parsePattern(std::string & pattern, PatternPtr & nick,
+  PatternPtr & userhost, PatternPtr & gecos)
 {
   while (!pattern.empty())
   {

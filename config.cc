@@ -57,7 +57,7 @@ struct OperDef
   OperDef() { };
 
   std::string Handle, Passwd;
-  Config::PatternPtr pattern;
+  PatternPtr pattern;
   class UserFlags Flags;
 };
 
@@ -67,7 +67,7 @@ struct LinkDef
   LinkDef() { };
 
   std::string Handle, Passwd;
-  Config::PatternPtr pattern;
+  PatternPtr pattern;
 };
 
 
@@ -90,10 +90,10 @@ struct YLine
 
 struct RemoteClient
 {
-  RemoteClient(const Config::PatternPtr _pattern, const UserFlags _flags)
+  RemoteClient(const PatternPtr _pattern, const UserFlags _flags)
     : pattern(_pattern), flags(_flags) { }
 
-  const Config::PatternPtr pattern;
+  const PatternPtr pattern;
   const UserFlags flags;
 };
 
@@ -141,7 +141,7 @@ void Config::AddOper(const std::string & Handle, const std::string & pattern,
   {
     OperDef temp;
     temp.Handle = Handle;
-    temp.pattern.reset(smartPattern(pattern, false));
+    temp.pattern = smartPattern(pattern, false);
     temp.Passwd = Passwd;
     temp.Flags = Config::parseUserFlags(Flags);
     Opers.push_back(temp);
@@ -165,7 +165,8 @@ void Config::AddException(const std::string & pattern)
 {
   try
   {
-    Exceptions.push_back(smartPattern(pattern, false));
+    PatternPtr tmp(smartPattern(pattern, false));
+    Exceptions.push_back(tmp);
 #ifdef CONFIG_DEBUG
     std::cout << "Exception: " << pattern << std::endl;
 #endif
@@ -185,7 +186,8 @@ void Config::AddSpoofer(const std::string & pattern)
 {
   try
   {
-    Spoofers.push_back(smartPattern(pattern, false));
+    PatternPtr tmp(smartPattern(pattern, false));
+    Spoofers.push_back(tmp);
 #ifdef CONFIG_DEBUG
     std::cout << "Spoofer: " << pattern << std::endl;
 #endif
@@ -213,7 +215,7 @@ void Config::AddLink(const std::string & Handle, const std::string & pattern,
     {
       LinkDef temp;
       temp.Handle = Handle;
-      temp.pattern.reset(smartPattern(pattern, false));
+      temp.pattern = smartPattern(pattern, false);
       temp.Passwd = Passwd;
       Links.push_back(temp);
 #ifdef CONFIG_DEBUG
