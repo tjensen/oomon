@@ -72,6 +72,10 @@ public:
   {
     return BotSock::inet_ntoa(this->ip);
   }
+  BotSock::Address getSubnet(void) const
+  {
+    return (this->getIP() & BotSock::ClassCNetMask);
+  }
   bool getOper(void) const { return this->isOper; };
   int getScore(void) const { return this->randScore; };
   std::string getUserHost(void) const

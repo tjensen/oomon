@@ -1591,6 +1591,7 @@ UserHash::checkHostClones(const std::string & host)
 void
 UserHash::checkIpClones(const BotSock::Address & ip)
 {
+  BotSock::Address subnet(ip & BotSock::ClassCNetMask);
   const unsigned int index = UserHash::hashFunc(ip);
 
   std::time_t now = std::time(0);
@@ -1603,7 +1604,7 @@ UserHash::checkIpClones(const BotSock::Address & ip)
   for (UserEntryList::iterator find = this->iptable[index].begin();
     find != this->iptable[index].end(); ++find)
   {
-    if (BotSock::sameClassC((*find)->getIP(), ip) &&
+    if (((*find)->getSubnet() == subnet) &&
       ((now - (*find)->getConnectTime()) <= vars[VAR_CLONE_MAX_TIME]->getInt()))
     {
       if ((*find)->getReportTime() > 0)
@@ -1681,10 +1682,8 @@ UserHash::checkIpClones(const BotSock::Address & ip)
   for (UserEntryList::iterator find = this->iptable[index].begin();
     find != this->iptable[index].end(); ++find)
   {
-    if (BotSock::sameClassC((*find)->getIP(), ip) &&
-      ((now - (*find)->getConnectTime()) <=
-       vars[VAR_CLONE_MAX_TIME]->getInt()) &&
-      ((*find)->getReportTime() == 0))
+    if (((*find)->getSubnet() == subnet) && ((*find)->getReportTime() == 0) &&
+      ((now - (*find)->getConnectTime()) <= vars[VAR_CLONE_MAX_TIME]->getInt()))
     {
       ++cloneCount;
 
