@@ -1,0 +1,48 @@
+# ===========================================================================
+# OOMon - Objected Oriented Monitor Bot
+# Copyright (C) 2004  Timothy L. Jensen
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+# ===========================================================================
+
+# Sample included config file
+# $Id$
+
+# Remote users
+#
+#Syntax:
+#  R:handle@bot:flags:
+#
+# handle@bot - The handle and bot of the user(s) to give access.  This
+#              field can also contain a mask or regex pattern.
+#
+# flags - This defines which commands the user may use.  See the userlist.cf
+#         file for a detailed list of available flags.  Although it is
+#         possible to include the "R" flag in a remote user line, the flag
+#         has no meaning and is silently ignored.
+#
+
+# Give access to all remote commands to Toast@OOMon2
+R:Toast@OOMon2:CDGKMNOWX:
+
+# Give access to dline, kline, and oper commands to cheese@OOMon2
+R:cheese@OOMon2:DKO:
+
+# Give access to channel commands to Mayo on any bot
+R:mayo@*:C:
+
+# Give access to kline and oper commands to everyone on the bot named OOMon3
+R:*@OOMon3:KO:
+

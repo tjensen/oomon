@@ -6,6 +6,7 @@ config.cache
 sig.inc
 config.status
 makefile
+mkpasswd
 oomon
 oomon.log
 oomon.pid

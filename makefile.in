@@ -88,6 +88,11 @@ install: $(EXE) $(MKPASSWD) install-mkdirs
 		echo "$(INSTALL_DATA) userlist.cf $(sysconfdir)/userlist.cf"; \
 		$(INSTALL_DATA) userlist.cf $(sysconfdir)/userlist.cf; \
 	fi
+	$(INSTALL_DATA) remotes.cf $(sysconfdir)/remotes.cf.sample
+	-@if test ! -e $(sysconfdir)/remotes.cf; then \
+		echo "$(INSTALL_DATA) remotes.cf $(sysconfdir)/remotes.cf"; \
+		$(INSTALL_DATA) remotes.cf $(sysconfdir)/remotes.cf; \
+	fi
 	$(INSTALL_DATA) oomon-motd.txt $(sysconfdir)/oomon-motd.txt.sample
 	-@if test ! -e $(sysconfdir)/oomon-motd.txt; then \
 		echo "$(INSTALL_DATA) oomon-motd.txt $(sysconfdir)/oomon-motd.txt"; \

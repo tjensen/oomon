@@ -34,6 +34,7 @@ S:plasma.toast.pc:6667::#monitors:
 
 # Include another config file here
 I:userlist.cf
+I:remotes.cf
 
 # Exceptions
 E:*@*toast.pc
