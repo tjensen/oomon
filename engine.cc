@@ -665,7 +665,7 @@ onClientConnect(std::string text)
     gecos.erase(gecos.end() - 1);
   }
 
-  //connects.onNotice(nick + ' ' + userhost + ' ' + ipString);
+  connects.onNotice(nick + ' ' + userhost + ' ' + ipString);
 
   users.add(nick, userhost, ipString, false, false, classString, gecos);
 
