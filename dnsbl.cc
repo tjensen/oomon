@@ -51,16 +51,15 @@ Dnsbl dnsbl;
 
 
 bool
-Dnsbl::checkZone(const BotSock::Address & addr, const UserEntryPtr user,
-    const std::string & zone)
+Dnsbl::checkZone(const UserEntryPtr user, const std::string & zone)
 {
   if (!zone.empty())
   {
 #ifdef HAVE_LIBADNS
 
-    QueryPtr temp(new Query(addr, user, zone));
+    QueryPtr temp(new Query(user, zone));
 
-    int ret = adns.submit_rbl(addr, zone, temp->query);
+    int ret = adns.submit_rbl(user->getIP(), zone, temp->query);
 
     if (0 == ret)
     {
@@ -74,7 +73,7 @@ Dnsbl::checkZone(const BotSock::Address & addr, const UserEntryPtr user,
 #else
 
     std::string::size_type pos = 0;
-    std::string ip(BotSock::inet_ntoa(addr));
+    std::string ip(user->getTextIP());
 
     std::string lookup(zone);
 
@@ -93,7 +92,7 @@ Dnsbl::checkZone(const BotSock::Address & addr, const UserEntryPtr user,
 
     if (NULL != result)
     {
-      Dnsbl::openProxyDetected(addr, user, zone);
+      Dnsbl::openProxyDetected(user, zone);
 
       return true;
     }
@@ -105,7 +104,7 @@ Dnsbl::checkZone(const BotSock::Address & addr, const UserEntryPtr user,
 }
 
 bool
-Dnsbl::check(const BotSock::Address & addr, const UserEntryPtr user)
+Dnsbl::check(const UserEntryPtr user)
 {
   bool result = false;
 
@@ -116,7 +115,7 @@ Dnsbl::check(const BotSock::Address & addr, const UserEntryPtr user)
     StrSplit(zones, vars[VAR_DNSBL_PROXY_ZONE]->getString(), " ,", true);
 
     result = (zones.end() != std::find_if(zones.begin(), zones.end(),
-          boost::bind(&Dnsbl::checkZone, this, addr, user, _1)));
+          boost::bind(&Dnsbl::checkZone, this, user, _1)));
   }
 
   return result;
@@ -139,7 +138,7 @@ Dnsbl::Query::process(void)
 #ifdef DNSBL_DEBUG
       std::cout << "DNSBL query succeeded!" << std::endl;
 #endif /* DNSBL_DEBUG */
-      Dnsbl::openProxyDetected(this->addr_, this->user_, this->zone_);
+      Dnsbl::openProxyDetected(this->user_, this->zone_);
     }
     else
     {
@@ -185,15 +184,12 @@ Dnsbl::status(BotClient * client) const
 
 
 void
-Dnsbl::openProxyDetected(const BotSock::Address & addr,
-    const UserEntryPtr user, const std::string & zone)
+Dnsbl::openProxyDetected(const UserEntryPtr user, const std::string & zone)
 {
-  std::string ip(BotSock::inet_ntoa(addr));
-
   Format reason;
   reason.setStringToken('n', user->getNick());
   reason.setStringToken('u', user->getUserHost());
-  reason.setStringToken('i', ip);
+  reason.setStringToken('i', user->getTextIP());
   reason.setStringToken('z', zone);
 
   // This is a proxy listed by the DNSBL
@@ -202,13 +198,12 @@ Dnsbl::openProxyDetected(const BotSock::Address & addr,
   notice += '!';
   notice += user->getUserHost();
   notice += " [";
-  notice += ip;
+  notice += user->getTextIP();
   notice += ']';
   Log::Write(notice);
   ::SendAll(notice, UserFlags::OPER, WATCH_DNSBL);
 
-  doAction(user->getNick(), user->getUserHost(), addr,
-      vars[VAR_DNSBL_PROXY_ACTION]->getAction(),
+  doAction(user, vars[VAR_DNSBL_PROXY_ACTION]->getAction(),
       vars[VAR_DNSBL_PROXY_ACTION]->getInt(),
       reason.format(vars[VAR_DNSBL_PROXY_REASON]->getString()), false);
 }

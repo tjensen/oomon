@@ -40,10 +40,10 @@ public:
   Dnsbl(void) { }
   virtual ~Dnsbl(void) { }
 
-  bool check(const BotSock::Address & addr, const UserEntryPtr user);
+  bool check(const UserEntryPtr user);
 
-  static void openProxyDetected(const BotSock::Address & addr,
-      const UserEntryPtr user, const std::string & zone);
+  static void openProxyDetected(const UserEntryPtr user,
+      const std::string & zone);
 
 #ifdef HAVE_LIBADNS
   void process(void);
@@ -52,22 +52,20 @@ public:
   void status(class BotClient * client) const;
 
 private:
-  bool checkZone(const BotSock::Address & addr, const UserEntryPtr user,
-      const std::string & zone);
+  bool checkZone(const UserEntryPtr user, const std::string & zone);
 
 #ifdef HAVE_LIBADNS
   class Query
   {
   public:
-    Query(const BotSock::Address & addr, const UserEntryPtr user,
-      const std::string & zone) : addr_(addr), user_(user), zone_(zone) { }
+    Query(const UserEntryPtr user, const std::string & zone)
+      : user_(user), zone_(zone) { }
 
     bool process(void);
 
     Adns::Query query;
 
   private:
-    const BotSock::Address addr_;
     const UserEntryPtr user_;
     const std::string zone_;
   };

@@ -1081,7 +1081,7 @@ checkProxy(const UserEntryPtr user)
 {
   // If the IP is listed by the DNSBL, there's no reason to do a scan
   // of our own!
-  if (!dnsbl.check(user->getIP(), user))
+  if (!dnsbl.check(user))
   {
     proxies.check(user);
   }
