@@ -149,14 +149,14 @@ public:
 
 private:
   std::string nick;
-  std::string user;
-  std::string host;
-  std::string fakeHost;
-  std::string domain;
-  std::string userClass;
-  std::string gecos;
-  BotSock::Address ip;
-  std::time_t connectTime;
+  const std::string user;
+  const std::string host;
+  const std::string fakeHost;
+  const std::string domain;
+  const std::string userClass;
+  const std::string gecos;
+  const BotSock::Address ip;
+  const std::time_t connectTime;
   std::time_t reportTime;
   std::time_t versioned;
   bool isOper;

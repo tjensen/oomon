@@ -55,6 +55,22 @@
 #include "defaults.h"
 
 
+// Used by reportSeedrand
+class ScoreNode
+{
+public:
+  ScoreNode(UserEntryPtr info, int score) : info_(info),
+    score_(score) { }
+  UserEntryPtr getInfo() const { return this->info_; };
+  int getScore() const { return this->score_; };
+  bool operator < (const ScoreNode & compare) const
+    { return (this->score_ < compare.score_); };
+private:
+  UserEntryPtr info_;
+  int score_;
+};
+
+
 const static int CLONE_DETECT_INC = 15;
 
 
@@ -169,6 +185,10 @@ UserHash::add(const std::string & nick, const std::string & userhost,
       UserEntryPtr newuser(new UserEntry(nick, user, host, fakeHost, userClass,
         gecos, ip.empty() ? INADDR_NONE : BotSock::inet_addr(ip),
         (fromTrace ? 0 : std::time(0)), isOper));
+
+#ifdef USERHASH_DEBUG
+      std::cout << "New UserEntryPtr: " << newuser.get() << std::endl;
+#endif
 
       // Add it to the hash tables
       UserHash::addToHash(this->hosttable, newuser->getHost(), newuser);
@@ -794,7 +814,7 @@ UserHash::reportClasses(BotClient * client, const std::string & className) const
 
 void
 UserHash::reportSeedrand(BotClient * client, const PatternPtr mask,
-  const int threshold, const bool count) const
+    const int threshold, const bool count) const
 {
   if (!count)
   {
@@ -802,7 +822,7 @@ UserHash::reportSeedrand(BotClient * client, const PatternPtr mask,
       boost::lexical_cast<std::string>(threshold));
   }
 
-  std::list<UserHash::ScoreNode> scores;
+  std::list<ScoreNode> scores;
 
   for (UserEntryTable::const_iterator i = this->usertable.begin();
     i != this->usertable.end(); ++i)
@@ -814,7 +834,7 @@ UserHash::reportSeedrand(BotClient * client, const PatternPtr mask,
       {
 	if ((*find)->getScore() >= threshold)
         {
-	  UserHash::ScoreNode tmp(*find, (*find)->getScore());
+	  ScoreNode tmp(*find, (*find)->getScore());
 	  scores.push_back(tmp);
         }
       }
@@ -825,7 +845,7 @@ UserHash::reportSeedrand(BotClient * client, const PatternPtr mask,
   {
     scores.sort();
 
-    for (std::list<UserHash::ScoreNode>::const_iterator pos = scores.begin();
+    for (std::list<ScoreNode>::const_iterator pos = scores.begin();
       pos != scores.end(); ++pos)
     {
       UserEntryPtr info(pos->getInfo());
@@ -1039,7 +1059,7 @@ UserHash::reportClones(BotClient * client) const
 	{
 	  // sort connect times in decreasing order
 	  std::sort(connfromhost.begin(), connfromhost.end(),
-	    std::greater<std::time_t>());
+              std::greater<std::time_t>());
 
 	  int j, k;
 
@@ -1048,8 +1068,8 @@ UserHash::reportClones(BotClient * client) const
             for (j = 0; j < numfound - k; ++j)
 	    {
               if ((connfromhost[j] > 0) && (connfromhost[j + k] > 0) &&
-		((connfromhost[j] - connfromhost[j + k]) <=
-		((k + 1) * CLONE_DETECT_INC)))
+                  ((connfromhost[j] - connfromhost[j + k]) <=
+                   ((k + 1) * CLONE_DETECT_INC)))
 	      {
                 goto getout;  /* goto rules! */
 	      }
@@ -1127,7 +1147,7 @@ UserHash::reportVClones(BotClient * client) const
 	{
 	  // sort connect times in decreasing order
 	  std::sort(connectTime.begin(), connectTime.end(),
-	    std::greater<std::time_t>());
+              std::greater<std::time_t>());
 
 	  int j, k;
 
@@ -1136,8 +1156,8 @@ UserHash::reportVClones(BotClient * client) const
             for (j = 0; j < numfound - k; ++j)
 	    {
               if ((connectTime[j] > 0) && (connectTime[j + k] > 0) &&
-		((connectTime[j] - connectTime[j + k]) <=
-		((k + 1) * CLONE_DETECT_INC)))
+                  ((connectTime[j] - connectTime[j + k]) <=
+                   ((k + 1) * CLONE_DETECT_INC)))
 	      {
                 goto getout;  /* goto rules! */
 	      }

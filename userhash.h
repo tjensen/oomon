@@ -111,20 +111,6 @@ private:
   typedef std::list<UserEntryPtr> UserEntryList;
   typedef std::vector<UserEntryList> UserEntryTable;
 
-  class ScoreNode
-  {
-  public:
-    ScoreNode(UserEntryPtr info, int score) : info_(info),
-      score_(score) { }
-    UserEntryPtr getInfo() const { return this->info_; };
-    int getScore() const { return this->score_; };
-    bool operator < (const ScoreNode & compare) const
-      { return (this->score_ < compare.score_); };
-  private:
-    UserEntryPtr info_;
-    int score_;
-  };
-
   static unsigned int hashFunc(const BotSock::Address & key);
   static unsigned int hashFunc(const std::string & key);
 
