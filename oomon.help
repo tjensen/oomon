@@ -188,6 +188,25 @@ findk
 .f.o
 .l.kline
 .l.unkline
+findu
+.s.findu <filter>
+.d.Searches for users matching the provided
+.d.filter.  Filters should be of the following
+.d.syntax:
+.d.  <field>=<pattern>[,<field>=<pattern>[,...]]
+.d.
+.d.If "<field>=" is not provided, it is assumed
+.d.that the pattern is to match against the
+.d."nick!user@host#gecos" field.
+.e.> .findu /^([a-z]+)[0-9]+!.*@.*#\1$/
+.e.  fnerd67 (~root@adsl-10-0-2-27.lsan03.pacdell.net) [10.0.2.27]
+.e.  bort989 (~owned@D7894510.ipt.bol.com) [10.0.37.16]
+.e.  felch042 (~no@202.154.251.105) [202.154.251.105]
+.e.3 matches for nuhg=/^([a-z]+)[0-9]+!.*@.*#\1$/ found.
+.f.o
+.l.glist
+.l.list
+.l.nfind
 gline
 .s.gline [<duration>] <nick|mask> <reason>
 .d.Adds a K: line (ban) for a particular nick

@@ -405,7 +405,7 @@ grabPattern(std::string & input, const std::string & delimiters)
       ++pos;
     }
   }
-  if (pos < len)
+  if ((pos > 0) && (len > 0))
   {
     result = input.substr(0, pos);
     input = input.substr(pos);

@@ -49,6 +49,7 @@
 #include "log.h"
 #include "engine.h"
 #include "pattern.h"
+#include "filter.h"
 #include "botclient.h"
 #include "format.h"
 
@@ -558,6 +559,39 @@ UserHash::clear()
   UserHash::clearHash(this->domaintable);
   UserHash::clearHash(this->iptable);
   this->userCount = this->previousCount = 0;
+}
+
+
+int
+UserHash::findUsers(BotClient * client, const Filter & filter) const
+{
+  int numfound = 0;
+
+  for (UserEntryTable::const_iterator index = this->usertable.begin();
+    index != this->usertable.end(); ++index)
+  {
+    for (UserEntryList::const_iterator pos = index->begin();
+      pos != index->end(); ++pos)
+    {
+      if (filter.matches(*pos))
+      {
+	++numfound;
+	std::string outmsg((*pos)->output(vars[VAR_LIST_FORMAT]->getString()));
+        client->send(outmsg);
+      }
+    }
+  }
+
+  std::string outmsg;
+  outmsg += (numfound == 0) ? "No" : boost::lexical_cast<std::string>(numfound);
+  outmsg += " match";
+  outmsg += (numfound == 1) ? "" : "es";
+  outmsg += " for ";
+  outmsg += filter.get();
+  outmsg += " found.";
+  client->send(outmsg);
+
+  return numfound;
 }
 
 

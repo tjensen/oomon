@@ -102,6 +102,7 @@ CommandParser::CommandParser(void)
   this->addCommand("LIST", &CommandParser::cmdList, UserFlags::OPER);
   this->addCommand("IPLIST", &CommandParser::cmdList, UserFlags::OPER);
   this->addCommand("GLIST", &CommandParser::cmdGlist, UserFlags::OPER);
+  this->addCommand("FINDU", &CommandParser::cmdFindu, UserFlags::OPER);
   this->addCommand("FINDK", &CommandParser::cmdFindk, UserFlags::OPER);
   this->addCommand("FINDD", &CommandParser::cmdFindd, UserFlags::OPER);
   this->addCommand("CLASS", &CommandParser::cmdClass, UserFlags::OPER);
@@ -839,6 +840,34 @@ CommandParser::cmdGlist(BotClient * from, const std::string & command,
     catch (OOMon::regex_error & e)
     {
       throw CommandParser::exception("*** RegEx error: " + e.what());
+    }
+  }
+}
+
+
+void
+CommandParser::cmdFindu(BotClient * from, const std::string & command,
+  std::string parameters)
+{
+  if (parameters.empty())
+  {
+    CommandParser::syntax(command, "<filter>");
+  }
+  else
+  {
+    try
+    {
+      Filter filter(parameters, Filter::FIELD_NUHG);
+
+      users.findUsers(from, filter);
+    }
+    catch (OOMon::regex_error & e)
+    {
+      throw CommandParser::exception("*** RegEx error: " + e.what());
+    }
+    catch (Filter::bad_field & e)
+    {
+      throw CommandParser::exception(e.what());
     }
   }
 }

@@ -158,6 +158,8 @@ private:
     std::string parameters);
   void cmdGlist(class BotClient *from, const std::string & command,
     std::string parameters);
+  void cmdFindu(class BotClient *from, const std::string & command,
+    std::string parameters);
   void cmdFindk(class BotClient *from, const std::string & command,
     std::string parameters);
   void cmdFindd(class BotClient *from, const std::string & command,

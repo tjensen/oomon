@@ -28,10 +28,8 @@
 #include "util.h"
 
 
-Filter::Filter(const std::string & text, const bool extended)
+Filter::Filter(const std::string & text, const bool extended) : rest_(text)
 {
-  this->rest_ = text;
-
   this->parseFilter(this->rest_, extended);
 }
 
@@ -43,12 +41,13 @@ Filter::Filter(const std::string & text, const Filter::Field & defaultField,
 
   if (std::string::npos == equals)
   {
-    std::string pattern = grabPattern(this->rest_);
+    std::string pattern(grabPattern(this->rest_, " "));
     this->fields_[defaultField] = smartPattern(pattern,
         FIELD_NICK == defaultField);
   }
   else
   {
+    this->rest_ = text;
     this->parseFilter(this->rest_, extended);
   }
 }
@@ -70,7 +69,7 @@ Filter::parseFilter(std::string & text, const bool extended)
   while (!text.empty())
   {
     std::string::size_type equals = text.find('=');
-    if (equals == std::string::npos)
+    if (std::string::npos == equals)
     {
       throw Filter::bad_field("*** Filter is missing field name");
     }
@@ -80,8 +79,8 @@ Filter::parseFilter(std::string & text, const bool extended)
       text.erase(0, equals + 1);
 
       Filter::Field field(Filter::fieldType(fieldName, extended));
-      std::string temp(grabPattern(text, " ,"));
-      this->fields_[field] = smartPattern(temp, FIELD_NICK == field);
+      std::string pattern(grabPattern(text, " ,"));
+      this->fields_[field] = smartPattern(pattern, FIELD_NICK == field);
     }
 
     if (!text.empty())
