@@ -1146,6 +1146,10 @@ hexDump(const void *buffer, const int size)
 //  little guesswork to figure out where the nickname ends and the
 //  username begins.
 //
+//  Update: Recent versions of ratbox (and hybrid?) disallow '['
+//  characters in usernames and hostnames.  This makes parsing
+//  much easier.
+//
 // Parameters:
 //  NUH - A string containing a nickname, username, and hostname in
 //        the format, "nick[user@host]"
@@ -1157,6 +1161,21 @@ std::string
 chopNick(std::string NUH)
 {
   std::string result;
+
+#if NO_BRACKET_IN_USERHOST
+
+  // '[' characters are disallowed in usernames and hostnames, so simply
+  // find the last occurrance of '[' and make that the separator between
+  // the nickname and username.
+
+  std::string:size_type lastBracket = NUH.find_last('[');
+
+  if (std::string::npos != lastBracket)
+  {
+    result = NUH.substr(0, lastBracket - 1);
+  }
+
+#else
 
   // How many '[' characters are in the string?
   if (CountChars(NUH, '[') > 1)
@@ -1198,12 +1217,15 @@ chopNick(std::string NUH)
       result = NUH.substr(0, pos);
     }
   }
+
+#endif /* NO_BRACKET_IN_USERHOST */
+
   return result;
 }
 
 
 //////////////////////////////////////////////////////////////////////
-// chopUserHost(NUH)
+// chopUserhost(NUH)
 //
 // Description:
 //  Takes the user@host out of a nick[user@host].  Unfortunately, this
@@ -1222,6 +1244,28 @@ chopNick(std::string NUH)
 std::string
 chopUserhost(std::string NUH)
 {
+#if NO_BRACKET_IN_USERHOST
+
+  // '[' characters are disallowed in usernames and hostnames, so find the
+  // last occurrance of '[' and make that the separator between the nickname
+  // and the username.
+
+  std::string result;
+
+  std::string::size_type lastBracket = NUH.find_last('[');
+
+  if (std::string::npos != lastBracket)
+  {
+    result = NUH.substr(lastBracket);
+
+    // Remove the closing ']' too.
+    result.erase(result.end() - 1);
+  }
+
+  return result;
+
+#else
+
   if (NUH != "")
   {
     std::string::size_type pos = NUH.find('[');
@@ -1262,6 +1306,8 @@ chopUserhost(std::string NUH)
     }
   }
   return "";
+
+#endif /* NO_BRACKET_IN_USERHOST */
 }
 
 
