@@ -64,7 +64,7 @@ DCCList::connect(const BotSock::Address address, const int port,
 {
   try
   {
-    class DCCPtr newClient(new DCC);
+    DCCPtr newClient(new DCC);
 
     if (newClient->connect(ntohl(address), port, nick, userhost, ircIp))
     {
@@ -94,7 +94,7 @@ DCCList::listen(const std::string & nick, const std::string & userhost,
 {
   try
   {
-    class DCCPtr newListener(new DCC);
+    DCCPtr newListener(new DCC);
 
     if (newListener->listen(nick, userhost, ircIp, htons(config.dccPort())))
     {
