@@ -25,7 +25,6 @@
 #include <string>
 #include <list>
 #include <algorithm>
-#include <functional>
 
 // Std C headers
 #include <sys/types.h>

@@ -67,24 +67,6 @@ public:
 protected:
   virtual bool onRead(std::string text);
 
-  typedef void (DCC::*CommandFunc)(BotClient::ptr from,
-    const std::string & command, std::string parameters);
-
-  class CommandFunctor : public CommandParser::CommandFunctor
-  {
-  public:
-    CommandFunctor(DCC *owner, DCC::CommandFunc func) : _owner(owner),
-      _func(func) { }
-    virtual void operator()(BotClient::ptr from, const std::string & command,
-      const std::string & parameters)
-    {
-      (this->_owner->*(this->_func))(from, command, parameters);
-    }
-  private:
-    DCC *_owner;
-    DCC::CommandFunc _func;
-  };
-
   class Client : public BotClient
   {
   public:
@@ -95,7 +77,6 @@ protected:
     {
       this->_owner->write(text + '\n');
     }
-    virtual bool remote(void) const { return false; }
     virtual int flags(void) const { return this->_flags; }
     virtual std::string handle(void) const { return this->_handle; }
     virtual std::string bot(void) const { return Config::GetNick(); }
@@ -120,6 +101,13 @@ private:
 
   bool parse(std::string text);
 
+  void addCommand(const std::string & command,
+    void (DCC::*)(BotClient::ptr from, const std::string & command,
+    std::string parameters), const int flags,
+    const int options = CommandParser::NONE);
+
+  void cmdHelp(BotClient::ptr from, const std::string & command,
+    std::string parameters);
   void cmdAuth(BotClient::ptr from, const std::string & command,
     std::string parameters);
   void cmdQuit(BotClient::ptr from, const std::string & command,
@@ -129,6 +117,9 @@ private:
   void cmdWatch(BotClient::ptr from, const std::string & command,
     std::string parameters);
   void cmdChat(BotClient::ptr from, const std::string & command,
+    std::string parameters);
+
+  void cmdLocops(BotClient::ptr from, const std::string & command,
     std::string parameters);
 
   void loadConfig(void);

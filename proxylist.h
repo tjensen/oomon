@@ -24,7 +24,6 @@
 // Std C++ headers
 #include <string>
 #include <list>
-#include <functional>
 
 // Boost C++ headers
 #include <boost/shared_ptr.hpp>

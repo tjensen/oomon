@@ -23,8 +23,6 @@
 
 // Std C++ headers
 #include <string>
-#include <list>
-#include <functional>
 
 // Std C headers
 #include <sys/types.h>

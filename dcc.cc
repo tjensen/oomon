@@ -23,6 +23,9 @@
 #include <iostream>
 #include <string>
 
+// Boost C++ Headers
+#include <boost/bind.hpp>
+
 // OOMon Headers
 #include "strtype"
 #include "oomon.h"
@@ -39,6 +42,7 @@
 #include "remotelist.h"
 #include "arglist.h"
 #include "cmdparser.h"
+#include "help.h"
 
 
 #ifdef DEBUG
@@ -57,25 +61,20 @@ DCC::DCC(const std::string & nick, const std::string & userhost)
 
   this->watches = WatchSet::defaults();
 
-  CommandParser::CommandFunctorPtr
-    authCmd(new DCC::CommandFunctor(this, &DCC::cmdAuth));
-  parser.addCommand("AUTH", authCmd, UF_NONE);
+  // anonymous commands
+  this->addCommand("HELP", &DCC::cmdHelp, UF_NONE);
+  this->addCommand("INFO", &DCC::cmdHelp, UF_NONE);
+  this->addCommand("AUTH", &DCC::cmdAuth, UF_NONE);
+  this->addCommand("ECHO", &DCC::cmdEcho, UF_NONE);
+  this->addCommand("QUIT", &DCC::cmdQuit, UF_NONE,
+    CommandParser::EXACT_ONLY);
 
-  CommandParser::CommandFunctorPtr
-    quitCmd(new DCC::CommandFunctor(this, &DCC::cmdQuit));
-  parser.addCommand("QUIT", quitCmd, UF_NONE, CommandParser::EXACT_ONLY);
+  // UF_AUTHED commands
+  this->addCommand("WATCH", &DCC::cmdWatch, UF_AUTHED);
+  this->addCommand("CHAT", &DCC::cmdChat, UF_NONE);
 
-  CommandParser::CommandFunctorPtr
-    echoCmd(new DCC::CommandFunctor(this, &DCC::cmdEcho));
-  parser.addCommand("ECHO", echoCmd, UF_NONE);
-
-  CommandParser::CommandFunctorPtr
-    watchCmd(new DCC::CommandFunctor(this, &DCC::cmdWatch));
-  parser.addCommand("WATCH", watchCmd, UF_AUTHED);
-
-  CommandParser::CommandFunctorPtr
-    chatCmd(new DCC::CommandFunctor(this, &DCC::cmdChat));
-  parser.addCommand("CHAT", chatCmd, UF_NONE);
+  // UF_WALLOPS commands
+  this->addCommand("LOCOPS", &DCC::cmdLocops, UF_WALLOPS);
 }
 
 
@@ -88,6 +87,16 @@ DCC::DCC(DCC *listener, const std::string & nick, const std::string & userhost)
   this->UserHost = listener->UserHost;
   this->Nick = listener->Nick;
   this->watches = listener->watches;
+}
+
+
+void
+DCC::addCommand(const std::string & command,
+  void (DCC::*func)(BotClient::ptr from, const std::string & command,
+  std::string parameters), const int flags, const int options)
+{
+  this->parser.addCommand(command, boost::bind(func, this, _1, _2, _3), flags,
+    options);
 }
 
 
@@ -385,7 +394,7 @@ DCC::cmdWatch(BotClient::ptr from, const std::string & command,
 {
   if (parameters == "")
   {
-    this->send("Watching: " + WatchSet::getWatchNames(this->watches, false));
+    from->send("Watching: " + WatchSet::getWatchNames(this->watches, false));
   }
   else
   {
@@ -393,7 +402,7 @@ DCC::cmdWatch(BotClient::ptr from, const std::string & command,
 
     this->watches.set(output, parameters);
 
-    this->send(output);
+    from->send(output);
 
     userConfig->setWatches(this->client->handle(),
       WatchSet::getWatchNames(this->watches, true));
@@ -472,6 +481,49 @@ DCC::loadConfig(void)
   catch (OOMon::botdb_error & e)
   {
     std::cerr << e.what() << std::endl;
+  }
+}
+
+
+void
+DCC::cmdHelp(BotClient::ptr from, const std::string & command,
+  std::string parameters)
+{
+  std::string topic;
+
+  if (command == "info")
+  {
+    topic = parameters.empty() ? "info" : ("info " + parameters);
+  }
+  else
+  {
+    topic = parameters;
+  }
+
+  StrList output = Help::getHelp(topic);
+
+  if (output.empty())
+  {
+    from->send("Help can be read at http://oomon.sourceforge.net/");
+  }
+  else
+  {
+    from->send(output);
+  }
+}
+
+
+void
+DCC::cmdLocops(BotClient::ptr from, const std::string & command,
+  std::string parameters)
+{
+  if (!parameters.empty())
+  {
+    server.locops("(" + from->handle() + ") " + parameters);
+  }
+  else
+  {
+    CommandParser::syntax(command, "<text>");
   }
 }
 

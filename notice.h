@@ -47,7 +47,9 @@
 #include <string>
 #include <list>
 #include <algorithm>
-#include <functional>
+
+// Boost C++ Headers
+#include <boost/bind.hpp>
 
 // Std C Headers
 #include <time.h>
@@ -149,7 +151,7 @@ public:
 private:
   void expire(const time_t now)
   {
-    this->list.remove_if(std::bind2nd(std::mem_fun_ref(&NoticeEntry::expired), now));
+    this->list.remove_if(boost::bind(&NoticeEntry::expired, _1, now));
   }
 };
 

@@ -22,7 +22,6 @@
 #include <string>
 #include <map>
 #include <algorithm>
-#include <functional>
 
 #include "strtype"
 #include "arglist.h"

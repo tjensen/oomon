@@ -24,7 +24,6 @@
 // Std C++ Headers
 #include <string>
 #include <algorithm>
-#include <functional>
 
 // Boost C++ Headers
 #include <boost/shared_ptr.hpp>
@@ -44,7 +43,6 @@ public:
   virtual ~BotClient(void) { }
 
   virtual void send(const std::string & text) = 0;
-  virtual bool remote(void) const = 0;
   virtual int flags(void) const = 0;
   virtual std::string handle(void) const = 0;
   virtual std::string bot(void) const = 0;

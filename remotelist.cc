@@ -24,7 +24,6 @@
 #include <string>
 #include <list>
 #include <algorithm>
-#include <functional>
 
 #include "strtype"
 #include "remotelist.h"

@@ -23,15 +23,15 @@
 #include <iostream>
 #include <string>
 #include <algorithm>
-#include <functional>
 #include <memory>
+
+#include <boost/bind.hpp>
 
 #include "oomon.h"
 #include "cmdparser.h"
 #include "dcclist.h"
 #include "remotelist.h"
 #include "proxylist.h"
-#include "help.h"
 #include "main.h"
 #include "log.h"
 #include "engine.h"
@@ -41,6 +41,7 @@
 #include "trap.h"
 #include "vars.h"
 #include "config.h"
+#include "help.h"
 
 
 #ifdef DEBUG
@@ -50,88 +51,97 @@
 
 CommandParser::CommandParser(void)
 {
-  // anonymous commands
-  addCommand("HELP", &CommandParser::cmdHelp, UF_NONE, NO_REMOTE);
-  addCommand("INFO", &CommandParser::cmdHelp, UF_NONE, NO_REMOTE);
-
   // UF_AUTHED commands
-  addCommand("WHO", &CommandParser::cmdWho, UF_AUTHED);
-  addCommand("LINKS", &CommandParser::cmdLinks, UF_AUTHED);
-  addCommand("MOTD", &CommandParser::cmdMotd, UF_AUTHED);
-  addCommand("STATUS", &CommandParser::cmdStatus, UF_AUTHED);
+  this->addCommand("WHO", &CommandParser::cmdWho, UF_AUTHED);
+  this->addCommand("LINKS", &CommandParser::cmdLinks, UF_AUTHED);
+  this->addCommand("MOTD", &CommandParser::cmdMotd, UF_AUTHED);
+  this->addCommand("STATUS", &CommandParser::cmdStatus, UF_AUTHED);
 
   // UF_CHANOP commands
-  addCommand("JOIN", &CommandParser::cmdJoin, UF_CHANOP);
-  addCommand("OP", &CommandParser::cmdOp, UF_CHANOP);
-  addCommand("PART", &CommandParser::cmdPart, UF_CHANOP);
-
-  // UF_WALLOPS commands
-  addCommand("LOCOPS", &CommandParser::cmdLocops, UF_WALLOPS, NO_REMOTE);
+  this->addCommand("JOIN", &CommandParser::cmdJoin, UF_CHANOP);
+  this->addCommand("OP", &CommandParser::cmdOp, UF_CHANOP);
+  this->addCommand("PART", &CommandParser::cmdPart, UF_CHANOP);
 
   // UF_KLINE commands
-  addCommand("KLINE", &CommandParser::cmdKline, UF_KLINE);
-  addCommand("KBOT", &CommandParser::cmdKline, UF_KLINE);
-  addCommand("KCLONE", &CommandParser::cmdKline, UF_KLINE);
-  addCommand("KFLOOD", &CommandParser::cmdKline, UF_KLINE);
-  addCommand("KINFO", &CommandParser::cmdKline, UF_KLINE);
-  addCommand("KLINK", &CommandParser::cmdKline, UF_KLINE);
-  addCommand("KMOTD", &CommandParser::cmdKline, UF_KLINE);
-  addCommand("KPERM", &CommandParser::cmdKline, UF_KLINE);
-  addCommand("KPROXY", &CommandParser::cmdKline, UF_KLINE);
-  addCommand("KWINGATE", &CommandParser::cmdKline, UF_KLINE);
-  addCommand("KSPAM", &CommandParser::cmdKline, UF_KLINE);
-  addCommand("KTRACE", &CommandParser::cmdKline, UF_KLINE);
-  addCommand("UNKLINE", &CommandParser::cmdUnkline, UF_KLINE);
-
-  // UF_GLINE commands
-  //addCommand("GLINE", &CommandParser::cmdGline, UF_GLINE, NO_REMOTE);
-  //addCommand("UNGLINE", &CommandParser::cmdGline, UF_GLINE, NO_REMOTE);
+  this->addCommand("KLINE", &CommandParser::cmdKline, UF_KLINE);
+  this->addCommand("KBOT", &CommandParser::cmdKline, UF_KLINE);
+  this->addCommand("KCLONE", &CommandParser::cmdKline, UF_KLINE);
+  this->addCommand("KFLOOD", &CommandParser::cmdKline, UF_KLINE);
+  this->addCommand("KINFO", &CommandParser::cmdKline, UF_KLINE);
+  this->addCommand("KLINK", &CommandParser::cmdKline, UF_KLINE);
+  this->addCommand("KMOTD", &CommandParser::cmdKline, UF_KLINE);
+  this->addCommand("KPERM", &CommandParser::cmdKline, UF_KLINE);
+  this->addCommand("KPROXY", &CommandParser::cmdKline, UF_KLINE);
+  this->addCommand("KWINGATE", &CommandParser::cmdKline, UF_KLINE);
+  this->addCommand("KSPAM", &CommandParser::cmdKline, UF_KLINE);
+  this->addCommand("KTRACE", &CommandParser::cmdKline, UF_KLINE);
+  this->addCommand("UNKLINE", &CommandParser::cmdUnkline, UF_KLINE);
 
   // UF_DLINED commands
-  addCommand("DLINE", &CommandParser::cmdDline, UF_DLINE);
-  addCommand("UNDLINE", &CommandParser::cmdUndline, UF_DLINE);
+  this->addCommand("DLINE", &CommandParser::cmdDline, UF_DLINE);
+  this->addCommand("UNDLINE", &CommandParser::cmdUndline, UF_DLINE);
 
   // UF_OPER commands
-  addCommand("KILL", &CommandParser::cmdKill, UF_OPER);
-  addCommand("KILLLIST", &CommandParser::cmdKilllist, UF_OPER, EXACT_ONLY);
-  addCommand("KL", &CommandParser::cmdKilllist, UF_OPER, EXACT_ONLY);
-  addCommand("KILLNFIND", &CommandParser::cmdKillnfind, UF_OPER, EXACT_ONLY);
-  addCommand("KN", &CommandParser::cmdKillnfind, UF_OPER, EXACT_ONLY);
-  addCommand("RELOAD", &CommandParser::cmdReload, UF_OPER);
-  addCommand("TRACE", &CommandParser::cmdReload, UF_OPER);
-  addCommand("TRAP", &CommandParser::cmdTrap, UF_OPER);
-  addCommand("SET", &CommandParser::cmdSet, UF_OPER);
-  addCommand("NFIND", &CommandParser::cmdNfind, UF_OPER);
-  addCommand("LIST", &CommandParser::cmdList, UF_OPER);
-  addCommand("IPLIST", &CommandParser::cmdList, UF_OPER);
-  addCommand("GLIST", &CommandParser::cmdGlist, UF_OPER);
-  addCommand("FINDK", &CommandParser::cmdFindk, UF_OPER);
-  addCommand("FINDD", &CommandParser::cmdFindd, UF_OPER);
-  addCommand("CLASS", &CommandParser::cmdClass, UF_OPER);
-  addCommand("DOMAINS", &CommandParser::cmdDomains, UF_OPER);
-  addCommand("NETS", &CommandParser::cmdDomains, UF_OPER);
-  addCommand("MULTI", &CommandParser::cmdMulti, UF_OPER);
-  addCommand("BOTS", &CommandParser::cmdMulti, UF_OPER);
-  addCommand("HMULTI", &CommandParser::cmdMulti, UF_OPER);
-  addCommand("UMULTI", &CommandParser::cmdMulti, UF_OPER);
-  addCommand("VMULTI", &CommandParser::cmdMulti, UF_OPER);
-  addCommand("VBOTS", &CommandParser::cmdMulti, UF_OPER);
-  addCommand("CLONES", &CommandParser::cmdClones, UF_OPER);
-  addCommand("SEEDRAND", &CommandParser::cmdSeedrand, UF_OPER);
-  addCommand("DRONES", &CommandParser::cmdSeedrand, UF_OPER);
+  this->addCommand("KILL", &CommandParser::cmdKill, UF_OPER);
+  this->addCommand("KILLLIST", &CommandParser::cmdKilllist, UF_OPER,
+    EXACT_ONLY);
+  this->addCommand("KL", &CommandParser::cmdKilllist, UF_OPER, EXACT_ONLY);
+  this->addCommand("KILLNFIND", &CommandParser::cmdKillnfind, UF_OPER,
+    EXACT_ONLY);
+  this->addCommand("KN", &CommandParser::cmdKillnfind, UF_OPER, EXACT_ONLY);
+  this->addCommand("RELOAD", &CommandParser::cmdReload, UF_OPER);
+  this->addCommand("TRACE", &CommandParser::cmdReload, UF_OPER);
+  this->addCommand("TRAP", &CommandParser::cmdTrap, UF_OPER);
+  this->addCommand("SET", &CommandParser::cmdSet, UF_OPER);
+  this->addCommand("NFIND", &CommandParser::cmdNfind, UF_OPER);
+  this->addCommand("LIST", &CommandParser::cmdList, UF_OPER);
+  this->addCommand("IPLIST", &CommandParser::cmdList, UF_OPER);
+  this->addCommand("GLIST", &CommandParser::cmdGlist, UF_OPER);
+  this->addCommand("FINDK", &CommandParser::cmdFindk, UF_OPER);
+  this->addCommand("FINDD", &CommandParser::cmdFindd, UF_OPER);
+  this->addCommand("CLASS", &CommandParser::cmdClass, UF_OPER);
+  this->addCommand("DOMAINS", &CommandParser::cmdDomains, UF_OPER);
+  this->addCommand("NETS", &CommandParser::cmdDomains, UF_OPER);
+  this->addCommand("MULTI", &CommandParser::cmdMulti, UF_OPER);
+  this->addCommand("BOTS", &CommandParser::cmdMulti, UF_OPER);
+  this->addCommand("HMULTI", &CommandParser::cmdMulti, UF_OPER);
+  this->addCommand("UMULTI", &CommandParser::cmdMulti, UF_OPER);
+  this->addCommand("VMULTI", &CommandParser::cmdMulti, UF_OPER);
+  this->addCommand("VBOTS", &CommandParser::cmdMulti, UF_OPER);
+  this->addCommand("CLONES", &CommandParser::cmdClones, UF_OPER);
+  this->addCommand("SEEDRAND", &CommandParser::cmdSeedrand, UF_OPER);
+  this->addCommand("DRONES", &CommandParser::cmdSeedrand, UF_OPER);
 
   // UF_MASTER commands
-  addCommand("DIE", &CommandParser::cmdDie, UF_MASTER, EXACT_ONLY);
-  addCommand("CONN", &CommandParser::cmdConn, UF_MASTER);
-  addCommand("DISCONN", &CommandParser::cmdDisconn, UF_MASTER);
-  addCommand("RAW", &CommandParser::cmdRaw, UF_MASTER, EXACT_ONLY);
-  addCommand("SAVE", &CommandParser::cmdSave, UF_MASTER);
-  addCommand("LOAD", &CommandParser::cmdLoad, UF_MASTER);
-  addCommand("SPAMSUB", &CommandParser::cmdSpamsub, UF_MASTER);
-  addCommand("SPAMUNSUB", &CommandParser::cmdSpamunsub, UF_MASTER);
+  this->addCommand("DIE", &CommandParser::cmdDie, UF_MASTER, EXACT_ONLY);
+  this->addCommand("CONN", &CommandParser::cmdConn, UF_MASTER);
+  this->addCommand("DISCONN", &CommandParser::cmdDisconn, UF_MASTER);
+  this->addCommand("RAW", &CommandParser::cmdRaw, UF_MASTER, EXACT_ONLY);
+  this->addCommand("SAVE", &CommandParser::cmdSave, UF_MASTER);
+  this->addCommand("LOAD", &CommandParser::cmdLoad, UF_MASTER);
+  this->addCommand("SPAMSUB", &CommandParser::cmdSpamsub, UF_MASTER);
 #ifdef CMDPARSER_DEBUG
-  addCommand("TEST", &CommandParser::cmdTest, UF_MASTER, EXACT_ONLY);
+  this->addCommand("TEST", &CommandParser::cmdTest, UF_MASTER, EXACT_ONLY);
 #endif /* CMDPARSER_DEBUG */
+}
+
+
+void
+CommandParser::addCommand(const std::string & command, 
+  CommandParser::CommandFunction func, const int flags,
+  const int options)
+{
+  this->commands.push_back(Command(command, flags, options, func));
+}
+
+
+void
+CommandParser::addCommand(const std::string & command,
+  void (CommandParser::*func)(BotClient::ptr from, const std::string & command,
+  std::string parameters), const int flags, const int options)
+{
+  this->commands.push_back(Command(command, flags, options,
+    boost::bind(func, this, _1, _2, _3)));
 }
 
 
@@ -167,48 +177,12 @@ CommandParser::parse(const BotClient::ptr from, const std::string & command,
   {
     if (cmd->flags == (from->flags() & cmd->flags))
     {
-      if (!cmd->noRemote || !from->remote())
-      {
-        (*(cmd->func))(from, cmd->name, parameters);
-      }
-      else
-      {
-        throw CommandParser::exception("*** Not a remote command: " +
-	  cmd->name);
-      }
+      cmd->func(from, cmd->name, parameters);
     }
     else
     {
       CommandParser::insufficient_privileges();
     }
-  }
-}
-
-
-void
-CommandParser::cmdHelp(BotClient::ptr from, const std::string & command,
-  std::string parameters)
-{
-  std::string topic;
-
-  if (command == "info")
-  {
-    topic = parameters.empty() ? "info" : ("info " + parameters);
-  }
-  else
-  {
-    topic = parameters;
-  }
-
-  StrList output = Help::getHelp(topic);
-
-  if (output.empty())
-  {
-    from->send("Help can be read at http://oomon.sourceforge.net/");
-  }
-  else
-  {
-    from->send(output);
   }
 }
 
@@ -485,21 +459,6 @@ CommandParser::cmdPart(BotClient::ptr from, const std::string & command,
   else
   {
     CommandParser::syntax(command, "<channel>");
-  }
-}
-
-
-void
-CommandParser::cmdLocops(BotClient::ptr from, const std::string & command,
-  std::string parameters)
-{
-  if (!parameters.empty())
-  {
-    server.locops("(" + from->handle() + ") " + parameters);
-  }
-  else
-  {
-    CommandParser::syntax(command, "<text>");
   }
 }
 

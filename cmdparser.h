@@ -25,6 +25,9 @@
 #include <vector>
 #include <string>
 
+// Boost C++ Headers
+#include <boost/function.hpp>
+
 // OOMon Headers
 #include "oomon.h"
 #include "strtype"
@@ -57,43 +60,24 @@ public:
   void parse(BotClient::ptr from, const std::string & command,
     const std::string & parameters);
 
-  typedef void (CommandParser::*CommandFunc)(BotClient::ptr from,
-    const std::string & command, std::string parameters);
+  typedef boost::function<void (BotClient::ptr, const std::string &,
+    std::string)> CommandFunction;
 
-  enum { NONE = 0, NO_REMOTE = 1, EXACT_ONLY = 2 } Option;
-
-  class CommandFunctor
-  {
-  public:
-    CommandFunctor(void) { }
-    CommandFunctor(CommandParser *owner, CommandParser::CommandFunc func)
-      : _owner(owner), _func(func) { }
-    virtual void operator()(BotClient::ptr from, const std::string & command,
-      const std::string & parameters)
-    {
-      (this->_owner->*(this->_func))(from, command, parameters);
-    }
-  private:
-    CommandParser *_owner;
-    CommandParser::CommandFunc _func;
-  };
-  typedef boost::shared_ptr<CommandFunctor> CommandFunctorPtr;
+  enum { NONE = 0, EXACT_ONLY = 1 } Option;
 
 private:
   struct Command
   {
     Command(const std::string & _name, const int _flags, const int _options,
-      CommandFunctorPtr _func) : name(DownCase(_name)), flags(_flags),
-      func(_func)
+      CommandParser::CommandFunction _func) : name(DownCase(_name)),
+      flags(_flags), func(_func)
     {
-      this->noRemote = (_options & NO_REMOTE);
       this->exactOnly = (_options & EXACT_ONLY);
     }
     std::string name;
     int flags;
-    bool noRemote;
     bool exactOnly;
-    CommandFunctorPtr func;
+    CommandFunction func;
   };
 
   class partial_match
@@ -125,31 +109,18 @@ private:
   private:
     const std::string _name;
   };
-
   typedef std::vector<Command> CommandVector;
   CommandVector commands;
 
 public:
   void addCommand(const std::string & command, 
-    CommandParser::CommandFunctorPtr func, const int flags,
-    const int options = NONE)
-  {
-    this->commands.push_back(Command(command, flags, options, func));
-  }
-
-protected:
-  void addCommand(const std::string & command, CommandFunc func,
-    const int flags, const int options = NONE)
-  {
-    CommandParser::CommandFunctorPtr
-      fp(new CommandParser::CommandFunctor(this, func));
-
-    this->addCommand(command, fp, flags, options);
-  }
+    CommandParser::CommandFunction func, const int flags,
+    const int options = NONE);
 
 private:
-  void cmdHelp(BotClient::ptr from, const std::string & command,
-    std::string parameters);
+  void addCommand(const std::string & command,
+    void (CommandParser::*)(BotClient::ptr from, const std::string & command,
+    std::string parameters), const int flags, const int options = NONE);
 
   void cmdWho(BotClient::ptr from, const std::string & command,
     std::string parameters);
@@ -165,9 +136,6 @@ private:
   void cmdOp(BotClient::ptr from, const std::string & command,
     std::string parameters);
   void cmdPart(BotClient::ptr from, const std::string & command,
-    std::string parameters);
-
-  void cmdLocops(BotClient::ptr from, const std::string & command,
     std::string parameters);
 
   void cmdKill(BotClient::ptr from, const std::string & command,

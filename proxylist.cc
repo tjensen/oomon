@@ -25,7 +25,9 @@
 #include <string>
 #include <list>
 #include <algorithm>
-#include <functional>
+
+// Boost C++ Headers
+#include <boost/bind.hpp>
 
 // Std C headers
 #include <sys/types.h>
@@ -209,8 +211,7 @@ ProxyList::processAll(const fd_set & readset, const fd_set & writeset)
   time_t now = time(NULL);
   ProxyList::CacheEntry empty;
   std::replace_if(this->safeHosts.begin(), this->safeHosts.end(),
-    std::bind2nd(std::mem_fun_ref(&ProxyList::CacheEntry::isExpired), now),
-    empty);
+    boost::bind(&ProxyList::CacheEntry::isExpired, _1, now), empty);
 
   ProxyList::ProxyProcessor p(readset, writeset);
 

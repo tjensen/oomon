@@ -23,6 +23,9 @@
 #include <iostream>
 #include <string>
 
+// Boost C++ Headers
+#include <boost/bind.hpp>
+
 // Std C Headers
 #include <errno.h>
 #include <time.h>
@@ -84,25 +87,25 @@ IRC::IRC(): BotSock(false, true), supportETrace(false), supportKnock(false),
   addServerNoticeParser("* is attempting to join locally juped channel*",
     ::onJupeJoinNotice);
   addServerNoticeParser("* added K-Line for *",
-    std::bind1st(std::mem_fun(&KlineList::parseAndAdd), &this->klines));
+    boost::bind(&KlineList::parseAndAdd, &this->klines, _1));
   addServerNoticeParser("* added temporary * K-Line for *",
-    std::bind1st(std::mem_fun(&KlineList::parseAndAdd), &this->klines));
+    boost::bind(&KlineList::parseAndAdd, &this->klines, _1));
   addServerNoticeParser("* has removed the K-Line for: *",
-    std::bind1st(std::mem_fun(&KlineList::parseAndRemove), &this->klines));
+    boost::bind(&KlineList::parseAndRemove, &this->klines, _1));
   addServerNoticeParser("* has removed the temporary K-Line for: *",
-    std::bind1st(std::mem_fun(&KlineList::parseAndRemove), &this->klines));
+    boost::bind(&KlineList::parseAndRemove, &this->klines, _1));
   addServerNoticeParser("Temporary K-line for * expired",
-    std::bind1st(std::mem_fun(&KlineList::onExpireNotice), &this->klines));
+    boost::bind(&KlineList::onExpireNotice, &this->klines, _1));
   addServerNoticeParser("* added D-Line for *",
-    std::bind1st(std::mem_fun(&KlineList::parseAndAdd), &this->dlines));
+    boost::bind(&KlineList::parseAndAdd, &this->dlines, _1));
   addServerNoticeParser("* added temporary * D-Line for *",
-    std::bind1st(std::mem_fun(&KlineList::parseAndAdd), &this->dlines));
+    boost::bind(&KlineList::parseAndAdd, &this->dlines, _1));
   addServerNoticeParser("* has removed the D-Line for: *",
-    std::bind1st(std::mem_fun(&KlineList::parseAndRemove), &this->dlines));
+    boost::bind(&KlineList::parseAndRemove, &this->dlines, _1));
   addServerNoticeParser("* has removed the temporary D-Line for: *",
-    std::bind1st(std::mem_fun(&KlineList::parseAndRemove), &this->dlines));
+    boost::bind(&KlineList::parseAndRemove, &this->dlines, _1));
   addServerNoticeParser("Temporary D-line for * expired",
-    std::bind1st(std::mem_fun(&KlineList::onExpireNotice), &this->dlines));
+    boost::bind(&KlineList::onExpireNotice, &this->dlines, _1));
   addServerNoticeParser("?LINE active for *", ::onLineActive);
   addServerNoticeParser("?LINE over-ruled for *", ::onLineActive);
   addServerNoticeParser("* is requesting gline for *", ::onGlineRequest);
@@ -1450,6 +1453,6 @@ void
 IRC::onServerNotice(const std::string & text)
 {
   std::find_if(this->serverNotices.begin(), this->serverNotices.end(),
-    std::bind2nd(std::mem_fun_ref(&Parser::match), text));
+    boost::bind(&Parser::match, _1, text));
 }
 
