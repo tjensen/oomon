@@ -76,6 +76,7 @@ private:
   std::time_t timeout_;
 
   static AutoAction action;
+  static std::string exec;
   static std::string reason;
   static int timeout;
 };

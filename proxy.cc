@@ -26,6 +26,7 @@
 #include <list>
 #include <algorithm>
 #include <ctime>
+#include <cstdlib>
 
 // Boost C++ Headers
 #include <boost/lexical_cast.hpp>
@@ -71,6 +72,7 @@ AutoAction Proxy::action(DEFAULT_SCAN_PROXY_ACTION,
     DEFAULT_SCAN_PROXY_ACTION_TIME);
 std::string Proxy::reason(DEFAULT_SCAN_PROXY_REASON);
 int Proxy::timeout(DEFAULT_SCAN_TIMEOUT);
+std::string Proxy::exec(DEFAULT_SCAN_PROXY_EXEC);
 
 
 Proxy::Proxy(const UserEntryPtr user)
@@ -117,6 +119,19 @@ Proxy::detectedProxy(void)
   Log::Write(notice);
 
   doAction(this->user_, Proxy::action, reason.format(Proxy::reason), false);
+
+  if (!Proxy::exec.empty())
+  {
+    Format fmt;
+    fmt.setStringToken('n', this->nick());
+    fmt.setStringToken('u', this->userhost());
+    fmt.setStringToken('i', this->textAddress());
+    fmt.setStringToken('p', portString);
+    fmt.setStringToken('t', this->typeName());
+
+    std::string cmdline(fmt.format(Proxy::exec));
+    std::system(cmdline.c_str());
+  }
 }
 
 
@@ -143,6 +158,7 @@ void
 Proxy::init(void)
 {
   vars.insert("SCAN_PROXY_ACTION", AutoAction::Setting(Proxy::action));
+  vars.insert("SCAN_PROXY_EXEC", Setting::StringSetting(Proxy::exec));
   vars.insert("SCAN_PROXY_REASON", Setting::StringSetting(Proxy::reason));
   vars.insert("SCAN_TIMEOUT", Setting::IntegerSetting(Proxy::timeout, 1));
 }

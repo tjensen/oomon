@@ -857,6 +857,7 @@ set
 .t.scan_http_post_ports
 .t.scan_max_count
 .t.scan_proxy_action
+.t.scan_proxy_exec
 .t.scan_proxy_reason
 .t.scan_socks4_ports
 .t.scan_socks5_ports
@@ -1821,6 +1822,20 @@ set scan_proxy_action
 .d.be connecting from an open proxy.
 .f.mo
 .l.info actions
+set scan_proxy_exec
+.s.set scan_proxy_exec [<command>]
+.d.If this setting is not empty, the monitor
+.d.bot will attempt to run this shell command
+.d.upon detection of an open proxy.  This may
+.d.be useful for logging or reporting open
+.d.proxies to DNSBL lists.
+.d.
+.d.Note that OOMon blocks while the command
+.d.is running, so the program or script that
+.d.is run should be designed to finish as
+.d.quickly as possible.
+.f.mo
+.l.scan_for_proxies
 set scan_proxy_reason
 .s.set scan_proxy_reason [<text>]
 .d.This setting determines the kill, k-line, or
