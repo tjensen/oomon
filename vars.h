@@ -21,6 +21,36 @@
 
 // $Id$
 
+// ===========================================================================
+// File Description:
+//
+//  OOMon is now highly configurable at runtime.  In older versions, OOMon
+//  had to be configured at compile-time, which was tedious and sometimes
+//  difficult to do correctly.  Now, it's possible to view or modify any of
+//  OOMon's settings with the ".set" command.
+//
+//  The Vars class' interface should be quiet straightforward.  Reading
+//  a single setting should be done using the [] operator.  For example:
+//    vars[VAR_SOMETHING]->getInt()
+//  Refer to setting.h for the interface to each individual setting.
+//
+//  Other public member functions include:
+//    findVar(string)
+//      Search for a setting with a symbol name matching the string.  If
+//      one setting matches, return the index to that setting.  If no
+//      settings match, return -1.  If two or more settings match, return
+//      VAR_COUNT.
+//    set(string, string, string)
+//      The ".set" command uses this function to modify settings.  It
+//      returns a string that should be reported back to the user.
+//    get(StrList, string)
+//      The ".set" command uses this function to view settings.  It returns
+//      the number of settings matching the string.  The StrList should
+//      be reported back to the user.
+//    save(ofstream)
+//      Write all modified settings to a file.
+// ===========================================================================
+
 // Std C++ Headers
 #include <fstream>
 #include <string>

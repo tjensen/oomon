@@ -34,8 +34,24 @@
 #include "util.h"
 #include "remote.h"
 
-// Originally I used strsep() to do this, but quickly learned how
-// unportable it makes my code. *sigh* oh well. This works too.
+
+//////////////////////////////////////////////////////////////////////
+// StrSplit(temp, input, tokens, ignoreEmpties)
+//
+// Description:
+//  Converts a token-separated string into a vector of strings.  This
+//  function works similarly to Perl's split() function.
+//
+// Parameters:
+//  temp          - The resulting vector of strings.
+//  input         - A token-seprated string.
+//  tokens        - A string containing one or more token characters.
+//  ignoreEmpties - If true, empty strings will not be inserted into
+//                  vector.
+//
+// Return Value:
+//  The function returns the number of nodes inserted into the vector.
+//////////////////////////////////////////////////////////////////////
 int
 StrSplit(StrVector & temp, std::string input, const std::string & tokens,
   bool ignoreEmpties)
@@ -99,6 +115,21 @@ ReadLine(register int fd, std::string & text)
 }
 
 
+//////////////////////////////////////////////////////////////////////
+// SplitIRC(temp, text)
+//
+// Description:
+//  Converts a line received from an IRC server to a vector of strings
+//  where each node in the vector is a parameter.  A colon (':') is
+//  interpreted to mean the rest of the string is a single parameter.
+//
+// Parameters:
+//  temp - The resulting vector.
+//  text - The string received from the IRC server.
+//
+// Return Value:
+//  The function returns the number of nodes inserted into the vector.
+//////////////////////////////////////////////////////////////////////
 int
 SplitIRC(StrVector & temp, std::string text)
 {
@@ -143,6 +174,22 @@ SplitIRC(StrVector & temp, std::string text)
 }
 
 
+//////////////////////////////////////////////////////////////////////
+// SplitFrom(input, Nick, UserHost)
+//
+// Description:
+//  Splits a nick!user@host string into two parts: a nick part and a
+//  userhost part.
+//
+// Parameters:
+//  input    - A nick!user@host string received from an IRC server.
+//             This can also contain a server name.
+//  Nick     - Destination for the nick portion of the string.
+//  UserHost - Destination for the userhost portion of the string.
+//
+// Return Value:
+//  None.
+//////////////////////////////////////////////////////////////////////
 void
 SplitFrom(std::string input, std::string & Nick, std::string & UserHost)
 {
@@ -162,6 +209,19 @@ SplitFrom(std::string input, std::string & Nick, std::string & UserHost)
 }
 
 
+//////////////////////////////////////////////////////////////////////
+// getNick(text)
+//
+// Description:
+//  Identifies the nickname in a nick!user@host string.
+//
+// Parameters:
+//  text - A string containing a nick!user@host.
+//
+// Return Value:
+//  The function returns the portion of the string up to but not
+//  including the first '!' character.
+//////////////////////////////////////////////////////////////////////
 std::string
 getNick(const std::string & text)
 {
@@ -206,6 +266,21 @@ getIRCCommand(const std::string & text)
 }
 
 
+//////////////////////////////////////////////////////////////////////
+// atoul(text)
+//
+// Description:
+//  Converts a string to an unsigned long.  The function will stop
+//  converting at the first non-numeric character.
+//
+// Parameters:
+//  text - A string containing a decimal representation of an unsigned
+//         long integer.
+//
+// Return Value:
+//  The function returns the converted unsigned long.  If the string
+//  begins with a non-numeric character, the function will return 0.
+//////////////////////////////////////////////////////////////////////
 unsigned long
 atoul(const char *text)
 {
@@ -216,27 +291,54 @@ atoul(const char *text)
 }
 
 
+//////////////////////////////////////////////////////////////////////
+// FirstWord(text)
+//
+// Description:
+//  Removes the first word of a string.  The function will stop at
+//  the first space character.
+//
+// Parameters:
+//  text - The string from which to remove the first word.
+//
+// Return Value:
+//  The function returns the word that was removed from the beginning
+//  of the string.
+//////////////////////////////////////////////////////////////////////
 std::string
-FirstWord(std::string & Text)
+FirstWord(std::string & text)
 {
   std::string temp;
-  std::string::size_type i = Text.find(' ');
+  std::string::size_type i = text.find(' ');
   if (std::string::npos != i)
   {
-    temp = Text.substr(0, i);
-    Text = Text.substr(i + 1);
+    temp = text.substr(0, i);
+    text = text.substr(i + 1);
   }
   else
   {
-    temp = Text;
-    Text = "";
+    temp = text;
+    text = "";
   }
-  while ((Text.length() > 0) && (Text[0] == ' '))
-    Text.erase((std::string::size_type) 0, 1);
+  while ((text.length() > 0) && (text[0] == ' '))
+    text.erase((std::string::size_type) 0, 1);
   return temp;
 }
 
 
+//////////////////////////////////////////////////////////////////////
+// UpCase(c)
+//
+// Description:
+//  Converts a character to upper-case.
+//
+// Parameters:
+//  c - An upper or lower-case character.
+//
+// Return Value:
+//  The function returns the upper-case representation of the
+//  character.
+//////////////////////////////////////////////////////////////////////
 char
 UpCase(const char c)
 {
@@ -244,10 +346,22 @@ UpCase(const char c)
 }
 
 
+//////////////////////////////////////////////////////////////////////
+// UpCase(text)
+//
+// Description:
+//  Converts a string to all upper-case characters.
+//
+// Parameters:
+//  text - A string containing upper and/or lower-case characters.
+//
+// Return Value:
+//  The function returns the upper-case representation of the string.
+//////////////////////////////////////////////////////////////////////
 std::string
-UpCase(const std::string & Text)
+UpCase(const std::string & text)
 {
-  std::string result = Text;
+  std::string result = text;
   std::string::size_type len = result.length();
 
   for (std::string::size_type index = 0; index < len; index++)
@@ -259,6 +373,19 @@ UpCase(const std::string & Text)
 }
 
 
+//////////////////////////////////////////////////////////////////////
+// DownCase(c)
+//
+// Description:
+//  Converts a character to lower-case.
+//
+// Parameters:
+//  c - An upper or lower-case character.
+//
+// Return Value:
+//  The function returns the lower-case representation of the
+//  character.
+//////////////////////////////////////////////////////////////////////
 char
 DownCase(const char c)
 {
@@ -266,10 +393,22 @@ DownCase(const char c)
 }
 
 
+//////////////////////////////////////////////////////////////////////
+// DownCase(text)
+//
+// Description:
+//  Converts a string to all lower-case characters.
+//
+// Parameters:
+//  text - A string containing upper and/or lower-case characters.
+//
+// Return Value:
+//  The function returns the lower-case representation of the string.
+//////////////////////////////////////////////////////////////////////
 std::string
-DownCase(const std::string & Text)
+DownCase(const std::string & text)
 {
-  std::string result = Text;
+  std::string result = text;
   std::string::size_type len = result.length();
 
   for (std::string::size_type index = 0; index < len; index++)
@@ -281,26 +420,68 @@ DownCase(const std::string & Text)
 }
 
 
+//////////////////////////////////////////////////////////////////////
+// Same(text1, text2)
+//
+// Description:
+//  Case-insensitively compares two strings.
+//
+// Parameters:
+//  text1  - The first string.
+//  text2  - The second string.
+//
+// Return Value:
+//  The function returns true if both strings match.
+//////////////////////////////////////////////////////////////////////
 bool
-Same(const std::string & Text1, const std::string & Text2)
+Same(const std::string & text1, const std::string & text2)
 {
-  return (UpCase(Text1) == UpCase(Text2));
+  return (UpCase(text1) == UpCase(text2));
 }
 
 
+//////////////////////////////////////////////////////////////////////
+// Same(text1, text2, length)
+//
+// Description:
+//  Case-insensitively compares up to length characters of two
+//  strings.
+//
+// Parameters:
+//  text1  - The first string.
+//  text2  - The second string.
+//  length - The maximum number of characters to compare.
+//
+// Return Value:
+//  The function returns true if the characters in both strings match.
+//////////////////////////////////////////////////////////////////////
 bool
-Same(const std::string & Text1, const std::string & Text2,
+Same(const std::string & text1, const std::string & text2,
   const std::string::size_type length)
 {
-  if ((length > Text1.length()) || (length > Text2.length()))
+  if ((length > text1.length()) || (length > text2.length()))
   {
     return false;
   }
 
-  return (UpCase(Text1.substr(0, length)) == UpCase(Text2.substr(0, length)));
+  return (UpCase(text1.substr(0, length)) == UpCase(text2.substr(0, length)));
 }
 
 
+//////////////////////////////////////////////////////////////////////
+// ChkPass(CORRECT, TEST)
+//
+// Description:
+//  Compares a string to a secret password.
+//
+// Parameters:
+//  CORRECT - The secret password (encrypted).
+//  TEST    - A user-entered value to check against the password.
+//
+// Return Value:
+//  The function returns true if the passwords match and false
+//  otherwise.
+//////////////////////////////////////////////////////////////////////
 bool
 ChkPass(std::string CORRECT, std::string TEST)
 {
@@ -318,6 +499,20 @@ ChkPass(std::string CORRECT, std::string TEST)
 }
 
 
+//////////////////////////////////////////////////////////////////////
+// timeStamp(format)
+//
+// Description:
+//  Produces a string containing a textual representation of the
+//  current date and time.
+//
+// Parameters:
+//  format - Either TIMESTAMP_KLINE or TIMESTAMP_LOG.
+//
+// Return Value:
+//  The function returns a string containing a textual representation
+//  of the current date and time.
+//////////////////////////////////////////////////////////////////////
 std::string
 timeStamp(const TimeStampFormat format)
 {
@@ -356,6 +551,21 @@ timeStamp(const TimeStampFormat format)
 }
 
 
+//////////////////////////////////////////////////////////////////////
+// IntToStr(i, len)
+//
+// Description:
+//  Converts an int to a string.
+//
+// Parameters:
+//  i   - The int to convert.
+//  len - The desired width of the resulting string.
+//
+// Return Value:
+//  The function returns string containing the decimal representation
+//  of the int, right-aligned with spaces to fill the desired width if
+//  necessary.
+//////////////////////////////////////////////////////////////////////
 std::string
 IntToStr(int i, std::string::size_type len)
 {
@@ -391,6 +601,21 @@ IntToStr(int i, std::string::size_type len)
 }
 
 
+//////////////////////////////////////////////////////////////////////
+// ULongToStr(i, len)
+//
+// Description:
+//  Converts an unsigned long to a string.
+//
+// Parameters:
+//  i   - The unsigned long to convert.
+//  len - The desired width of the resulting string.
+//
+// Return Value:
+//  The function returns string containing the decimal representation
+//  of the unsigned long, right-aligned with spaces to fill the
+//  desired width if necessary.
+//////////////////////////////////////////////////////////////////////
 std::string
 ULongToStr(unsigned long i, std::string::size_type len)
 {
@@ -419,6 +644,18 @@ ULongToStr(unsigned long i, std::string::size_type len)
 }
 
 
+//////////////////////////////////////////////////////////////////////
+// GetHandleHB(text)
+//
+// Description:
+//  Identifies the botname in a handle@botname string.
+//
+// Parameters:
+//  text - A string containing a handle@botname.
+//
+// Return Value:
+//  The function returns the botname portion of the handle@botname.
+//////////////////////////////////////////////////////////////////////
 std::string
 GetBotHB(std::string text)
 {
@@ -433,6 +670,18 @@ GetBotHB(std::string text)
 }
 
 
+//////////////////////////////////////////////////////////////////////
+// GetHandleHB(text)
+//
+// Description:
+//  Identifies the handle in a handle@botname string.
+//
+// Parameters:
+//  text - A string containing a handle@botname.
+//
+// Return Value:
+//  The function returns the handle portion of the handle@botname.
+//////////////////////////////////////////////////////////////////////
 std::string
 GetHandleHB(std::string text)
 {
@@ -447,6 +696,19 @@ GetHandleHB(std::string text)
 }
 
 
+//////////////////////////////////////////////////////////////////////
+// CountChars(text, ch)
+//
+// Description:
+//  Counts how many of a particular character exist in a string.
+//
+// Parameters:
+//  text - The string to scan.
+//  ch   - The character to count.
+//
+// Return Value:
+//  The function returns the number of characters counted.
+//////////////////////////////////////////////////////////////////////
 std::string::size_type
 CountChars(const std::string & text, const std::string::value_type ch)
 {
@@ -465,6 +727,28 @@ CountChars(const std::string & text, const std::string::value_type ch)
 }
 
 
+//////////////////////////////////////////////////////////////////////
+// isIP(host)
+//
+// Description:
+//  Determines if a hostname is an IP address.  The checking is fairly
+//  ignorant about correctness of an IP address.  It merely checks if
+//  the string contains 3 dots and the remaining characters are all
+//  numeric.  So, the following are all considered IPs by this
+//  function:
+//    1.2.3.4
+//    999999999.2.3.4
+//    1...2
+//  The probably ought to be changed so that only valid IP addresses
+//  are identified.
+//
+// Parameters:
+//  host - A string containing a hostname or IP address.
+//
+// Return Value:
+//  The function returns true if host contains an IP address or false
+//  if it contains a hostname.
+//////////////////////////////////////////////////////////////////////
 bool
 isIP(const std::string & host)
 {
@@ -473,6 +757,19 @@ isIP(const std::string & host)
 }
 
 
+//////////////////////////////////////////////////////////////////////
+// getDomain(host, withDot)
+//
+// Description:
+//  Identifies the domain (or subnet) of a hostname (or IP address).
+//
+// Parameters:
+//  host    - A string containing a hostname or IP address.
+//  withDot - If true, the resulting domain will include an extra dot.
+//
+// Return Value:
+//  The function returns a string containing a domain or subnet.
+//////////////////////////////////////////////////////////////////////
 std::string
 getDomain(std::string host, bool withDot)
 {
@@ -559,6 +856,19 @@ getDomain(std::string host, bool withDot)
 }
 
 
+//////////////////////////////////////////////////////////////////////
+// klineMask(userhost)
+//
+// Description:
+//  Generates a suitable k-line mask for a particular user@host.
+//
+// Parameters:
+//  userhost - A string containing a user@host.
+//
+// Return Value:
+//  The function returns a k-line mask that matches the passed
+//  user@host.
+//////////////////////////////////////////////////////////////////////
 std::string klineMask(const std::string & userhost)
 {
   std::string::size_type at = userhost.find('@');
@@ -597,6 +907,20 @@ std::string klineMask(const std::string & userhost)
   }
 }
 
+
+//////////////////////////////////////////////////////////////////////
+// classCMask(ip)
+//
+// Description:
+//  Creates a class-C style mask of an IP address.
+//
+// Parameters:
+//  ip - A string representation of an IP address.
+//
+// Return Value:
+//  The function returns a string containing a class-C mask of the IP
+//  address.
+//////////////////////////////////////////////////////////////////////
 std::string classCMask(const std::string & ip)
 {
   std::string::size_type lastDot = ip.rfind('.');
@@ -604,6 +928,22 @@ std::string classCMask(const std::string & ip)
   return (ip.substr(0, lastDot) + ".*");
 }
 
+
+//////////////////////////////////////////////////////////////////////
+// StrJoin(token, items)
+//
+// Description:
+//  Converts a vector of strings to a single string, where each node
+//  of the vector is separated by a token character.  This function
+//  works similarly to Perl's join() function.
+//
+// Parameters:
+//  token - A character to separate each node of the vector.
+//  items - A vector of strings.
+//
+// Return Value:
+//  The resulting token-separated string.
+//////////////////////////////////////////////////////////////////////
 std::string
 StrJoin(char token, const StrVector & items)
 {
@@ -621,6 +961,19 @@ StrJoin(char token, const StrVector & items)
 }
 
 
+//////////////////////////////////////////////////////////////////////
+// isNumeric(text)
+//
+// Description:
+//  Determines whether a string contains only numeric characters.
+//
+// Parameters:
+//  text - A string to check.
+//
+// Return Value:
+//  The function returns true if the string contains only numeric
+//  characters or false otherwise.
+//////////////////////////////////////////////////////////////////////
 bool
 isNumeric(const std::string & text)
 {
@@ -675,6 +1028,19 @@ isDynamic(const std::string & user, const std::string & host)
 }
 
 
+//////////////////////////////////////////////////////////////////////
+// timeDiff(diff)
+//
+// Description:
+//  Convert a time difference to a textual representation of weeks,
+//  days, hours, minutes, and seconds.
+//
+// Parameters:
+//  diff - A time difference.
+//
+// Return Value:
+//  A string containing the textual representation.
+//////////////////////////////////////////////////////////////////////
 std::string
 timeDiff(time_t diff)
 {
@@ -728,6 +1094,19 @@ timeDiff(time_t diff)
 }
 
 
+//////////////////////////////////////////////////////////////////////
+// trimLeft(text)
+//
+// Description:
+//  Removes the whitespace from the beginning of a string.
+//
+// Parameters:
+//  text - Any string.
+//
+// Return Value:
+//  The function returns the string with its leading whitespace
+//  removed.
+//////////////////////////////////////////////////////////////////////
 std::string
 trimLeft(const std::string & text)
 {
@@ -742,6 +1121,21 @@ trimLeft(const std::string & text)
 }
 
 
+//////////////////////////////////////////////////////////////////////
+// hexDump(buffer, size)
+//
+// Description:
+//  Converts an array of bytes to their hexadecimal representations.
+//
+// Parameters:
+//  buffer - A pointer to the start of the array.
+//  size   - The size, in bytes, of the array.
+//
+// Return Value:
+//  The function returns a string containing a space-separated list
+//  of hexadecimal values suitable for printing, eating, etc.  May
+//  cause drowsiness.
+//////////////////////////////////////////////////////////////////////
 std::string
 hexDump(const void *buffer, const int size)
 {
@@ -767,11 +1161,89 @@ hexDump(const void *buffer, const int size)
 }
 
 
-// chopUserhost(NUH)
+//////////////////////////////////////////////////////////////////////
+// chopNick(NUH)
 //
-// Takes the user@host out of a nick[user@host]
-// Sorry, I'm too lazy to code the other formats :P
+// Description:
+//  Takes the nick out of a nick[user@host].  Unfortunately, this
+//  isn't as easy to do as you might expect because both the nickname
+//  and username can contain '[' characters.  Therefore, we do a
+//  little guesswork to figure out where the nickname ends and the
+//  username begins.
 //
+// Parameters:
+//  NUH - A string containing a nickname, username, and hostname in
+//        the format, "nick[user@host]"
+//
+// Return value:
+//  The function returns the nickname portion of the string.
+//////////////////////////////////////////////////////////////////////
+std::string
+chopNick(std::string NUH)
+{
+  std::string result;
+
+  // How many '[' characters are in the string?
+  if (CountChars(NUH, '[') > 1)
+  {
+    // More than one '[' character.  Yuck.  Let's do some guesswork.
+
+    // Is there a "[~" sequence?  That's usually a pretty good indicator.
+    std::string::size_type pos = NUH.find("[~");
+
+    if (pos != std::string::npos)
+    {
+      result = NUH.substr(0, pos);
+    }
+    else
+    {
+      // No luck.  Okay, assume all of the '[' characters are in the
+      // nickname.  Don't expect this to be correct every time.
+      int nicklen = 0;
+
+      while (nicklen < 9)
+      {
+        if ((NUH[nicklen] == '[') &&
+	  (CountChars(NUH.substr(nicklen), '[') == 1))
+        {
+	  break;
+        }
+        nicklen++;
+      }
+      result = NUH.substr(0, nicklen);
+    }
+  }
+  else
+  {
+    // Only 1 '[' character and that must be the nickname/username divider.
+    std::string::size_type pos = NUH.find('[');
+
+    if (pos != std::string::npos)
+    {
+      result = NUH.substr(0, pos);
+    }
+  }
+  return result;
+}
+
+
+//////////////////////////////////////////////////////////////////////
+// chopUserHost(NUH)
+//
+// Description:
+//  Takes the user@host out of a nick[user@host].  Unfortunately, this
+//  isn't as easy to do as you might expect because both the nickname
+//  and username can contain '[' characters.  Therefore, we do a
+//  little guesswork to figure out where the nickname ends and the
+//  username begins.
+//
+// Parameters:
+//  NUH - A string containing a nickname, username, and hostname in
+//        the format, "nick[user@host]"
+//
+// Return value:
+//  The function returns the user@host portion of the string.
+//////////////////////////////////////////////////////////////////////
 std::string
 chopUserhost(std::string NUH)
 {
@@ -813,43 +1285,6 @@ chopUserhost(std::string NUH)
       NUH.erase(NUH.length() - 1, 1);
       return NUH;
     }
-  }
-  return "";
-}
-
-
-// chopNick(NUH)
-//
-// Takes the nick out of a nick[user@host]
-//
-std::string
-chopNick(std::string NUH)
-{
-  std::string::size_type pos;
-  if (CountChars(NUH, '[') == 1)
-  {
-    pos = NUH.find('[');
-    if (pos != std::string::npos)
-    {
-      return NUH.substr(0, pos);
-    }
-  }
-  if (CountChars(NUH, '[') > 1)
-  {
-    if ((pos = NUH.find("[~")) != std::string::npos)
-    {
-      return NUH.substr(0, pos);
-    }
-    int nicklen = 0;
-    while (nicklen < 9)
-    {
-      if ((NUH[nicklen] == '[') && (CountChars(NUH.substr(nicklen), '[') == 1))
-      {
-	break;
-      }
-      nicklen++;
-    }
-    return NUH.substr(0, nicklen);
   }
   return "";
 }

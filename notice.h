@@ -21,6 +21,28 @@
 
 // $Id$
 
+// ===========================================================================
+// File Description:
+//
+//  This file contains the generic server notice handler classes.  The
+//  idea here is that OOMon watches several types of server notice types
+//  to detect flooding, spamming, etc.  When enough notices are detected
+//  for a particular user, some action is performed.
+//
+//  The NoticeList template class acts as a container for some class
+//  derived from SimpleNoticeEntry.  Each derived class should query its
+//  associated settings (in vars.cc) to determine when an action should
+//  be taken.
+//
+//  The public interface to NoticeList includes three member functions:
+//   clear()
+//     Empty the container.
+//   size()
+//     Return the number of entries in the container.
+//   onNotice(string)
+//     Parse a server notice.
+// ===========================================================================
+
 // Std C++ Headers
 #include <string>
 #include <list>
@@ -89,6 +111,8 @@ public:
     this->list.clear();
   }
 
+  int size(void) const { return this->list.size(); };
+
   void onNotice(const std::string & notice)
   {
     time_t now = time(NULL);
@@ -118,8 +142,6 @@ public:
     }
   }
 
-  int size(void) const { return this->list.size(); };
-
 private:
   void expire(const time_t now)
   {
@@ -131,23 +153,38 @@ private:
 class SimpleNoticeEntry
 {
 public:
+  // Derived classes' constructors should take a string parameter
+  // containing a server notice and parse the notice.
   virtual ~SimpleNoticeEntry(void) { }
 
+  // Derived classes should implement triggered to determine if the
+  // parameters, count and interval, indicate an action should be
+  // taken.  They may also want to call this function to determine
+  // if the user should be excluded from actions.
   bool triggered(const int & count, const time_t & interval) const
   {
+    // Return true if the user is not an Oper and is not E: lined.
     return (!Config::IsOKHost(this->userhost) &&
       !Config::IsOper(this->userhost));
   }
 
+  // Derived classes should implement execute to perform the desired
+  // action (kill, kline, dline, etc.)
   virtual void execute(void) const = 0;
 
+  // Derived classes should implement expired to return true if
+  // the interval parameter indicates the entry has expired.
   virtual bool expired(const time_t interval) const = 0;
 
+  // Derived classes may want to implement update to refresh their
+  // private data.
   void update(const SimpleNoticeEntry & data)
   {
     this->nick = data.nick;
   }
 
+  // Derived classes may want to overload the == operator to compare
+  // additional private data.
   bool operator==(const SimpleNoticeEntry & rhs) const
   {
     return Same(this->userhost, rhs.userhost);

@@ -21,10 +21,17 @@
 
 // $Id$
 
+// ===========================================================================
+// File Description:
+//
+//  A simple open WinGate proxy detector.
+// ===========================================================================
+
 #include <string>
 
 #include "oomon.h"
 #include "proxy.h"
+
 
 class WinGate : public Proxy
 {

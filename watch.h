@@ -21,6 +21,18 @@
 
 // $Id$
 
+// ===========================================================================
+// File Description:
+//
+//  This file contains the WatchSet class, which is used to determine what
+//  types of messages to send to a user of OOMon.
+//
+//  Each OOMon user is able to configure his or her watches through the use
+//  of the ".watch" command.  All messages sent by OOMon have watch types
+//  associated with them.  If a user's watches do not include the watch
+//  types of the message, the user will not receive the message.
+// ===========================================================================
+
 // Std C++ Headers
 #include <string>
 #include <set>
@@ -48,28 +60,50 @@ public:
   WatchSet(void) { };
   ~WatchSet(void) { };
 
+  // Remove all watch types from this set.
   void clear(void) { this->contents.clear(); };
 
+  // Return the number of watch types in this set.
   std::set<Watch>::size_type size(void) const { return this->contents.size(); };
 
+  // Add a watch type or set of watch types to this set.
   void add(const Watch watch) { this->contents.insert(watch); };
   void add(const WatchSet & watches);
 
+  // Remove a watch type or set of watch types from this set.
   void remove(const Watch watch) { this->contents.erase(watch); };
   void remove(const WatchSet & watches);
 
+  // Return true if this set contains the desired watch type or set of
+  // watch types.
   bool has(const Watch watch) const
     { return (this->contents.end() != this->contents.find(watch)); };
   bool has(const WatchSet & watches) const;
 
   void set(StrList & output, std::string line);
 
+  // Return a set of all possible watch types
   static WatchSet all(void);
+
+  // Return a set of the default watch types
   static WatchSet defaults(void);
+
+  // Convert a watch type to its symbolic name
   static std::string getWatchName(const Watch watch);
+
+  // Convert a symbolic name to a watch type
   static Watch getWatchValue(const std::string & watch);
+
+  // Return a space-separated list of symbolic names corresponding to a
+  // set of watch types.  If distinct is true, prepend watch types that
+  // are in the set with '+' and ones that aren't in the set with '-'.
   static std::string getWatchNames(const WatchSet & watches, bool distinct);
+
+  // Convert a space-separated list of symbolic names to a set of watch
+  // types.
   static WatchSet getWatchValues(const std::string & watches);
+
+  // Convert vector of symbolic names to a set of watch types.
   static WatchSet getWatchValues(StrVector & watches);
 
 private:
@@ -80,4 +114,4 @@ private:
 
 
 #endif /* __WATCH_H__ */
-    
+
