@@ -2345,6 +2345,7 @@ status
 .s.status
 .d.Dumps general information about the monitor
 .d.bot.
+.l.version
 trace
 .s.trace
 .d.Reloads the monitor bot's internal list of
@@ -2441,6 +2442,12 @@ unkline
 .l.findk
 .l.kline
 .l.undline
+version
+.s.version
+.d.Shows details about the OOMon, including its
+.d.version, build date and time, and supported
+.d.options used at compile time.
+.l.status
 vmulti.vbots
 .s.vmulti [<number>]
 .s.vbots [<number>]

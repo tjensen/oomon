@@ -195,6 +195,8 @@ private:
     std::string parameters);
   void cmdSpamunsub(class BotClient *from, const std::string & command,
     std::string parameters);
+  void cmdVersion(class BotClient *from, const std::string & command,
+    std::string parameters);
   void cmdTest(class BotClient *from, const std::string & command,
     std::string parameters);
 };

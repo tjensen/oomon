@@ -58,6 +58,7 @@ CommandParser::CommandParser(void)
   this->addCommand("LINKS", &CommandParser::cmdLinks, UserFlags::AUTHED);
   this->addCommand("MOTD", &CommandParser::cmdMotd, UserFlags::AUTHED);
   this->addCommand("STATUS", &CommandParser::cmdStatus, UserFlags::AUTHED);
+  this->addCommand("VERSION", &CommandParser::cmdVersion, UserFlags::AUTHED);
 
   // UserFlags::CHANOP commands
   this->addCommand("JOIN", &CommandParser::cmdJoin, UserFlags::CHANOP);
@@ -1221,6 +1222,32 @@ CommandParser::cmdSpamunsub(BotClient * from, const std::string & command,
   Log::Write(notice);
 
   server.subSpamTrap(false);
+}
+
+
+void
+CommandParser::cmdVersion(BotClient * from, const std::string & command,
+  std::string parameters)
+{
+  from->send("OOMon version " OOMON_VERSION
+#if defined(__DATE__) && defined(__TIME__)
+    " (Built " __DATE__ " " __TIME__ ")"
+#endif
+    );
+  from->send("Supported options:"
+#if HAVE_CRYPT
+    " crypt"
+#endif
+#if HAVE_LIBADNS
+    " ADNS"
+#endif
+#if HAVE_LIBGDBM
+    " GDBM"
+#endif
+#if HAVE_LIBPCRE
+    " PCRE"
+#endif
+    );
 }
 
 
