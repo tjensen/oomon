@@ -43,7 +43,8 @@ public:
     const std::string & userhost);
 
   static void openProxyDetected(const BotSock::Address & addr,
-    const std::string & nick, const std::string & userhost);
+    const std::string & nick, const std::string & userhost,
+    const std::string & zone);
 
 #ifdef HAVE_LIBADNS
   void process(void);
@@ -60,8 +61,8 @@ private:
   {
   public:
     Query(const BotSock::Address & addr, const std::string & nick,
-      const std::string & userhost) : _addr(addr), _nick(nick),
-      _userhost(userhost) { }
+      const std::string & userhost, const std::string & zone) : _addr(addr),
+      _nick(nick), _userhost(userhost), _zone(zone) { }
 
     bool process(void);
 
@@ -71,6 +72,7 @@ private:
     const BotSock::Address _addr;
     const std::string _nick;
     const std::string _userhost;
+    const std::string _zone;
   };
 
   typedef boost::shared_ptr<Query> QueryPtr;

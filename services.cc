@@ -40,6 +40,7 @@
 #include "log.h"
 #include "vars.h"
 #include "format.h"
+#include "config.h"
 
 
 Services services;

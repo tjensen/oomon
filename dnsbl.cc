@@ -43,6 +43,7 @@
 #include "log.h"
 #include "main.h"
 #include "botclient.h"
+#include "format.h"
 
 
 Dnsbl dnsbl;
@@ -56,7 +57,7 @@ Dnsbl::checkZone(const BotSock::Address & addr, const std::string & nick,
   {
 #ifdef HAVE_LIBADNS
 
-    QueryPtr temp(new Query(addr, nick, userhost));
+    QueryPtr temp(new Query(addr, nick, userhost, zone));
 
     int ret = adns.submit_rbl(addr, zone, temp->query);
 
@@ -91,7 +92,7 @@ Dnsbl::checkZone(const BotSock::Address & addr, const std::string & nick,
 
     if (NULL != result)
     {
-      Dnsbl::openProxyDetected(addr, nick, userhost);
+      Dnsbl::openProxyDetected(addr, nick, userhost, zone);
 
       return true;
     }
@@ -138,7 +139,8 @@ Dnsbl::Query::process(void)
 #ifdef DNSBL_DEBUG
       std::cout << "DNSBL query succeeded!" << std::endl;
 #endif /* DNSBL_DEBUG */
-      Dnsbl::openProxyDetected(this->_addr, this->_nick, this->_userhost);
+      Dnsbl::openProxyDetected(this->_addr, this->_nick, this->_userhost,
+	this->_zone);
     }
     else
     {
@@ -182,21 +184,30 @@ Dnsbl::status(BotClient * client) const
 
 void
 Dnsbl::openProxyDetected(const BotSock::Address & addr,
-  const std::string & nick, const std::string & userhost)
+  const std::string & nick, const std::string & userhost,
+  const std::string & zone)
 {
+  std::string ip(BotSock::inet_ntoa(addr));
+
+  Format reason;
+  reason.setStringToken('n', nick);
+  reason.setStringToken('u', userhost);
+  reason.setStringToken('i', ip);
+  reason.setStringToken('z', zone);
+
   // This is a proxy listed by the DNSBL
   std::string notice("DNSBL Open Proxy detected for ");
   notice += nick;
   notice += '!';
   notice += userhost;
   notice += " [";
-  notice += BotSock::inet_ntoa(addr);
+  notice += ip;
   notice += ']';
   Log::Write(notice);
   ::SendAll(notice, UserFlags::OPER);
 
   doAction(nick, userhost, addr, vars[VAR_DNSBL_PROXY_ACTION]->getAction(),
     vars[VAR_DNSBL_PROXY_ACTION]->getInt(),
-    vars[VAR_DNSBL_PROXY_REASON]->getString(), false);
+    reason.format(vars[VAR_DNSBL_PROXY_REASON]->getString()), false);
 }
 

@@ -1159,7 +1159,12 @@ set dnsbl_proxy_reason
 .s.set dnsbl_proxy_reason [<text>]
 .d.The k-line or d-line reason to use for
 .d.proxies detected through a DNS Blackhole
-.d.List (DNSBL).
+.d.List (DNSBL).  Instances of "%n" will be
+.d.replaced by the offender's nick, "%u" will
+.d.be replaced by the offender's userhost, "%i"
+.d.will be replaced by the offender's IP
+.d.address, and "%z" will be replaced by the
+.d.DNSBL proxy zone used to detect the proxy.
 .f.mo
 .l.set dnsbl_proxy_action
 set dnsbl_proxy_zone
