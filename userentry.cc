@@ -113,6 +113,16 @@ UserEntry::matches(const std::string & lcNick, const std::string & lcUser,
 }
 
 
+bool
+UserEntry::same(const std::string & nick, const std::string & user,
+  const std::string & host) const
+{
+  return (nick.empty() || server.same(this->getNick(), nick)) &&
+    (user.empty() || server.same(this->getUser(), user)) &&
+    (host.empty() || server.same(this->getHost(), host));
+}
+
+
 void
 UserEntry::checkVersionTimeout(const std::time_t now, const std::time_t timeout)
 {

@@ -54,6 +54,9 @@ public:
   bool matches(const std::string & lowercaseNick,
     const std::string & lowercaseUser, const std::string & lowercaseHost) const;
 
+  bool same(const std::string & nick, const std::string & user,
+    const std::string & host) const;
+
   void checkVersionTimeout(const std::time_t now, const std::time_t timeout);
 
   std::string getNick(void) const { return this->nick; };
