@@ -109,8 +109,7 @@ Proxy::detectedProxy(void)
   ::SendAll(notice, UserFlags::OPER, WATCH_PROXYSCANS);
   Log::Write(notice);
 
-  doAction(this->nick(), this->userhost(), this->address(),
-      vars[VAR_SCAN_PROXY_ACTION]->getAction(),
+  doAction(this->user_, vars[VAR_SCAN_PROXY_ACTION]->getAction(),
       vars[VAR_SCAN_PROXY_ACTION]->getInt(),
       reason.format(vars[VAR_SCAN_PROXY_REASON]->getString()), false);
 }

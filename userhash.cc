@@ -200,7 +200,7 @@ UserHash::add(const std::string & nick, const std::string & userhost,
         if ((newuser->getIP() != INADDR_NONE) &&
             !config.isExempt(newuser, Config::EXEMPT_PROXY))
         {
-          checkProxy(newuser->getIP(), newuser);
+          checkProxy(newuser);
         }
 
         if (vars[VAR_CTCPVERSION_ENABLE]->getBool() &&

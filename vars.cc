@@ -283,6 +283,8 @@ Vars::Vars(void) : vec(VAR_COUNT)
   this->vec[VAR_SCAN_HTTP_POST_PORTS] =
     SettingPtr(new StrSetting("SCAN_HTTP_POST_PORTS",
     DEFAULT_SCAN_HTTP_POST_PORTS));
+  this->vec[VAR_SCAN_MAX_COUNT] = SettingPtr(new IntSetting("SCAN_MAX_COUNT",
+        DEFAULT_SCAN_MAX_COUNT, 1));
   this->vec[VAR_SCAN_PROXY_ACTION] =
     SettingPtr(new ActionSetting("SCAN_PROXY_ACTION",
     DEFAULT_SCAN_PROXY_ACTION));

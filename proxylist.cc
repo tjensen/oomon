@@ -87,7 +87,7 @@ ProxyList::ProxyList(void) : safeHosts(ProxyList::CACHE_SIZE), cacheHits(0),
 //
 bool
 ProxyList::connect(ProxyPtr newProxy, const BotSock::Address & address,
-  const BotSock::Port port)
+    const BotSock::Port port)
 {
 #ifdef PROXYLIST_DEBUG
   std::cout << "Creating proxy connection to address " << address << ":" <<
@@ -105,77 +105,89 @@ ProxyList::connect(ProxyPtr newProxy, const BotSock::Address & address,
 
   this->scanners.push_back(newProxy);
 
-#ifdef PROXYLIST_DEBUG
-  std::cout << this->scanners.size() << " proxies queued up for processing." <<
-    std::endl;
-#endif
-
   return true;
 }
 
 
-void
-ProxyList::initiateCheck(const Proxy::Protocol type, const std::string & port,
-  const BotSock::Address & address, const UserEntryPtr user)
+bool
+ProxyList::initiateCheck(const UserEntryPtr user, const BotSock::Port port,
+    Proxy::Protocol protocol)
 {
+  bool result = false;
+
   try
   {
-    int portNum = boost::lexical_cast<int>(port);
+    ProxyPtr newProxy;
 
-    if (!this->skipCheck(address, portNum, type))
+    switch (protocol)
     {
-      ProxyPtr newProxy;
-
-      switch (type)
-      {
-	case Proxy::HTTP_CONNECT:
-          {
-            ProxyPtr tmp(new Http(user));
-            newProxy.swap(tmp);
-          }
-	  break;
-	case Proxy::HTTP_POST:
-          {
-            ProxyPtr tmp(new HttpPost(user));
-            newProxy.swap(tmp);
-          }
-	  break;
-	case Proxy::WINGATE:
-          {
-            ProxyPtr tmp(new WinGate(user));
-            newProxy.swap(tmp);
-          }
-	  break;
-	case Proxy::SOCKS4:
-          {
-            ProxyPtr tmp(new Socks4(user));
-            newProxy.swap(tmp);
-          }
-	  break;
-	case Proxy::SOCKS5:
-          {
-            ProxyPtr tmp(new Socks5(user));
-            newProxy.swap(tmp);
-          }
-	  break;
-	default:
-	  std::cerr << "Unknown proxy type?" << std::endl;
-	  break;
-      }
-
-      if (newProxy)
-      {
-	this->connect(newProxy, address, portNum);
-      }
+      case Proxy::HTTP_CONNECT:
+        {
+          ProxyPtr tmp(new Http(user));
+          newProxy.swap(tmp);
+        }
+        break;
+      case Proxy::HTTP_POST:
+        {
+          ProxyPtr tmp(new HttpPost(user));
+          newProxy.swap(tmp);
+        }
+        break;
+      case Proxy::WINGATE:
+        {
+          ProxyPtr tmp(new WinGate(user));
+          newProxy.swap(tmp);
+        }
+        break;
+      case Proxy::SOCKS4:
+        {
+          ProxyPtr tmp(new Socks4(user));
+          newProxy.swap(tmp);
+        }
+        break;
+      case Proxy::SOCKS5:
+        {
+          ProxyPtr tmp(new Socks5(user));
+          newProxy.swap(tmp);
+        }
+        break;
+      default:
+        std::cerr << "Unknown proxy type?" << std::endl;
+        break;
     }
-  }
-  catch (boost::bad_lexical_cast)
-  {
-    std::cerr << "Bad port number: " << port << std::endl;
+
+    if (newProxy)
+    {
+      result = this->connect(newProxy, user->getIP(), port);
+    }
   }
   catch (OOMon::errno_error & e)
   {
     std::cerr << "Connect to proxy failed (" << e.why() << ")" << std::endl;
+  }
+
+  return result;
+}
+
+
+void
+ProxyList::enqueueScan(const UserEntryPtr user, const std::string & portStr,
+    const Proxy::Protocol protocol)
+{
+  try
+  {
+    BotSock::Port port = boost::lexical_cast<BotSock::Port>(portStr);
+
+    if (!this->skipCheck(user->getIP(), port, protocol))
+    {
+      ProxyList::QueueNode enqueue(user, port, protocol);
+
+      this->queuedScans.push_back(enqueue);
+    }
+  }
+  catch (boost::bad_lexical_cast)
+  {
+    std::cerr << "Bad port number: " << portStr << std::endl;
   }
 }
 
@@ -187,7 +199,7 @@ ProxyList::initiateCheck(const Proxy::Protocol type, const std::string & port,
 // Returns true if no errors occurred
 //
 void
-ProxyList::check(const BotSock::Address & address, const UserEntryPtr user)
+ProxyList::check(const UserEntryPtr user)
 {
   if (vars[VAR_SCAN_FOR_PROXIES]->getBool())
   {
@@ -203,24 +215,24 @@ ProxyList::check(const BotSock::Address & address, const UserEntryPtr user)
     for (StrVector::iterator pos = httpConnect.begin();
         pos != httpConnect.end(); ++pos)
     {
-      ProxyList::initiateCheck(Proxy::HTTP_CONNECT, *pos, address, user);
+      this->enqueueScan(user, *pos, Proxy::HTTP_CONNECT);
     }
     for (StrVector::iterator pos = httpPost.begin(); pos != httpPost.end();
         ++pos)
     {
-      ProxyList::initiateCheck(Proxy::HTTP_POST, *pos, address, user);
+      this->enqueueScan(user, *pos, Proxy::HTTP_POST);
     }
     for (StrVector::iterator pos = socks4.begin(); pos != socks4.end(); ++pos)
     {
-      ProxyList::initiateCheck(Proxy::SOCKS4, *pos, address, user);
+      this->enqueueScan(user, *pos, Proxy::SOCKS4);
     }
     for (StrVector::iterator pos = socks5.begin(); pos != socks5.end(); ++pos)
     {
-      ProxyList::initiateCheck(Proxy::SOCKS5, *pos, address, user);
+      this->enqueueScan(user, *pos, Proxy::SOCKS5);
     }
     for (StrVector::iterator pos = wingate.begin(); pos != wingate.end(); ++pos)
     {
-      ProxyList::initiateCheck(Proxy::WINGATE, *pos, address, user);
+      this->enqueueScan(user, *pos, Proxy::WINGATE);
     }
   }
 }
@@ -273,8 +285,24 @@ ProxyList::processAll(const fd_set & readset, const fd_set & writeset)
   std::replace_if(this->safeHosts.begin(), this->safeHosts.end(),
     boost::bind(&ProxyList::CacheEntry::isExpired, _1, now), empty);
 
-  ProxyList::ProxyProcessor p(readset, writeset);
+  // Process queue
+  const ProxyList::SockList::size_type max = vars[VAR_SCAN_MAX_COUNT]->getInt();
+  while (!this->queuedScans.empty() && (this->scanners.size() < max))
+  {
+    ProxyList::QueueNode front(this->queuedScans.front());
 
+    if (this->initiateCheck(front.user, front.port, front.protocol))
+    {
+      this->queuedScans.pop_front();
+    }
+    else
+    {
+      break;
+    }
+  }
+
+  // Process active scans
+  ProxyList::ProxyProcessor p(readset, writeset);
   this->scanners.remove_if(p);
 }
 
@@ -288,11 +316,22 @@ ProxyList::ProxyIsChecking::operator()(ProxyPtr proxy)
 
 
 bool
-ProxyList::isChecking(const BotSock::Address & address,
-    const BotSock::Port port, const Proxy::Protocol type) const
+ProxyList::ProxyIsQueued::operator()(const QueueNode & node) const
 {
-  return (this->scanners.end() != std::find_if(this->scanners.begin(),
-    this->scanners.end(), ProxyList::ProxyIsChecking(address, port, type)));
+  return ((node.user->getIP() == this->address_) &&
+    (node.port == this->port_) && (node.protocol == this->protocol_));
+}
+
+
+bool
+ProxyList::isChecking(const BotSock::Address & address,
+    const BotSock::Port port, const Proxy::Protocol protocol) const
+{
+  return ((this->scanners.end() != std::find_if(this->scanners.begin(),
+    this->scanners.end(), ProxyList::ProxyIsChecking(address, port,
+      protocol))) || (this->queuedScans.end() !=
+    std::find_if(this->queuedScans.begin(), this->queuedScans.end(),
+      ProxyList::ProxyIsQueued(address, port, protocol))));
 }
 
 
@@ -317,6 +356,15 @@ ProxyList::addToCache(const BotSock::Address & address,
 
     this->safeHosts[0] = newEntry;
   }
+}
+
+
+bool
+ProxyList::skipCheck(const BotSock::Address & address,
+    const BotSock::Port & port, const Proxy::Protocol & type)
+{
+  return (this->isChecking(address, port, type) ||
+      this->isVerifiedClean(address, port, type));
 }
 
 
@@ -359,11 +407,15 @@ void
 ProxyList::status(BotClient * client) const
 {
   ProxyList::SockList::size_type size(this->scanners.size());
+  ProxyList::Queue::size_type queueSize(this->queuedScans.size());
 
   if ((size > 0) || vars[VAR_SCAN_FOR_PROXIES]->getBool())
   {
     std::string scanCount("Proxy scanners: ");
     scanCount += boost::lexical_cast<std::string>(size);
+    scanCount += " (";
+    scanCount += boost::lexical_cast<std::string>(queueSize);
+    scanCount += " queued)";
     client->send(scanCount);
 
     int cacheCount = 0;

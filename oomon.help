@@ -858,6 +858,7 @@ set
 .t.scan_for_proxies
 .t.scan_http_connect_ports
 .t.scan_http_post_ports
+.t.scan_max_count
 .t.scan_proxy_action
 .t.scan_proxy_reason
 .t.scan_socks4_ports
@@ -1727,6 +1728,7 @@ set scan_for_proxies
 .f.mo
 .l.set scan_http_connect_ports
 .l.set scan_http_post_ports
+.l.set scan_max_count
 .l.set scan_proxy_action
 .l.set scan_proxy_reason
 .l.set scan_socks4_ports
@@ -1756,6 +1758,16 @@ set scan_http_post_ports
 .l.set scan_socks4_ports
 .l.set scan_socks5_ports
 .l.set scan_wingate_ports
+set scan_max_count
+.s.set scan_proxy_action [<integer>]
+.d.When actively scanning for open proxies,
+.d.OOMon will limit the number of simultaneous
+.d.scans to this value.  Higher values will
+.d.improve proxy detection time, but lower
+.d.values will help prevent resource
+.d.starvation.
+.f.mo
+.l.set scan_for_proxies
 set scan_proxy_action
 .s.set scan_proxy_action [<action> [<time>]]
 .d.This setting determines how the monitor bot

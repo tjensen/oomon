@@ -24,6 +24,8 @@
 // Std C++ headers
 #include <string>
 #include <list>
+#include <vector>
+#include <deque>
 
 // Boost C++ headers
 #include <boost/shared_ptr.hpp>
@@ -48,7 +50,7 @@ public:
   ProxyList(void);
   virtual ~ProxyList(void) { }
 
-  void check(const BotSock::Address & address, const UserEntryPtr user);
+  void check(const UserEntryPtr user);
   bool connect(ProxyPtr newProxy, const BotSock::Address & address,
       const BotSock::Port port);
   void processAll(const fd_set & readset, const fd_set & writeset);
@@ -60,19 +62,17 @@ public:
   void addToCache(const BotSock::Address & address, const BotSock::Port port,
       const Proxy::Protocol type);
   bool skipCheck(const BotSock::Address & address, const BotSock::Port & port,
-      const Proxy::Protocol & type)
-  {
-    return (this->isChecking(address, port, type) ||
-        this->isVerifiedClean(address, port, type));
-  }
+      const Proxy::Protocol & type);
 
   void status(class BotClient * client) const;
 
   static const std::time_t CACHE_EXPIRE;
 
 private:
-  void initiateCheck(const Proxy::Protocol type, const std::string & port,
-    const BotSock::Address & address, const UserEntryPtr user);
+  bool initiateCheck(const UserEntryPtr user, const BotSock::Port port,
+      const Proxy::Protocol protocol);
+  void ProxyList::enqueueScan(const UserEntryPtr user,
+      const std::string & portStr, const Proxy::Protocol protocol);
 
   typedef std::list<ProxyPtr> SockList;
   SockList scanners;
@@ -104,12 +104,12 @@ private:
   class CacheEntry
   {
   public:
-    CacheEntry(void) : ip_(INADDR_NONE) { };
+    CacheEntry(void) : ip_(INADDR_NONE) { }
     CacheEntry(const BotSock::Address & ip, const BotSock::Port & port,
         const Proxy::Protocol & type)
       : ip_(ip), port_(port), type_(type), checked_(std::time(NULL)) { }
 
-    bool isEmpty(void) const { return (INADDR_NONE == ip_); };
+    bool isEmpty(void) const { return (INADDR_NONE == ip_); }
     bool operator==(const CacheEntry & rhs) const
     {
       if (rhs.isEmpty())
@@ -147,7 +147,7 @@ private:
       this->checked_ = std::time(NULL);
     }
 
-    void clear(void) { ip_ = INADDR_NONE; };
+    void clear(void) { ip_ = INADDR_NONE; }
 
   private:
     BotSock::Address ip_;
@@ -156,8 +156,33 @@ private:
     std::time_t checked_;
   };
 
+  struct QueueNode
+  {
+    QueueNode(const UserEntryPtr user_, const BotSock::Port port_,
+        const Proxy::Protocol protocol_)
+      : user(user_), port(port_), protocol(protocol_) { }
+    const UserEntryPtr user;
+    const BotSock::Port port;
+    const Proxy::Protocol protocol;
+  };
+
+  class ProxyIsQueued : public std::unary_function<QueueNode, bool>
+  {
+  public:
+    explicit ProxyIsQueued(const BotSock::Address & address,
+        const BotSock::Port port, const Proxy::Protocol protocol)
+      : address_(address), port_(port), protocol_(protocol) { }
+    bool operator()(const QueueNode & proxy) const;
+  private:
+    const BotSock::Address address_;
+    const BotSock::Port port_;
+    const Proxy::Protocol protocol_;
+  };
+
   typedef std::vector<CacheEntry> Cache;
+  typedef std::deque<QueueNode> Queue;
   Cache safeHosts;
+  Queue queuedScans;
   mutable unsigned long cacheHits, cacheMisses;
   static const SockList::size_type CACHE_SIZE;
 };

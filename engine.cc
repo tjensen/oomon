@@ -1077,13 +1077,13 @@ onTooManyConnNotice(const std::string & text)
 
 
 void
-checkProxy(const BotSock::Address & ip, const UserEntryPtr user)
+checkProxy(const UserEntryPtr user)
 {
   // If the IP is listed by the DNSBL, there's no reason to do a scan
   // of our own!
-  if (!dnsbl.check(ip, user))
+  if (!dnsbl.check(user->getIP(), user))
   {
-    proxies.check(ip, user);
+    proxies.check(user);
   }
 }
 
