@@ -268,30 +268,33 @@ ProxyList::addToCache(const std::string & address, const BotSock::Port port,
 
 bool
 ProxyList::isVerifiedClean(const std::string & address,
-  const BotSock::Port port, const Proxy::Protocol type) const
+  const BotSock::Port port, const Proxy::Protocol type)
 {
   const ProxyList::CacheEntry tmp(BotSock::inet_addr(address), port, type);
 
-  ProxyList::Cache::const_iterator pos = std::find(this->safeHosts.begin(),
+  ProxyList::Cache::iterator pos = std::find(this->safeHosts.begin(),
     this->safeHosts.end(), tmp);
 
-  bool result = (pos != this->safeHosts.end());
+  bool result;
 
-#ifdef PROXYLIST_DEBUG
-  if (result)
+  if (this->safeHosts.end() == pos)
   {
-    std::cout << "Verified clean: " << address << ":" << port << " (" <<
-      type << ")" << std::endl;
-  }
-#endif
-
-  if (result)
-  {
-    ++this->cacheHits;
+    result = false;
+    ++this->cacheMisses;
   }
   else
   {
-    ++this->cacheMisses;
+    result = true;
+    ++this->cacheHits;
+    pos->update();
+
+#ifdef PROXYLIST_DEBUG
+    if (result)
+    {
+      std::cout << "Verified clean: " << address << ":" << port << " (" <<
+        type << ")" << std::endl;
+    }
+#endif
   }
 
   return result;

@@ -56,11 +56,11 @@ public:
   bool isChecking(const std::string &, const BotSock::Port,
     Proxy::Protocol) const;
   bool isVerifiedClean(const std::string & address,
-    const BotSock::Port port, const Proxy::Protocol type) const;
+    const BotSock::Port port, const Proxy::Protocol type);
   void addToCache(const std::string & address, const BotSock::Port port,
     const Proxy::Protocol type);
   bool skipCheck(const std::string & address, const BotSock::Port & port,
-    const Proxy::Protocol & type) const
+    const Proxy::Protocol & type)
   {
     return (this->isChecking(address, port, type) ||
       this->isVerifiedClean(address, port, type));
@@ -137,6 +137,11 @@ private:
 	return true;
       }
       return false;
+    }
+
+    void update(void)
+    {
+      this->_checked = std::time(NULL);
     }
 
     void clear(void) { _ip = INADDR_NONE; };
