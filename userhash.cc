@@ -837,7 +837,8 @@ UserHash::reportClasses(BotClient * client, const std::string & className)
   for (UserEntryTable::iterator i = this->domaintable.begin();
     i != this->domaintable.end(); ++i)
   {
-    for (UserEntryList::iterator userptr = i->begin(); userptr != i->end(); ++i)
+    for (UserEntryList::iterator userptr = i->begin(); userptr != i->end();
+      ++userptr)
     {
       Classes[server.downCase((*userptr)->getClass())]++;
     }
@@ -877,7 +878,8 @@ UserHash::reportSeedrand(BotClient * client, const PatternPtr mask,
   for (UserEntryTable::const_iterator i = this->usertable.begin();
     i != this->usertable.end(); ++i)
   {
-    for (UserEntryList::const_iterator find = i->begin(); find != i->end(); ++i)
+    for (UserEntryList::const_iterator find = i->begin(); find != i->end();
+      ++find)
     {
       if (mask->match((*find)->getNick()))
       {
@@ -940,7 +942,8 @@ UserHash::reportDomains(BotClient * client, const int num)
   for (UserEntryTable::iterator i = this->hosttable.begin();
     i != this->hosttable.end(); ++i)
   {
-    for (UserEntryList::iterator userptr = i->begin(); userptr != i->end(); ++i)
+    for (UserEntryList::iterator userptr = i->begin(); userptr != i->end();
+      ++userptr)
     {
       bool found = false;
 
@@ -1027,7 +1030,8 @@ UserHash::reportNets(BotClient * client, const int num)
   for (UserEntryTable::iterator i = this->hosttable.begin();
     i != this->hosttable.end(); ++i)
   {
-    for (UserEntryList::iterator userptr = i->begin(); userptr != i->end(); ++i)
+    for (UserEntryList::iterator userptr = i->begin(); userptr != i->end();
+      ++userptr)
     {
       if ((*userptr)->getIP() != INADDR_NONE)
       {
@@ -1111,7 +1115,8 @@ UserHash::reportClones(BotClient * client)
   for (UserEntryTable::iterator i = this->hosttable.begin();
     i != this->hosttable.end(); ++i)
   {
-    for (UserEntryList::iterator userptr = i->begin(); userptr != i->end(); ++i)
+    for (UserEntryList::iterator userptr = i->begin(); userptr != i->end();
+      ++userptr)
     {
       UserEntryList::iterator temp = i->begin();
       for (; temp != userptr; ++temp)
