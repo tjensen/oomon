@@ -577,6 +577,7 @@ TrapList::match(const UserEntryPtr user, const std::string & version,
         {
 	  pos->second.updateStats();
 	  pos->second.doAction(pos->first, user);
+          break;
         }
       }
       catch (OOMon::regex_error & e)
