@@ -73,11 +73,11 @@ bool ProxyList::enable(DEFAULT_SCAN_FOR_PROXIES);
 bool ProxyList::cacheEnable(DEFAULT_SCAN_CACHE);
 int ProxyList::cacheExpire(DEFAULT_SCAN_CACHE_EXPIRE);
 int ProxyList::maxCount(DEFAULT_SCAN_MAX_COUNT);
-ProxyList::PortList ProxyList::httpConnectPorts;
-ProxyList::PortList ProxyList::httpPostPorts;
-ProxyList::PortList ProxyList::socks4Ports;
-ProxyList::PortList ProxyList::socks5Ports;
-ProxyList::PortList ProxyList::wingatePorts;
+ProxyList::PortSet ProxyList::httpConnectPorts;
+ProxyList::PortSet ProxyList::httpPostPorts;
+ProxyList::PortSet ProxyList::socks4Ports;
+ProxyList::PortSet ProxyList::socks5Ports;
+ProxyList::PortSet ProxyList::wingatePorts;
 ProxyList::Cache::size_type ProxyList::cacheSize(DEFAULT_SCAN_CACHE_SIZE);
 
 
@@ -175,9 +175,9 @@ ProxyList::initiateCheck(const UserEntryPtr user, const BotSock::Port port,
 
 void
 ProxyList::enqueueScans(const UserEntryPtr user,
-    const ProxyList::PortList & ports, const Proxy::Protocol protocol)
+    const ProxyList::PortSet & ports, const Proxy::Protocol protocol)
 {
-  for (ProxyList::PortList::const_iterator pos = ports.begin();
+  for (ProxyList::PortSet::const_iterator pos = ports.begin();
       pos != ports.end(); ++pos)
   {
     if (!this->skipCheck(user->getIP(), *pos, protocol))
@@ -426,16 +426,16 @@ ProxyList::status(BotClient * client) const
 
 
 std::string
-ProxyList::getPorts(const ProxyList::PortList * ports)
+ProxyList::getPorts(const ProxyList::PortSet * ports)
 {
   std::string result;
 
-  for (ProxyList::PortList::const_iterator pos = ports->begin();
+  for (ProxyList::PortSet::const_iterator pos = ports->begin();
       pos != ports->end(); ++pos)
   {
     if (!result.empty())
     {
-      result += ", ";
+      result += ',';
     }
 
     result += boost::lexical_cast<std::string>(*pos);
@@ -446,31 +446,56 @@ ProxyList::getPorts(const ProxyList::PortList * ports)
 
 
 std::string
-ProxyList::setPorts(ProxyList::PortList * ports, const std::string & newValue)
+ProxyList::setPorts(ProxyList::PortSet * ports, const std::string & newValue)
 {
   std::string result;
-  ProxyList::PortList newPorts;
 
-  StrVector values;
-  StrSplit(values, newValue, " ,", true);
-  for (StrVector::const_iterator pos = values.begin(); pos != values.end();
-      ++pos)
+  if ((newValue.length() > 1) && (newValue[0] == '+') || (newValue[0] == '-'))
   {
+    char action = newValue[0];
+
     try
     {
-      newPorts.push_back(boost::lexical_cast<BotSock::Port>(*pos));
+      if (action == '+')
+      {
+        ports->insert(boost::lexical_cast<BotSock::Port>(newValue.substr(1)));
+      }
+      else if (action == '-')
+      {
+        ports->erase(boost::lexical_cast<BotSock::Port>(newValue.substr(1)));
+      }
     }
     catch (boost::bad_lexical_cast)
     {
       result = "*** Bad port number: ";
-      result += *pos;
-      break;
+      result += newValue.substr(1);
     }
   }
-
-  if (result.empty())
+  else
   {
-    ports->swap(newPorts);
+    ProxyList::PortSet newPorts;
+
+    StrVector values;
+    StrSplit(values, newValue, " ,", true);
+    for (StrVector::const_iterator pos = values.begin(); pos != values.end();
+        ++pos)
+    {
+      try
+      {
+        newPorts.insert(boost::lexical_cast<BotSock::Port>(*pos));
+      }
+      catch (boost::bad_lexical_cast)
+      {
+        result = "*** Bad port number: ";
+        result += *pos;
+        break;
+      }
+    }
+
+    if (result.empty())
+    {
+      ports->swap(newPorts);
+    }
   }
 
   return result;

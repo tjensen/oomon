@@ -24,6 +24,7 @@
 // Std C++ headers
 #include <string>
 #include <list>
+#include <set>
 #include <vector>
 #include <deque>
 
@@ -73,10 +74,10 @@ private:
   bool initiateCheck(const UserEntryPtr user, const BotSock::Port port,
       const Proxy::Protocol protocol);
 
-  typedef std::list<BotSock::Port> PortList;
+  typedef std::set<BotSock::Port> PortSet;
 
   void ProxyList::enqueueScans(const UserEntryPtr user,
-      const ProxyList::PortList & ports, const Proxy::Protocol protocol);
+      const ProxyList::PortSet & ports, const Proxy::Protocol protocol);
 
   typedef std::list<ProxyPtr> SockList;
   SockList scanners;
@@ -190,8 +191,8 @@ private:
   mutable unsigned long cacheHits, cacheMisses;
   static const SockList::size_type CACHE_SIZE;
 
-  static std::string getPorts(const ProxyList::PortList * ports);
-  static std::string setPorts(ProxyList::PortList * ports,
+  static std::string getPorts(const ProxyList::PortSet * ports);
+  static std::string setPorts(ProxyList::PortSet * ports,
       const std::string & newValue);
 
   static std::string getCacheSize(void);
@@ -200,11 +201,11 @@ private:
   static bool enable;
   static bool cacheEnable;
   static int maxCount;
-  static ProxyList::PortList httpConnectPorts;
-  static ProxyList::PortList httpPostPorts;
-  static ProxyList::PortList socks4Ports;
-  static ProxyList::PortList socks5Ports;
-  static ProxyList::PortList wingatePorts;
+  static ProxyList::PortSet httpConnectPorts;
+  static ProxyList::PortSet httpPostPorts;
+  static ProxyList::PortSet socks4Ports;
+  static ProxyList::PortSet socks5Ports;
+  static ProxyList::PortSet wingatePorts;
   static ProxyList::Cache::size_type cacheSize;
 };
 
