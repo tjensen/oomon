@@ -634,6 +634,12 @@ IRC::onCtcpReply(const std::string & from, const std::string & userhost,
 
     if (this->same(command, "VERSION"))
     {
+      std::string notice("*** CTCP VERSION reply from ");
+      notice += from;
+      notice += ": ";
+      notice += text;
+      ::SendAll(notice, UserFlags::OPER, WATCH_CTCPVERSIONS);
+
       users.onVersionReply(from, userhost, text);
     }
   }

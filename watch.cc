@@ -203,7 +203,7 @@ WatchSet::defaults(void)
   result.add(WATCH_CHAT);
   //result.add(WATCH_CONNECTS);
   result.add(WATCH_CONNFLOOD);
-  result.add(WATCH_CTCPVERSIONS);
+  //result.add(WATCH_CTCPVERSIONS);
   //result.add(WATCH_DISCONNECTS);
   result.add(WATCH_DLINES);
   //result.add(WATCH_DLINE_MATCHES);
