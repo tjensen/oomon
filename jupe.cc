@@ -56,7 +56,7 @@ JupeJoinList::checkJupe(const std::string & nick,
       msg = "Possible juped channel (" + entry.channel + ") auto-joiner: " +
 	nick + " (" + entry.userhost + ")";
     }
-    ::SendAll(msg, UF_OPER);
+    ::SendAll(msg, UF_OPER, WATCH_JUPES);
     Log::Write(msg);
 
     BotSock::Address ip = users.getIP(nick, entry.userhost);
