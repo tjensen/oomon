@@ -56,6 +56,9 @@
 #include <string>
 #include <vector>
 
+// Boost C++ Headers
+#include <boost/shared_ptr.hpp>
+
 // OOMon Headers
 #include "setting.h"
 
@@ -214,21 +217,22 @@ enum VarNum
 class Vars
 {
 public:
-  typedef std::vector<Setting *> VarVector;
+  typedef boost::shared_ptr<Setting> SettingPtr;
+  typedef std::vector<SettingPtr> VarVector;
   typedef VarVector::size_type size_type;
   typedef VarVector::const_reference const_reference;
 
-  Vars();
-  virtual ~Vars();
+  Vars(void);
+  virtual ~Vars(void) { };
 
   int findVar(const std::string & name) const;
   std::string set(const std::string & name, const std::string & value,
     const std::string & handle = "");
   int get(StrList & output, const std::string & name) const;
 
-  const_reference operator[](size_type __n) const
+  const_reference operator[](size_type n) const
   {
-    return *(vec.begin() + __n);
+    return vec[n];
   };
 
   void save(std::ofstream & file) const;
