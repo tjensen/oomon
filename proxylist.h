@@ -47,6 +47,8 @@ private:
   typedef boost::shared_ptr<Proxy> ProxyPtr;
 
 public:
+  static void init(void);
+
   ProxyList(void);
   virtual ~ProxyList(void) { }
 
@@ -70,8 +72,11 @@ public:
 private:
   bool initiateCheck(const UserEntryPtr user, const BotSock::Port port,
       const Proxy::Protocol protocol);
-  void ProxyList::enqueueScan(const UserEntryPtr user,
-      const std::string & portStr, const Proxy::Protocol protocol);
+
+  typedef std::list<BotSock::Port> PortList;
+
+  void ProxyList::enqueueScans(const UserEntryPtr user,
+      const ProxyList::PortList & ports, const Proxy::Protocol protocol);
 
   typedef std::list<ProxyPtr> SockList;
   SockList scanners;
@@ -184,6 +189,18 @@ private:
   Queue queuedScans;
   mutable unsigned long cacheHits, cacheMisses;
   static const SockList::size_type CACHE_SIZE;
+
+  static std::string getPorts(const ProxyList::PortList * ports);
+  static std::string setPorts(ProxyList::PortList * ports,
+      const std::string & newValue);
+
+  static bool enable;
+  static int maxCount;
+  static ProxyList::PortList httpConnectPorts;
+  static ProxyList::PortList httpPostPorts;
+  static ProxyList::PortList socks4Ports;
+  static ProxyList::PortList socks5Ports;
+  static ProxyList::PortList wingatePorts;
 };
 
 

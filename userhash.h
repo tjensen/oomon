@@ -31,6 +31,7 @@
 #include "pattern.h"
 #include "filter.h"
 #include "userentry.h"
+#include "autoaction.h"
 #include "action.h"
 
 
@@ -40,6 +41,8 @@
 class UserHash
 {
 public:
+  static void init(void);
+
   enum ListAction { LIST_VIEW, LIST_COUNT, LIST_KILL };
 
   UserHash(void);
@@ -153,6 +156,27 @@ private:
   UserEntryTable iptable;
   std::string maskNick, maskRealHost, maskFakeHost;
   int userCount, previousCount;
+
+  static bool brokenHostnameMunging;
+  static int cloneMaxTime;
+  static int cloneMinCount;
+  static std::string cloneReportFormat;
+  static int cloneReportInterval;
+  static bool ctcpversionEnable;
+  static int ctcpversionTimeout;
+  static AutoAction ctcpversionTimeoutAction;
+  static std::string ctcpversionTimeoutReason;
+  static int multiMin;
+  static bool operInMulti;
+  static AutoAction seedrandAction;
+  static std::string seedrandFormat;
+  static std::string seedrandReason;
+  static int seedrandReportMin;
+  static bool trapConnects;
+  static bool trapCtcpVersions;
+  static bool trapNickChanges;
+  static bool trapNotices;
+  static bool trapPrivmsgs;
 };
 
 

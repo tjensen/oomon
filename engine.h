@@ -81,5 +81,9 @@ bool checkForSpoof(const std::string & nick, const std::string & user,
 
 void status(class BotClient * client);
 
+bool autoPilot(void);
+
+void engine_init(void);
+
 #endif /* __ENGINE_H__ */
 

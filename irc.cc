@@ -29,6 +29,9 @@
 #include <boost/bind.hpp>
 #include <boost/lexical_cast.hpp>
 
+// Std C Headers
+#include <limits.h>
+
 // OOMon Headers
 #include "strtype"
 #include "oomon.h"
@@ -46,6 +49,7 @@
 #include "userhash.h"
 #include "pattern.h"
 #include "botclient.h"
+#include "defaults.h"
 
 
 #ifdef DEBUG
@@ -54,6 +58,17 @@
 
 
 IRC server;
+
+
+bool IRC::operNickInReason_(DEFAULT_OPER_NICK_IN_REASON);
+bool IRC::relayMsgsToLocops_(DEFAULT_RELAY_MSGS_TO_LOCOPS);
+int IRC::serverTimeout_(DEFAULT_SERVER_TIMEOUT);
+bool IRC::trackPermDlines_(DEFAULT_TRACK_PERM_DLINES);
+bool IRC::trackPermKlines_(DEFAULT_TRACK_PERM_KLINES);
+bool IRC::trackTempDlines_(DEFAULT_TRACK_TEMP_DLINES);
+bool IRC::trackTempKlines_(DEFAULT_TRACK_TEMP_KLINES);
+std::string IRC::umode_(DEFAULT_UMODE);
+int IRC::userCountDeltaMax_(DEFAULT_USER_COUNT_DELTA_MAX);
 
 
 IRC::IRC(): BotSock(false, true), supportETrace(false), supportKnock(false),
@@ -169,7 +184,7 @@ IRC::onConnect()
 
   this->amIAnOper = false;
 
-  this->setTimeout(vars[VAR_SERVER_TIMEOUT]->getInt());
+  this->setTimeout(IRC::serverTimeout_);
 
   return true;
 }
@@ -314,8 +329,8 @@ IRC::onRead(std::string text)
         // IRC >> :plasma.engr.arizona.edu 216 OOMon K *.monkeys.org * * foo llalalala (1998/03/03 11.18)
         // IRC >> :plasma.engr.arizona.edu 216 OOMon K *bork.com * *hork moo la la la (1998/03/03 11.18)
         if ((params.size() > 6) &&
-	  ((params[3] == "K") && vars[VAR_TRACK_PERM_KLINES]->getBool()) ||
-	  ((params[3] == "k") && vars[VAR_TRACK_TEMP_KLINES]->getBool()))
+            ((params[3] == "K") && IRC::trackPermKlines_) ||
+            ((params[3] == "k") && IRC::trackTempKlines))
         {
 	  std::string reason = (params.size() > 7) ? params[7] : "";
 	  for (StrVector::size_type pos = 8; pos < params.size(); pos++)
@@ -346,8 +361,8 @@ IRC::onRead(std::string text)
       case 225:
         // IRC >> :plasma.toast.pc 225 ToastFOO D 1.2.3.4 :foo (2003/1/9 17.27)
         if ((params.size() > 4) &&
-	  ((params[3] == "D") && vars[VAR_TRACK_PERM_DLINES]->getBool()) ||
-	  ((params[3] == "d") && vars[VAR_TRACK_TEMP_DLINES]->getBool()))
+            ((params[3] == "D") && IRC::trackPermDlines_) ||
+            ((params[3] == "d") && IRC::trackTempDlines_))
         {
 	  std::string reason = (params.size() > 5) ? params[5] : "";
 	  for (StrVector::size_type pos = 6; pos < params.size(); pos++)
@@ -369,11 +384,11 @@ IRC::onRead(std::string text)
 	  // :plasma.toast.pc 311 Toast Toast toast Plasma.Toast.PC * :i
 	  std::string nick = params[3];
 
-	  if (this->same(nick, vars[VAR_SPAMTRAP_NICK]->getString()))
+	  if (this->same(nick, Services::spamtrapNick()))
 	  {
 	    std::string userhost = params[4] + '@' + params[5];
 
-	    if (this->same(userhost, vars[VAR_SPAMTRAP_USERHOST]->getString()))
+	    if (this->same(userhost, Services::spamtrapUserhost()))
 	    {
 	      services.pollSpamtrap();
 	    }
@@ -386,7 +401,7 @@ IRC::onRead(std::string text)
 #ifdef USE_FLAGS
 	  this->write("FLAGS +ALL\n");
 #endif
-          this->umode(vars[VAR_UMODE]->getString());
+          this->umode(IRC::umode_);
           this->trace();
 	  this->reloadDlines();
 	  this->reloadKlines();
@@ -697,9 +712,9 @@ IRC::onPrivmsg(const std::string & from, const std::string & userhost,
   }
   else if (this->same(to, this->myNick))
   {
-    if (vars[VAR_SPAMTRAP_ENABLE]->getBool() &&
-      this->same(from, vars[VAR_SPAMTRAP_NICK]->getString()) &&
-      this->same(userhost, vars[VAR_SPAMTRAP_USERHOST]->getString()))
+    if (Services::spamtrapEnable() &&
+      this->same(from, Services::spamtrapNick()) &&
+      this->same(userhost, Services::spamtrapUserhost()))
     {
       services.onSpamtrapMessage(text);
     }
@@ -715,7 +730,7 @@ IRC::onPrivmsg(const std::string & from, const std::string & userhost,
 
       Log::Write(msg);
       ::SendAll("(IRC) " + msg, UserFlags::OPER, WATCH_MSGS);
-      if (vars[VAR_RELAY_MSGS_TO_LOCOPS]->getBool())
+      if (IRC::relayMsgsToLocops_)
       {
 	this->locops(msg);
       }
@@ -756,7 +771,7 @@ IRC::onNotice(const std::string & from, const std::string & userhost,
       Log::Write("Unable to set user mode +n!  I can't see nick changes!");
     }
   }
-  else if (this->same(from, vars[VAR_XO_SERVICES_RESPONSE]->getString()))
+  else if (this->same(from, Services::xoServicesResponse()))
   {
     services.onXoNotice(text);
   }
@@ -766,9 +781,9 @@ IRC::onNotice(const std::string & from, const std::string & userhost,
   }
   else if (this->same(to, this->myNick))
   {
-    if (vars[VAR_SPAMTRAP_ENABLE]->getBool() &&
-      this->same(from, vars[VAR_SPAMTRAP_NICK]->getString()) &&
-      this->same(userhost, vars[VAR_SPAMTRAP_USERHOST]->getString()))
+    if (Services::spamtrapEnable() &&
+        this->same(from, Services::spamtrapNick()) &&
+        this->same(userhost, Services::spamtrapUserhost()))
     {
       services.onSpamtrapNotice(text);
     }
@@ -837,7 +852,7 @@ IRC::isOn(const std::string & text)
 
 
 void
-IRC::kline(const std::string & from, const int minutes,
+IRC::kline(const std::string & from, const unsigned int minutes,
   const std::string & target, const std::string & reason)
 {
   std::string line;
@@ -852,7 +867,7 @@ IRC::kline(const std::string & from, const int minutes,
     line = "KLINE " + target + " :" + reason;
   }
 
-  if (vars[VAR_OPER_NICK_IN_REASON]->getBool())
+  if (IRC::operNickInReason_)
   {
     this->write(line + " [" + from + "]\n");
   }
@@ -873,7 +888,7 @@ IRC::unkline(const std::string & from, const std::string & target)
 
 
 void
-IRC::dline(const std::string & from, const int minutes,
+IRC::dline(const std::string & from, const unsigned int minutes,
   const std::string & target, const std::string & reason)
 {
   std::string line;
@@ -888,7 +903,7 @@ IRC::dline(const std::string & from, const int minutes,
     line = "DLINE " + target + " :" + reason;
   }
 
-  if (vars[VAR_OPER_NICK_IN_REASON]->getBool())
+  if (IRC::operNickInReason_)
   {
     this->write(line + " [" + from + "]\n");
   }
@@ -914,7 +929,7 @@ IRC::kill(const std::string & from, const std::string & target,
 {
   std::string line = "KILL " + target;
 
-  if (vars[VAR_OPER_NICK_IN_REASON]->getBool())
+  if (IRC::operNickInReason_)
   {
     this->write(line + " :(" + from + ") " + reason + "\n");
   }
@@ -971,12 +986,12 @@ void
 IRC::reloadKlines(void)
 {
   this->klines.Clear();
-  if (vars[VAR_TRACK_PERM_KLINES]->getBool())
+  if (IRC::trackPermKlines_)
   {
     this->gettingKlines = true;
     this->write("STATS K\n");
   }
-  if (vars[VAR_TRACK_TEMP_KLINES]->getBool())
+  if (IRC::trackTempKlines_)
   {
     this->gettingTempKlines = true;
     this->write("STATS k\n");
@@ -996,12 +1011,12 @@ void
 IRC::reloadDlines(void)
 {
   this->dlines.Clear();
-  if (vars[VAR_TRACK_PERM_DLINES]->getBool())
+  if (IRC::trackPermDlines_)
   {
     this->gettingDlines = true;
     this->write("STATS D\n");
   }
-  if (vars[VAR_TRACK_TEMP_DLINES]->getBool())
+  if (IRC::trackTempDlines_)
   {
     this->gettingTempKlines = true;
     this->write("STATS d\n");
@@ -1143,25 +1158,25 @@ IRC::status(BotClient * client) const
   client->send("Connect Time: " + this->getUptime());
 
   KlineList::size_type klineCount = this->klines.size();
-  if (vars[VAR_TRACK_TEMP_KLINES]->getBool() && (klineCount > 0))
+  if (IRC::trackTempKlines_ && (klineCount > 0))
   {
     client->send("K: lines: " + boost::lexical_cast<std::string>(klineCount) +
       " (" + boost::lexical_cast<std::string>(this->klines.permSize()) +
       " permanent)");
   }
-  else if (vars[VAR_TRACK_PERM_KLINES]->getBool())
+  else if (IRC::trackPermKlines_)
   {
     client->send("K: lines: " + boost::lexical_cast<std::string>(klineCount));
   }
 
   KlineList::size_type dlineCount = this->dlines.size();
-  if (vars[VAR_TRACK_TEMP_DLINES]->getBool() && (dlineCount > 0))
+  if (IRC::trackTempDlines_ && (dlineCount > 0))
   {
     client->send("D: lines: " + boost::lexical_cast<std::string>(dlineCount) +
       " (" + boost::lexical_cast<std::string>(this->dlines.permSize()) +
       " permanent)");
   }
-  else if (vars[VAR_TRACK_PERM_DLINES]->getBool())
+  else if (IRC::trackPermDlines_)
   {
     client->send("D: lines: " + boost::lexical_cast<std::string>(dlineCount));
   }
@@ -1173,13 +1188,14 @@ IRC::subSpamTrap(const bool sub)
 {
   if (sub)
   {
-    this->msg(vars[VAR_SPAMTRAP_NICK]->getString(), ".nicksub " +
-      boost::lexical_cast<std::string>(vars[VAR_SPAMTRAP_MIN_SCORE]->getInt()) +
-      " " + this->getServerName() + " raw");
+    this->msg(Services::spamtrapNick(),
+        ".nicksub " +
+        boost::lexical_cast<std::string>(Services::spamtrapMinScore()) + " " +
+        this->getServerName() + " raw");
   }
   else
   {
-    this->msg(vars[VAR_SPAMTRAP_NICK]->getString(), ".nickunsub");
+    this->msg(Services::spamtrapNick(), ".nickunsub");
   }
 }
 
@@ -1215,8 +1231,7 @@ IRC::checkUserDelta(void)
   {
     int delta = users.getUserCountDelta();
 
-    if ((this->lastUserDeltaCheck > 0) &&
-      (delta > vars[VAR_USER_COUNT_DELTA_MAX]->getInt()))
+    if ((this->lastUserDeltaCheck > 0) && (delta > IRC::userCountDeltaMax_))
     {
       std::string msg("*** User count increased by ");
       msg += boost::lexical_cast<std::string>(delta);
@@ -1611,5 +1626,64 @@ IRC::validNick(const std::string & nick)
   }
 
   return result;
+}
+
+
+std::string
+IRC::getServerTimeout(void)
+{
+  return boost::lexical_cast<std::string>(IRC::serverTimeout_);
+}
+
+
+std::string
+IRC::setServerTimeout(const std::string & newValue)
+{
+  std::string result;
+
+  try
+  {
+    int timeout = boost::lexical_cast<int>(newValue);
+    if (timeout >= 30)
+    {
+      IRC::serverTimeout_ = timeout;
+      server.setTimeout(timeout);
+    }
+    else
+    {
+      result = "*** Numeric value between 30 and ";
+      result += boost::lexical_cast<std::string>(INT_MAX);
+      result += " expected!";
+    }
+  }
+  catch (boost::bad_lexical_cast)
+  {
+    result = "*** Numeric value expected!";
+  }
+
+  return result;
+}
+
+
+void
+IRC::init(void)
+{
+  vars.insert("OPER_NICK_IN_REASON",
+      Setting::BooleanSetting(IRC::operNickInReason_));
+  vars.insert("RELAY_MSGS_TO_LOCOPS",
+      Setting::BooleanSetting(IRC::relayMsgsToLocops_));
+  vars.insert("SERVER_TIMEOUT", Setting(IRC::getServerTimeout,
+        IRC::setServerTimeout));
+  vars.insert("TRACK_PERM_DLINES",
+      Setting::BooleanSetting(IRC::trackPermDlines_));
+  vars.insert("TRACK_PERM_KLINES",
+      Setting::BooleanSetting(IRC::trackPermKlines_));
+  vars.insert("TRACK_TEMP_DLINES",
+      Setting::BooleanSetting(IRC::trackTempDlines_));
+  vars.insert("TRACK_TEMP_KLINES",
+      Setting::BooleanSetting(IRC::trackTempKlines_));
+  vars.insert("UMODE", Setting::StringSetting(IRC::umode_));
+  vars.insert("USER_COUNT_DELTA_MAX",
+      Setting::IntegerSetting(IRC::userCountDeltaMax_, 1));
 }
 

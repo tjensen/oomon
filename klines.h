@@ -59,11 +59,9 @@ private:
 
 class KlineList
 {
-private:
-  std::list<KlineItem> Klines; 
-  char lineType;
-
 public:
+  static void init(void);
+
   typedef std::list<KlineItem>::size_type size_type;
 
   KlineList(const char lineType = 'K') { this->lineType = lineType; }
@@ -82,6 +80,12 @@ public:
   bool parseAndRemove(std::string text);
   KlineList::size_type size() const { return Klines.size(); };
   KlineList::size_type permSize() const;
+
+private:
+  std::list<KlineItem> Klines; 
+  char lineType;
+
+  static bool extraInfo;
 };
 
 #endif

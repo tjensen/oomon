@@ -42,6 +42,8 @@
 class Config
 {
   public:
+    static void init(void);
+
     Config(void);
     Config(const std::string & filename);
     virtual ~Config(void);
@@ -120,6 +122,8 @@ class Config
 
     bool saveSettings(void) const;
     bool loadSettings(void);
+
+    static bool autoSave(void) { return Config::autoSave_; }
 
     struct parse_failed : public OOMon::oomon_error
     {
@@ -218,6 +222,9 @@ class Config
     std::string settingsFilename_;
     BotSock::Port remotePort_;
     BotSock::Port dccPort_;
+
+    static bool operOnlyDcc_;
+    static bool autoSave_;
 };
 
 

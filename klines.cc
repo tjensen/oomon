@@ -37,11 +37,15 @@
 #include "vars.h"
 #include "pattern.h"
 #include "botclient.h"
+#include "defaults.h"
 
 
 #ifdef DEBUG
 # define KLINES_DEBUG
 #endif
+
+
+bool KlineList::extraInfo(DEFAULT_EXTRA_KLINE_INFO);
 
 
 void KlineList::Clear()
@@ -207,7 +211,7 @@ KlineList::parseAndAdd(std::string text)
     ::SendAll(msg, UserFlags::OPER);
   }
 
-  if (vars[VAR_EXTRA_KLINE_INFO]->getBool())
+  if (KlineList::extraInfo)
   {
     if (temporary)
     {
@@ -217,9 +221,8 @@ KlineList::parseAndAdd(std::string text)
     Reason = Reason + " (" + ::timeStamp(TIMESTAMP_KLINE) + ')';
   }
 
-  if (!temporary ||
-    ((lineType == 'K') && vars[VAR_TRACK_TEMP_KLINES]->getBool()) ||
-    ((lineType == 'D') && vars[VAR_TRACK_TEMP_DLINES]->getBool()))
+  if (!temporary || ((lineType == 'K') && IRC::trackTempKlines()) ||
+      ((lineType == 'D') && IRC::trackTempDlines()))
   {
     Add(UserHost, Reason, temporary);
   }
@@ -329,9 +332,8 @@ KlineList::parseAndRemove(std::string text)
     ::SendAll(msg, UserFlags::OPER);
   }
 
-  if (!temporary ||
-    ((lineType == 'K') && vars[VAR_TRACK_TEMP_KLINES]->getBool()) ||
-    ((lineType == 'D') && vars[VAR_TRACK_TEMP_DLINES]->getBool()))
+  if (!temporary || ((lineType == 'K') && IRC::trackTempKlines()) ||
+      ((lineType == 'D') && IRC::trackTempDlines()))
   {
     Remove(UserHost);
   }
@@ -354,5 +356,13 @@ KlineList::permSize() const
     }
   }
   return count;
+}
+
+
+void
+KlineList::init(void)
+{
+  vars.insert("EXTRA_KLINE_INFO",
+      Setting::BooleanSetting(KlineList::extraInfo));
 }
 

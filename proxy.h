@@ -33,11 +33,14 @@
 #include "oomon.h"
 #include "botsock.h"
 #include "userentry.h"
+#include "autoaction.h"
 
 
 class Proxy : public BotSock
 {
 public:
+  static void init(void);
+
   enum Protocol { SOCKS4, SOCKS5, WINGATE, HTTP_CONNECT, HTTP_POST };
 
   Proxy(const UserEntryPtr user);
@@ -71,6 +74,10 @@ private:
   const UserEntryPtr user_;
   BotSock::Port port_;
   std::time_t timeout_;
+
+  static AutoAction action;
+  static std::string reason;
+  static int timeout;
 };
 
 #endif /* __PROXY_H__ */

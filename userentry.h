@@ -37,6 +37,8 @@
 class UserEntry
 {
 public:
+  static void init(void);
+
   UserEntry(const std::string & aNick, const std::string & aUser,
     const std::string & aHost, const std::string & aFakeHost,
     const std::string & aUserClass, const std::string & aGecos,
@@ -140,6 +142,11 @@ public:
 
   std::string output(const std::string & format) const;
 
+  static bool brokenHostnameMunging(void)
+  {
+    return UserEntry::brokenHostnameMunging_;
+  }
+
 private:
   std::string nick;
   std::string user;
@@ -155,6 +162,8 @@ private:
   bool isOper;
   bool connected_;
   int randScore;
+
+  static bool brokenHostnameMunging_;
 };
 
 

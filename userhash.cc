@@ -39,6 +39,7 @@
 #include "botsock.h"
 #include "util.h"
 #include "config.h"
+#include "irc.h"
 #include "vars.h"
 #include "autoaction.h"
 #include "seedrand.h"
@@ -51,9 +52,33 @@
 #include "botclient.h"
 #include "format.h"
 #include "action.h"
+#include "defaults.h"
 
 
 const static int CLONE_DETECT_INC = 15;
+
+
+int UserHash::cloneMaxTime(DEFAULT_CLONE_MAX_TIME);
+int UserHash::cloneMinCount(DEFAULT_CLONE_MIN_COUNT);
+std::string UserHash::cloneReportFormat(DEFAULT_CLONE_REPORT_FORMAT);
+int UserHash::cloneReportInterval(DEFAULT_CLONE_REPORT_INTERVAL);
+bool UserHash::ctcpversionEnable(DEFAULT_CTCPVERSION_ENABLE);
+int UserHash::ctcpversionTimeout(DEFAULT_CTCPVERSION_TIMEOUT);
+AutoAction UserHash::ctcpversionTimeoutAction(DEFAULT_CTCPVERSION_TIMEOUT_ACTION,
+    DEFAULT_CTCPVERSION_TIMEOUT_ACTION_TIME);
+std::string UserHash::ctcpversionTimeoutReason(DEFAULT_CTCPVERSION_TIMEOUT_REASON);
+int UserHash::multiMin(DEFAULT_MULTI_MIN);
+bool UserHash::operInMulti(DEFAULT_OPER_IN_MULTI);
+AutoAction UserHash::seedrandAction(DEFAULT_SEEDRAND_ACTION,
+    DEFAULT_SEEDRAND_ACTION_TIME);
+std::string UserHash::seedrandFormat(DEFAULT_SEEDRAND_FORMAT);
+std::string UserHash::seedrandReason(DEFAULT_SEEDRAND_REASON);
+int UserHash::seedrandReportMin(DEFAULT_SEEDRAND_REPORT_MIN);
+bool UserHash::trapConnects(DEFAULT_TRAP_CONNECTS);
+bool UserHash::trapCtcpVersions(DEFAULT_TRAP_CTCP_VERSIONS);
+bool UserHash::trapNickChanges(DEFAULT_TRAP_NICK_CHANGES);
+bool UserHash::trapNotices(DEFAULT_TRAP_NOTICES);
+bool UserHash::trapPrivmsgs(DEFAULT_TRAP_PRIVMSGS);
 
 
 UserHash users;
@@ -156,13 +181,12 @@ UserHash::add(const std::string & nick, const std::string & userhost,
       if (!fromTrace && !config.isOper(newuser))
       {
         // Check if this client matches any traps
-        if (vars[VAR_TRAP_CONNECTS]->getBool())
+        if (UserHash::trapConnects)
         {
           TrapList::match(newuser);
         }
 
-        if ((newuser->getScore() >=
-              vars[VAR_SEEDRAND_REPORT_MIN]->getInt()) &&
+        if ((newuser->getScore() >= UserHash::seedrandReportMin) &&
             !config.isExempt(newuser, Config::EXEMPT_SEEDRAND))
         {
           std::string scoreStr(
@@ -192,9 +216,8 @@ UserHash::add(const std::string & nick, const std::string & userhost,
           reason.setStringToken('s', scoreStr);
 
           doAction(nick, userhost, BotSock::inet_addr(ip),
-            vars[VAR_SEEDRAND_ACTION]->getAction(),
-            vars[VAR_SEEDRAND_ACTION]->getInt(),
-            reason.format(vars[VAR_SEEDRAND_REASON]->getString()), false);
+              UserHash::seedrandAction, reason.format(UserHash::seedrandReason),
+              false);
         }
 
         if ((newuser->getIP() != INADDR_NONE) &&
@@ -203,7 +226,7 @@ UserHash::add(const std::string & nick, const std::string & userhost,
           checkProxy(newuser);
         }
 
-        if (vars[VAR_CTCPVERSION_ENABLE]->getBool() &&
+        if (UserHash::ctcpversionEnable &&
             !config.isExempt(newuser, Config::EXEMPT_VERSION))
         {
           newuser->version();
@@ -261,7 +284,7 @@ UserHash::onVersionReply(const std::string & nick, const std::string & userhost,
   if (find)
   {
     find->hasVersion(version);
-    if (vars[VAR_TRAP_CTCP_VERSIONS]->getBool() &&
+    if (UserHash::trapCtcpVersions &&
         !config.isExempt(find, Config::EXEMPT_VERSION))
     {
       TrapList::matchCtcpVersion(find, version);
@@ -274,7 +297,7 @@ void
 UserHash::onPrivmsg(const std::string & nick, const std::string & userhost,
   const std::string & privmsg)
 {
-  if (vars[VAR_TRAP_PRIVMSGS]->getBool())
+  if (UserHash::trapPrivmsgs)
   {
     UserEntryPtr find(this->findUser(nick, userhost));
 
@@ -290,7 +313,7 @@ void
 UserHash::onNotice(const std::string & nick, const std::string & userhost,
   const std::string & notice)
 {
-  if (vars[VAR_TRAP_NOTICES]->getBool())
+  if (UserHash::trapNotices)
   {
     UserEntryPtr find(this->findUser(nick, userhost));
 
@@ -305,7 +328,7 @@ UserHash::onNotice(const std::string & nick, const std::string & userhost,
 void
 UserHash::checkVersionTimeout(void)
 {
-  std::time_t timeout = vars[VAR_CTCPVERSION_TIMEOUT]->getInt();
+  std::time_t timeout = UserHash::ctcpversionTimeout;
 
   if (timeout > 0)
   {
@@ -336,9 +359,8 @@ UserHash::checkVersionTimeout(void)
           Log::Write(notice);
 
           doAction(nick, userhost, user->getIP(),
-              vars[VAR_CTCPVERSION_TIMEOUT_ACTION]->getAction(),
-              vars[VAR_CTCPVERSION_TIMEOUT_ACTION]->getInt(),
-              vars[VAR_CTCPVERSION_TIMEOUT_REASON]->getString(), false);
+              UserHash::ctcpversionTimeoutAction,
+              UserHash::ctcpversionTimeoutReason, false);
         }
       }
     }
@@ -356,12 +378,12 @@ UserHash::updateNick(const std::string & oldNick, const std::string & userhost,
   {
     find->setNick(newNick);
 
-    if (vars[VAR_TRAP_NICK_CHANGES]->getBool())
+    if (UserHash::trapNickChanges)
     {
       TrapList::match(find);
     }
 
-    if ((find->getScore() >= vars[VAR_SEEDRAND_REPORT_MIN]->getInt()) &&
+    if ((find->getScore() >= UserHash::seedrandReportMin) &&
         !find->getOper() && !config.isOper(find) &&
         !config.isExempt(find, Config::EXEMPT_SEEDRAND))
     {
@@ -391,9 +413,8 @@ UserHash::updateNick(const std::string & oldNick, const std::string & userhost,
       reason.setStringToken('s', scoreStr);
 
       doAction(find->getNick(), userhost, find->getIP(),
-	vars[VAR_SEEDRAND_ACTION]->getAction(),
-	vars[VAR_SEEDRAND_ACTION]->getInt(),
-	reason.format(vars[VAR_SEEDRAND_REASON]->getString()), false);
+          UserHash::seedrandAction, reason.format(UserHash::seedrandReason),
+          false);
     }
   }
 }
@@ -415,7 +436,7 @@ UserHash::remove(const std::string & nick, const std::string & userhost,
     // more of the tables.
     bool error = false;
 
-    if (vars[VAR_BROKEN_HOSTNAME_MUNGING]->getBool())
+    if (UserEntry::brokenHostnameMunging())
     {
       host = "";
       domain = "";
@@ -809,7 +830,7 @@ UserHash::reportSeedrand(BotClient * client, const PatternPtr mask,
     {
       UserEntryPtr info(pos->getInfo());
 
-      client->send(info->output(vars[VAR_SEEDRAND_FORMAT]->getString()));
+      client->send(info->output(UserHash::seedrandFormat));
     }
   }
 
@@ -1154,8 +1175,7 @@ void
 UserHash::reportMulti(BotClient * client, const int minimum) const
 {
   char foundany(0);
-  int minclones((minimum > 0) ? minimum : vars[VAR_MULTI_MIN]->getInt());
-  bool operInMulti(vars[VAR_OPER_IN_MULTI]->getBool());
+  int minclones((minimum > 0) ? minimum : UserHash::multiMin);
 
   for (UserEntryTable::const_iterator i = this->domaintable.begin();
       i != this->domaintable.end(); ++i)
@@ -1163,7 +1183,8 @@ UserHash::reportMulti(BotClient * client, const int minimum) const
     for (UserEntryList::const_iterator userptr = i->begin();
         userptr != i->end(); ++userptr)
     {
-      if (operInMulti || (!(*userptr)->getOper() && !config.isOper(*userptr)))
+      if (UserHash::operInMulti || (!(*userptr)->getOper() &&
+            !config.isOper(*userptr)))
       {
         int numfound(1);
 
@@ -1173,7 +1194,8 @@ UserHash::reportMulti(BotClient * client, const int minimum) const
         {
           if (server.same((*temp)->getUser(), (*userptr)->getUser()) &&
               server.same((*temp)->getDomain(), (*userptr)->getDomain()) &&
-              (operInMulti || (!(*temp)->getOper() && !config.isOper(*temp))))
+              (UserHash::operInMulti || (!(*temp)->getOper() &&
+                                         !config.isOper(*temp))))
           {
             break;
           }
@@ -1185,7 +1207,8 @@ UserHash::reportMulti(BotClient * client, const int minimum) const
           {
             if (server.same((*temp)->getUser(), (*userptr)->getUser()) &&
                 server.same((*temp)->getDomain(), (*userptr)->getDomain()) &&
-                (operInMulti || (!(*temp)->getOper() && !config.isOper(*temp))))
+                (UserHash::operInMulti || (!(*temp)->getOper() &&
+                                           !config.isOper(*temp))))
             {
               ++numfound;
             }
@@ -1224,8 +1247,7 @@ void
 UserHash::reportHMulti(BotClient * client, const int minimum) const
 {
   char foundany(0);
-  int minclones((minimum > 0) ? minimum : vars[VAR_MULTI_MIN]->getInt());
-  bool operInMulti(vars[VAR_OPER_IN_MULTI]->getBool());
+  int minclones((minimum > 0) ? minimum : UserHash::multiMin);
 
   for (UserEntryTable::const_iterator i = this->domaintable.begin();
       i != this->domaintable.end(); ++i)
@@ -1233,7 +1255,8 @@ UserHash::reportHMulti(BotClient * client, const int minimum) const
     for (UserEntryList::const_iterator userptr = i->begin();
         userptr != i->end(); ++userptr)
     {
-      if (operInMulti || (!(*userptr)->getOper() && !config.isOper(*userptr)))
+      if (UserHash::operInMulti || (!(*userptr)->getOper() &&
+            !config.isOper(*userptr)))
       {
         int numfound(1);
 
@@ -1242,7 +1265,8 @@ UserHash::reportHMulti(BotClient * client, const int minimum) const
         for (; temp != userptr; ++temp)
         {
           if (server.same((*temp)->getHost(), (*userptr)->getHost()) &&
-              (operInMulti || (!(*temp)->getOper() && !config.isOper(*temp))))
+              (UserHash::operInMulti || (!(*temp)->getOper() &&
+                                         !config.isOper(*temp))))
           {
             break;
           }
@@ -1253,7 +1277,8 @@ UserHash::reportHMulti(BotClient * client, const int minimum) const
           for (++temp; temp != i->end(); ++temp)
           {
             if (server.same((*temp)->getHost(), (*userptr)->getHost()) &&
-                (operInMulti || (!(*temp)->getOper() && !config.isOper(*temp))))
+                (UserHash::operInMulti || (!(*temp)->getOper() &&
+                                           !config.isOper(*temp))))
             {
               ++numfound;
             }
@@ -1285,8 +1310,7 @@ void
 UserHash::reportUMulti(BotClient * client, const int minimum) const
 {
   char foundany(0);
-  int minclones((minimum > 0) ? minimum : vars[VAR_MULTI_MIN]->getInt());
-  bool operInMulti(vars[VAR_OPER_IN_MULTI]->getBool());
+  int minclones((minimum > 0) ? minimum : UserHash::multiMin);
 
   for (UserEntryTable::const_iterator i = this->usertable.begin();
       i != this->usertable.end(); ++i)
@@ -1294,7 +1318,8 @@ UserHash::reportUMulti(BotClient * client, const int minimum) const
     for (UserEntryList::const_iterator userptr = i->begin();
         userptr != i->end(); ++userptr)
     {
-      if (operInMulti || (!(*userptr)->getOper() && !config.isOper(*userptr)))
+      if (UserHash::operInMulti || (!(*userptr)->getOper() &&
+            !config.isOper(*userptr)))
       {
         int numfound(1);
 
@@ -1303,7 +1328,8 @@ UserHash::reportUMulti(BotClient * client, const int minimum) const
         for (; temp != userptr; ++temp)
         {
           if (server.same((*temp)->getUser(), (*userptr)->getUser()) &&
-              (operInMulti || (!(*temp)->getOper() && !config.isOper(*temp))))
+              (UserHash::operInMulti || (!(*temp)->getOper() &&
+                                         !config.isOper(*temp))))
           {
             break;
           }
@@ -1314,7 +1340,8 @@ UserHash::reportUMulti(BotClient * client, const int minimum) const
           for (++temp; temp != i->end(); ++temp)
           {
             if (server.same((*temp)->getUser(), (*userptr)->getUser()) &&
-                (operInMulti || (!(*temp)->getOper() && !config.isOper(*temp))))
+                (UserHash::operInMulti || (!(*temp)->getOper() &&
+                                           !config.isOper(*temp))))
             {
               ++numfound;
             }
@@ -1346,8 +1373,7 @@ void
 UserHash::reportVMulti(BotClient * client, const int minimum) const
 {
   char foundany(0);
-  int minclones((minimum > 0) ? minimum : vars[VAR_MULTI_MIN]->getInt());
-  bool operInMulti(vars[VAR_OPER_IN_MULTI]->getBool());
+  int minclones((minimum > 0) ? minimum : UserHash::multiMin);
 
   for (UserEntryTable::const_iterator i = this->iptable.begin();
       i != this->iptable.end(); ++i)
@@ -1355,7 +1381,8 @@ UserHash::reportVMulti(BotClient * client, const int minimum) const
     for (UserEntryList::const_iterator userptr = i->begin();
         userptr != i->end(); ++userptr)
     {
-      if (operInMulti || (!(*userptr)->getOper() && !config.isOper(*userptr)))
+      if (UserHash::operInMulti || (!(*userptr)->getOper() &&
+            !config.isOper(*userptr)))
       {
         int numfound(1);
 
@@ -1366,7 +1393,8 @@ UserHash::reportVMulti(BotClient * client, const int minimum) const
           if (server.same((*temp)->getUser(), (*userptr)->getUser()) &&
               (((*userptr)->getIP() & BotSock::ClassCNetMask) ==
                ((*userptr)->getIP() & BotSock::ClassCNetMask)) &&
-              (operInMulti || (!(*temp)->getOper() && !config.isOper(*temp))))
+              (UserHash::operInMulti || (!(*temp)->getOper() &&
+                                         !config.isOper(*temp))))
           {
             break;
           }
@@ -1379,7 +1407,8 @@ UserHash::reportVMulti(BotClient * client, const int minimum) const
             if (server.same((*temp)->getUser(), (*userptr)->getUser()) &&
                 (((*userptr)->getIP() & BotSock::ClassCNetMask) ==
                  ((*userptr)->getIP() & BotSock::ClassCNetMask)) &&
-                (operInMulti || (!(*temp)->getOper() && !config.isOper(*temp))))
+                (UserHash::operInMulti || (!(*temp)->getOper() &&
+                                           !config.isOper(*temp))))
             {
               ++numfound;
             }
@@ -1431,7 +1460,7 @@ UserHash::checkHostClones(const std::string & host)
     find != this->hosttable[index].end(); ++find)
   {
     if (server.same((*find)->getHost(), host) &&
-      ((now - (*find)->getConnectTime()) <= vars[VAR_CLONE_MAX_TIME]->getInt()))
+        ((now - (*find)->getConnectTime()) <= UserHash::cloneMaxTime))
     {
       if ((*find)->getReportTime() > 0)
       {
@@ -1454,9 +1483,8 @@ UserHash::checkHostClones(const std::string & host)
     }
   }
 
-  if (((reportedClones == 0) &&
-    (cloneCount < vars[VAR_CLONE_MIN_COUNT]->getInt())) ||
-    ((now - lastReport) < vars[VAR_CLONE_REPORT_INTERVAL]->getInt()))
+  if (((reportedClones == 0) && (cloneCount < UserHash::cloneMinCount)) ||
+      ((now - lastReport) < UserHash::cloneReportInterval))
   {
     return;
   }
@@ -1508,9 +1536,8 @@ UserHash::checkHostClones(const std::string & host)
     find != this->hosttable[index].end(); ++find)
   {
     if (server.same((*find)->getHost(), host) &&
-      ((now - (*find)->getConnectTime()) <=
-       vars[VAR_CLONE_MAX_TIME]->getInt()) &&
-      ((*find)->getReportTime() == 0))
+        ((now - (*find)->getConnectTime()) <= UserHash::cloneMaxTime) &&
+        ((*find)->getReportTime() == 0))
     {
       ++cloneCount;
 
@@ -1522,12 +1549,11 @@ UserHash::checkHostClones(const std::string & host)
       std::string notice;
       if (cloneCount == 1)
       {
-	notice1 = (*find)->output(
-	  vars[VAR_CLONE_REPORT_FORMAT]->getString());
+	notice1 = (*find)->output(UserHash::cloneReportFormat);
       }
       else
       {
-	notice = (*find)->output(vars[VAR_CLONE_REPORT_FORMAT]->getString());
+	notice = (*find)->output(UserHash::cloneReportFormat);
       }
 
       lastIdentd = currentIdentd = true;
@@ -1608,7 +1634,7 @@ UserHash::checkIpClones(const BotSock::Address & ip)
     find != this->iptable[index].end(); ++find)
   {
     if (((*find)->getSubnet() == subnet) &&
-      ((now - (*find)->getConnectTime()) <= vars[VAR_CLONE_MAX_TIME]->getInt()))
+        ((now - (*find)->getConnectTime()) <= UserHash::cloneMaxTime))
     {
       if ((*find)->getReportTime() > 0)
       {
@@ -1631,9 +1657,8 @@ UserHash::checkIpClones(const BotSock::Address & ip)
     }
   }
 
-  if (((reportedClones == 0) &&
-    (cloneCount < vars[VAR_CLONE_MIN_COUNT]->getInt())) ||
-    ((now - lastReport) < vars[VAR_CLONE_REPORT_INTERVAL]->getInt()))
+  if (((reportedClones == 0) && (cloneCount < UserHash::cloneMinCount)) ||
+      ((now - lastReport) < UserHash::cloneReportInterval))
   {
     return;
   }
@@ -1686,7 +1711,7 @@ UserHash::checkIpClones(const BotSock::Address & ip)
     find != this->iptable[index].end(); ++find)
   {
     if (((*find)->getSubnet() == subnet) && ((*find)->getReportTime() == 0) &&
-      ((now - (*find)->getConnectTime()) <= vars[VAR_CLONE_MAX_TIME]->getInt()))
+        ((now - (*find)->getConnectTime()) <= UserHash::cloneMaxTime))
     {
       ++cloneCount;
 
@@ -1698,12 +1723,11 @@ UserHash::checkIpClones(const BotSock::Address & ip)
       std::string notice;
       if (cloneCount == 1)
       {
-	notice1 = (*find)->output(
-	  vars[VAR_CLONE_REPORT_FORMAT]->getString());
+	notice1 = (*find)->output(UserHash::cloneReportFormat);
       }
       else
       {
-	notice = (*find)->output(vars[VAR_CLONE_REPORT_FORMAT]->getString());
+	notice = (*find)->output(UserHash::cloneReportFormat);
       }
 
       lastIdentd = currentIdentd = true;
@@ -1941,5 +1965,48 @@ void
 UserHash::resetUserCountDelta(void)
 {
   this->previousCount = this->userCount;
+}
+
+
+void
+UserHash::init(void)
+{
+  UserEntry::init();
+
+  vars.insert("CLONE_MAX_TIME",
+      Setting::IntegerSetting(UserHash::cloneMaxTime, 1));
+  vars.insert("CLONE_MIN_COUNT",
+      Setting::IntegerSetting(UserHash::cloneMinCount, 2));
+  vars.insert("CLONE_REPORT_FORMAT",
+      Setting::StringSetting(UserHash::cloneReportFormat));
+  vars.insert("CLONE_REPORT_INTERVAL",
+      Setting::IntegerSetting(UserHash::cloneReportInterval, 1));
+  vars.insert("CTCPVERSION_ENABLE",
+      Setting::BooleanSetting(UserHash::ctcpversionEnable));
+  vars.insert("CTCPVERSION_TIMEOUT",
+      Setting::IntegerSetting(UserHash::ctcpversionTimeout, 0));
+  vars.insert("CTCPVERSION_TIMEOUT_ACTION",
+      AutoAction::Setting(UserHash::ctcpversionTimeoutAction));
+  vars.insert("CTCPVERSION_TIMEOUT_REASON",
+      Setting::StringSetting(UserHash::ctcpversionTimeoutReason));
+  vars.insert("MULTI_MIN", Setting::IntegerSetting(UserHash::multiMin, 1));
+  vars.insert("OPER_IN_MULTI",
+      Setting::BooleanSetting(UserHash::operInMulti));
+  vars.insert("SEEDRAND_ACTION", AutoAction::Setting(UserHash::seedrandAction));
+  vars.insert("SEEDRAND_FORMAT",
+      Setting::StringSetting(UserHash::seedrandFormat));
+  vars.insert("SEEDRAND_REASON",
+      Setting::StringSetting(UserHash::seedrandReason));
+  vars.insert("SEEDRAND_REPORT_MIN",
+      Setting::IntegerSetting(UserHash::seedrandReportMin));
+  vars.insert("TRAP_CONNECTS", Setting::BooleanSetting(UserHash::trapConnects));
+  vars.insert("TRAP_CTCP_VERSIONS",
+      Setting::BooleanSetting(UserHash::trapCtcpVersions));
+  vars.insert("TRAP_NICK_CHANGES",
+      Setting::BooleanSetting(UserHash::trapNickChanges));
+  vars.insert("TRAP_NOTICES",
+      Setting::BooleanSetting(UserHash::trapNotices));
+  vars.insert("TRAP_PRIVMSGS",
+      Setting::BooleanSetting(UserHash::trapPrivmsgs));
 }
 

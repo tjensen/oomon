@@ -27,22 +27,41 @@
 // OOMon Headers
 #include "botsock.h"
 #include "userentry.h"
+#include "vars.h"
 
 
-enum AutoAction
+class AutoAction
 {
-  ACTION_NOTHING, ACTION_KILL, ACTION_KLINE, ACTION_KLINE_HOST,
-  ACTION_KLINE_DOMAIN, ACTION_KLINE_IP, ACTION_KLINE_USERNET, ACTION_KLINE_NET,
-  ACTION_SMART_KLINE, ACTION_SMART_KLINE_HOST, ACTION_SMART_KLINE_IP,
-  ACTION_DLINE_IP, ACTION_DLINE_NET
+  public:
+    enum Type
+    {
+      NOTHING, KILL, KLINE, KLINE_HOST, KLINE_DOMAIN, KLINE_IP, KLINE_USERNET,
+      KLINE_NET, SMART_KLINE, SMART_KLINE_HOST, SMART_KLINE_IP, DLINE_IP,
+      DLINE_NET
+    };
+
+    AutoAction(const AutoAction::Type type, const unsigned int duration = 0)
+      : type_(type), duration_(duration) { }
+
+    AutoAction::Type type(void) const { return this->type_; }
+    unsigned int duration(void) const { return this->duration_; }
+
+    static std::string get(const AutoAction * value);
+    static std::string set(AutoAction * value, const std::string & value);
+
+    static ::Setting Setting(AutoAction & action);
+
+  private:
+    AutoAction::Type type_;
+    unsigned int duration_;
 };
 
 
 void doAction(const std::string & nick, const std::string & userhost,
-    BotSock::Address ip, const AutoAction & action, int duration,
-    const std::string & reason, bool suggestKlineAfterKill);
+    BotSock::Address ip, const AutoAction & action, const std::string & reason,
+    bool suggestKlineAfterKill);
 void doAction(const UserEntryPtr & user, const AutoAction & action,
-    int duration, const std::string & reason, bool suggestKlineAfterKill);
+    const std::string & reason, bool suggestKlineAfterKill);
 
 
 #endif /* __AUTOACTION_H__ */

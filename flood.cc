@@ -30,7 +30,6 @@
 #include "main.h"
 #include "irc.h"
 #include "log.h"
-#include "vars.h"
 #include "userhash.h"
 
 
@@ -50,7 +49,7 @@ FloodList::addFlood(const std::string & nick, const std::string & userhost,
       /* if its an old old entry, let it drop to 0, then start counting
          (this should be very unlikely case)
        */
-      if ((pos->last + this->getMaxTime()) < now)
+      if ((pos->last + this->maxTime_) < now)
       {
         pos->count = 0;
       }
@@ -58,10 +57,10 @@ FloodList::addFlood(const std::string & nick, const std::string & userhost,
       pos->count++;
       pos->last = now;
       
-      if (pos->count >= this->getMaxCount())
+      if (pos->count >= this->maxCount_)
       {
-	std::string msg("Possible " + this->getType() + " flooder: " +
-	  nick + " (" + userhost + ")");
+	std::string msg("Possible " + this->type_ + " flooder: " + nick +
+            " (" + userhost + ")");
         ::SendAll(msg, UserFlags::OPER);
 	Log::Write(msg);
 
@@ -84,15 +83,13 @@ FloodList::addFlood(const std::string & nick, const std::string & userhost,
 
         if (local && !exempt)
         {
-	  doAction(nick, userhost, ip, vars[this->getActionVar()]->getAction(),
-	    vars[this->getActionVar()]->getInt(),
-	    vars[this->getReasonVar()]->getString(), true);
+	  doAction(nick, userhost, ip, this->action_, this->reason_, true);
         }
       }       
     }         
     else
     {         
-      if ((pos->last + this->getMaxTime()) < now)
+      if ((pos->last + this->maxTime_) < now)
       {     
 	this->list.erase(pos);
 	--pos;
@@ -162,7 +159,7 @@ FloodList::onNotice(const std::string & notice, std::string text,
   if (!config.isOper(userhost, users.getIP(nick, userhost)) &&
       !users.isOper(nick, userhost))
   {
-    ::SendAll(notice, UserFlags::OPER, this->getWatch());
+    ::SendAll(notice, UserFlags::OPER, this->watch_);
 
     this->addFlood(nick, userhost, now, server.same(serverName,
       server.getServerName()));

@@ -28,12 +28,14 @@
 
 // OOMon Headers
 #include "strtype"
-#include "vars.h"
+#include "autoaction.h"
 
 
 class JupeJoinList
 {
 public:
+  static void init(void);
+
   JupeJoinList() { };
 
   void clear() { this->list.clear(); };
@@ -54,6 +56,12 @@ private:
   };
 
   std::list<JupeJoinEntry> list;
+
+  static AutoAction action;
+  static bool ignoreChannel;
+  static int maxCount;
+  static int maxTime;
+  static std::string reason;
 
   void checkJupe(const std::string & nick, const JupeJoinEntry & entry) const;
 

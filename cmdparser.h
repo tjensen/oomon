@@ -40,6 +40,8 @@
 class CommandParser : private boost::noncopyable
 {
 public:
+  static void init(void);
+
   CommandParser(void);
   virtual ~CommandParser(void) { }
 
@@ -195,6 +197,12 @@ private:
     std::string parameters);
   void cmdTest(class BotClient *from, const std::string & command,
     std::string parameters);
+
+  static int defaultDlineTimeout;
+  static int defaultKlineTimeout;
+  static std::string killlistReason;
+  static std::string killnfindReason;
+  static int seedrandCommandMin;
 };
 
 #endif /* __CMDPARSER_H__ */

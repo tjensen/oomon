@@ -28,29 +28,19 @@
 
 // OOMon Headers
 #include "engine.h"
-#include "vars.h"
 #include "watch.h"
 
 
 class FloodList
 {
 public:
-  FloodList(const std::string & type, VarNum actionVar, VarNum reasonVar,
-    VarNum maxCountVar, VarNum maxTimeVar, Watch watch)
-    : type_(type), actionVar_(actionVar), reasonVar_(reasonVar),
-    maxCountVar_(maxCountVar), maxTimeVar_(maxTimeVar), watch_(watch)
-  {
-  }
+  FloodList(const std::string & type, const AutoAction & action,
+      const std::string & reason, const int & maxCount, const int & maxTime,
+      const Watch watch) : type_(type), action_(action), reason_(reason),
+                           maxCount_(maxCount), maxTime_(maxTime),
+                           watch_(watch) { }
 
   void clear() { this->list.clear(); };
-
-
-  std::string getType() const { return this->type_; };
-  VarNum getActionVar() const { return this->actionVar_; };
-  VarNum getReasonVar() const { return this->reasonVar_; };
-  int getMaxCount() const { return vars[this->maxCountVar_]->getInt(); };
-  int getMaxTime() const { return vars[this->maxTimeVar_]->getInt(); };
-  Watch getWatch() const { return this->watch_; };
 
   bool onNotice(const std::string & notice, std::string text,
     std::time_t now = std::time(NULL));
@@ -69,11 +59,11 @@ private:
   std::list<FloodEntry> list;
 
   std::string type_;
-  VarNum actionVar_;
-  VarNum reasonVar_;
-  VarNum maxCountVar_;
-  VarNum maxTimeVar_;
-  Watch watch_;
+  const AutoAction & action_;
+  const std::string & reason_;
+  const int & maxCount_;
+  const int & maxTime_;
+  const Watch watch_;
 
   void addFlood(const std::string & nick, const std::string & userhost,
     std::time_t now, bool local);

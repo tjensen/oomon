@@ -39,16 +39,24 @@
 #include "main.h"
 #include "engine.h"
 #include "userdb.h"
+#include "irc.h"
 #include "vars.h"
 #include "remotelist.h"
 #include "arglist.h"
 #include "cmdparser.h"
 #include "help.h"
+#include "defaults.h"
 
 
 #ifdef DEBUG
 # define DCC_DEBUG
 #endif
+
+
+bool DCC::ignoreUnknownCommand(DEFAULT_IGNORE_UNKNOWN_COMMAND);
+bool DCC::statspShowIdle(DEFAULT_STATSP_SHOW_IDLE);
+bool DCC::statspShowUserhost(DEFAULT_STATSP_SHOW_USERHOST);
+bool DCC::unauthedMayChat(DEFAULT_UNAUTHED_MAY_CHAT);
 
 
 DCC::DCC(const std::string & nick, const std::string & userhost,
@@ -243,8 +251,7 @@ DCC::parse(std::string text)
 	remotes.sendRemoteCommand(this, to, command, text);
       }
     }
-    else if (text != "Unknown command" ||
-        !vars[VAR_IGNORE_UNKNOWN_COMMAND]->getBool())
+    else if (text != "Unknown command" || !DCC::ignoreUnknownCommand)
     {
       // Chat
       this->cmdChat(this, "CHAT", text);
@@ -319,8 +326,7 @@ void
 DCC::cmdChat(BotClient *from, const std::string & command,
   std::string parameters)
 {
-  if (from->flags().has(UserFlags::AUTHED) ||
-    vars[VAR_UNAUTHED_MAY_CHAT]->getBool())
+  if (DCC::unauthedMayChat || from->flags().has(UserFlags::AUTHED))
   {
     if (this->echoMyChatter_)
     {
@@ -453,13 +459,13 @@ DCC::statsP(StrList & output) const
   {
     std::string notice(this->handle());
 
-    if (vars[VAR_STATSP_SHOW_USERHOST]->getBool())
+    if (DCC::statspShowUserhost)
     {
       notice += " (";
       notice += this->userhost();
       notice += ')';
     }
-    if (vars[VAR_STATSP_SHOW_IDLE]->getBool())
+    if (DCC::statspShowIdle)
     {
       notice += " Idle: ";
       notice += boost::lexical_cast<std::string>(this->idleTime());
@@ -597,5 +603,19 @@ DCC::cmdLocops(BotClient *from, const std::string & command,
   {
     CommandParser::syntax(command, "<text>");
   }
+}
+
+
+void
+DCC::init(void)
+{
+  vars.insert("IGNORE_UNKNOWN_COMMAND",
+      Setting::BooleanSetting(DCC::ignoreUnknownCommand));
+  vars.insert("STATSP_SHOW_IDLE",
+      Setting::BooleanSetting(DCC::statspShowIdle));
+  vars.insert("STATSP_SHOW_USERHOST",
+      Setting::BooleanSetting(DCC::statspShowUserhost));
+  vars.insert("UNAUTHED_MAY_CHAT",
+      Setting::BooleanSetting(DCC::unauthedMayChat));
 }
 

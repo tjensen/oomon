@@ -61,13 +61,25 @@
 #include "engine.h"
 #include "irc.h"
 #include "vars.h"
+#include "defaults.h"
 
 
 #ifdef DEBUG
 # define PROXYLIST_DEBUG
 #endif
 
+
+bool ProxyList::enable(DEFAULT_SCAN_FOR_PROXIES);
+int ProxyList::maxCount(DEFAULT_SCAN_MAX_COUNT);
+ProxyList::PortList ProxyList::httpConnectPorts;
+ProxyList::PortList ProxyList::httpPostPorts;
+ProxyList::PortList ProxyList::socks4Ports;
+ProxyList::PortList ProxyList::socks5Ports;
+ProxyList::PortList ProxyList::wingatePorts;
+
+
 ProxyList proxies;
+
 
 const std::time_t ProxyList::CACHE_EXPIRE = (60 * 60); /* 1 hour */
 const ProxyList::SockList::size_type ProxyList::CACHE_SIZE = 5000;
@@ -163,23 +175,18 @@ ProxyList::initiateCheck(const UserEntryPtr user, const BotSock::Port port,
 
 
 void
-ProxyList::enqueueScan(const UserEntryPtr user, const std::string & portStr,
-    const Proxy::Protocol protocol)
+ProxyList::enqueueScans(const UserEntryPtr user,
+    const ProxyList::PortList & ports, const Proxy::Protocol protocol)
 {
-  try
+  for (ProxyList::PortList::const_iterator pos = ports.begin();
+      pos != ports.end(); ++pos)
   {
-    BotSock::Port port = boost::lexical_cast<BotSock::Port>(portStr);
-
-    if (!this->skipCheck(user->getIP(), port, protocol))
+    if (!this->skipCheck(user->getIP(), *pos, protocol))
     {
-      ProxyList::QueueNode enqueue(user, port, protocol);
+      ProxyList::QueueNode enqueue(user, *pos, protocol);
 
       this->queuedScans.push_back(enqueue);
     }
-  }
-  catch (boost::bad_lexical_cast)
-  {
-    std::cerr << "Bad port number: " << portStr << std::endl;
   }
 }
 
@@ -193,39 +200,13 @@ ProxyList::enqueueScan(const UserEntryPtr user, const std::string & portStr,
 void
 ProxyList::check(const UserEntryPtr user)
 {
-  if (vars[VAR_SCAN_FOR_PROXIES]->getBool())
+  if (ProxyList::enable)
   {
-    StrVector httpConnect, httpPost, socks4, socks5, wingate;
-
-    StrSplit(httpConnect, vars[VAR_SCAN_HTTP_CONNECT_PORTS]->getString(), " ,",
-        true);
-    StrSplit(httpPost, vars[VAR_SCAN_HTTP_POST_PORTS]->getString(), " ,", true);
-    StrSplit(socks4, vars[VAR_SCAN_SOCKS4_PORTS]->getString(), " ,", true);
-    StrSplit(socks4, vars[VAR_SCAN_SOCKS5_PORTS]->getString(), " ,", true);
-    StrSplit(wingate, vars[VAR_SCAN_WINGATE_PORTS]->getString(), " ,", true);
-
-    for (StrVector::iterator pos = httpConnect.begin();
-        pos != httpConnect.end(); ++pos)
-    {
-      this->enqueueScan(user, *pos, Proxy::HTTP_CONNECT);
-    }
-    for (StrVector::iterator pos = httpPost.begin(); pos != httpPost.end();
-        ++pos)
-    {
-      this->enqueueScan(user, *pos, Proxy::HTTP_POST);
-    }
-    for (StrVector::iterator pos = socks4.begin(); pos != socks4.end(); ++pos)
-    {
-      this->enqueueScan(user, *pos, Proxy::SOCKS4);
-    }
-    for (StrVector::iterator pos = socks5.begin(); pos != socks5.end(); ++pos)
-    {
-      this->enqueueScan(user, *pos, Proxy::SOCKS5);
-    }
-    for (StrVector::iterator pos = wingate.begin(); pos != wingate.end(); ++pos)
-    {
-      this->enqueueScan(user, *pos, Proxy::WINGATE);
-    }
+    this->enqueueScans(user, ProxyList::httpConnectPorts, Proxy::HTTP_CONNECT);
+    this->enqueueScans(user, ProxyList::httpPostPorts, Proxy::HTTP_POST);
+    this->enqueueScans(user, ProxyList::socks4Ports, Proxy::SOCKS4);
+    this->enqueueScans(user, ProxyList::socks5Ports, Proxy::SOCKS5);
+    this->enqueueScans(user, ProxyList::wingatePorts, Proxy::WINGATE);
   }
 }
 
@@ -278,8 +259,8 @@ ProxyList::processAll(const fd_set & readset, const fd_set & writeset)
     boost::bind(&ProxyList::CacheEntry::isExpired, _1, now), empty);
 
   // Process queue
-  const ProxyList::SockList::size_type max = vars[VAR_SCAN_MAX_COUNT]->getInt();
-  while (!this->queuedScans.empty() && (this->scanners.size() < max))
+  while (!this->queuedScans.empty() &&
+      (static_cast<int>(this->scanners.size()) < ProxyList::maxCount))
   {
     ProxyList::QueueNode front(this->queuedScans.front());
 
@@ -404,7 +385,7 @@ ProxyList::status(BotClient * client) const
   ProxyList::SockList::size_type size(this->scanners.size());
   ProxyList::Queue::size_type queueSize(this->queuedScans.size());
 
-  if ((size > 0) || vars[VAR_SCAN_FOR_PROXIES]->getBool())
+  if ((size > 0) || ProxyList::enable)
   {
     std::string scanCount("Proxy scanners: ");
     scanCount += boost::lexical_cast<std::string>(size);
@@ -433,5 +414,83 @@ ProxyList::status(BotClient * client) const
     cache += " misses)";
     client->send(cache);
   }
+}
+
+
+std::string
+ProxyList::getPorts(const ProxyList::PortList * ports)
+{
+  std::string result;
+
+  for (ProxyList::PortList::const_iterator pos = ports->begin();
+      pos != ports->end(); ++pos)
+  {
+    if (!result.empty())
+    {
+      result += ", ";
+    }
+
+    result += boost::lexical_cast<std::string>(*pos);
+  }
+
+  return result;
+}
+
+
+std::string
+ProxyList::setPorts(ProxyList::PortList * ports, const std::string & newValue)
+{
+  std::string result;
+  ProxyList::PortList newPorts;
+
+  StrVector values;
+  StrSplit(values, newValue, " ,", true);
+  for (StrVector::const_iterator pos = values.begin(); pos != values.end();
+      ++pos)
+  {
+    try
+    {
+      newPorts.push_back(boost::lexical_cast<BotSock::Port>(*pos));
+    }
+    catch (boost::bad_lexical_cast)
+    {
+      result = "*** Bad port number: ";
+      result += *pos;
+      break;
+    }
+  }
+
+  if (result.empty())
+  {
+    ports->swap(newPorts);
+  }
+
+  return result;
+}
+
+
+void
+ProxyList::init(void)
+{
+  Proxy::init();
+
+  vars.insert("SCAN_FOR_PROXIES", Setting::BooleanSetting(ProxyList::enable));
+  vars.insert("SCAN_HTTP_CONNECT_PORTS",
+      Setting(boost::bind(ProxyList::getPorts, &ProxyList::httpConnectPorts),
+        boost::bind(ProxyList::setPorts, &ProxyList::httpConnectPorts, _1)));
+  vars.insert("SCAN_HTTP_POST_PORTS",
+      Setting(boost::bind(ProxyList::getPorts, &ProxyList::httpPostPorts),
+        boost::bind(ProxyList::setPorts, &ProxyList::httpPostPorts, _1)));
+  vars.insert("SCAN_MAX_COUNT", Setting::IntegerSetting(ProxyList::maxCount,
+        1));
+  vars.insert("SCAN_SOCKS4_PORTS",
+      Setting(boost::bind(ProxyList::getPorts, &ProxyList::socks4Ports),
+        boost::bind(ProxyList::setPorts, &ProxyList::socks4Ports, _1)));
+  vars.insert("SCAN_SOCKS5_PORTS",
+      Setting(boost::bind(ProxyList::getPorts, &ProxyList::socks5Ports),
+        boost::bind(ProxyList::setPorts, &ProxyList::socks5Ports, _1)));
+  vars.insert("SCAN_WINGATE_PORTS",
+      Setting(boost::bind(ProxyList::getPorts, &ProxyList::wingatePorts),
+        boost::bind(ProxyList::setPorts, &ProxyList::wingatePorts, _1)));
 }
 

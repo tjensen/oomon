@@ -41,7 +41,6 @@
 #include "main.h"
 #include "irc.h"
 #include "watch.h"
-#include "vars.h"
 
 
 #ifdef DEBUG

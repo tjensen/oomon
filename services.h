@@ -25,6 +25,9 @@
 #include <string>
 #include <ctime>
 
+// OOMon Headers
+#include "autoaction.h"
+
 
 class Services
 {
@@ -39,6 +42,23 @@ public:
   void onSpamtrapNotice(const std::string & text);
   void onIson(const std::string & text);
 
+  static bool spamtrapEnable(void) { return Services::spamtrapEnable_; }
+  static int spamtrapMinScore(void) { return Services::spamtrapMinScore_; }
+  static const std::string & spamtrapNick(void)
+  {
+    return Services::spamtrapNick_;
+  }
+  static const std::string & spamtrapUserhost(void)
+  {
+    return Services::spamtrapUserhost_;
+  }
+  static const std::string & xoServicesResponse(void)
+  {
+    return Services::xoServicesResponse_;
+  }
+
+  static void init(void);
+
 private:
   // XO services parameters
   std::string cloningUserhost;
@@ -47,6 +67,20 @@ private:
 
   std::time_t lastCheckedTime;
   bool gettingCaReports;
+
+  static int servicesCheckInterval_;
+  static int servicesCloneLimit_;
+  static AutoAction spamtrapAction_;
+  static std::string spamtrapDefaultReason_;
+  static bool spamtrapEnable_;
+  static int spamtrapMinScore_;
+  static std::string spamtrapNick_;
+  static std::string spamtrapUserhost_;
+  static AutoAction xoServicesCloneAction_;
+  static std::string xoServicesCloneReason_;
+  static bool xoServicesEnable_;
+  static std::string xoServicesRequest_;
+  static std::string xoServicesResponse_;
 };
 
 

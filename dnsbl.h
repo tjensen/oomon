@@ -34,11 +34,14 @@
 #include "strtype"
 #include "adnswrap.h"
 #include "userentry.h"
+#include "autoaction.h"
 
 
 class Dnsbl
 {
 public:
+  static void init(void);
+
   Dnsbl(void) { }
   virtual ~Dnsbl(void) { }
 
@@ -54,6 +57,9 @@ public:
 #endif /* HAVE_LIBADNS */
 
   void status(class BotClient * client) const;
+
+  static std::string getZones(void);
+  static std::string setZones(const std::string & value);
 
 private:
   typedef boost::function<void(const UserEntryPtr, std::string,
@@ -88,6 +94,11 @@ private:
 
   QueryList queries_;
 #endif /* HAVE_LIBADNS */
+
+  static AutoAction action;
+  static bool enable;
+  static std::string reason;
+  static StrVector zones;
 };
 
 

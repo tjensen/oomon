@@ -44,11 +44,20 @@
 #include "config.h"
 #include "help.h"
 #include "dnsbl.h"
+#include "defaults.h"
+#include "irc.h"
 
 
 #ifdef DEBUG
 # define CMDPARSER_DEBUG
 #endif
+
+
+int CommandParser::defaultDlineTimeout(DEFAULT_DEFAULT_DLINE_TIMEOUT);
+int CommandParser::defaultKlineTimeout(DEFAULT_DEFAULT_KLINE_TIMEOUT);
+std::string CommandParser::killlistReason(DEFAULT_KILLLIST_REASON);
+std::string CommandParser::killnfindReason(DEFAULT_KILLNFIND_REASON);
+int CommandParser::seedrandCommandMin(DEFAULT_SEEDRAND_COMMAND_MIN);
 
 
 CommandParser::CommandParser(void)
@@ -257,7 +266,7 @@ CommandParser::cmdKline(BotClient * from, const std::string & command,
   }
   catch (boost::bad_lexical_cast)
   {
-    minutes = vars[VAR_DEFAULT_KLINE_TIMEOUT]->getInt();
+    minutes = CommandParser::defaultKlineTimeout;
   }
 
   if (!parm.empty())
@@ -366,7 +375,7 @@ void
 CommandParser::cmdDline(BotClient * from, const std::string & command,
   std::string parameters)
 {
-  unsigned int minutes = vars[VAR_DEFAULT_DLINE_TIMEOUT]->getInt();
+  unsigned int minutes = CommandParser::defaultDlineTimeout;
 
   std::string parm = FirstWord(parameters);
   try
@@ -376,7 +385,7 @@ CommandParser::cmdDline(BotClient * from, const std::string & command,
   }
   catch (boost::bad_lexical_cast)
   {
-    minutes = vars[VAR_DEFAULT_DLINE_TIMEOUT]->getInt();
+    minutes = CommandParser::defaultDlineTimeout;
   }
 
   if (!parm.empty())
@@ -521,12 +530,12 @@ CommandParser::cmdKilllist(BotClient * from, const std::string & command,
     {
       std::string pattern(grabPattern(parameters));
 
-      std::string defaultReason(vars[VAR_KILLNFIND_REASON]->getString());
+      std::string defaultReason(CommandParser::killnfindReason);
       Filter::Field field(Filter::FIELD_NICK);
       if ((0 == command.compare("kl")) || (0 == command.compare("killlist")))
       {
         field = Filter::FIELD_UH;
-        defaultReason = vars[VAR_KILLLIST_REASON]->getString();
+        defaultReason = CommandParser::killlistReason;
       }
 
       Filter filter(field, smartPattern(pattern, Filter::FIELD_NICK == field));
@@ -633,20 +642,13 @@ CommandParser::cmdSet(BotClient * from, const std::string & command,
 
   if (parameters.empty() && !clearVar)
   {
-    if (!vars.get(from, varName) > 0)
-    {
-      from->send("No such variable \"" + varName + "\"");
-    }
+    vars.get(from, varName);
   }
   else
   {
     if (from->flags().has(UserFlags::MASTER))
     {
-      std::string error = vars.set(varName, parameters, from->handleAndBot());
-      if (error.length() > 0)
-      {
-        from->send(error);
-      }
+      vars.set(from, varName, parameters);
     }
     else
     {
@@ -1035,7 +1037,7 @@ CommandParser::cmdSeedrand(BotClient * from, const std::string & command,
       args.getInvalid());
   }
 
-  int threshhold = vars[VAR_SEEDRAND_COMMAND_MIN]->getInt();
+  int threshhold = CommandParser::seedrandCommandMin;
   std::string parm;
   if (args.haveBinary("-min", parm))
   {
@@ -1203,5 +1205,21 @@ CommandParser::cmdTest(BotClient * from, const std::string & command,
   std::string parameters)
 {
   server.onServerNotice(parameters);
+}
+
+
+void
+CommandParser::init(void)
+{
+  vars.insert("DEFAULT_DLINE_TIMEOUT",
+      Setting::IntegerSetting(CommandParser::defaultDlineTimeout, 0));
+  vars.insert("DEFAULT_KLINE_TIMEOUT",
+      Setting::IntegerSetting(CommandParser::defaultKlineTimeout, 0));
+  vars.insert("KILLLIST_REASON",
+      Setting::StringSetting(CommandParser::killlistReason));
+  vars.insert("KILLNFIND_REASON",
+      Setting::StringSetting(CommandParser::killnfindReason));
+  vars.insert("SEEDRAND_COMMAND_MIN",
+      Setting::IntegerSetting(CommandParser::seedrandCommandMin));
 }
 

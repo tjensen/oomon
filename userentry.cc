@@ -32,18 +32,22 @@
 #include "botsock.h"
 #include "irc.h"
 #include "seedrand.h"
-#include "vars.h"
 #include "userflags.h"
 #include "autoaction.h"
 #include "main.h"
 #include "log.h"
 #include "trap.h"
 #include "util.h"
+#include "vars.h"
+#include "defaults.h"
 
 
 #ifdef USERHASH_DEBUG
 extern unsigned long userEntryCount;
 #endif /* USERHASH_DEBUG */
+
+
+bool UserEntry::brokenHostnameMunging_(DEFAULT_BROKEN_HOSTNAME_MUNGING);
 
 
 UserEntry::UserEntry(const std::string & aNick,
@@ -97,7 +101,7 @@ bool
 UserEntry::matches(const std::string & lcNick, const std::string & lcUser,
   const std::string & lcHost) const
 {
-  if (vars[VAR_BROKEN_HOSTNAME_MUNGING]->getBool())
+  if (UserEntry::brokenHostnameMunging_)
   {
     return (this->matches(lcNick) &&
       (0 == lcUser.compare(server.downCase(this->getUser()))));
@@ -239,5 +243,13 @@ UserEntry::output(const std::string & format) const
     idx = next;
   }
   return result;
+}
+
+
+void
+UserEntry::init(void)
+{
+  vars.insert("BROKEN_HOSTNAME_MUNGING",
+      Setting::BooleanSetting(UserEntry::brokenHostnameMunging_));
 }
 

@@ -34,7 +34,6 @@
 #include "log.h"
 #include "main.h"
 #include "config.h"
-#include "vars.h"
 #include "pattern.h"
 #include "arglist.h"
 #include "userentry.h"
@@ -523,8 +522,7 @@ TrapList::cmd(BotClient * client, std::string line)
     }
   }
 
-  if (modified && (0 != client->id().compare("CONFIG")) &&
-    vars[VAR_AUTO_SAVE]->getBool())
+  if (modified && Config::autoSave() && (0 != client->id().compare("CONFIG")))
   {
     config.saveSettings();
   }

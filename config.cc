@@ -41,10 +41,12 @@
 #include "pattern.h"
 #include "botsock.h"
 #include "irc.h"
+#include "main.h"
 #include "log.h"
 #include "botexcept.h"
 #include "userflags.h"
 #include "botclient.h"
+#include "defaults.h"
 
 
 #ifdef DEBUG
@@ -55,6 +57,10 @@
 #ifndef MAXHOSTNAMELEN
 # define MAXHOSTNAMELEN 256
 #endif
+
+
+bool Config::autoSave_(DEFAULT_AUTO_SAVE);
+bool Config::operOnlyDcc_(DEFAULT_OPER_ONLY_DCC);
 
 
 struct Config::Oper
@@ -707,7 +713,7 @@ Config::mayChat(const std::string & userhost) const
 {
   bool result(false);
 
-  if (vars[VAR_OPER_ONLY_DCC]->getBool())
+  if (Config::operOnlyDcc_)
   {
     try
     {
@@ -1135,6 +1141,8 @@ public:
   virtual void send(const std::string & text)
   {
     std::cerr << text << std::endl;
+    ::SendAll(text, UserFlags::MASTER);
+    Log::Write(text);
   }
 };
 
@@ -1148,6 +1156,8 @@ Config::loadSettings(void)
 
   if (file)
   {
+    ConfigClient client;
+
     // Prepare TRAP list for load
     TrapList::preLoad();
 
@@ -1166,8 +1176,6 @@ Config::loadSettings(void)
       }
       else if (cmd == "TRAP")
       {
-	ConfigClient client;
-
 	TrapList::cmd(&client, line);
 
 #ifdef CONFIG_DEBUG
@@ -1178,7 +1186,14 @@ Config::loadSettings(void)
       {
 	std::string varName = FirstWord(line);
 
-	vars.set(varName, line);
+        if (!varName.empty() && ('-' == varName[0]))
+        {
+	  vars.set(&client, varName.substr(1), "");
+        }
+        else
+        {
+	  vars.set(&client, varName, line);
+        }
 
 #ifdef CONFIG_DEBUG
         std::cout << "Set: " << varName << " = " << line << std::endl;
@@ -1363,5 +1378,13 @@ Config::exemptFlags(const std::string & text)
   }
 
   return result;
+}
+
+
+void
+Config::init(void)
+{
+  vars.insert("AUTO_SAVE", Setting::BooleanSetting(Config::autoSave_));
+  vars.insert("OPER_ONLY_DCC", Setting::BooleanSetting(Config::operOnlyDcc_));
 }
 

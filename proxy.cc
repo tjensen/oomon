@@ -59,11 +59,18 @@
 #include "irc.h"
 #include "vars.h"
 #include "format.h"
+#include "defaults.h"
 
 
 #ifdef DEBUG
 # define PROXY_DEBUG
 #endif
+
+
+AutoAction Proxy::action(DEFAULT_SCAN_PROXY_ACTION,
+    DEFAULT_SCAN_PROXY_ACTION_TIME);
+std::string Proxy::reason(DEFAULT_SCAN_PROXY_REASON);
+int Proxy::timeout(DEFAULT_SCAN_TIMEOUT);
 
 
 Proxy::Proxy(const UserEntryPtr user)
@@ -109,9 +116,7 @@ Proxy::detectedProxy(void)
   ::SendAll(notice, UserFlags::OPER, WATCH_PROXYSCANS);
   Log::Write(notice);
 
-  doAction(this->user_, vars[VAR_SCAN_PROXY_ACTION]->getAction(),
-      vars[VAR_SCAN_PROXY_ACTION]->getInt(),
-      reason.format(vars[VAR_SCAN_PROXY_REASON]->getString()), false);
+  doAction(this->user_, Proxy::action, reason.format(Proxy::reason), false);
 }
 
 
@@ -127,10 +132,18 @@ Proxy::connect(const BotSock::Port port)
 void
 Proxy::setProxyTimeout(void)
 {
-  std::time_t seconds = vars[VAR_SCAN_TIMEOUT]->getInt();
-
-  if (seconds > 0)
+  if (Proxy::timeout > 0)
   {
-    this->timeout_ = time(0) + seconds;
+    this->timeout_ = time(0) + Proxy::timeout;
   }
 }
+
+
+void
+Proxy::init(void)
+{
+  vars.insert("SCAN_PROXY_ACTION", AutoAction::Setting(Proxy::action));
+  vars.insert("SCAN_PROXY_REASON", Setting::StringSetting(Proxy::reason));
+  vars.insert("SCAN_TIMEOUT", Setting::IntegerSetting(Proxy::timeout, 1));
+}
+

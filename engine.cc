@@ -53,6 +53,7 @@
 #include "botclient.h"
 #include "dnsbl.h"
 #include "format.h"
+#include "defaults.h"
 
 
 #ifdef DEBUG
@@ -75,34 +76,129 @@ public:
 static std::list<NickChangeEntry> nickChanges;
 
 
-static FloodList linkLookers("LINKS", VAR_LINKS_FLOOD_ACTION,
-  VAR_LINKS_FLOOD_REASON, VAR_LINKS_FLOOD_MAX_COUNT, VAR_LINKS_FLOOD_MAX_TIME,
-  WATCH_LINKS);
+static bool autoKlineHost(DEFAULT_AUTO_KLINE_HOST);
+static std::string autoKlineHostReason(DEFAULT_AUTO_KLINE_HOST_REASON);
+static int autoKlineHostTime(DEFAULT_AUTO_KLINE_HOST_TIME);
+static bool autoKlineNet(DEFAULT_AUTO_KLINE_NET);
+static std::string autoKlineNetReason(DEFAULT_AUTO_KLINE_NET_REASON);
+static int autoKlineNetTime(DEFAULT_AUTO_KLINE_NET_TIME);
+static bool autoKlineNoident(DEFAULT_AUTO_KLINE_NOIDENT);
+static std::string autoKlineNoidentReason(DEFAULT_AUTO_KLINE_NOIDENT_REASON);
+static int autoKlineNoidentTime(DEFAULT_AUTO_KLINE_NOIDENT_TIME);
+static bool autoKlineUserhost(DEFAULT_AUTO_KLINE_USERHOST);
+static std::string autoKlineUserhostReason(DEFAULT_AUTO_KLINE_USERHOST_REASON);
+static int autoKlineUserhostTime(DEFAULT_AUTO_KLINE_USERHOST_TIME);
+static bool autoKlineUsernet(DEFAULT_AUTO_KLINE_USERNET);
+static std::string autoKlineUsernetReason(DEFAULT_AUTO_KLINE_USERNET_REASON);
+static int autoKlineUsernetTime(DEFAULT_AUTO_KLINE_USERNET_TIME);
+static bool autoPilot_(DEFAULT_AUTO_PILOT);
+static bool checkForSpoofs(DEFAULT_CHECK_FOR_SPOOFS);
+static AutoAction fakeIpSpoofAction(DEFAULT_FAKE_IP_SPOOF_ACTION,
+    DEFAULT_FAKE_IP_SPOOF_ACTION_TIME);
+static std::string fakeIpSpoofReason(DEFAULT_FAKE_IP_SPOOF_REASON);
+static AutoAction illegalCharSpoofAction(DEFAULT_ILLEGAL_CHAR_SPOOF_ACTION,
+    DEFAULT_ILLEGAL_CHAR_SPOOF_ACTION_TIME);
+static std::string illegalCharSpoofReason(DEFAULT_ILLEGAL_CHAR_SPOOF_REASON);
+static AutoAction illegalTldSpoofAction(DEFAULT_ILLEGAL_TLD_SPOOF_ACTION,
+    DEFAULT_ILLEGAL_TLD_SPOOF_ACTION_TIME);
+static std::string illegalTldSpoofReason(DEFAULT_ILLEGAL_TLD_SPOOF_REASON);
+static AutoAction invalidUsernameAction(DEFAULT_INVALID_USERNAME_ACTION,
+    DEFAULT_INVALID_USERNAME_ACTION_TIME);
+static std::string invalidUsernameReason(DEFAULT_INVALID_USERNAME_REASON);
+static int nickChangeT1Time(DEFAULT_NICK_CHANGE_T1_TIME);
+static int nickChangeT2Time(DEFAULT_NICK_CHANGE_T2_TIME);
+static int nickChangeMaxCount(DEFAULT_NICK_CHANGE_MAX_COUNT);
+static AutoAction nickFloodAction(DEFAULT_NICK_FLOOD_ACTION,
+    DEFAULT_NICK_FLOOD_ACTION_TIME);
+static std::string nickFloodReason(DEFAULT_NICK_FLOOD_REASON);
+static bool statspCaseInsensitive(DEFAULT_STATSP_CASE_INSENSITIVE);
+static std::string statspMessage(DEFAULT_STATSP_MESSAGE);
+static bool statspReply(DEFAULT_STATSP_REPLY);
+static bool watchFlooderNotices(DEFAULT_WATCH_FLOODER_NOTICES);
+static bool watchInfoNotices(DEFAULT_WATCH_INFO_NOTICES);
+static bool watchJupeNotices(DEFAULT_WATCH_JUPE_NOTICES);
+static bool watchLinksNotices(DEFAULT_WATCH_LINKS_NOTICES);
+static bool watchMotdNotices(DEFAULT_WATCH_MOTD_NOTICES);
+static bool watchOperfailNotices(DEFAULT_WATCH_OPERFAIL_NOTICES);
+static bool watchSpambotNotices(DEFAULT_WATCH_SPAMBOT_NOTICES);
+static bool watchStatsNotices(DEFAULT_WATCH_STATS_NOTICES);
+static bool watchToomanyNotices(DEFAULT_WATCH_TOOMANY_NOTICES);
+static bool watchTraceNotices(DEFAULT_WATCH_TRACE_NOTICES);
 
-static FloodList traceLookers("TRACE", VAR_TRACE_FLOOD_ACTION,
-  VAR_TRACE_FLOOD_REASON, VAR_TRACE_FLOOD_MAX_COUNT, VAR_TRACE_FLOOD_MAX_TIME,
-  WATCH_TRACES);
+static AutoAction linksFloodAction(DEFAULT_LINKS_FLOOD_ACTION,
+    DEFAULT_LINKS_FLOOD_ACTION_TIME);
+static std::string linksFloodReason(DEFAULT_LINKS_FLOOD_REASON);
+static int linksFloodMaxCount(DEFAULT_LINKS_FLOOD_MAX_COUNT);
+static int linksFloodMaxTime(DEFAULT_LINKS_FLOOD_MAX_TIME);
+static FloodList linkLookers("LINKS", linksFloodAction, linksFloodReason,
+    linksFloodMaxCount, linksFloodMaxTime, WATCH_LINKS);
 
-static FloodList motdLookers("MOTD", VAR_MOTD_FLOOD_ACTION,
-  VAR_MOTD_FLOOD_REASON, VAR_MOTD_FLOOD_MAX_COUNT, VAR_MOTD_FLOOD_MAX_TIME,
-  WATCH_MOTDS);
+static AutoAction traceFloodAction(DEFAULT_TRACE_FLOOD_ACTION,
+    DEFAULT_TRACE_FLOOD_ACTION_TIME);
+static std::string traceFloodReason(DEFAULT_TRACE_FLOOD_REASON);
+static int traceFloodMaxCount(DEFAULT_TRACE_FLOOD_MAX_COUNT);
+static int traceFloodMaxTime(DEFAULT_TRACE_FLOOD_MAX_TIME);
+static FloodList traceLookers("TRACE", traceFloodAction, traceFloodReason,
+    traceFloodMaxCount, traceFloodMaxTime, WATCH_TRACES);
 
-static FloodList infoLookers("INFO", VAR_INFO_FLOOD_ACTION,
-  VAR_INFO_FLOOD_REASON, VAR_INFO_FLOOD_MAX_COUNT, VAR_INFO_FLOOD_MAX_TIME,
-  WATCH_INFOS);
+static AutoAction motdFloodAction(DEFAULT_MOTD_FLOOD_ACTION,
+    DEFAULT_MOTD_FLOOD_ACTION_TIME);
+static std::string motdFloodReason(DEFAULT_MOTD_FLOOD_REASON);
+static int motdFloodMaxCount(DEFAULT_MOTD_FLOOD_MAX_COUNT);
+static int motdFloodMaxTime(DEFAULT_MOTD_FLOOD_MAX_TIME);
+static FloodList motdLookers("MOTD", motdFloodAction, motdFloodReason,
+    motdFloodMaxCount, motdFloodMaxTime, WATCH_MOTDS);
 
-static FloodList statsLookers("STATS", VAR_STATS_FLOOD_ACTION,
-  VAR_STATS_FLOOD_REASON, VAR_STATS_FLOOD_MAX_COUNT, VAR_STATS_FLOOD_MAX_TIME,
-  WATCH_STATS);
+static AutoAction infoFloodAction(DEFAULT_INFO_FLOOD_ACTION,
+    DEFAULT_INFO_FLOOD_ACTION_TIME);
+static std::string infoFloodReason(DEFAULT_INFO_FLOOD_REASON);
+static int infoFloodMaxCount(DEFAULT_INFO_FLOOD_MAX_COUNT);
+static int infoFloodMaxTime(DEFAULT_INFO_FLOOD_MAX_TIME);
+static FloodList infoLookers("INFO", infoFloodAction, infoFloodReason,
+    infoFloodMaxCount, infoFloodMaxTime, WATCH_INFOS);
 
+static AutoAction statsFloodAction(DEFAULT_STATS_FLOOD_ACTION,
+    DEFAULT_STATS_FLOOD_ACTION_TIME);
+static std::string statsFloodReason(DEFAULT_STATS_FLOOD_REASON);
+static int statsFloodMaxCount(DEFAULT_STATS_FLOOD_MAX_COUNT);
+static int statsFloodMaxTime(DEFAULT_STATS_FLOOD_MAX_TIME);
+static FloodList statsLookers("STATS", statsFloodAction, statsFloodReason,
+    statsFloodMaxCount, statsFloodMaxTime, WATCH_STATS);
+
+AutoAction FloodNoticeEntry::flooderAction(DEFAULT_FLOODER_ACTION,
+    DEFAULT_FLOODER_ACTION_TIME);
+std::string FloodNoticeEntry::flooderReason(DEFAULT_FLOODER_REASON);
+int FloodNoticeEntry::flooderMaxCount(DEFAULT_FLOODER_MAX_COUNT);
+int FloodNoticeEntry::flooderMaxTime(DEFAULT_FLOODER_MAX_TIME);
 static NoticeList<FloodNoticeEntry> possibleFlooders;
 
+AutoAction SpambotNoticeEntry::spambotAction(DEFAULT_SPAMBOT_ACTION,
+    DEFAULT_SPAMBOT_ACTION_TIME);
+std::string SpambotNoticeEntry::spambotReason(DEFAULT_SPAMBOT_REASON);
+int SpambotNoticeEntry::spambotMaxCount(DEFAULT_SPAMBOT_MAX_COUNT);
+int SpambotNoticeEntry::spambotMaxTime(DEFAULT_SPAMBOT_MAX_TIME);
 static NoticeList<SpambotNoticeEntry> spambots;
 
+AutoAction TooManyConnNoticeEntry::toomanyAction(DEFAULT_TOOMANY_ACTION,
+    DEFAULT_TOOMANY_ACTION_TIME);
+std::string TooManyConnNoticeEntry::toomanyReason(DEFAULT_TOOMANY_REASON);
+int TooManyConnNoticeEntry::toomanyMaxCount(DEFAULT_TOOMANY_MAX_COUNT);
+int TooManyConnNoticeEntry::toomanyMaxTime(DEFAULT_TOOMANY_MAX_TIME);
+bool TooManyConnNoticeEntry::toomanyIgnoreUsername(DEFAULT_TOOMANY_IGNORE_USERNAME);
 static NoticeList<TooManyConnNoticeEntry> tooManyConn;
 
+AutoAction ConnectEntry::connectFloodAction(DEFAULT_CONNECT_FLOOD_ACTION,
+    DEFAULT_CONNECT_FLOOD_ACTION_TIME);
+std::string ConnectEntry::connectFloodReason(DEFAULT_CONNECT_FLOOD_REASON);
+int ConnectEntry::connectFloodMaxCount(DEFAULT_CONNECT_FLOOD_MAX_COUNT);
+int ConnectEntry::connectFloodMaxTime(DEFAULT_CONNECT_FLOOD_MAX_TIME);
 static NoticeList<ConnectEntry> connects;
 
+AutoAction OperFailNoticeEntry::operfailAction(DEFAULT_OPERFAIL_ACTION,
+    DEFAULT_OPERFAIL_ACTION_TIME);
+std::string OperFailNoticeEntry::operfailReason(DEFAULT_OPERFAIL_REASON);
+int OperFailNoticeEntry::operfailMaxCount(DEFAULT_OPERFAIL_MAX_COUNT);
+int OperFailNoticeEntry::operfailMaxTime(DEFAULT_OPERFAIL_MAX_TIME);
 static NoticeList<OperFailNoticeEntry> operfails;
 
 
@@ -155,58 +251,47 @@ klineClones(const bool kline, const std::string & rate,
     {
       if (identd)
       {
-	std::string text(reason.format(
-	  vars[VAR_AUTO_KLINE_NET_REASON]->getString()));
+	std::string text(reason.format(autoKlineNetReason));
 
-        if (vars[VAR_AUTO_KLINE_NET]->getBool() &&
-	  vars[VAR_AUTO_PILOT]->getBool() && kline)
+        if (autoKlineNet && autoPilot_ && kline)
         {
           Notice = "Adding auto-kline for *@" + Net + " :" + text;
-          server.kline("Auto-Kline", vars[VAR_AUTO_KLINE_NET_TIME]->getInt(),
-            "*@" + Net, text);
+          server.kline("Auto-Kline", autoKlineNetTime, "*@" + Net, text);
         }
         else
         {
-          Notice = makeKline("*@" + Net, text,
-	    vars[VAR_AUTO_KLINE_NET_TIME]->getInt());
+          Notice = makeKline("*@" + Net, text, autoKlineNetTime);
         }
       }
       else
       {
-	std::string text(reason.format(
-	  vars[VAR_AUTO_KLINE_NOIDENT_REASON]->getString()));
+	std::string text(reason.format(autoKlineNoidentReason));
 
-        if (vars[VAR_AUTO_KLINE_NOIDENT]->getBool() &&
-          vars[VAR_AUTO_PILOT]->getBool() && kline)
+        if (autoKlineNoident && autoPilot_ && kline)
         {
           Notice = "Adding auto-kline for ~*@" + Net + " :" + text;
-          server.kline("Auto-Kline",
-	    vars[VAR_AUTO_KLINE_NOIDENT_TIME]->getInt(), "~*@" + Net, text);
+          server.kline("Auto-Kline", autoKlineNoidentTime, "~*@" + Net, text);
         }
         else
         {
-          Notice = makeKline("~*@" + Net, text,
-	    vars[VAR_AUTO_KLINE_NOIDENT_TIME]->getInt());
+          Notice = makeKline("~*@" + Net, text, autoKlineNoidentTime);
         }
       }
     }
     else
     {
-      std::string text(reason.format(
-	vars[VAR_AUTO_KLINE_USERNET_REASON]->getString()));
+      std::string text(reason.format(autoKlineUsernetReason));
 
-      if (vars[VAR_AUTO_KLINE_USERNET]->getBool() &&
-        vars[VAR_AUTO_PILOT]->getBool() && kline)
+      if (autoKlineUsernet && autoPilot_ && kline)
       {
         Notice = "Adding auto-kline for *" + User + "@" + Net + " :" + text;
 
-        server.kline("Auto-Kline", vars[VAR_AUTO_KLINE_USERNET_TIME]->getInt(),
-	  "*" + User + "@" + Net, text);
+        server.kline("Auto-Kline", autoKlineUsernetTime, "*" + User + "@" + Net,
+            text);
       }
       else
       {
-        Notice = makeKline("*" + User + "@" + Net, text,
-          vars[VAR_AUTO_KLINE_USERNET_TIME]->getInt());
+        Notice = makeKline("*" + User + "@" + Net, text, autoKlineUsernetTime);
       }
     }
   }
@@ -214,20 +299,16 @@ klineClones(const bool kline, const std::string & rate,
   {
   if (isDynamic("", Host))
   {
-    std::string text(reason.format(
-      vars[VAR_AUTO_KLINE_HOST_REASON]->getString()));
+    std::string text(reason.format(autoKlineHostReason));
 
-    if (vars[VAR_AUTO_KLINE_HOST]->getBool() &&
-      vars[VAR_AUTO_PILOT]->getBool() && kline)
+    if (autoKlineHost && autoPilot_ && kline)
     {
       Notice = "Adding auto-kline for *@" + Host + " :" + text;
-      server.kline("Auto-Kline", vars[VAR_AUTO_KLINE_HOST_TIME]->getInt(),
-        "*@" + Host, text);
+      server.kline("Auto-Kline", autoKlineHostTime, "*@" + Host, text);
     }
     else
     {
-      Notice = makeKline("*@" + Host, text,
-        vars[VAR_AUTO_KLINE_HOST_TIME]->getInt());
+      Notice = makeKline("*@" + Host, text, autoKlineHostTime);
     }
   }
   else
@@ -256,61 +337,51 @@ klineClones(const bool kline, const std::string & rate,
     {
       if (differentUser)
       {
-	std::string text(reason.format(
-	  vars[VAR_AUTO_KLINE_HOST_REASON]->getString()));
+	std::string text(reason.format(autoKlineHostReason));
 
-        if (vars[VAR_AUTO_KLINE_HOST]->getBool() &&
-          vars[VAR_AUTO_PILOT]->getBool() && kline)
+        if (autoKlineHost && autoPilot_ && kline)
         {
           Notice = "Adding auto-kline for *@" + Host + " :" + text;
 
-          server.kline("Auto-Kline", vars[VAR_AUTO_KLINE_HOST_TIME]->getInt(),
-            "*@" + Host, text);
+          server.kline("Auto-Kline", autoKlineHostTime, "*@" + Host, text);
         }
         else
         {
-          Notice = makeKline("*@" + Host, text,
-            vars[VAR_AUTO_KLINE_HOST_TIME]->getInt());
+          Notice = makeKline("*@" + Host, text, autoKlineHostTime);
         }
       }
       else
       {
-	std::string text(reason.format(
-	  vars[VAR_AUTO_KLINE_USERHOST_REASON]->getString()));
+	std::string text(reason.format(autoKlineUserhostReason));
 
-        if (vars[VAR_AUTO_KLINE_USERHOST]->getBool() &&
-          vars[VAR_AUTO_PILOT]->getBool() && kline)
+        if (autoKlineUserhost && autoPilot_ && kline)
         {
           Notice = "Adding auto-kline for *" + User + "@" + suggestedHost +
             " :" + text;
-          server.kline("Auto-Kline",
-	    vars[VAR_AUTO_KLINE_USERHOST_TIME]->getInt(),
-            "*" + User + "@" + suggestedHost, text);
+          server.kline("Auto-Kline", autoKlineUserhostTime,
+              "*" + User + "@" + suggestedHost, text);
         }
         else
         {
           Notice = makeKline("*" + User + "@" + suggestedHost, text,
-            vars[VAR_AUTO_KLINE_USERHOST_TIME]->getInt());
+              autoKlineUserhostTime);
         }
       }
     }
     else
     {
-      std::string text(reason.format(
-	vars[VAR_AUTO_KLINE_NOIDENT_REASON]->getString()));
+      std::string text(reason.format(autoKlineNoidentReason));
 
-      if (vars[VAR_AUTO_KLINE_NOIDENT]->getBool() &&
-        vars[VAR_AUTO_PILOT]->getBool() && kline)
+      if (autoKlineNoident && autoPilot_ && kline)
       {
         Notice = "Adding auto-kline for ~*@" + suggestedHost + " :" + text;
 
-        server.kline("Auto-Kline", vars[VAR_AUTO_KLINE_NOIDENT_TIME]->getInt(),
-          "~*@" + suggestedHost, text);
+        server.kline("Auto-Kline", autoKlineNoidentTime, "~*@" + suggestedHost,
+            text);
       }
       else
       {
-        Notice = makeKline("~*@" + suggestedHost, text,
-          vars[VAR_AUTO_KLINE_NOIDENT_TIME]->getInt());
+        Notice = makeKline("~*@" + suggestedHost, text, autoKlineNoidentTime);
       }
     }
   }
@@ -368,9 +439,9 @@ addToNickChangeList(const std::string & userhost, const std::string & oldNick,
    
   // expire stale entries
   nickChanges.remove_if(boost::bind(&::t2expired, _1, currentTime,
-    vars[VAR_NICK_CHANGE_T2_TIME]->getInt()));
+        nickChangeT2Time));
   nickChanges.remove_if(boost::bind(&::t1expired, _1, currentTime,
-    vars[VAR_NICK_CHANGE_T1_TIME]->getInt()));
+      nickChangeT1Time));
 
   std::list<NickChangeEntry>::iterator ncp = std::find_if(nickChanges.begin(),
     nickChanges.end(), boost::bind(&::userhostMatch, _1, userhost));
@@ -393,7 +464,7 @@ addToNickChangeList(const std::string & userhost, const std::string & oldNick,
     std::time_t timeDifference = currentTime - ncp->lastNickChange;
 
     // how many T1 intervals do we have?
-    int timeTicks = timeDifference / vars[VAR_NICK_CHANGE_T1_TIME]->getInt();
+    int timeTicks = timeDifference / nickChangeT1Time;
 
 #ifdef ENGINE_DEBUG
     std::cout << "lastNick=" << ncp->lastNick << ", userhost=" <<
@@ -408,8 +479,8 @@ addToNickChangeList(const std::string & userhost, const std::string & oldNick,
     ncp->lastNick = lastNick;
 
     // now, check for a nick flooder
-    if ((ncp->nickChangeCount >= vars[VAR_NICK_CHANGE_MAX_COUNT]->getInt())
-      && (currentTime >= ncp->nextNotice))
+    if ((ncp->nickChangeCount >= nickChangeMaxCount) &&
+        (currentTime >= ncp->nextNotice))
     {
       std::string rate(boost::lexical_cast<std::string>(ncp->nickChangeCount));
       rate += " in ";
@@ -456,10 +527,8 @@ addToNickChangeList(const std::string & userhost, const std::string & oldNick,
 
       if (!exempt)
       {
-	doAction(lastNick, userhost, ip,
-	  vars[VAR_NICK_FLOOD_ACTION]->getAction(),
-	  vars[VAR_NICK_FLOOD_ACTION]->getInt(),
-	  reason.format(vars[VAR_NICK_FLOOD_REASON]->getString()), true);
+	doAction(lastNick, userhost, ip, nickFloodAction,
+            reason.format(nickFloodReason), true);
       }
 
       ncp->nextNotice = currentTime + 5;
@@ -745,9 +814,7 @@ onCsNickFlood(std::string text)
 
   if (!exempt)
   {
-    doAction(nick, userhost, ip, vars[VAR_NICK_FLOOD_ACTION]->getAction(),
-      vars[VAR_NICK_FLOOD_ACTION]->getInt(),
-      vars[VAR_NICK_FLOOD_REASON]->getString(), true);
+    doAction(nick, userhost, ip, nickFloodAction, nickFloodReason, true);
   }
 
   return true;
@@ -866,7 +933,7 @@ onLinksNotice(std::string text)
 {
   bool result = false;
 
-  if (vars[VAR_WATCH_LINKS_NOTICES]->getBool())
+  if (watchLinksNotices)
   {
     std::string notice("[");
     notice += text;
@@ -906,7 +973,7 @@ onTraceNotice(std::string text)
 {
   bool result = false;
 
-  if (vars[VAR_WATCH_TRACE_NOTICES]->getBool())
+  if (watchTraceNotices)
   {
     std::string notice("[");
     notice += text;
@@ -927,7 +994,7 @@ onMotdNotice(std::string text)
 {
   bool result = false;
 
-  if (vars[VAR_WATCH_MOTD_NOTICES]->getBool())
+  if (watchMotdNotices)
   {
     std::string notice("[");
     notice += text;
@@ -948,7 +1015,7 @@ onInfoNotice(std::string text)
 {
   bool result = false;
 
-  if (vars[VAR_WATCH_INFO_NOTICES]->getBool())
+  if (watchInfoNotices)
   {
     std::string notice("[");
     notice += text;
@@ -977,9 +1044,8 @@ onStatsNotice(std::string text)
   {
     std::string statsType = FirstWord(text);
 
-    if (vars[VAR_STATSP_REPLY]->getBool() && ((0 == statsType.compare("p")) ||
-      (vars[VAR_STATSP_CASE_INSENSITIVE]->getBool() &&
-      (0 == statsType.compare("P")))))
+    if (statspReply && ((0 == statsType.compare("p")) ||
+          (statspCaseInsensitive && (0 == statsType.compare("P")))))
     {
       std::string copy = text;
 
@@ -1003,7 +1069,7 @@ onStatsNotice(std::string text)
         return false;
       }
 
-      if (!vars[VAR_WATCH_STATS_NOTICES]->getBool())
+      if (!watchStatsNotices)
       {
         ::SendAll(notice, UserFlags::OPER);
       }
@@ -1013,10 +1079,9 @@ onStatsNotice(std::string text)
       StrList output;
       clients.statsP(output);
 
-      std::string message = vars[VAR_STATSP_MESSAGE]->getString();
-      if (message.length() > 0)
+      if (!statspMessage.empty())
       {
-        output.push_back(message);
+        output.push_back(statspMessage);
       }
 
       server.notice(std::string(nick), output);
@@ -1024,7 +1089,7 @@ onStatsNotice(std::string text)
       result = true;
     }
 
-    if (vars[VAR_WATCH_STATS_NOTICES]->getBool())
+    if (watchStatsNotices)
     {
       result = statsLookers.onNotice(notice, text);
     }
@@ -1039,7 +1104,7 @@ onFlooderNotice(const std::string & text)
 {
   bool result = false;
 
-  if (vars[VAR_WATCH_FLOODER_NOTICES]->getBool())
+  if (watchFlooderNotices)
   {
     result = possibleFlooders.onNotice(text);
   }
@@ -1053,7 +1118,7 @@ onSpambotNotice(const std::string & text)
 {
   bool result = false;
 
-  if (vars[VAR_WATCH_SPAMBOT_NOTICES]->getBool())
+  if (watchSpambotNotices)
   {
     result = spambots.onNotice(text);
   }
@@ -1067,7 +1132,7 @@ onTooManyConnNotice(const std::string & text)
 {
   bool result = false;
 
-  if (vars[VAR_WATCH_TOOMANY_NOTICES]->getBool())
+  if (watchToomanyNotices)
   {
     result = tooManyConn.onNotice(text);
   }
@@ -1099,53 +1164,53 @@ status(BotClient * client)
     boost::lexical_cast<std::string>(nickChanges.size()));
   client->send("Connect flooders: " +
     boost::lexical_cast<std::string>(connects.size()));
-  if (vars[VAR_WATCH_LINKS_NOTICES]->getBool())
+  if (watchLinksNotices)
   {
     client->send("Links lookers: " +
       boost::lexical_cast<std::string>(linkLookers.size()));
   }
-  if (vars[VAR_WATCH_TRACE_NOTICES]->getBool())
+  if (watchTraceNotices)
   {
     client->send("Trace lookers: " +
       boost::lexical_cast<std::string>(traceLookers.size()));
   }
-  if (vars[VAR_WATCH_MOTD_NOTICES]->getBool())
+  if (watchMotdNotices)
   {
     client->send("Motd lookers: " +
       boost::lexical_cast<std::string>(motdLookers.size()));
   }
-  if (vars[VAR_WATCH_INFO_NOTICES]->getBool())
+  if (watchInfoNotices)
   {
     client->send("Info lookers: " +
       boost::lexical_cast<std::string>(infoLookers.size()));
   }
-  if (vars[VAR_WATCH_STATS_NOTICES]->getBool())
+  if (watchStatsNotices)
   {
     client->send("Stats lookers: " +
       boost::lexical_cast<std::string>(statsLookers.size()));
   }
-  if (vars[VAR_WATCH_FLOODER_NOTICES]->getBool())
+  if (watchFlooderNotices)
   {
     client->send("Possible flooders: " +
       boost::lexical_cast<std::string>(possibleFlooders.size()));
   }
-  if (vars[VAR_WATCH_SPAMBOT_NOTICES]->getBool())
+  if (watchSpambotNotices)
   {
     client->send("Possible spambots: " +
       boost::lexical_cast<std::string>(spambots.size()));
   }
-  if (vars[VAR_WATCH_TOOMANY_NOTICES]->getBool())
+  if (watchToomanyNotices)
   {
     client->send("Too many connections: " +
       boost::lexical_cast<std::string>(tooManyConn.size()));
   }
-  if (vars[VAR_WATCH_OPERFAIL_NOTICES]->getBool())
+  if (watchOperfailNotices)
   {
     client->send("Oper fails: " +
       boost::lexical_cast<std::string>(operfails.size()));
   }
 
-  if (vars[VAR_WATCH_JUPE_NOTICES]->getBool())
+  if (watchJupeNotices)
   {
     jupeJoiners.status(client);
   }
@@ -1192,7 +1257,7 @@ checkForSpoof(const std::string & nick, const std::string & user,
   const std::string & host, const std::string & ip,
   const std::string & userClass)
 {
-  if (vars[VAR_CHECK_FOR_SPOOFS]->getBool())
+  if (checkForSpoofs)
   {
     std::string userhost = user + '@' + host;
 
@@ -1211,10 +1276,8 @@ checkForSpoof(const std::string & nick, const std::string & user,
 	    ") [" + ip + "]");
 	  Log::Write(notice);
 	  ::SendAll(notice, UserFlags::OPER);
-	  doAction(nick, userhost, BotSock::inet_addr(ip),
-	    vars[VAR_FAKE_IP_SPOOF_ACTION]->getAction(),
-	    vars[VAR_FAKE_IP_SPOOF_ACTION]->getInt(),
-	    vars[VAR_FAKE_IP_SPOOF_REASON]->getString(), false);
+	  doAction(nick, userhost, BotSock::inet_addr(ip), fakeIpSpoofAction,
+              fakeIpSpoofReason, false);
 	  return true;
 	}
       }
@@ -1259,9 +1322,7 @@ checkForSpoof(const std::string & nick, const std::string & user,
 	    Log::Write(notice);
 	    ::SendAll(notice, UserFlags::OPER);
 	    doAction(nick, userhost, BotSock::inet_addr(ip),
-	      vars[VAR_ILLEGAL_TLD_SPOOF_ACTION]->getAction(),
-	      vars[VAR_ILLEGAL_TLD_SPOOF_ACTION]->getInt(),
-	      vars[VAR_ILLEGAL_TLD_SPOOF_REASON]->getString(), false);
+                illegalTldSpoofAction, illegalTldSpoofReason, false);
             return true;
           }
         }
@@ -1272,9 +1333,7 @@ checkForSpoof(const std::string & nick, const std::string & user,
 	  Log::Write(notice);
 	  ::SendAll(notice, UserFlags::OPER);
 	  doAction(nick, userhost, BotSock::inet_addr(ip),
-	    vars[VAR_ILLEGAL_CHAR_SPOOF_ACTION]->getAction(),
-	    vars[VAR_ILLEGAL_CHAR_SPOOF_ACTION]->getInt(),
-	    vars[VAR_ILLEGAL_CHAR_SPOOF_REASON]->getString(), false);
+              illegalCharSpoofAction, illegalCharSpoofReason, false);
           return true;
         }
       }
@@ -1300,10 +1359,8 @@ onInvalidUsername(std::string text)
 
   if (!config.isExempt(userhost, Config::EXEMPT_INVALID))
   {
-    doAction(nick, userhost, INADDR_NONE,
-      vars[VAR_INVALID_USERNAME_ACTION]->getAction(),
-      vars[VAR_INVALID_USERNAME_ACTION]->getInt(),
-      vars[VAR_INVALID_USERNAME_REASON]->getString(), false);
+    doAction(nick, userhost, INADDR_NONE, invalidUsernameAction,
+        invalidUsernameReason, false);
   }
 
   return true;
@@ -1315,8 +1372,8 @@ onClearTempKlines(std::string text)
 {
   bool result = false;
 
- if (vars[VAR_TRACK_TEMP_KLINES]->getBool())
- {
+  if (IRC::trackTempKlines())
+  {
     std::string notice("*** ");
     notice += text;
 
@@ -1340,7 +1397,7 @@ onClearTempDlines(std::string text)
 {
   bool result = false;
 
-  if (vars[VAR_TRACK_TEMP_DLINES]->getBool())
+  if (IRC::trackTempDlines())
   {
     std::string notice("*** ");
     notice += text;
@@ -1466,7 +1523,7 @@ onJupeJoinNotice(const std::string & text)
 {
   bool result = false;
 
-  if (vars[VAR_WATCH_JUPE_NOTICES]->getBool())
+  if (watchJupeNotices)
   {
     result = jupeJoiners.onNotice(text);
   }
@@ -1498,3 +1555,176 @@ onMaskHostNotice(std::string text)
 
   return result;
 }
+
+
+bool
+autoPilot(void)
+{
+  return autoPilot_;
+}
+
+
+void
+engine_init(void)
+{
+  JupeJoinList::init();
+
+  vars.insert("AUTO_PILOT", Setting::BooleanSetting(autoPilot_));
+  vars.insert("AUTO_KLINE_HOST", Setting::BooleanSetting(autoKlineHost));
+  vars.insert("AUTO_KLINE_HOST_REASON",
+      Setting::StringSetting(autoKlineHostReason));
+  vars.insert("AUTO_KLINE_HOST_TIME",
+      Setting::IntegerSetting(autoKlineHostTime, 0));
+  vars.insert("AUTO_KLINE_NET", Setting::BooleanSetting(autoKlineNet));
+  vars.insert("AUTO_KLINE_NET_REASON",
+      Setting::StringSetting(autoKlineNetReason));
+  vars.insert("AUTO_KLINE_NET_TIME",
+      Setting::IntegerSetting(autoKlineNetTime, 0));
+  vars.insert("AUTO_KLINE_NOIDENT", Setting::BooleanSetting(autoKlineNoident));
+  vars.insert("AUTO_KLINE_NOIDENT_REASON",
+      Setting::StringSetting(autoKlineNoidentReason));
+  vars.insert("AUTO_KLINE_NOIDENT_TIME",
+      Setting::IntegerSetting(autoKlineNoidentTime, 0));
+  vars.insert("AUTO_KLINE_USERHOST",
+      Setting::BooleanSetting(autoKlineUserhost));
+  vars.insert("AUTO_KLINE_USERHOST_REASON",
+      Setting::StringSetting(autoKlineUserhostReason));
+  vars.insert("AUTO_KLINE_USERHOST_TIME",
+      Setting::IntegerSetting(autoKlineUserhostTime, 0));
+  vars.insert("AUTO_KLINE_USERNET", Setting::BooleanSetting(autoKlineUsernet));
+  vars.insert("AUTO_KLINE_USERNET_REASON",
+      Setting::StringSetting(autoKlineUsernetReason));
+  vars.insert("AUTO_KLINE_USERNET_TIME",
+      Setting::IntegerSetting(autoKlineUsernetTime, 0));
+  vars.insert("CHECK_FOR_SPOOFS", Setting::BooleanSetting(checkForSpoofs));
+  vars.insert("FAKE_IP_SPOOF_ACTION", AutoAction::Setting(fakeIpSpoofAction));
+  vars.insert("FAKE_IP_SPOOF_REASON",
+      Setting::StringSetting(fakeIpSpoofReason));
+  vars.insert("ILLEGAL_CHAR_SPOOF_ACTION",
+      AutoAction::Setting(illegalCharSpoofAction));
+  vars.insert("ILLEGAL_CHAR_SPOOF_REASON",
+      Setting::StringSetting(illegalCharSpoofReason));
+  vars.insert("ILLEGAL_TLD_SPOOF_ACTION",
+      AutoAction::Setting(illegalTldSpoofAction));
+  vars.insert("ILLEGAL_TLD_SPOOF_REASON",
+      Setting::StringSetting(illegalTldSpoofReason));
+  vars.insert("INVALID_USERNAME_ACTION",
+      AutoAction::Setting(invalidUsernameAction));
+  vars.insert("INVALID_USERNAME_REASON",
+      Setting::StringSetting(invalidUsernameReason));
+  vars.insert("NICK_CHANGE_MAX_COUNT",
+      Setting::IntegerSetting(nickChangeMaxCount, 1));
+  vars.insert("NICK_CHANGE_T1_TIME",
+      Setting::IntegerSetting(nickChangeT1Time, 1));
+  vars.insert("NICK_CHANGE_T2_TIME",
+      Setting::IntegerSetting(nickChangeT2Time, 1));
+  vars.insert("NICK_FLOOD_ACTION", AutoAction::Setting(nickFloodAction));
+  vars.insert("NICK_FLOOD_REASON", Setting::StringSetting(nickFloodReason));
+  vars.insert("STATSP_REPLY",
+      Setting::BooleanSetting(statspReply));
+  vars.insert("STATSP_CASE_INSENSITIVE",
+      Setting::BooleanSetting(statspCaseInsensitive));
+  vars.insert("WATCH_FLOODER_NOTICES",
+      Setting::BooleanSetting(watchFlooderNotices));
+  vars.insert("WATCH_INFO_NOTICES",
+      Setting::BooleanSetting(watchInfoNotices));
+  vars.insert("WATCH_JUPE_NOTICES",
+      Setting::BooleanSetting(watchJupeNotices));
+  vars.insert("WATCH_LINKS_NOTICES",
+      Setting::BooleanSetting(watchLinksNotices));
+  vars.insert("WATCH_MOTD_NOTICES",
+      Setting::BooleanSetting(watchMotdNotices));
+  vars.insert("WATCH_OPERFAIL_NOTICES",
+      Setting::BooleanSetting(watchOperfailNotices));
+  vars.insert("WATCH_SPAMBOT_NOTICES",
+      Setting::BooleanSetting(watchSpambotNotices));
+  vars.insert("WATCH_STATS_NOTICES",
+      Setting::BooleanSetting(watchStatsNotices));
+  vars.insert("WATCH_TOOMANY_NOTICES",
+      Setting::BooleanSetting(watchToomanyNotices));
+  vars.insert("WATCH_TRACE_NOTICES",
+      Setting::BooleanSetting(watchTraceNotices));
+
+  vars.insert("LINKS_FLOOD_ACTION", AutoAction::Setting(linksFloodAction));
+  vars.insert("LINKS_FLOOD_REASON", Setting::StringSetting(linksFloodReason));
+  vars.insert("LINKS_FLOOD_MAX_COUNT",
+      Setting::IntegerSetting(linksFloodMaxCount));
+  vars.insert("LINKS_FLOOD_MAX_TIME",
+      Setting::IntegerSetting(linksFloodMaxTime));
+
+  vars.insert("MOTD_FLOOD_ACTION", AutoAction::Setting(motdFloodAction));
+  vars.insert("MOTD_FLOOD_REASON", Setting::StringSetting(motdFloodReason));
+  vars.insert("MOTD_FLOOD_MAX_COUNT",
+      Setting::IntegerSetting(motdFloodMaxCount));
+  vars.insert("MOTD_FLOOD_MAX_TIME",
+      Setting::IntegerSetting(motdFloodMaxTime));
+
+  vars.insert("TRACE_FLOOD_ACTION", AutoAction::Setting(traceFloodAction));
+  vars.insert("TRACE_FLOOD_REASON", Setting::StringSetting(traceFloodReason));
+  vars.insert("TRACE_FLOOD_MAX_COUNT",
+      Setting::IntegerSetting(traceFloodMaxCount));
+  vars.insert("TRACE_FLOOD_MAX_TIME",
+      Setting::IntegerSetting(traceFloodMaxTime));
+
+  vars.insert("INFO_FLOOD_ACTION", AutoAction::Setting(infoFloodAction));
+  vars.insert("INFO_FLOOD_REASON", Setting::StringSetting(infoFloodReason));
+  vars.insert("INFO_FLOOD_MAX_COUNT",
+      Setting::IntegerSetting(infoFloodMaxCount));
+  vars.insert("INFO_FLOOD_MAX_TIME",
+      Setting::IntegerSetting(infoFloodMaxTime));
+
+  vars.insert("STATS_FLOOD_ACTION", AutoAction::Setting(statsFloodAction));
+  vars.insert("STATS_FLOOD_REASON", Setting::StringSetting(statsFloodReason));
+  vars.insert("STATS_FLOOD_MAX_COUNT",
+      Setting::IntegerSetting(statsFloodMaxCount));
+  vars.insert("STATS_FLOOD_MAX_TIME",
+      Setting::IntegerSetting(statsFloodMaxTime));
+
+  vars.insert("FLOODER_ACTION",
+      AutoAction::Setting(FloodNoticeEntry::flooderAction));
+  vars.insert("FLOODER_REASON",
+      Setting::StringSetting(FloodNoticeEntry::flooderReason));
+  vars.insert("FLOODER_MAX_COUNT",
+      Setting::IntegerSetting(FloodNoticeEntry::flooderMaxCount, 0));
+  vars.insert("FLOODER_MAX_TIME",
+      Setting::IntegerSetting(FloodNoticeEntry::flooderMaxTime, 1));
+
+  vars.insert("SPAMBOT_ACTION",
+      AutoAction::Setting(SpambotNoticeEntry::spambotAction));
+  vars.insert("SPAMBOT_REASON",
+      Setting::StringSetting(SpambotNoticeEntry::spambotReason));
+  vars.insert("SPAMBOT_MAX_COUNT",
+      Setting::IntegerSetting(SpambotNoticeEntry::spambotMaxCount, 0));
+  vars.insert("SPAMBOT_MAX_TIME",
+      Setting::IntegerSetting(SpambotNoticeEntry::spambotMaxTime, 1));
+
+  vars.insert("TOOMANY_ACTION",
+      AutoAction::Setting(TooManyConnNoticeEntry::toomanyAction));
+  vars.insert("TOOMANY_REASON",
+      Setting::StringSetting(TooManyConnNoticeEntry::toomanyReason));
+  vars.insert("TOOMANY_MAX_COUNT",
+      Setting::IntegerSetting(TooManyConnNoticeEntry::toomanyMaxCount, 0));
+  vars.insert("TOOMANY_MAX_TIME",
+      Setting::IntegerSetting(TooManyConnNoticeEntry::toomanyMaxTime, 1));
+  vars.insert("TOOMANY_IGNORE_USERNAME",
+      Setting::BooleanSetting(TooManyConnNoticeEntry::toomanyIgnoreUsername));
+
+  vars.insert("CONNECT_FLOOD_ACTION",
+      AutoAction::Setting(ConnectEntry::connectFloodAction));
+  vars.insert("CONNECT_FLOOD_REASON",
+      Setting::StringSetting(ConnectEntry::connectFloodReason));
+  vars.insert("CONNECT_FLOOD_MAX_COUNT",
+      Setting::IntegerSetting(ConnectEntry::connectFloodMaxCount, 0));
+  vars.insert("CONNECT_FLOOD_MAX_TIME",
+      Setting::IntegerSetting(ConnectEntry::connectFloodMaxTime, 1));
+
+  vars.insert("OPERFAIL_ACTION",
+      AutoAction::Setting(OperFailNoticeEntry::operfailAction));
+  vars.insert("OPERFAIL_REASON",
+      Setting::StringSetting(OperFailNoticeEntry::operfailReason));
+  vars.insert("OPERFAIL_MAX_COUNT",
+      Setting::IntegerSetting(OperFailNoticeEntry::operfailMaxCount, 0));
+  vars.insert("OPERFAIL_MAX_TIME",
+      Setting::IntegerSetting(OperFailNoticeEntry::operfailMaxTime, 1));
+}
+

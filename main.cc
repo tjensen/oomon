@@ -51,13 +51,14 @@
 #include "dcclist.h"
 #include "dcc.h"
 #include "watch.h"
-#include "vars.h"
 #include "remotelist.h"
 #include "botexcept.h"
 #include "botclient.h"
 #include "userdb.h"
 #include "adnswrap.h"
 #include "dnsbl.h"
+#include "engine.h"
+#include "userhash.h"
 
 
 #ifdef DEBUG
@@ -360,6 +361,20 @@ alreadyRunning(void)
 }
 
 
+static void
+initModules(void)
+{
+  engine_init();
+  Config::init();
+  CommandParser::init();
+  IRC::init();
+  Services::init();
+  UserHash::init();
+  Dnsbl::init();
+  ProxyList::init();
+}
+
+
 static	void
 printhelp(char *name)
 {
@@ -425,6 +440,8 @@ main(int argc, char **argv)
     std::cerr << "*** " << e.what() << std::endl;
     return EXIT_CONFIG_ERROR;
   }
+
+  initModules();
 
   config.loadSettings();
 

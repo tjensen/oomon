@@ -31,8 +31,7 @@
 //
 //  The NoticeList template class acts as a container for some class
 //  derived from SimpleNoticeEntry.  Each derived class should query its
-//  associated settings (in vars.cc) to determine when an action should
-//  be taken.
+//  associated settings to determine when an action should be taken.
 //
 //  The public interface to NoticeList includes three member functions:
 //   clear()
@@ -54,11 +53,11 @@
 
 // OOMon Headers
 #include "strtype"
-#include "vars.h"
 #include "util.h"
 #include "main.h"
 #include "botsock.h"
 #include "botexcept.h"
+#include "autoaction.h"
 
 
 template<typename T>
@@ -238,8 +237,7 @@ public:
   bool triggered(const int & count, const std::time_t & interval) const
   {
     return (SimpleNoticeEntry::triggered(count, interval) &&
-      (count > vars[VAR_FLOODER_MAX_COUNT]->getInt()) &&
-      (interval <= vars[VAR_FLOODER_MAX_TIME]->getInt()));
+      (count > flooderMaxCount) && (interval <= flooderMaxTime));
   }
 
   virtual void execute(void) const
@@ -248,15 +246,13 @@ public:
       this->userhost + ")", UserFlags::OPER, WATCH_FLOODERS);
 
     doAction(this->nick, this->userhost,
-      ::users.getIP(this->nick, this->userhost),
-      vars[VAR_FLOODER_ACTION]->getAction(),
-      vars[VAR_FLOODER_ACTION]->getInt(),
-      vars[VAR_FLOODER_REASON]->getString(), true);
+        ::users.getIP(this->nick, this->userhost), flooderAction, flooderReason,
+        true);
   }
 
   bool expired(const std::time_t interval) const
   {
-    return (interval > vars[VAR_FLOODER_MAX_TIME]->getInt());
+    return (interval > flooderMaxTime);
   }
 
   void update(const FloodNoticeEntry & data)
@@ -266,6 +262,11 @@ public:
     this->server = data.server;
     this->target = data.target;
   }
+
+  static AutoAction flooderAction;
+  static std::string flooderReason;
+  static int flooderMaxCount;
+  static int flooderMaxTime;
 
 protected:
   std::string server;
@@ -327,8 +328,7 @@ public:
   bool triggered(const int & count, const std::time_t & interval) const
   {
     return (SimpleNoticeEntry::triggered(count, interval) &&
-      (count > vars[VAR_SPAMBOT_MAX_COUNT]->getInt()) &&
-      (interval <= vars[VAR_SPAMBOT_MAX_TIME]->getInt()));
+        (count > spambotMaxCount) && (interval <= spambotMaxTime));
   }
 
   virtual void execute(void) const
@@ -337,15 +337,13 @@ public:
       this->userhost + ")", UserFlags::OPER, WATCH_SPAMBOTS);
 
     doAction(this->nick, this->userhost,
-      ::users.getIP(this->nick, this->userhost),
-      vars[VAR_SPAMBOT_ACTION]->getAction(),
-      vars[VAR_SPAMBOT_ACTION]->getInt(),
-      vars[VAR_SPAMBOT_REASON]->getString(), true);
+        ::users.getIP(this->nick, this->userhost), spambotAction, spambotReason,
+        true);
   }
 
   bool expired(const std::time_t interval) const
   {
-    return (interval > vars[VAR_SPAMBOT_MAX_TIME]->getInt());
+    return (interval > spambotMaxTime);
   }
 
   void update(const SpambotNoticeEntry & data)
@@ -354,6 +352,11 @@ public:
 
     this->channel = data.channel;
   }
+
+  static AutoAction spambotAction;
+  static std::string spambotReason;
+  static int spambotMaxCount;
+  static int spambotMaxTime;
 
 protected:
   std::string channel;
@@ -402,8 +405,7 @@ public:
   bool triggered(const int & count, const std::time_t & interval) const
   {
     return (SimpleNoticeEntry::triggered(count, interval) &&
-      (count > vars[VAR_TOOMANY_MAX_COUNT]->getInt()) &&
-      (interval <= vars[VAR_TOOMANY_MAX_TIME]->getInt()));
+        (count > toomanyMaxCount) && (interval <= toomanyMaxTime));
   }
 
   virtual void execute(void) const
@@ -412,15 +414,13 @@ public:
       this->userhost + ")", UserFlags::OPER, WATCH_TOOMANYS);
 
     doAction(this->nick, this->userhost,
-      ::users.getIP(this->nick, this->userhost),
-      vars[VAR_TOOMANY_ACTION]->getAction(),
-      vars[VAR_TOOMANY_ACTION]->getInt(),
-      vars[VAR_TOOMANY_REASON]->getString(), true);
+        ::users.getIP(this->nick, this->userhost), toomanyAction, toomanyReason,
+        true);
   }
 
   bool expired(const std::time_t interval) const
   {
-    return (interval > vars[VAR_TOOMANY_MAX_TIME]->getInt());
+    return (interval > toomanyMaxTime);
   }
 
   void update(const TooManyConnNoticeEntry & data)
@@ -433,7 +433,7 @@ public:
 
   bool operator==(const TooManyConnNoticeEntry & rhs) const
   {
-    if (vars[VAR_TOOMANY_IGNORE_USERNAME]->getBool())
+    if (toomanyIgnoreUsername)
     {
       return Same(this->host, rhs.host);
     }
@@ -442,6 +442,12 @@ public:
       return SimpleNoticeEntry::operator==(rhs);
     }
   }
+
+  static AutoAction toomanyAction;
+  static std::string toomanyReason;
+  static int toomanyMaxCount;
+  static int toomanyMaxTime;
+  static bool toomanyIgnoreUsername;
 
 protected:
   std::string user;
@@ -476,8 +482,7 @@ public:
   bool triggered(const int & count, const std::time_t & interval) const
   {
     return (SimpleNoticeEntry::triggered(count, interval) &&
-      (count > vars[VAR_CONNECT_FLOOD_MAX_COUNT]->getInt()) &&
-      (interval <= vars[VAR_CONNECT_FLOOD_MAX_TIME]->getInt()));
+        (count > connectFloodMaxCount) && (interval <= connectFloodMaxTime));
   }
 
   virtual void execute(void) const
@@ -486,15 +491,13 @@ public:
       this->userhost + ")", UserFlags::OPER, WATCH_CONNFLOOD);
 
     doAction(this->nick, this->userhost,
-      ::users.getIP(this->nick, this->userhost),
-      vars[VAR_CONNECT_FLOOD_ACTION]->getAction(),
-      vars[VAR_CONNECT_FLOOD_ACTION]->getInt(),
-      vars[VAR_CONNECT_FLOOD_REASON]->getString(), true);
+        ::users.getIP(this->nick, this->userhost), connectFloodAction,
+        connectFloodReason, true);
   }
 
   bool expired(const std::time_t interval) const
   {
-    return (interval > vars[VAR_CONNECT_FLOOD_MAX_TIME]->getInt());
+    return (interval > connectFloodMaxTime);
   }
 
   void update(const ConnectEntry & data)
@@ -516,6 +519,11 @@ public:
       return Same(this->host, rhs.host);
     }
   }
+
+  static AutoAction connectFloodAction;
+  static std::string connectFloodReason;
+  static int connectFloodMaxCount;
+  static int connectFloodMaxTime;
 
 protected:
   std::string host;
@@ -568,8 +576,7 @@ public:
   bool triggered(const int & count, const std::time_t & interval) const
   {
     return (SimpleNoticeEntry::triggered(count, interval) &&
-      (count > vars[VAR_OPERFAIL_MAX_COUNT]->getInt()) &&
-      (interval <= vars[VAR_OPERFAIL_MAX_TIME]->getInt()));
+        (count > operfailMaxCount) && (interval <= operfailMaxTime));
   }
 
   virtual void execute(void) const
@@ -578,21 +585,24 @@ public:
       " (" + this->userhost + ")", UserFlags::OPER, WATCH_OPERFAILS);
 
     doAction(this->nick, this->userhost,
-      ::users.getIP(this->nick, this->userhost),
-      vars[VAR_OPERFAIL_ACTION]->getAction(),
-      vars[VAR_OPERFAIL_ACTION]->getInt(),
-      vars[VAR_OPERFAIL_REASON]->getString(), true);
+        ::users.getIP(this->nick, this->userhost), operfailAction,
+        operfailReason, true);
   }
 
   bool expired(const std::time_t interval) const
   {
-    return (interval > vars[VAR_OPERFAIL_MAX_TIME]->getInt());
+    return (interval > operfailMaxTime);
   }
 
   void update(const OperFailNoticeEntry & data)
   {
     SimpleNoticeEntry::update(data);
   }
+
+  static AutoAction operfailAction;
+  static std::string operfailReason;
+  static int operfailMaxCount;
+  static int operfailMaxTime;
 };
 
 

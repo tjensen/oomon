@@ -38,6 +38,8 @@
 class DCC : public BotClient
 {
 public:
+  static void init(void);
+
   DCC(const std::string & nick = "", const std::string & userhost = "",
     const BotSock::Address userIp = INADDR_NONE);
   DCC(DCC *listener);
@@ -99,6 +101,11 @@ private:
   std::string handle_;
   std::string id_;
   UserFlags flags_;
+
+  static bool ignoreUnknownCommand;
+  static bool statspShowIdle;
+  static bool statspShowUserhost;
+  static bool unauthedMayChat;
 
   bool parse(std::string text);
 

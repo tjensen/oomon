@@ -45,6 +45,14 @@
 #include "watch.h"
 #include "botclient.h"
 #include "format.h"
+#include "defaults.h"
+
+
+AutoAction Dnsbl::action(DEFAULT_DNSBL_PROXY_ACTION,
+    DEFAULT_DNSBL_PROXY_ACTION_TIME);
+bool Dnsbl::enable(DEFAULT_DNSBL_PROXY_ENABLE);
+std::string Dnsbl::reason(DEFAULT_DNSBL_PROXY_REASON);
+StrVector Dnsbl::zones;
 
 
 Dnsbl dnsbl;
@@ -146,22 +154,20 @@ Dnsbl::checkZone(const UserEntryPtr user, std::string zone,
 void
 Dnsbl::check(const UserEntryPtr user, CleanFunction cleanFunction)
 {
-  if (vars[VAR_DNSBL_PROXY_ENABLE]->getBool())
+  if (Dnsbl::enable)
   {
-    StrVector zones;
+    StrVector copy(Dnsbl::zones);
 
-    StrSplit(zones, vars[VAR_DNSBL_PROXY_ZONE]->getString(), " ,", true);
-
-    if (zones.empty())
+    if (copy.empty())
     {
       cleanFunction(user);
     }
     else
     {
-      std::string zone(zones.front());
-      zones.erase(zones.begin());
+      std::string zone(copy.front());
+      copy.erase(copy.begin());
 
-      this->checkZone(user, zone, zones, cleanFunction);
+      this->checkZone(user, zone, copy, cleanFunction);
     }
   }
   else
@@ -238,7 +244,7 @@ void
 Dnsbl::status(BotClient * client) const
 {
 #ifdef HAVE_LIBADNS
-  if (!this->queries_.empty() || vars[VAR_DNSBL_PROXY_ENABLE]->getBool())
+  if (Dnsbl::enable || !this->queries_.empty())
   {
     client->send("DNSBL queries: " +
         boost::lexical_cast<std::string>(this->queries_.size()));
@@ -267,8 +273,51 @@ Dnsbl::openProxyDetected(const UserEntryPtr user, const std::string & zone)
   Log::Write(notice);
   ::SendAll(notice, UserFlags::OPER, WATCH_DNSBL);
 
-  doAction(user, vars[VAR_DNSBL_PROXY_ACTION]->getAction(),
-      vars[VAR_DNSBL_PROXY_ACTION]->getInt(),
-      reason.format(vars[VAR_DNSBL_PROXY_REASON]->getString()), false);
+  doAction(user, Dnsbl::action, reason.format(Dnsbl::reason), false);
+}
+
+
+std::string
+Dnsbl::getZones(void)
+{
+  std::string result;
+
+  for (StrVector::const_iterator pos = Dnsbl::zones.begin();
+      pos != Dnsbl::zones.end(); ++pos)
+  {
+    if (!result.empty())
+    {
+      result += ", ";
+    }
+
+    result += *pos;
+  }
+
+  return result;
+}
+
+
+std::string
+Dnsbl::setZones(const std::string & value)
+{
+  std::string result;
+
+  Dnsbl::zones.clear();
+
+  StrSplit(Dnsbl::zones, value, " ,", true);
+
+  return result;
+}
+
+
+void
+Dnsbl::init(void)
+{
+  Dnsbl::setZones(DEFAULT_DNSBL_PROXY_ZONE);
+
+  vars.insert("DNSBL_PROXY_ACTION", AutoAction::Setting(Dnsbl::action));
+  vars.insert("DNSBL_PROXY_ENABLE", Setting::BooleanSetting(Dnsbl::enable));
+  vars.insert("DNSBL_PROXY_REASON", Setting::StringSetting(Dnsbl::reason));
+  vars.insert("DNSBL_PROXY_ZONE", Setting(Dnsbl::getZones, Dnsbl::setZones));
 }
 

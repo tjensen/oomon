@@ -41,9 +41,27 @@
 #include "vars.h"
 #include "format.h"
 #include "config.h"
+#include "defaults.h"
 
 
 Services services;
+
+
+int Services::servicesCheckInterval_(DEFAULT_SERVICES_CHECK_INTERVAL);
+int Services::servicesCloneLimit_(DEFAULT_SERVICES_CLONE_LIMIT);
+AutoAction Services::spamtrapAction_(DEFAULT_SPAMTRAP_ACTION,
+    DEFAULT_SPAMTRAP_ACTION_TIME);
+std::string Services::spamtrapDefaultReason_(DEFAULT_SPAMTRAP_DEFAULT_REASON);
+bool Services::spamtrapEnable_(DEFAULT_SPAMTRAP_ENABLE);
+int Services::spamtrapMinScore_(DEFAULT_SPAMTRAP_MIN_SCORE);
+std::string Services::spamtrapNick_(DEFAULT_SPAMTRAP_NICK);
+std::string Services::spamtrapUserhost_(DEFAULT_SPAMTRAP_USERHOST);
+AutoAction Services::xoServicesCloneAction_(DEFAULT_XO_SERVICES_CLONE_ACTION,
+    DEFAULT_XO_SERVICES_CLONE_ACTION_TIME);
+std::string Services::xoServicesCloneReason_(DEFAULT_XO_SERVICES_CLONE_REASON);
+bool Services::xoServicesEnable_(DEFAULT_XO_SERVICES_ENABLE);
+std::string Services::xoServicesRequest_(DEFAULT_XO_SERVICES_REQUEST);
+std::string Services::xoServicesResponse_(DEFAULT_XO_SERVICES_RESPONSE);
 
 
 void
@@ -51,20 +69,19 @@ Services::check()
 {
   std::time_t now = std::time(NULL);
 
-  if ((this->lastCheckedTime +
-    (vars[VAR_SERVICES_CHECK_INTERVAL]->getInt() * 60)) < now)
+  if ((this->lastCheckedTime + (Services::servicesCheckInterval_ * 60)) < now)
   {
     this->lastCheckedTime = now;
 
-    if (vars[VAR_XO_SERVICES_ENABLE]->getBool())
+    if (Services::xoServicesEnable_)
     {
-      server.msg(vars[VAR_XO_SERVICES_REQUEST]->getString(), "clones " +
-        boost::lexical_cast<std::string>(vars[VAR_SERVICES_CLONE_LIMIT]->getInt()));
+      server.msg(Services::xoServicesRequest_, "clones " +
+          boost::lexical_cast<std::string>(Services::servicesCloneLimit_));
     }
 
-    if (vars[VAR_SPAMTRAP_ENABLE]->getBool())
+    if (Services::spamtrapEnable_)
     {
-      server.whois(vars[VAR_SPAMTRAP_NICK]->getString());
+      server.whois(Services::spamtrapNick_);
     }
 
 #ifdef CA_SERVICES
@@ -78,7 +95,7 @@ Services::check()
 void
 Services::onXoNotice(std::string text)
 {
-  if (!vars[VAR_XO_SERVICES_ENABLE]->getBool())
+  if (!Services::xoServicesEnable_)
   {
     return;
   }
@@ -105,7 +122,7 @@ Services::onXoNotice(std::string text)
     std::string nick = parms[0];
     std::string count(boost::lexical_cast<std::string>(this->cloneCount));
 
-    std::string notice(vars[VAR_XO_SERVICES_RESPONSE]->getString());
+    std::string notice(Services::xoServicesResponse_);
     notice += " reports ";
     notice += count;
     notice += " users cloning ";
@@ -138,15 +155,13 @@ Services::onXoNotice(std::string text)
     reason.setStringToken('u', this->cloningUserhost);
     reason.setStringToken('i', BotSock::inet_ntoa(ip));
     reason.setStringToken('c', count);
-    reason.setStringToken('s', vars[VAR_XO_SERVICES_RESPONSE]->getString());
+    reason.setStringToken('s', Services::xoServicesResponse_);
 
     if (!exempt)
     {
       doAction(nick, this->cloningUserhost, ip,
-	vars[VAR_XO_SERVICES_CLONE_ACTION]->getAction(),
-	vars[VAR_XO_SERVICES_CLONE_ACTION]->getInt(),
-	reason.format(vars[VAR_XO_SERVICES_CLONE_REASON]->getString()),
-	this->suggestKline);
+          Services::xoServicesCloneAction_,
+          reason.format(Services::xoServicesCloneReason_), this->suggestKline);
     }
 
     this->suggestKline = false;
@@ -304,7 +319,7 @@ Services::onSpamtrapMessage(const std::string & text)
       {
         int score = boost::lexical_cast<int>(FirstWord(copy));
 
-        if (score >= vars[VAR_SPAMTRAP_MIN_SCORE]->getInt())
+        if (score >= Services::spamtrapMinScore_)
         {
           std::string klineType = FirstWord(copy);
 
@@ -322,8 +337,7 @@ Services::onSpamtrapMessage(const std::string & text)
           Log::Write(notice);
 
           doAction(nick, userhost, users.getIP(nick, userhost),
-	    vars[VAR_SPAMTRAP_ACTION]->getAction(),
-	    vars[VAR_SPAMTRAP_ACTION]->getInt(), copy, false);
+              Services::spamtrapAction_, copy, false);
         }
       }
       catch (boost::bad_lexical_cast)
@@ -390,8 +404,8 @@ Services::onSpamtrapNotice(const std::string & text)
 	    {
 	      std::string serverName = FirstWord(copy);
 
-	      if ((score >= vars[VAR_SPAMTRAP_MIN_SCORE]->getInt()) &&
-	        server.same(serverName, server.getServerName()))
+	      if ((score >= Services::spamtrapMinScore_) &&
+                  server.same(serverName, server.getServerName()))
 	      {
                 std::string notice("*** SpamTrap report: ");
 	        notice += nick;
@@ -404,9 +418,8 @@ Services::onSpamtrapNotice(const std::string & text)
                 Log::Write(notice);
 
                 doAction(nick, userhost, users.getIP(nick, userhost),
-	          vars[VAR_SPAMTRAP_ACTION]->getAction(),
-	          vars[VAR_SPAMTRAP_ACTION]->getInt(),
-	          vars[VAR_SPAMTRAP_DEFAULT_REASON]->getString(), false);
+                    Services::spamtrapAction_, Services::spamtrapDefaultReason_,
+                    false);
 	      }
               return;
 	    }
@@ -437,10 +450,41 @@ Services::onSpamtrapNotice(const std::string & text)
 void
 Services::pollSpamtrap()
 {
-  if (vars[VAR_SPAMTRAP_ENABLE]->getBool())
+  if (Services::spamtrapEnable_)
   {
-    server.msg(vars[VAR_SPAMTRAP_NICK]->getString(), ".server " +
-      server.getServerName());
+    server.msg(Services::spamtrapNick_, ".server " + server.getServerName());
   }
+}
+
+
+void
+Services::init(void)
+{
+  vars.insert("SERVICES_CHECK_INTERVAL",
+      Setting::IntegerSetting(Services::servicesCheckInterval_, 1));
+  vars.insert("SERVICES_CLONE_LIMIT",
+      Setting::IntegerSetting(Services::servicesCloneLimit_, 2));
+  vars.insert("SPAMTRAP_ACTION",
+      AutoAction::Setting(Services::spamtrapAction_));
+  vars.insert("SPAMTRAP_DEFAULT_REASON",
+      Setting::StringSetting(Services::spamtrapDefaultReason_));
+  vars.insert("SPAMTRAP_ENABLE",
+      Setting::BooleanSetting(Services::spamtrapEnable_));
+  vars.insert("SPAMTRAP_MIN_SCORE",
+      Setting::IntegerSetting(Services::spamtrapMinScore_, 0));
+  vars.insert("SPAMTRAP_NICK",
+      Setting::StringSetting(Services::spamtrapNick_));
+  vars.insert("SPAMTRAP_USERHOST",
+      Setting::StringSetting(Services::spamtrapUserhost_));
+  vars.insert("XO_SERVICES_CLONE_ACTION",
+      AutoAction::Setting(Services::xoServicesCloneAction_));
+  vars.insert("XO_SERVICES_CLONE_REASON",
+      Setting::StringSetting(Services::xoServicesCloneReason_));
+  vars.insert("XO_SERVICES_ENABLE",
+      Setting::BooleanSetting(Services::xoServicesEnable_));
+  vars.insert("XO_SERVICES_REQUEST",
+      Setting::StringSetting(Services::xoServicesRequest_));
+  vars.insert("XO_SERVICES_RESPONSE",
+      Setting::StringSetting(Services::xoServicesResponse_));
 }
 

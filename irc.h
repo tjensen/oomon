@@ -66,10 +66,10 @@ public:
   void ctcp(const std::string &, const std::string &);
   void ctcpReply(const std::string &, const std::string &);
   void isOn(const std::string &);
-  void kline(const std::string &, const int, const std::string &,
+  void kline(const std::string &, const unsigned int, const std::string &,
     const std::string &);
   void unkline(const std::string &, const std::string &);
-  void dline(const std::string &, const int, const std::string &,
+  void dline(const std::string &, const unsigned int, const std::string &,
     const std::string &);
   void undline(const std::string &, const std::string &);
   void kill(const std::string &, const std::string &, const std::string &);
@@ -123,6 +123,11 @@ public:
 
   static bool validNick(const std::string & nick);
 
+  static bool trackTempKlines(void) { return IRC::trackTempKlines_; }
+  static bool trackTempDlines(void) { return IRC::trackTempDlines_; }
+
+  static void init(void);
+
 protected:
   bool onRead(std::string text);
 
@@ -157,6 +162,16 @@ private:
   std::time_t lastUserDeltaCheck;
   std::time_t lastCtcpVersionTimeoutCheck;
 
+  static bool operNickInReason_;
+  static bool relayMsgsToLocops_;
+  static int serverTimeout_;
+  static bool trackPermDlines_;
+  static bool trackPermKlines_;
+  static bool trackTempDlines_;
+  static bool trackTempKlines_;
+  static std::string umode_;
+  static int userCountDeltaMax_;
+
   void onCtcp(const std::string & from, const std::string & userhost,
     const std::string & to, std::string text);
   void onCtcpReply(const std::string & from, const std::string & userhost,
@@ -165,6 +180,9 @@ private:
     const std::string & to, std::string text);
   void onNotice(const std::string & from, const std::string & userhost,
     const std::string & to, std::string text);
+
+  static std::string getServerTimeout(void);
+  static std::string setServerTimeout(const std::string & newValue);
 
   static IRCCommand getCommand(const std::string & text);
 };

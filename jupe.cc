@@ -32,11 +32,21 @@
 #include "util.h"
 #include "main.h"
 #include "log.h"
+#include "irc.h"
 #include "vars.h"
 #include "userhash.h"
 #include "botclient.h"
 #include "config.h"
 #include "format.h"
+#include "defaults.h"
+
+
+AutoAction JupeJoinList::action(DEFAULT_JUPE_JOIN_ACTION,
+    DEFAULT_JUPE_JOIN_ACTION_TIME);
+bool JupeJoinList::ignoreChannel(DEFAULT_JUPE_JOIN_IGNORE_CHANNEL);
+int JupeJoinList::maxCount(DEFAULT_JUPE_JOIN_MAX_COUNT);
+int JupeJoinList::maxTime(DEFAULT_JUPE_JOIN_MAX_TIME);
+std::string JupeJoinList::reason(DEFAULT_JUPE_JOIN_REASON);
 
 
 JupeJoinList jupeJoiners;
@@ -46,11 +56,11 @@ void
 JupeJoinList::checkJupe(const std::string & nick,
   const JupeJoinList::JupeJoinEntry & entry) const
 {
-  if (entry.count > vars[VAR_JUPE_JOIN_MAX_COUNT]->getInt())
+  if (entry.count > JupeJoinList::maxCount)
   {
     std::string msg;
 
-    if (vars[VAR_JUPE_JOIN_IGNORE_CHANNEL]->getBool())
+    if (JupeJoinList::ignoreChannel)
     {
       msg = "Possible juped channel auto-joiner: " + nick + " (" +
 	entry.userhost + ")";
@@ -89,10 +99,8 @@ JupeJoinList::checkJupe(const std::string & nick,
       reason.setStringToken('c', entry.channel);
       reason.setStringToken('r', entry.reason);
 
-      doAction(nick, entry.userhost, ip,
-        vars[VAR_JUPE_JOIN_ACTION]->getAction(),
-        vars[VAR_JUPE_JOIN_ACTION]->getInt(),
-        reason.format(vars[VAR_JUPE_JOIN_REASON]->getString()), false);
+      doAction(nick, entry.userhost, ip, JupeJoinList::action,
+          reason.format(JupeJoinList::reason), false);
     }
   }
 }
@@ -109,15 +117,14 @@ JupeJoinList::add(const std::string & nick, const std::string & userhost,
     pos != this->list.end(); ++pos)
   {
     if (server.same(pos->userhost, userhost) &&
-      (vars[VAR_JUPE_JOIN_IGNORE_CHANNEL]->getBool() ||
-      server.same(pos->channel, channel)))
+        (JupeJoinList::ignoreChannel || server.same(pos->channel, channel)))
     {
       foundEntry = true;
 
       pos->channel = channel;
       pos->reason = reason;
   
-      if ((pos->last + vars[VAR_JUPE_JOIN_MAX_TIME]->getInt()) < now)
+      if ((pos->last + JupeJoinList::maxTime) < now)
       {
 	// Old entry -- drop count to 1
         pos->count = 1;
@@ -133,7 +140,7 @@ JupeJoinList::add(const std::string & nick, const std::string & userhost,
     }
     else
     {
-      if ((pos->last + vars[VAR_JUPE_JOIN_MAX_TIME]->getInt()) < now)
+      if ((pos->last + JupeJoinList::maxTime) < now)
       {     
 	this->list.erase(pos);
 	--pos;
@@ -218,5 +225,21 @@ JupeJoinList::status(BotClient * client) const
 {
   client->send("Juped channel joiners: " +
     boost::lexical_cast<std::string>(this->list.size()));
+}
+
+
+void
+JupeJoinList::init(void)
+{
+  vars.insert("JUPE_JOIN_ACTION",
+      AutoAction::Setting(JupeJoinList::action));
+  vars.insert("JUPE_JOIN_IGNORE_CHANNEL",
+      Setting::BooleanSetting(JupeJoinList::ignoreChannel));
+  vars.insert("JUPE_JOIN_MAX_COUNT",
+      Setting::IntegerSetting(JupeJoinList::maxCount, 0));
+  vars.insert("JUPE_JOIN_MAX_TIME",
+      Setting::IntegerSetting(JupeJoinList::maxTime, 0));
+  vars.insert("JUPE_JOIN_REASON",
+      Setting::StringSetting(JupeJoinList::reason));
 }
 
