@@ -41,6 +41,7 @@
 #include "main.h"
 #include "irc.h"
 #include "watch.h"
+#include "vars.h"
 
 
 #ifdef DEBUG
@@ -121,12 +122,12 @@ DCCList::listen(const std::string & nick, const std::string & userhost,
 }
 
 
-// preSelect(readset)
+// setAllFD(readset)
 //
 // Do this if you want to be able to receive data :P
 //
 void
-DCCList::preSelect(fd_set & readset, fd_set & writeset)
+DCCList::setAllFD(fd_set & readset, fd_set & writeset)
 {
   FDSetter<DCCPtr> fds(readset, writeset);
 
@@ -142,12 +143,12 @@ DCCList::ListenProcessor::operator()(DCCPtr listener)
 
   try
   {
-    remove = !listener->postSelect(this->readset_, this->writeset_);
+    remove = !listener->process(this->readset_, this->writeset_);
   }
   catch (OOMon::ready_for_accept)
   {
 #ifdef DCCLIST_DEBUG
-    std::cout << "DCC::postSelect() threw exception: ready_for_accept" <<
+    std::cout << "DCC::process() threw exception: ready_for_accept" <<
       std::endl;
 #endif
 
@@ -189,14 +190,13 @@ DCCList::ClientProcessor::operator()(DCCPtr client)
 
   try
   {
-    remove = !client->postSelect(this->readset_, this->writeset_);
+    remove = !client->process(this->readset_, this->writeset_);
   }
   catch (OOMon::timeout_error)
   {
     remove = true;
 #ifdef DCCLIST_DEBUG
-    std::cout << "DCC::postSelect() threw exception: timeout_error" <<
-      std::endl;
+    std::cout << "DCC::process() threw exception: timeout_error" << std::endl;
 #endif
     if (!client->isConnected())
     {
@@ -207,7 +207,7 @@ DCCList::ClientProcessor::operator()(DCCPtr client)
   catch (OOMon::errno_error & e)
   {
     remove = true;
-    std::cerr << "DCC::postSelect() threw exception: errno_error: " <<
+    std::cerr << "DCC::process() threw exception: errno_error: " <<
       e.what() << std::endl;
   }
 
@@ -221,14 +221,14 @@ DCCList::ClientProcessor::operator()(DCCPtr client)
 }
 
 
-// postSelect(readset, writeset)
+// processAll(readset, writeset)
 //
 // Processes any received data at each DCC connection.
 //
 // Returns true if no errors ocurred.
 //
 void
-DCCList::postSelect(const fd_set & readset, const fd_set & writeset)
+DCCList::processAll(const fd_set & readset, const fd_set & writeset)
 {
   ListenProcessor lp(readset, writeset, this->connections);
   this->listeners.remove_if(lp);
