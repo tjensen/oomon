@@ -25,6 +25,9 @@
 // Std C Headers
 #include <errno.h>
 
+// Boost C++ Headers
+#include <boost/shared_ptr.hpp>
+
 // OOMon Headers
 #include "userdb.h"
 #include "util.h"
@@ -36,7 +39,7 @@
 #endif
 
 
-UserDB *userConfig;
+boost::shared_ptr<UserDB> userConfig;
 
 
 bool

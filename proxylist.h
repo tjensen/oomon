@@ -33,7 +33,6 @@
 #include <unistd.h>
 
 // OOMon headers
-#include "strtype"
 #include "oomon.h"
 #include "proxy.h"
 #include "botsock.h"
@@ -67,7 +66,7 @@ public:
       this->isVerifiedClean(address, port, type));
   }
 
-  void status(StrList & output) const;
+  void status(class BotClient * client) const;
 
   static const time_t CACHE_EXPIRE;
 

@@ -21,6 +21,9 @@
 
 // $Id$
 
+// Boost C++ Headers
+#include <boost/shared_ptr.hpp>
+
 // OOMon Headers
 #include "botdb.h"
 
@@ -43,7 +46,7 @@ private:
 };
 
 
-extern UserDB *userConfig;
+extern boost::shared_ptr<UserDB> userConfig;
 
 
 #endif /* __USERDB_H__ */

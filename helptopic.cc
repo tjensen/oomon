@@ -37,7 +37,7 @@ HelpTopic::HelpTopic(void)
   example.clear();
   helpLink.clear();
   subTopic.clear();
-  flags = UserFlags::NONE;
+  flags = UserFlags::NONE();
   error = 0;
 }
 
@@ -92,158 +92,157 @@ HelpTopic::operator==(const std::string & topic) const
 }
 
 
-StrList
-HelpTopic::getHelp(void)
+bool
+HelpTopic::getHelp(BotClient * client)
 {
-  StrList result;
-
-  result.clear();
-
-  if (topics.size() <= 0)
+  bool result = false;
+  if (topics.size() > 0)
   {
-    return result;
-  }
+    result = true;
 
-  if (syntax.size() > 0)
-  {
-    result.push_back("\002Syntax:\002");
-    for (StrList::iterator pos = syntax.begin();
-      pos != syntax.end(); ++pos)
+    if (syntax.size() > 0)
     {
-      result.push_back(std::string("  .") + *pos);
-    }
-  }
-
-  if (description.size() > 0)
-  {
-    result.push_back("\002Description:\002");
-    for (StrList::iterator pos = description.begin();
-      pos != description.end(); ++pos)
-    {
-      result.push_back(std::string("  ") + *pos);
-    }
-  }
-
-  if (example.size() > 0)
-  {
-    result.push_back("\002Example:\002");
-    for (StrList::iterator pos = example.begin();
-      pos != example.end(); ++pos)
-    {
-      result.push_back(std::string("  ") + *pos);
-    }
-  }
-
-  result.push_back("\002Required Flags:\002");
-  if (flags == UserFlags::NONE)
-  {
-    result.push_back("  None");
-  }
-  else
-  {
-    if (flags.has(UserFlags::CHANOP))
-    {
-      result.push_back("  C - Chanop");
-    }
-    if (flags.has(UserFlags::DLINE))
-    {
-      result.push_back("  D - Dline");
-    }
-    if (flags.has(UserFlags::GLINE))
-    {
-      result.push_back("  G - Gline");
-    }
-    if (flags.has(UserFlags::KLINE))
-    {
-      result.push_back("  K - Kline");
-    }
-    if (flags.has(UserFlags::MASTER))
-    {
-      result.push_back("  M - Master");
-    }
-    if (flags.has(UserFlags::OPER))
-    {
-      result.push_back("  O - Oper");
-    }
-    if (flags.has(UserFlags::REMOTE))
-    {
-      result.push_back("  R - Remote");
-    }
-    if (flags.has(UserFlags::WALLOPS))
-    {
-      result.push_back("  W - Wallops");
-    }
-  }
-
-  if (helpLink.size() > 0)
-  {
-    std::string row = std::string("");
-
-    result.push_back("\002See Also:\002");
-    for (StrList::iterator pos = helpLink.begin();
-      pos != helpLink.end(); ++pos)
-    {
-      if (row.length() == 0)
+      client->send("\002Syntax:\002");
+      for (StrList::iterator pos = syntax.begin();
+        pos != syntax.end(); ++pos)
       {
-        row = DownCase(*pos);
-      }
-      else
-      {
-        if ((row.length() + pos->length() + 2) > 40)
-        {
-          result.push_back(std::string("  ") + row);
-	  row = DownCase(*pos);
-	}
-	else
-	{
-	  row += std::string("  ") + DownCase(*pos);
-	}
+        client->send("  ." + *pos);
       }
     }
-    if (row.length() > 0)
+
+    if (description.size() > 0)
     {
-      result.push_back(std::string("  ") + row);
+      client->send("\002Description:\002");
+      for (StrList::iterator pos = description.begin();
+        pos != description.end(); ++pos)
+      {
+        client->send("  " + *pos);
+      }
     }
-  }
 
-  if (subTopic.size() > 0)
-  {
-    std::string row = std::string("");
-
-    std::string major = topics[0];
-    major = FirstWord(major);
-
-    if (Same("info", major))
+    if (example.size() > 0)
     {
-      result.push_back("\002Topics:\002 (.info <topic>)");
+      client->send("\002Example:\002");
+      for (StrList::iterator pos = example.begin();
+        pos != example.end(); ++pos)
+      {
+        client->send("  " + *pos);
+      }
+    }
+
+    client->send("\002Required Flags:\002");
+    if (flags == UserFlags::NONE())
+    {
+      client->send("  None");
     }
     else
     {
-      result.push_back("\002Sub-Topics:\002 (.help " + major + " <sub-topic>)");
-    }
-    for (StrList::iterator pos = subTopic.begin();
-      pos != subTopic.end(); ++pos)
-    {
-      if (row.length() == 0)
+      if (flags.has(UserFlags::CHANOP))
       {
-        row = DownCase(*pos);
+        client->send("  C - Chanop");
+      }
+      if (flags.has(UserFlags::DLINE))
+      {
+        client->send("  D - Dline");
+      }
+      if (flags.has(UserFlags::GLINE))
+      {
+        client->send("  G - Gline");
+      }
+      if (flags.has(UserFlags::KLINE))
+      {
+        client->send("  K - Kline");
+      }
+      if (flags.has(UserFlags::MASTER))
+      {
+        client->send("  M - Master");
+      }
+      if (flags.has(UserFlags::OPER))
+      {
+        client->send("  O - Oper");
+      }
+      if (flags.has(UserFlags::REMOTE))
+      {
+        client->send("  R - Remote");
+      }
+      if (flags.has(UserFlags::WALLOPS))
+      {
+        client->send("  W - Wallops");
+      }
+    }
+
+    if (helpLink.size() > 0)
+    {
+      std::string row = std::string("");
+
+      client->send("\002See Also:\002");
+      for (StrList::iterator pos = helpLink.begin();
+        pos != helpLink.end(); ++pos)
+      {
+        if (row.length() == 0)
+        {
+          row = DownCase(*pos);
+        }
+        else
+        {
+          if ((row.length() + pos->length() + 2) > 40)
+          {
+            client->send("  " + row);
+	    row = DownCase(*pos);
+	  }
+	  else
+	  {
+	    row += "  ";
+	    row += DownCase(*pos);
+	  }
+        }
+      }
+      if (row.length() > 0)
+      {
+        client->send("  " + row);
+      }
+    }
+
+    if (subTopic.size() > 0)
+    {
+      std::string row = std::string("");
+
+      std::string major = topics[0];
+      major = FirstWord(major);
+
+      if (Same("info", major))
+      {
+        client->send("\002Topics:\002 (.info <topic>)");
       }
       else
       {
-        if ((row.length() + pos->length() + 2) > 40)
-	{
-          result.push_back(std::string("  ") + row);
-	  row = DownCase(*pos);
-	}
-	else
-	{
-	  row += std::string("  ") + DownCase(*pos);
-	}
+        client->send("\002Sub-Topics:\002 (.help " + major + " <sub-topic>)");
       }
-    }
-    if (row.length() > 0)
-    {
-      result.push_back(std::string("  ") + row);
+      for (StrList::iterator pos = subTopic.begin();
+        pos != subTopic.end(); ++pos)
+      {
+        if (row.length() == 0)
+        {
+          row = DownCase(*pos);
+        }
+        else
+        {
+          if ((row.length() + pos->length() + 2) > 40)
+	  {
+            client->send("  " + row);
+	    row = DownCase(*pos);
+	  }
+	  else
+	  {
+	    row += "  ";
+	    row += DownCase(*pos);
+	  }
+        }
+      }
+      if (row.length() > 0)
+      {
+        client->send("  " + row);
+      }
     }
   }
 
@@ -251,8 +250,8 @@ HelpTopic::getHelp(void)
 }
 
 
-StrList
-HelpTopic::getHelp(const std::string & topic)
+bool
+HelpTopic::getHelp(BotClient * client, const std::string & topic)
 {
   std::string	line;
   bool		inTopic = false;
@@ -261,7 +260,7 @@ HelpTopic::getHelp(const std::string & topic)
   if (!helpFile.is_open())
   {
     error = true;
-    return StrList();
+    return false;
   }
 
   while (std::getline(helpFile, line))
@@ -365,5 +364,5 @@ HelpTopic::getHelp(const std::string & topic)
   }
   helpFile.close();
 
-  return getHelp();
+  return getHelp(client);
 }

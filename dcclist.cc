@@ -58,7 +58,7 @@ DCCList clients;
 // Returns true if no errors ocurred.
 //
 bool
-DCCList::connect(const DCC::Address address, const int port,
+DCCList::connect(const BotSock::Address address, const int port,
   const std::string & nick, const std::string & userhost)
 {
   try
@@ -121,10 +121,10 @@ DCCList::listen(const std::string & nick, const std::string & userhost)
 void
 DCCList::setAllFD(fd_set & readset, fd_set & writeset)
 {
-  BotSock::FDSetter s(readset, writeset);
+  FDSetter<DCCPtr> fds(readset, writeset);
 
-  std::for_each(this->listeners.begin(), this->listeners.end(), s);
-  std::for_each(this->connections.begin(), this->connections.end(), s);
+  std::for_each(this->listeners.begin(), this->listeners.end(), fds);
+  std::for_each(this->connections.begin(), this->connections.end(), fds);
 }
 
 
@@ -191,8 +191,8 @@ DCCList::ClientProcessor::operator()(DCCPtr client)
 #endif
     if (!client->isConnected())
     {
-      server.notice(client->getNick(), "DCC CHAT connection timed out.");
-      Log::Write(client->getUserhost() + " timed out on DCC connect");
+      server.notice(client->nick(), "DCC CHAT connection timed out.");
+      Log::Write(client->userhost() + " timed out on DCC connect");
     }
   }
   catch (OOMon::errno_error & e)
@@ -204,7 +204,8 @@ DCCList::ClientProcessor::operator()(DCCPtr client)
 
   if (remove && client->isConnected())
   {
-    ::SendAll(client->getUserhost() + " has disconnected", UserFlags::AUTHED);
+    ::SendAll(client->userhost() + " has disconnected", UserFlags::AUTHED,
+      WatchSet(), client.get());
   }
 
   return remove;
@@ -235,7 +236,7 @@ DCCList::processAll(const fd_set & readset, const fd_set & writeset)
 //
 bool
 DCCList::sendChat(const std::string & From, std::string Text,
-  const BotClient::ptr skip)
+  const BotClient *skip)
 {
   if (Text != "")
   {
@@ -263,68 +264,45 @@ DCCList::sendChat(const std::string & From, std::string Text,
 }
 
 
-void
-DCCList::WhoList::operator()(DCCPtr client)
+bool
+DCCList::sendTo(const std::string & from, const std::string & clientId,
+  const std::string & message)
 {
-  if (client->isConnected())
+  DCCPtr client(this->find(clientId));
+  bool result = false;
+
+  if (0 != client.get())
   {
-    this->_output.push_back(client->getFlags() + " " + client->getHandle() +
-      " (" + client->getUserhost() + ") " + IntToStr(client->getIdle()));
+    std::string notice("[");
+    notice += from;
+    notice += "] ";
+    notice += message;
+    client->send(message);
+    result = true;
   }
-  else
-  {
-    this->_output.push_back(client->getFlags() + " " + client->getHandle() +
-      " (" + client->getUserhost() + ") -connecting-");
-  }
+
+  return result;
 }
 
 
-// who(Output)
+// who(client)
 //
 // Returns a list of connected users
 //
 void
-DCCList::who(StrList & output)
+DCCList::who(BotClient * client)
 {
-  output.clear();
-
   if (this->connections.empty())
   {
-    output.push_back("No client connections!");
+    client->send("No client connections!");
   }
   else
   {
-    output.push_back("Client connections:");
+    client->send("Client connections:");
 
     std::for_each(this->connections.begin(), this->connections.end(),
-      WhoList(output));
+      boost::bind(&DCC::who, _1, client));
   }
-}
-
-
-bool
-DCCList::StatsPList::operator()(DCCPtr client)
-{
-  bool count = false;
-
-  if (client->isConnected() && client->isOper())
-  {
-    std::string notice(client->getHandle());
-
-    if (vars[VAR_STATSP_SHOW_USERHOST]->getBool())
-    {
-      notice += " (" + client->getUserhost() + ")";
-    }
-    if (vars[VAR_STATSP_SHOW_IDLE]->getBool())
-    {
-      notice += " Idle: " + IntToStr(client->getIdle());
-    }
-
-    this->_output.push_back(notice);
-    count = true;
-  }
-
-  return count;
 }
 
 
@@ -338,7 +316,7 @@ DCCList::statsP(StrList & output)
   output.clear();
 
   int operCount = std::count_if(this->connections.begin(),
-    this->connections.end(), StatsPList(output));
+    this->connections.end(), boost::bind(&DCC::statsP, _1, output));
 
   output.push_back(IntToStr(operCount) + " OOMon oper" +
     (operCount == 1 ? "" : "s"));
@@ -352,11 +330,75 @@ DCCList::statsP(StrList & output)
 //
 void
 DCCList::sendAll(const std::string & message, const UserFlags flags,
-  const WatchSet & watches, const BotClient::ptr skip)
+  const WatchSet & watches, const BotClient *skip)
 {
   SendFilter filter(message, flags, watches, skip);
 
   std::for_each(this->connections.begin(), this->connections.end(), filter);
+}
+
+
+void
+DCCList::sendAll(const std::string & from, const std::string & text,
+  const std::string & flags, const std::string & watches)
+{
+  try
+  {
+    UserFlags f = UserFlags(flags, ',');
+    WatchSet w = WatchSet::getWatchValues(watches);
+
+    std::string notice("[");
+    notice += from;
+    notice += "] ";
+    notice += text;
+
+    this->sendAll(notice, f, w);
+  }
+  catch (OOMon::invalid_watch_name & e)
+  {
+    std::cerr << e.what() << std::endl;
+  }
+  catch (UserFlags::invalid_flag & e)
+  {
+    std::cerr << e.what() << std::endl;
+  }
+}
+
+
+void
+DCCList::sendAll(const std::string & from, const std::string & skipId,
+  const std::string & text, const std::string & flags,
+  const std::string & watches)
+{
+  try
+  {
+    UserFlags f = UserFlags(flags, ',');
+    WatchSet w = WatchSet::getWatchValues(watches);
+
+    std::string notice("[");
+    notice += from;
+    notice += "] ";
+    notice += text;
+
+    for (SockList::iterator pos = this->connections.begin();
+      pos != this->connections.end(); ++pos)
+    {
+      DCCPtr copy(*pos);
+
+      if (!Same(copy->id(), skipId))
+      {
+	copy->send(notice, f, w);
+      }
+    }
+  }
+  catch (OOMon::invalid_watch_name & e)
+  {
+    std::cerr << e.what() << std::endl;
+  }
+  catch (UserFlags::invalid_flag & e)
+  {
+    std::cerr << e.what() << std::endl;
+  }
 }
 
 
@@ -365,9 +407,30 @@ DCCList::sendAll(const std::string & message, const UserFlags flags,
 // Report status information about DCC connections
 //
 void
-DCCList::status(StrList & output) const
+DCCList::status(BotClient * client) const
 {
-  output.push_back("DCC Connections: " + IntToStr(this->connections.size()));
-  output.push_back("DCC Listeners: " + IntToStr(this->listeners.size()));
+  client->send("DCC Connections: " + IntToStr(this->connections.size()));
+  client->send("DCC Listeners: " + IntToStr(this->listeners.size()));
+}
+
+
+DCCList::DCCPtr
+DCCList::find(const std::string & id) const
+{
+  DCCPtr result;
+
+  for (SockList::const_iterator pos = this->connections.begin();
+    pos != this->connections.end(); ++pos)
+  {
+    DCCPtr copy(*pos);
+
+    if (0 == copy->id().compare(id))
+    {
+      result = copy;
+      break;
+    }
+  }
+
+  return result;
 }
 

@@ -43,10 +43,9 @@
 //    set(string, string, string)
 //      The ".set" command uses this function to modify settings.  It
 //      returns a string that should be reported back to the user.
-//    get(StrList, string)
+//    get(client, string)
 //      The ".set" command uses this function to view settings.  It returns
-//      the number of settings matching the string.  The StrList should
-//      be reported back to the user.
+//      the number of settings matching the string.
 //    save(ofstream)
 //      Write all modified settings to a file.
 // ===========================================================================
@@ -228,7 +227,7 @@ public:
   int findVar(const std::string & name) const;
   std::string set(const std::string & name, const std::string & value,
     const std::string & handle = "");
-  int get(StrList & output, const std::string & name) const;
+  int get(class BotClient * client, const std::string & name) const;
 
   const_reference operator[](size_type n) const
   {

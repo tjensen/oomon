@@ -24,6 +24,9 @@
 // Std C++ Headers
 #include <string>
 
+// Std C Headers
+#include <time.h>
+
 // OOMon Headers
 #include "strtype"
 #include "oomon.h"
@@ -34,7 +37,7 @@
 #include "botclient.h"
 
 
-class DCC : public BotSock
+class DCC : public BotClient
 {
 public:
   DCC(const std::string & nick = "", const std::string & userhost = "");
@@ -49,84 +52,74 @@ public:
   void motd(void);
 
   void chat(const std::string & text);
-  void send(const std::string & message,
-    const UserFlags flags = UserFlags::NONE,
-    const WatchSet & watches = WatchSet());
-  void send(StrList & message, const UserFlags flags = UserFlags::NONE,
+  void send(const std::string & message, const UserFlags flags,
     const WatchSet & watches = WatchSet());
 
-  std::string getUserhost(void) const { return UserHost; }
-  std::string getNick(void) const { return Nick; }
+  virtual void send(const std::string & message);
+  virtual UserFlags flags(void) const { return this->_flags; }
+  virtual std::string handle(void) const { return this->_handle; }
+  virtual std::string bot(void) const { return Config::GetNick(); }
+  virtual std::string id(void) const { return this->_id; }
+
+  void flags(const UserFlags f) { this->_flags = f; }
+  void handle(const std::string & h) { this->_handle = h; }
+  std::string humanReadableFlags(void) const;
+  void who(class BotClient * client) const;
+  bool statsP(StrList & output) const;
+
+  std::string userhost(void) const { return this->_userhost; }
+  std::string nick(void) const { return this->_nick; }
 
   bool isOper(void) const
-    { return (this->client->flags().has(UserFlags::OPER)); }
+    { return (this->flags().has(UserFlags::OPER)); }
   bool isAuthed(void) const
-    { return (this->client->flags().has(UserFlags::AUTHED)); }
-  std::string getFlags(void) const;
-  std::string getHandle(void) const { return this->client->handle(); }
+    { return (this->flags().has(UserFlags::AUTHED)); }
 
-  virtual bool onConnect(void);
+  bool onConnect(void);
+
+  BotSock::Port getLocalPort(void) const { return this->_sock.getLocalPort(); }
+  bool isConnected(void) const { return this->_sock.isConnected(); }
+  bool process(const fd_set & readset, const fd_set & writeset)
+    { return this->_sock.process(readset, writeset); }
+  void setFD(fd_set & readset, fd_set & writeset)
+    { this->_sock.setFD(readset, writeset); }
+  time_t idleTime(void) const { return this->_sock.getIdle(); }
 
 protected:
-  virtual bool onRead(std::string text);
-
-  class Client : public BotClient
-  {
-  public:
-    Client(DCC *owner) : _owner(owner), _handle(), _flags(UserFlags::NONE)
-    {
-      _id = ptrToStr(owner);
-    }
-    ~Client(void) { }
-
-    virtual void send(const std::string & text)
-    {
-      this->_owner->write(text + '\n');
-    }
-    virtual UserFlags flags(void) const { return this->_flags; }
-    virtual std::string handle(void) const { return this->_handle; }
-    virtual std::string bot(void) const { return Config::GetNick(); }
-    virtual std::string id(void) const { return this->_id; }
-
-    void flags(const UserFlags f) { this->_flags = f; }
-    void handle(const std::string & h) { this->_handle = h; }
-
-  private:
-    DCC *_owner;
-    std::string _handle;
-    std::string _id;
-    UserFlags _flags;
-  };
-  typedef boost::shared_ptr<Client> ClientPtr;
+  bool onRead(std::string text);
 
 private:
-  bool echoMyChatter;
-  std::string UserHost, Nick;
-  WatchSet watches;
-  CommandParser parser;
-  ClientPtr client;
+  BotSock _sock;
+  bool _echoMyChatter;
+  std::string _userhost;
+  std::string _nick;
+  WatchSet _watches;
+  CommandParser _parser;
+  std::string _handle;
+  std::string _id;
+  UserFlags _flags;
 
   bool parse(std::string text);
 
   void addCommand(const std::string & command,
-    void (DCC::*)(BotClient::ptr from, const std::string & command,
+    void (DCC::*)(class BotClient *from, const std::string & command,
     std::string parameters), const UserFlags flags,
     const int options = CommandParser::NONE);
 
-  void cmdHelp(BotClient::ptr from, const std::string & command,
+  void cmdHelp(class BotClient *from, const std::string & command,
     std::string parameters);
-  void cmdAuth(BotClient::ptr from, const std::string & command,
+  void cmdAuth(class BotClient *from, const std::string & command,
     std::string parameters);
-  void cmdQuit(BotClient::ptr from, const std::string & command,
+  void cmdQuit(class BotClient *from, const std::string & command,
     std::string parameters);
-  void cmdEcho(BotClient::ptr from, const std::string & command,
+  void cmdEcho(class BotClient *from, const std::string & command,
     std::string parameters);
-  void cmdWatch(BotClient::ptr from, const std::string & command,
+  void cmdWatch(class BotClient *from, const std::string & command,
     std::string parameters);
-  void cmdChat(BotClient::ptr from, const std::string & command,
+  void cmdChat(class BotClient *from, const std::string & command,
     std::string parameters);
 
-  void cmdLocops(BotClient::ptr from, const std::string & command,
+  void cmdLocops(class BotClient *from, const std::string & command,
     std::string parameters);
 
   void loadConfig(void);

@@ -69,6 +69,9 @@ IRC::IRC(): BotSock(false, true), supportETrace(false), supportKnock(false),
   this->myNick = "";
   this->lastUserDeltaCheck = 0;
 
+  registerOnConnectHandler(boost::bind(&IRC::onConnect, this));
+  registerOnReadHandler(boost::bind(&IRC::onRead, this, _1));
+
   addServerNoticeParser("Client connecting: *", ::onClientConnect);
   addServerNoticeParser("Client exiting: *", ::onClientExit);
   addServerNoticeParser("Nick change: *", ::onNickChange);
@@ -903,10 +906,10 @@ IRC::reloadDlines(const std::string & from)
 
 
 void
-IRC::findK(StrList & output, const Pattern *userhost, const bool count,
+IRC::findK(BotClient * client, const Pattern *userhost, const bool count,
   const bool searchPerms, const bool searchTemps, const bool searchReason) const
 {
-  this->klines.find(output, userhost, count, searchPerms, searchTemps,
+  this->klines.find(client, userhost, count, searchPerms, searchTemps,
     searchReason);
 }
 
@@ -921,10 +924,10 @@ IRC::findAndRemoveK(const std::string & from, const Pattern *userhost,
 
 
 void
-IRC::findD(StrList & output, const Pattern *userhost, const bool count,
+IRC::findD(BotClient * client, const Pattern *userhost, const bool count,
   const bool searchPerms, const bool searchTemps, const bool searchReason) const
 {
-  this->dlines.find(output, userhost, count, searchPerms, searchTemps,
+  this->dlines.find(client, userhost, count, searchPerms, searchTemps,
     searchReason);
 }
 
@@ -1019,30 +1022,30 @@ IRC::knock(const std::string & channel)
 
 
 void
-IRC::status(StrList & output) const
+IRC::status(BotClient * client) const
 {
-  output.push_back("Connect Time: " + this->getUptime());
+  client->send("Connect Time: " + this->getUptime());
 
   KlineList::size_type klineCount = this->klines.size();
   if (vars[VAR_TRACK_TEMP_KLINES]->getBool() && (klineCount > 0))
   {
-    output.push_back("K: lines: " + IntToStr(klineCount) + " (" +
+    client->send("K: lines: " + IntToStr(klineCount) + " (" +
       IntToStr(this->klines.permSize()) + " permanent)");
   }
   else if (vars[VAR_TRACK_PERM_KLINES]->getBool())
   {
-    output.push_back("K: lines: " + IntToStr(klineCount));
+    client->send("K: lines: " + IntToStr(klineCount));
   }
 
   KlineList::size_type dlineCount = this->dlines.size();
   if (vars[VAR_TRACK_TEMP_DLINES]->getBool() && (dlineCount > 0))
   {
-    output.push_back("D: lines: " + IntToStr(dlineCount) + " (" +
+    client->send("D: lines: " + IntToStr(dlineCount) + " (" +
       IntToStr(this->dlines.permSize()) + " permanent)");
   }
   else if (vars[VAR_TRACK_PERM_DLINES]->getBool())
   {
-    output.push_back("D: lines: " + IntToStr(dlineCount));
+    client->send("D: lines: " + IntToStr(dlineCount));
   }
 }
 

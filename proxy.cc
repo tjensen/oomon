@@ -64,8 +64,8 @@
 
 Proxy::Proxy(const std::string & hostname, const std::string & nick,
   const std::string & userhost)
-  : BotSock(), _hostname(hostname), _nick(nick), _userhost(userhost),
-  _detectedProxy(false)
+  : BotSock(), _detectedProxy(false), _hostname(hostname), _nick(nick),
+  _userhost(userhost)
 {
 }
 

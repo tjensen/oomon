@@ -398,7 +398,12 @@ bool
 Same(const std::string & text1, const std::string & text2,
   const std::string::size_type length)
 {
-  return (0 == UpCase(text1).compare(0, length, UpCase(text2), 0, length));
+  std::string copy1(text1.substr(0,
+    (text1.length() < length) ? text1.length() : length));
+  std::string copy2(text2.substr(0,
+    (text2.length() < length) ? text2.length() : length));
+
+  return (0 == UpCase(copy1).compare(UpCase(copy2)));
 }
 
 

@@ -29,7 +29,6 @@
 #include "strtype"
 #include "remote.h"
 #include "botsock.h"
-#include "botclient.h"
 #include "links.h"
 
 
@@ -49,24 +48,34 @@ public:
   bool connect(const std::string & handle);
   void listen(void);
 
-  void send(const std::string &, const std::string &,
-    const std::string &, const std::string &,
-    const class Remote *skip = 0);
+  void sendBroadcast(const std::string & from, const std::string & text,
+    const std::string & flags = "NONE", const std::string & watches = "NONE");
+  void sendBroadcastPtr(const std::string & from, const Remote *skip,
+    const std::string & text, const std::string & flags = "NONE",
+    const std::string & watches = "NONE");
+  void sendBroadcastId(const std::string & from, const std::string & skipId,
+    const std::string & skipBot, const std::string & text,
+    const std::string & flags = "NONE", const std::string & watches = "NONE");
+
+  void sendNotice(const std::string & from, const std::string & clientId,
+    const std::string & clientBot, const std::string & text);
 
   void sendChat(const std::string & from, const std::string & text,
-    const Remote *skip = (Remote *) 0);
+    const Remote *skip = 0);
   void sendBotJoin(const std::string & oldnode, const std::string & newnode,
-    const Remote *skip = (Remote *) 0);
+    const Remote *skip = 0);
   void sendBotPart(const std::string & from, const std::string & node,
-    const Remote *skip = (Remote *) 0);
-  void sendCommand(const BotClient::ptr client, const std::string & bot,
+    const Remote *skip = 0);
+  void sendCommand(class BotClient * client, const std::string & bot,
     const std::string & command, const std::string & parameters);
 
-  void conn(const std::string & from, const std::string & target);
-  void disconn(const std::string & from, const std::string & target);
+  void cmdConn(BotClient * from, const std::string & command,
+    std::string parameters);
+  void cmdDisconn(BotClient * from, const std::string & command,
+    std::string parameters);
 
-  void getLinks(StrList & Output);
-  void getBotNet(BotLinkList & list, const Remote *skip = (Remote *) 0);
+  void getLinks(class BotClient * client);
+  void getBotNet(BotLinkList & list, const Remote *skip = 0);
 
   bool isLinkedDirectlyToMe(const std::string &) const;
   RemotePtr findBot(const std::string &) const;
@@ -106,7 +115,7 @@ private:
   {
   public:
     SendChat(const std::string & from, const std::string & text,
-      const Remote *skip = (Remote *) 0) : _from(from), _text(text),
+      const Remote *skip = 0) : _from(from), _text(text),
       _skip(skip) { }
     void operator()(RemotePtr r)
     {
@@ -125,7 +134,7 @@ private:
   {
   public:
     SendBotJoinPart(const bool join, const std::string node1,
-      const std::string node2, const Remote *skip = (Remote *) 0)
+      const std::string node2, const Remote *skip = 0)
       : _join(join), _node1(node1), _node2(node2), _skip(skip) { }
     void operator()(RemotePtr r)
     {

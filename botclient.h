@@ -26,19 +26,16 @@
 #include <algorithm>
 
 // Boost C++ Headers
-#include <boost/shared_ptr.hpp>
+#include <boost/bind.hpp>
 
 // OOMon Headers
 #include "oomon.h"
-#include "strtype"
 #include "userflags.h"
 
 
 class BotClient
 {
 public:
-  typedef boost::shared_ptr<BotClient> ptr;
-
   BotClient(void) { }
   virtual ~BotClient(void) { }
 
@@ -48,24 +45,6 @@ public:
   virtual std::string bot(void) const = 0;
   virtual std::string id(void) const = 0;
 
-private:
-  class sender
-  {
-  public:
-    sender(BotClient *target) : _target(target) { }
-    void operator()(const std::string & text)
-    {
-      _target->send(text);
-    }
-  private:
-    BotClient *_target;
-  };
-
-public:
-  void send(const StrList & text)
-  {
-    std::for_each(text.begin(), text.end(), BotClient::sender(this));
-  }
   std::string handleAndBot(void) const
   {
     return (this->handle() + '@' + this->bot());

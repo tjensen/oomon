@@ -100,6 +100,12 @@ struct YLine
   std::string Description;
 };
 
+struct RemoteClient
+{
+  std::string mask;
+  UserFlags flags;
+};
+
 
 OperDef::OperDef(const OperDef & copy)
 {
@@ -125,6 +131,7 @@ std::list<Pattern *> Config::Spoofers;
 LinkList Config::Links;
 ConnList Config::Connections;
 YLineList Config::YLines;
+RemoteClientList Config::remoteClients;
 std::string Config::Nick, Config::UserName, Config::IRCName, Config::OperNick, Config::OperPass;
 std::string Config::OurHostName;
 std::string Config::LogFile = ::expandPath(DEFAULT_LOGFILE, LOGDIR);
@@ -162,27 +169,7 @@ void Config::AddOper(const std::string & Handle, const std::string & pattern,
     temp.Handle = Handle;
     temp.pattern = smartPattern(pattern, false);
     temp.Passwd = Passwd;
-    temp.Flags = UserFlags::NONE;
-    if (Flags.find('C') != std::string::npos)
-      temp.Flags |= UserFlags::CHANOP;
-    if (Flags.find('D') != std::string::npos)
-      temp.Flags |= UserFlags::DLINE;
-    if (Flags.find('G') != std::string::npos)
-      temp.Flags |= UserFlags::GLINE;
-    if (Flags.find('K') != std::string::npos)
-      temp.Flags |= UserFlags::KLINE;
-    if (Flags.find('M') != std::string::npos)
-      temp.Flags |= UserFlags::MASTER;
-    if (Flags.find('N') != std::string::npos)
-      temp.Flags |= UserFlags::NICK;
-    if (Flags.find('O') != std::string::npos)
-      temp.Flags |= UserFlags::OPER;
-    if (Flags.find('R') != std::string::npos)
-      temp.Flags |= UserFlags::REMOTE;
-    if (Flags.find('W') != std::string::npos)
-      temp.Flags |= UserFlags::WALLOPS;
-    if (Flags.find('X') != std::string::npos)
-      temp.Flags |= UserFlags::CONN;
+    temp.Flags = Config::parseUserFlags(Flags);
     Opers.push_back(temp);
 #ifdef CONFIG_DEBUG
     std::cout << "Oper: " << Handle << ", " << pattern << ", " << Passwd <<
@@ -314,6 +301,18 @@ void Config::AddYLine(const std::string & YClass,
 }
 
 
+void
+Config::addRemoteClient(const std::string & mask, const std::string & flags)
+{
+  RemoteClient tmp;
+
+  tmp.mask = mask;
+  tmp.flags = Config::parseUserFlags(flags);
+
+  remoteClients.push_back(tmp);
+}
+
+
 // Load(filename)
 //
 // This does the actual loading of the configuration file.
@@ -382,7 +381,7 @@ void Config::Load(const std::string filename)
 	break;
       case 'c':
       case 'C':
-	if (Parameters.size() > 4)
+	if (Parameters.size() >= 4)
 	{
 	  // Connection parameters
 	  handle = Parameters[0];
@@ -434,7 +433,7 @@ void Config::Load(const std::string filename)
 	break;
       case 'l':
       case 'L':
-	if (Parameters.size() > 3)
+	if (Parameters.size() >= 3)
 	{
 	  // Link parameters
 	  handle = Parameters[0];
@@ -474,15 +473,24 @@ void Config::Load(const std::string filename)
 #endif
 	}
 	break;
+      case 'r':
+      case 'R':
+	if (Parameters.size() > 1)
+	{
+	  std::string mask(Parameters[0]);
+	  std::string flags(Parameters[1]);
+#ifdef CONFIG_DEBUG
+          std::cout << "Remote Client: " << mask << " (" << flags << ")" <<
+	    std::endl;
+#endif /* CONFIG_DEBUG */
+	  Config::addRemoteClient(mask, flags);
+	}
+	break;
       case 's':
       case 'S':
 	if (Parameters.size() > 3)
 	{
 	  // Server Parameters
-	  #ifdef CONFIG_DEBUG
-	    std::cout << "Server: ";
-	    //Parameters.Print();
-	  #endif
 	  Server.Hostname = Parameters[0];
 	  Server.port = atoi(Parameters[1].c_str());
 	  Server.Password = Parameters[2];
@@ -813,6 +821,56 @@ std::string Config::GetYLineDescription(const std::string & YClass)
   return "";
 }
 
+
+UserFlags
+Config::getRemoteFlags(const std::string & client)
+{
+  UserFlags flags(UserFlags::NONE());
+
+  for (RemoteClientList::const_iterator pos = remoteClients.begin();
+    pos != remoteClients.end(); ++pos)
+  {
+    if (Same(client, pos->mask))
+    {
+      flags = pos->flags;
+      break;
+    }
+  }
+
+  return flags;
+}
+
+
+UserFlags
+Config::parseUserFlags(const std::string & text)
+{
+  UserFlags result(UserFlags::NONE());
+
+  if (text.find('C') != std::string::npos)
+    result |= UserFlags::CHANOP;
+  if (text.find('D') != std::string::npos)
+    result |= UserFlags::DLINE;
+  if (text.find('G') != std::string::npos)
+    result |= UserFlags::GLINE;
+  if (text.find('K') != std::string::npos)
+    result |= UserFlags::KLINE;
+  if (text.find('M') != std::string::npos)
+    result |= UserFlags::MASTER;
+  if (text.find('N') != std::string::npos)
+    result |= UserFlags::NICK;
+  if (text.find('O') != std::string::npos)
+    result |= UserFlags::OPER;
+  if (text.find('R') != std::string::npos)
+    result |= UserFlags::REMOTE;
+  if (text.find('W') != std::string::npos)
+    result |= UserFlags::WALLOPS;
+  if (text.find('X') != std::string::npos)
+    result |= UserFlags::CONN;
+
+  return result;
+}
+
+
 std::string
 Config::getProxyVhost()
 {
@@ -876,6 +934,22 @@ Config::saveSettings()
 }
 
 
+class ConfigClient : public BotClient
+{
+public:
+  ConfigClient(void) { }
+
+  virtual std::string handle(void) const { return std::string(); }
+  virtual std::string bot(void) const { return std::string(); }
+  virtual std::string id(void) const { return "CONFIG"; }
+  virtual UserFlags flags(void) const { return UserFlags::ALL(); }
+  virtual void send(const std::string & text)
+  {
+    std::cerr << text << std::endl;
+  }
+};
+
+
 bool
 Config::loadSettings()
 {
@@ -901,9 +975,9 @@ Config::loadSettings()
       }
       else if (cmd == "TRAP")
       {
-	StrList discard;
+	ConfigClient client;
 
-	TrapList::cmd(discard, line, true);
+	TrapList::cmd(&client, line);
 
 #ifdef CONFIG_DEBUG
         std::cout << "Added trap: " << line << std::endl;

@@ -29,10 +29,9 @@
 #include <signal.h>
 
 // OOMon Headers
-#include "strtype"
+#include "userflags.h"
 #include "watch.h"
-#include "config.h"
-#include "botclient.h"
+
 
 enum OOMonExitCode
 {
@@ -40,13 +39,14 @@ enum OOMonExitCode
   EXIT_BOTDB_ERROR
 };
 
+
 void gracefuldie(int sig);
-void ReloadConfig(const std::string &);
+void ReloadConfig(const std::string & from);
 void SendAll(const std::string & message,
-  const UserFlags flags = UserFlags::NONE,
-  const WatchSet & watches = WatchSet(),
-  const BotClient::ptr skip = BotClient::ptr());
-void motd(StrList &);
+  const class UserFlags flags = UserFlags::NONE(),
+  const class WatchSet & watches = WatchSet(),
+  const class BotClient * skip = 0);
+void motd(class BotClient * client);
 std::string getUptime(void);
 
 #endif

@@ -27,6 +27,7 @@
 
 // Boost C++ headers
 #include <boost/shared_ptr.hpp>
+#include <boost/bind.hpp>
 
 // OOMon headers
 #include "strtype"
@@ -34,27 +35,34 @@
 #include "config.h"
 #include "dcc.h"
 #include "watch.h"
-#include "botclient.h"
 
 
 class DCCList
 {
 public:
-  bool connect(const DCC::Address address, const int port,
+  bool connect(const BotSock::Address address, const int port,
     const std::string & nick, const std::string & userhost);
   bool listen(const std::string & nick, const std::string & userhost);
   void setAllFD(fd_set & readset, fd_set & writeset);
   void processAll(const fd_set & readset, const fd_set & writeset);
-  void sendAll(const std::string & message,
-    const UserFlags flags = UserFlags::NONE,
-    const WatchSet & watches = WatchSet(),
-    const BotClient::ptr skip = BotClient::ptr());
-  bool sendChat(const std::string & from, std::string message,
-    const BotClient::ptr skip = BotClient::ptr());
-  void who(StrList &);
-  void statsP(StrList &);
 
-  void status(StrList & output) const;
+  void sendAll(const std::string & message,
+    const UserFlags flags = UserFlags::NONE(),
+    const WatchSet & watches = WatchSet(), const class BotClient *skip = 0);
+  void sendAll(const std::string & from, const std::string & text,
+    const std::string & flags, const std::string & watches);
+  void sendAll(const std::string & from, const std::string & skipId,
+    const std::string & text, const std::string & flags,
+    const std::string & watches);
+  bool sendChat(const std::string & from, std::string message,
+    const class BotClient *skip = 0);
+  bool sendTo(const std::string & from, const std::string & clientId,
+    const std::string & message);
+
+  void who(class BotClient * client);
+  void statsP(StrList & output);
+
+  void status(class BotClient * client) const;
 
   DCCList() { };
   virtual ~DCCList() { };
@@ -65,7 +73,7 @@ private:
   SockList connections;
   SockList listeners;
 
-  DCCPtr find(const std::string &);
+  DCCPtr find(const std::string & id) const;
 
   class ListenProcessor
   {
@@ -91,44 +99,16 @@ private:
     const fd_set & _writeset;
   };
 
-  class WhoList
-  {
-  public:
-    WhoList(StrList & output) : _output(output) { }
-    void operator()(DCCPtr client);
-  private:
-    StrList & _output;
-  };
-
-  class StatsPList
-  {
-  public:
-    StatsPList(StrList & output) : _output(output) { }
-    bool operator()(DCCPtr client);
-  private:
-    StrList & _output;
-  };
-
   class SendFilter
   {
   public:
     SendFilter(const std::string & message, const UserFlags flags, 
-      const WatchSet & watches, const BotClient::ptr skip)
-      : _message(message), _flags(flags), _watches(watches)
-    {
-      if (skip.get())
-      {
-	this->_skip = skip->id();
-      }
-    }
-    SendFilter(const std::string & message, const UserFlags flags, 
-      const WatchSet & watches) : _message(message), _flags(flags),
-      _watches(watches) { }
+      const WatchSet & watches, const class BotClient *skip = 0)
+      : _message(message), _flags(flags), _watches(watches), _skip(skip) { }
 
     void operator()(DCCPtr client)
     {
-      if (this->_skip.empty() ||
-	(0 != this->_skip.compare(ptrToStr(client.get()))))
+      if (this->_skip != client.get())
       {
         client->send(this->_message, this->_flags, this->_watches);
       }
@@ -138,7 +118,7 @@ private:
     const std::string _message;
     const UserFlags _flags;
     const WatchSet _watches;
-    std::string _skip;
+    const BotClient * _skip;
   };
 
   class SendToFilter
@@ -151,7 +131,7 @@ private:
     bool operator()(DCCPtr client)
     {
       bool count = false;
-      if (this->_handle == client->getHandle())
+      if (this->_handle == client->handle())
       {
         client->send(this->_message, this->_flags, this->_watches);
         count = true;

@@ -525,7 +525,7 @@ UserHash::clear()
 
 
 int
-UserHash::listUsers(StrList & output, const Pattern *userhost,
+UserHash::listUsers(BotClient * client, const Pattern *userhost,
   std::string className, const ListAction action, const std::string & from,
   const std::string & reason) const
 {
@@ -534,8 +534,8 @@ UserHash::listUsers(StrList & output, const Pattern *userhost,
   if ((0 == userhost->get().compare("*")) ||
     (0 == userhost->get().compare("*@*")))
   {
-    output.push_back("Listing all users is not recommended. To do it anyway,");
-    output.push_back("use 'list ?*@*'.");
+    client->send("Listing all users is not recommended. To do it anyway,");
+    client->send("use 'list ?*@*'.");
   }
   else
   {
@@ -571,7 +571,7 @@ UserHash::listUsers(StrList & output, const Pattern *userhost,
 	  }
 	  if (action == UserHash::LIST_VIEW)
 	  {
-	    output.push_back(outmsg);
+	    client->send(outmsg);
 	  }
 	}
 	userptr = userptr->collision;
@@ -588,7 +588,7 @@ UserHash::listUsers(StrList & output, const Pattern *userhost,
     {
       outmsg = "No matches for " + userhost->get() + " found.";
     }
-    output.push_back(outmsg);
+    client->send(outmsg);
   }
 
   return numfound;
@@ -596,7 +596,7 @@ UserHash::listUsers(StrList & output, const Pattern *userhost,
 
 
 int
-UserHash::listNicks(StrList & output, const Pattern *nick,
+UserHash::listNicks(BotClient * client, const Pattern *nick,
   std::string className, const ListAction action, const std::string & from,
   const std::string & reason) const
 {
@@ -620,14 +620,13 @@ UserHash::listNicks(StrList & output, const Pattern *nick,
 	(0 == className.compare(userptr->info->getClass()))))
       {
         ++numfound;
-	std::string outmsg(userptr->info->output(vars[VAR_NFIND_FORMAT]->getString()));
 	if (action == UserHash::LIST_KILL)
 	{
 	  server.kill(from, userptr->info->getNick(), reason);
 	}
 	if (action == UserHash::LIST_VIEW)
 	{
-	  output.push_back(outmsg);
+	  client->send(userptr->info->output(vars[VAR_NFIND_FORMAT]->getString()));
 	}
       }
       userptr = userptr->collision;
@@ -643,14 +642,14 @@ UserHash::listNicks(StrList & output, const Pattern *nick,
   {
     outmsg = "No matches for " + nick->get() + " found.";
   }
-  output.push_back(outmsg);
+  client->send(outmsg);
 
   return numfound;
 }
 
 
 int
-UserHash::listGecos(StrList & output, const Pattern *gecos,
+UserHash::listGecos(BotClient * client, const Pattern *gecos,
   std::string className, const bool count) const
 {
   int numfound = 0;
@@ -671,14 +670,12 @@ UserHash::listGecos(StrList & output, const Pattern *gecos,
         {
 	  if (!count)
 	  {
-            output.push_back("The following clients match " + gecos->get() +
-	      ":");
+            client->send("The following clients match " + gecos->get() + ":");
 	  }
         }
 	if (!count)
 	{
-	  std::string outmsg(userptr->info->output(vars[VAR_GLIST_FORMAT]->getString()));
-          output.push_back(outmsg);
+          client->send(userptr->info->output(vars[VAR_GLIST_FORMAT]->getString()));
 	}
       }
       userptr = userptr->collision;
@@ -694,7 +691,7 @@ UserHash::listGecos(StrList & output, const Pattern *gecos,
   {
     outmsg = "No matches for " + gecos->get() + " found.";
   }
-  output.push_back(outmsg);
+  client->send(outmsg);
 
   return numfound;
 }
@@ -723,7 +720,7 @@ UserHash::have(std::string nick) const
 
 
 void
-UserHash::reportClasses(StrList & output, const std::string & className)
+UserHash::reportClasses(BotClient * client, const std::string & className)
 {
   typedef std::map<std::string,int> ClassType;
   ClassType Classes;
@@ -741,7 +738,7 @@ UserHash::reportClasses(StrList & output, const std::string & className)
   char outmsg[MAX_BUFF];
   snprintf(outmsg, sizeof(outmsg), "%-10s %-6s %s", "Class", "Count",
     "Description");
-  output.push_back(outmsg);
+  client->send(outmsg);
 
   for (ClassType::iterator pos = Classes.begin(); pos != Classes.end();
     ++pos)
@@ -751,19 +748,19 @@ UserHash::reportClasses(StrList & output, const std::string & className)
     {
       snprintf(outmsg, sizeof(outmsg), "%-10s %-6d %s", pos->first.c_str(),
 	pos->second, Config::GetYLineDescription(pos->first).c_str());
-      output.push_back(outmsg);
+      client->send(outmsg);
     }
   }
 }
 
 
 void
-UserHash::reportSeedrand(StrList & output, const Pattern *mask,
+UserHash::reportSeedrand(BotClient * client, const Pattern *mask,
   const int threshold, const bool count) const
 {
   if (!count)
   {
-    output.push_back("Searching " + mask->get() + ".  Threshold is " +
+    client->send("Searching " + mask->get() + ".  Threshold is " +
       IntToStr(threshold));
   }
 
@@ -794,30 +791,30 @@ UserHash::reportSeedrand(StrList & output, const Pattern *mask,
     {
       UserEntry *info = pos->getInfo();
 
-      output.push_back(info->output(vars[VAR_SEEDRAND_FORMAT]->getString()));
+      client->send(info->output(vars[VAR_SEEDRAND_FORMAT]->getString()));
     }
   }
 
   if (0 == scores.size())
   {
-    output.push_back("No matches (score >= " + IntToStr(threshold) + ") for " +
+    client->send("No matches (score >= " + IntToStr(threshold) + ") for " +
       mask->get() + " found.");
   }
   else if (1 == scores.size())
   {
-    output.push_back("1 match (score >= " + IntToStr(threshold) + ") for " +
+    client->send("1 match (score >= " + IntToStr(threshold) + ") for " +
       mask->get() + " found.");
   }
   else
   {
-    output.push_back(IntToStr(scores.size()) + " matches (score >= " +
+    client->send(IntToStr(scores.size()) + " matches (score >= " +
       IntToStr(threshold) + ") for " + mask->get() + " found.");
   }
 }
 
 
 void
-UserHash::reportDomains(StrList & output, const int num)
+UserHash::reportDomains(BotClient * client, const int num)
 {
   std::list<UserHash::SortEntry> sort;
   int maxCount = 1;
@@ -825,7 +822,7 @@ UserHash::reportDomains(StrList & output, const int num)
 
   if (num < 1)
   {
-    output.push_back("*** Parameter must be greater than 0!");
+    client->send("*** Parameter must be greater than 0!");
     return;
   }
 
@@ -877,13 +874,15 @@ UserHash::reportDomains(StrList & output, const int num)
       if (pos->count >= currentCount)
       {
         if (!foundany++)
-          output.push_back("Domains with most users on the server:");
+	{
+          client->send("Domains with most users on the server:");
+	}
 
         char outmsg[MAX_BUFF];            
         sprintf(outmsg, "  %-40s %3d user%s", pos->rec->getDomain().c_str(),
 	  pos->count, (pos->count == 1) ? "" : "s");
 
-        output.push_back(outmsg);
+        client->send(outmsg);
 
 	sort.erase(pos);
 	--pos;
@@ -899,13 +898,13 @@ UserHash::reportDomains(StrList & output, const int num)
   {  
     char outmsg[MAX_BUFF];            
     sprintf(outmsg, "No domains have %d or more users.", num);
-    output.push_back(outmsg);
+    client->send(outmsg);
   }
 }
 
 
 void
-UserHash::reportNets(StrList & output, const int num)
+UserHash::reportNets(BotClient * client, const int num)
 {
   std::list<UserHash::SortEntry> sort;
   int maxCount = 1;
@@ -913,7 +912,7 @@ UserHash::reportNets(StrList & output, const int num)
 
   if (num < 1)
   {
-    output.push_back("*** Parameter must be greater than 0!");
+    client->send("*** Parameter must be greater than 0!");
     return;
   }
 
@@ -969,14 +968,16 @@ UserHash::reportNets(StrList & output, const int num)
       if (pos->count >= currentCount)
       {
         if (!foundany++)
-          output.push_back("Nets with most users on the server:");
+	{
+          client->send("Nets with most users on the server:");
+	}
 
         char outmsg[MAX_BUFF];            
         sprintf(outmsg, "  %-40s %3d user%s",
 	  classCMask(BotSock::inet_ntoa(pos->rec->getIp())).c_str(),
 	  pos->count, (pos->count == 1) ? "" : "s");
 
-        output.push_back(outmsg);
+        client->send(outmsg);
 
 	sort.erase(pos);
 	--pos;
@@ -992,13 +993,13 @@ UserHash::reportNets(StrList & output, const int num)
   {  
     char outmsg[MAX_BUFF];            
     sprintf(outmsg, "No nets have %d or more users.", num);
-    output.push_back(outmsg);
+    client->send(outmsg);
   }
 }
 
 
 void
-UserHash::reportClones(StrList & output)
+UserHash::reportClones(BotClient * client)
 {
   bool foundany = false;
 
@@ -1068,7 +1069,7 @@ UserHash::reportClones(StrList & output)
             if (!foundany)
 	    {
 	      foundany = true;
-              output.push_back("Possible clonebots from the following hosts:");
+              client->send("Possible clonebots from the following hosts:");
 	    }
 
             char outmsg[MAX_BUFF];
@@ -1077,7 +1078,7 @@ UserHash::reportClones(StrList & output)
 	      connfromhost[j] - connfromhost[j + k], numfound,
 	      userptr->info->getHost().c_str());
 
-            output.push_back(outmsg);
+            client->send(outmsg);
           }   
         } 
       }     
@@ -1086,13 +1087,13 @@ UserHash::reportClones(StrList & output)
   }
   if (!foundany)
   {
-    output.push_back("No potential clonebots found.");
+    client->send("No potential clonebots found.");
   }
 }
 
 
 void
-UserHash::reportMulti(StrList & output, const int minimum)
+UserHash::reportMulti(BotClient * client, const int minimum)
 {
   HashRec *userptr,*top,*temp;
   int numfound,i;
@@ -1141,7 +1142,10 @@ UserHash::reportMulti(StrList & output, const int minimum)
         if (numfound >= (minclones - 1))
 	{
           if (!foundany++)
-            output.push_back("Multiple clients from the following userhosts:");
+	  {
+            client->send("Multiple clients from the following userhosts:");
+	  }
+
           notip = strncmp(userptr->info->getDomain().c_str(),
 	    userptr->info->getHost().c_str(),
             strlen(userptr->info->getDomain().c_str())) ||
@@ -1153,18 +1157,20 @@ UserHash::reportMulti(StrList & output, const int minimum)
 	    userptr->info->getUser().c_str(),
 	    notip ? "*" : userptr->info->getDomain().c_str(),
 	    notip ? userptr->info->getDomain().c_str() : "*");
-          output.push_back(outmsg);
+          client->send(outmsg);
         }
       }  
       userptr = userptr->collision;
     }
   }         
-  if (!foundany) 
-    output.push_back("No multiple logins found.");
+  if (!foundany)
+  {
+    client->send("No multiple logins found.");
+  }
 }
 
 void
-UserHash::reportHMulti(StrList & output, const int minimum)
+UserHash::reportHMulti(BotClient * client, const int minimum)
 {
   HashRec *userptr,*top,*temp;
   int numfound,i;
@@ -1203,23 +1209,28 @@ UserHash::reportHMulti(StrList & output, const int minimum)
         if (numfound >= (minclones - 1))
 	{
           if (!foundany++)
-            output.push_back("Multiple clients from the following hosts:");
+	  {
+            client->send("Multiple clients from the following hosts:");
+	  }
+
           numfound++; /* - zaph and next line*/
           sprintf(outmsg, " %s %2d -- *@%s",
 	    (numfound > minclones) ? "==>" : "   ", numfound,
 	    userptr->info->getHost().c_str());
-          output.push_back(outmsg);
+          client->send(outmsg);
         }
       }  
       userptr = userptr->collision;
     }
   }         
-  if (!foundany) 
-    output.push_back("No multiple logins found.");
+  if (!foundany)
+  {
+    client->send("No multiple logins found.");
+  }
 }
 
 void
-UserHash::reportUMulti(StrList & output, const int minimum)
+UserHash::reportUMulti(BotClient * client, const int minimum)
 {
   HashRec *userptr,*top,*temp;
   int numfound,i;
@@ -1258,23 +1269,28 @@ UserHash::reportUMulti(StrList & output, const int minimum)
         if (numfound >= (minclones - 1))
 	{
           if (!foundany++)
-            output.push_back("Multiple clients from the following usernames:");
+	  {
+            client->send("Multiple clients from the following usernames:");
+	  }
+
           numfound++; /* - zaph and next line*/
           sprintf(outmsg, " %s %2d -- %s@*",
 	    (numfound > minclones) ? "==>" : "   ", numfound,
 	    userptr->info->getUser().c_str());
-          output.push_back(outmsg);
+          client->send(outmsg);
         }
       }  
       userptr = userptr->collision;
     }
   }         
-  if (!foundany) 
-    output.push_back("No multiple logins found.");
+  if (!foundany)
+  {
+    client->send("No multiple logins found.");
+  }
 }
 
 void
-UserHash::reportVMulti(StrList & output, const int minimum)
+UserHash::reportVMulti(BotClient * client, const int minimum)
 {
   HashRec *userptr,*top,*temp;
   int numfound,i;
@@ -1321,7 +1337,10 @@ UserHash::reportVMulti(StrList & output, const int minimum)
         if (numfound >= (minclones - 1))
 	{
           if (!foundany++)
-            output.push_back("Multiple clients from the following vhosts:");
+	  {
+            client->send("Multiple clients from the following vhosts:");
+	  }
+
           numfound++; /* - zaph and next line*/
 	  std::string IP = BotSock::inet_ntoa(userptr->info->getIp());
 	  std::string::size_type lastDot = IP.rfind('.');
@@ -1332,14 +1351,16 @@ UserHash::reportVMulti(StrList & output, const int minimum)
           sprintf(outmsg, " %s %2d -- %s@%s.*",
 	    (numfound > minclones) ? "==>" : "   ", numfound,
 	    userptr->info->getUser().c_str(), IP.c_str());
-          output.push_back(outmsg);
+          client->send(outmsg);
         }
       }  
       userptr = userptr->collision;
     }
   }         
-  if (!foundany) 
-    output.push_back("No multiple logins found.");
+  if (!foundany)
+  {
+    client->send("No multiple logins found.");
+  }
 }
 
 
@@ -1673,9 +1694,9 @@ UserHash::checkIpClones(const BotSock::Address & ip)
 
 
 void
-UserHash::status(StrList & output)
+UserHash::status(BotClient * client)
 {
-  output.push_back("Users: " + IntToStr(this->userCount));
+  client->send("Users: " + IntToStr(this->userCount));
 
   int userHashCount = 0;
   long scoreSum = 0;
@@ -1690,7 +1711,7 @@ UserHash::status(StrList & output)
   }
   if (userHashCount != this->userCount)
   {
-    output.push_back("Users in usertable: " + IntToStr(userHashCount));
+    client->send("Users in usertable: " + IntToStr(userHashCount));
   }
 
   int hostHashCount = 0;
@@ -1704,7 +1725,7 @@ UserHash::status(StrList & output)
   }
   if (hostHashCount != this->userCount)
   {
-    output.push_back("Users in hosttable: " + IntToStr(hostHashCount));
+    client->send("Users in hosttable: " + IntToStr(hostHashCount));
   }
 
   int domainHashCount = 0;
@@ -1718,7 +1739,7 @@ UserHash::status(StrList & output)
   }
   if (domainHashCount != this->userCount)
   {
-    output.push_back("Users in domaintable: " + IntToStr(domainHashCount));
+    client->send("Users in domaintable: " + IntToStr(domainHashCount));
   }
 
   int ipHashCount = 0;
@@ -1732,10 +1753,10 @@ UserHash::status(StrList & output)
   }
   if (ipHashCount != this->userCount)
   {
-    output.push_back("Users in iptable: " + IntToStr(ipHashCount));
+    client->send("Users in iptable: " + IntToStr(ipHashCount));
   }
 
-  output.push_back("Average seedrand score: " +
+  client->send("Average seedrand score: " +
     ((this->userCount > 0) ? IntToStr(scoreSum / this->userCount) : "N/A"));
 }
 

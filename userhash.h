@@ -66,27 +66,27 @@ public:
   void checkHostClones(const std::string & host);
   void checkIpClones(const BotSock::Address & ip);
 
-  int listUsers(StrList & output, const Pattern *userhost,
+  int listUsers(class BotClient * client, const Pattern *userhost,
     std::string className, const ListAction action = LIST_VIEW,
     const std::string & from = "", const std::string & reason = "") const;
-  int listNicks(StrList & output, const Pattern *nick,
+  int listNicks(class BotClient * client, const Pattern *nick,
     std::string className, const ListAction action = LIST_VIEW,
     const std::string & from = "", const std::string & reason = "") const;
-  int listGecos(StrList & output, const Pattern *gecos,
+  int listGecos(class BotClient * client, const Pattern *gecos,
     std::string className, const bool count = false) const;
 
-  void reportClasses(StrList & output, const std::string & className);
-  void reportSeedrand(StrList & output, const Pattern *mask,
+  void reportClasses(class BotClient * client, const std::string & className);
+  void reportSeedrand(class BotClient * client, const Pattern *mask,
     const int threshold, const bool count = false) const;
-  void reportDomains(StrList & output, const int num);
-  void reportNets(StrList & output, const int num);
-  void reportClones(StrList & output);
-  void reportMulti(StrList & output, const int minimum);
-  void reportUMulti(StrList & output, const int minimum);
-  void reportHMulti(StrList & output, const int minimum);
-  void reportVMulti(StrList & output, const int minimum);
+  void reportDomains(class BotClient * client, const int num);
+  void reportNets(class BotClient * client, const int num);
+  void reportClones(class BotClient * client);
+  void reportMulti(class BotClient * client, const int minimum);
+  void reportUMulti(class BotClient * client, const int minimum);
+  void reportHMulti(class BotClient * client, const int minimum);
+  void reportVMulti(class BotClient * client, const int minimum);
 
-  void status(StrList & output);
+  void status(class BotClient * client);
 
   int getUserCountDelta(void);
   void resetUserCountDelta(void);

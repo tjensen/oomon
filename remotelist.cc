@@ -33,6 +33,7 @@
 #include "config.h"
 #include "botclient.h"
 #include "botexcept.h"
+#include "cmdparser.h"
 #include "log.h"
 
 
@@ -55,10 +56,10 @@ RemoteList::shutdown(void)
 void
 RemoteList::setFD(fd_set & readset, fd_set & writeset) const
 {
-  BotSock::FDSetter s(readset, writeset);
-
-  std::for_each(this->_listeners.begin(), this->_listeners.end(), s);
-  std::for_each(this->_connections.begin(), this->_connections.end(), s);
+  std::for_each(this->_listeners.begin(), this->_listeners.end(),
+    FDSetter<BotSock::ptr>(readset, writeset));
+  std::for_each(this->_connections.begin(), this->_connections.end(),
+    FDSetter<RemotePtr>(readset, writeset));
 }
 
 
@@ -187,10 +188,54 @@ RemoteList::processAll(const fd_set & readset, const fd_set & writeset)
 
 
 void
-RemoteList::send(const std::string & From, const std::string & Command,
-  const std::string & To, const std::string & Params,
-  const class Remote *skip)
+RemoteList::sendBroadcast(const std::string & from, const std::string & text,
+  const std::string & flags, const std::string & watches)
 {
+  std::for_each(this->_connections.begin(), this->_connections.end(),
+    boost::bind(&Remote::sendBroadcast, _1, from, text, flags, watches));
+}
+
+
+void
+RemoteList::sendBroadcastPtr(const std::string & from, const Remote *skip,
+  const std::string & text, const std::string & flags,
+  const std::string & watches)
+{
+  std::for_each(this->_connections.begin(), this->_connections.end(),
+    boost::bind(&Remote::sendBroadcastPtr, _1, from, skip, text, flags,
+    watches));
+}
+
+
+void
+RemoteList::sendBroadcastId(const std::string & from,
+  const std::string & skipId, const std::string & skipBot,
+  const std::string & text, const std::string & flags,
+  const std::string & watches)
+{
+  std::for_each(this->_connections.begin(), this->_connections.end(),
+    boost::bind(&Remote::sendBroadcastId, _1, from, skipId, skipBot, text,
+    flags, watches));
+}
+
+
+void
+RemoteList::sendNotice(const std::string & from, const std::string & clientId,
+  const std::string & clientBot, const std::string & text)
+{
+  if (Same(clientBot, Config::GetNick()))
+  {
+    clients.sendTo(from, clientId, text);
+  }
+  else
+  {
+    RemotePtr remoteBot(this->findBot(clientBot));
+
+    if (0 != remoteBot.get())
+    {
+       remoteBot->sendNotice(from, clientId, clientBot, text);
+    }
+  }
 }
 
 
@@ -222,7 +267,7 @@ RemoteList::sendBotPart(const std::string & from, const std::string & node,
 
 
 void
-RemoteList::sendCommand(const BotClient::ptr from, const std::string & to,
+RemoteList::sendCommand(BotClient * from, const std::string & to,
   const std::string & command, const std::string & parameters)
 {
   from->send("*** Remote commands aren't implemented yet!");
@@ -230,22 +275,46 @@ RemoteList::sendCommand(const BotClient::ptr from, const std::string & to,
 
 
 void
-RemoteList::conn(const std::string & from, const std::string & target)
+RemoteList::cmdConn(BotClient * from, const std::string & command,
+  std::string parameters)
 {
-  this->connect(target);
+  std::string bot(FirstWord(parameters));
+
+  if (bot.empty())
+  {
+    CommandParser::syntax(command, "<bot name>");
+  }
+  else
+  {
+    if (!this->connect(bot))
+    {
+      from->send("*** Unknown bot name: " + bot);
+    }
+  }
 }
 
 
 void
-RemoteList::disconn(const std::string & from, const std::string & target)
+RemoteList::cmdDisconn(BotClient * from, const std::string & command,
+  std::string parameters)
 {
+  std::string bot(FirstWord(parameters));
+
+  if (bot.empty())
+  {
+    CommandParser::syntax(command, "<bot name>");
+  }
+  else
+  {
+    from->send("*** I don't know how to disconnect!");
+  }
 }
 
 
 void
-RemoteList::getLinks(StrList & Output)
+RemoteList::getLinks(BotClient * client)
 {
-  Output.push_back(Config::GetNick());
+  client->send(Config::GetNick());
 
   for (ConnectionList::iterator pos = this->_connections.begin();
     pos != this->_connections.end(); ++pos)
@@ -254,13 +323,13 @@ RemoteList::getLinks(StrList & Output)
 
     if (copy != this->_connections.back())
     {
-      Output.push_back("|\\");
-      copy->getLinks(Output, "| ");
+      client->send("|\\");
+      copy->getLinks(client, "| ");
     }
     else
     {
-      Output.push_back(" \\");
-      copy->getLinks(Output, "  ");
+      client->send(" \\");
+      copy->getLinks(client, "  ");
     }
   }
 }

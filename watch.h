@@ -75,7 +75,7 @@ public:
   bool has(const WatchSet & watches) const
     { return (watches.contents == (this->contents & watches.contents)); };
 
-  void set(StrList & output, std::string line);
+  void set(class BotClient * output, std::string line, const bool noisy = true);
 
   // Return a set of all possible watch types
   static WatchSet all(void);
@@ -89,10 +89,11 @@ public:
   // Convert a symbolic name to a watch type
   static Watch getWatchValue(const std::string & watch);
 
-  // Return a space-separated list of symbolic names corresponding to a
-  // set of watch types.  If distinct is true, prepend watch types that
-  // are in the set with '+' and ones that aren't in the set with '-'.
-  static std::string getWatchNames(const WatchSet & watches, bool distinct);
+  // Return a list of symbolic names corresponding to a set of watch
+  // types.  If distinct is true, prepend watch types that are in the
+  // set with '+' and ones that aren't in the set with '-'.
+  static std::string getWatchNames(const WatchSet & watches, bool distinct,
+    char separator = ' ');
 
   // Convert a space-separated list of symbolic names to a set of watch
   // types.

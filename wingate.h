@@ -38,7 +38,7 @@ class WinGate : public Proxy
 {
 public:
   WinGate(const std::string & hostname, const std::string & nick,
-    const std::string & userhost) : Proxy(hostname, nick, userhost) { }
+    const std::string & userhost);
   virtual ~WinGate(void)
   {
     if (!this->_detectedProxy)
@@ -47,12 +47,12 @@ public:
     }
   }
 
-  virtual bool onConnect();
+  bool onConnect(void);
 
 protected:
-  virtual bool onRead(std::string);
+  bool onRead(std::string);
   virtual std::string typeName(void) const { return "WinGate"; };
-  virtual Proxy::Protocol type(void) const { Proxy::WINGATE; };
+  virtual Proxy::Protocol type(void) const { return Proxy::WINGATE; };
 };
 
 #endif /* __WINGATE_H__ */

@@ -70,9 +70,9 @@ public:
   void Clear();
   void Add(const std::string &, const std::string &,
     const bool temporary = false);
-  void find(StrList & Output, const Pattern *userhost, const bool count = false,
-    const bool searchPerms = true, const bool searchTemps = true,
-    const bool searchReason = false) const;
+  void find(class BotClient * client, const Pattern *userhost,
+    const bool count = false, const bool searchPerms = true,
+    const bool searchTemps = true, const bool searchReason = false) const;
   int findAndRemove(const std::string & from, const Pattern *userhost,
     const bool searchPerms = true, const bool searchTemps = true,
     const bool searchReason = false);

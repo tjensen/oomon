@@ -51,27 +51,31 @@
 
 
 DCC::DCC(const std::string & nick, const std::string & userhost)
-  : BotSock(), client(new DCC::Client(this))
+  : _sock(), _flags(UserFlags::NONE())
 {
-  this->setBuffering(true);
+  this->_sock.setBuffering(true);
+  this->_sock.registerOnConnectHandler(boost::bind(&DCC::onConnect, this));
+  this->_sock.registerOnReadHandler(boost::bind(&DCC::onRead, this, _1));
 
-  this->echoMyChatter = false;
-  this->UserHost = userhost;
-  this->Nick = nick;
+  this->_echoMyChatter = false;
+  this->_userhost = userhost;
+  this->_nick = nick;
 
-  this->watches = WatchSet::defaults();
+  this->_watches = WatchSet::defaults();
+
+  this->_id = ptrToStr(this);
 
   // anonymous commands
-  this->addCommand("HELP", &DCC::cmdHelp, UserFlags::NONE);
-  this->addCommand("INFO", &DCC::cmdHelp, UserFlags::NONE);
-  this->addCommand("AUTH", &DCC::cmdAuth, UserFlags::NONE);
-  this->addCommand("ECHO", &DCC::cmdEcho, UserFlags::NONE);
-  this->addCommand("QUIT", &DCC::cmdQuit, UserFlags::NONE,
+  this->addCommand("AUTH", &DCC::cmdAuth, UserFlags::NONE());
+  this->addCommand("HELP", &DCC::cmdHelp, UserFlags::NONE());
+  this->addCommand("INFO", &DCC::cmdHelp, UserFlags::NONE());
+  this->addCommand("ECHO", &DCC::cmdEcho, UserFlags::NONE());
+  this->addCommand("CHAT", &DCC::cmdChat, UserFlags::NONE());
+  this->addCommand("QUIT", &DCC::cmdQuit, UserFlags::NONE(),
     CommandParser::EXACT_ONLY);
 
   // UserFlags::AUTHED commands
   this->addCommand("WATCH", &DCC::cmdWatch, UserFlags::AUTHED);
-  this->addCommand("CHAT", &DCC::cmdChat, UserFlags::NONE);
 
   // UserFlags::WALLOPS commands
   this->addCommand("LOCOPS", &DCC::cmdLocops, UserFlags::WALLOPS);
@@ -79,23 +83,26 @@ DCC::DCC(const std::string & nick, const std::string & userhost)
 
 
 DCC::DCC(DCC *listener, const std::string & nick, const std::string & userhost)
-  : BotSock(listener), parser(listener->parser), client(listener->client)
+  : _sock(listener), _parser(listener->_parser)
 {
-  this->setBuffering(true);
+  this->_sock.setBuffering(true);
+  this->_sock.registerOnConnectHandler(boost::bind(&DCC::onConnect, this));
+  this->_sock.registerOnReadHandler(boost::bind(&DCC::onRead, this, _1));
 
-  this->echoMyChatter = listener->echoMyChatter;
-  this->UserHost = listener->UserHost;
-  this->Nick = listener->Nick;
-  this->watches = listener->watches;
+  this->_echoMyChatter = listener->_echoMyChatter;
+  this->_userhost = listener->_userhost;
+  this->_nick = listener->_nick;
+  this->_watches = listener->_watches;
+  this->_id = ptrToStr(this);
 }
 
 
 void
 DCC::addCommand(const std::string & command,
-  void (DCC::*func)(BotClient::ptr from, const std::string & command,
+  void (DCC::*func)(BotClient *from, const std::string & command,
   std::string parameters), const UserFlags flags, const int options)
 {
-  this->parser.addCommand(command, boost::bind(func, this, _1, _2, _3), flags,
+  this->_parser.addCommand(command, boost::bind(func, this, _1, _2, _3), flags,
     options);
 }
 
@@ -104,10 +111,10 @@ bool
 DCC::connect(const BotSock::Address address, const BotSock::Port port,
   const std::string nick, const std::string userhost)
 {
-  this->Nick = nick;
-  this->UserHost = userhost;
+  this->_nick = nick;
+  this->_userhost = userhost;
 
-  return this->BotSock::connect(address, port);
+  return this->_sock.connect(address, port);
 }
 
 
@@ -115,11 +122,11 @@ bool
 DCC::listen(const std::string nick, const std::string userhost,
   const BotSock::Port port, const int backlog)
 {
-  this->Nick = nick;
-  this->UserHost = userhost;
+  this->_nick = nick;
+  this->_userhost = userhost;
 
-  this->setTimeout(60);
-  return this->BotSock::listen(port, backlog);
+  this->_sock.setTimeout(60);
+  return this->_sock.listen(port, backlog);
 }
 
 
@@ -136,10 +143,10 @@ DCC::onConnect(void)
   std::cout << "DCC::onConnect()" << std::endl;
 #endif
   this->send("OOMon-" + std::string(OOMON_VERSION) + " by Timothy L. Jensen");
-  clients.sendAll(this->getUserhost() + " has connected", UserFlags::AUTHED,
-    WatchSet(), this->client);
+  clients.sendAll(this->userhost() + " has connected", UserFlags::AUTHED,
+    WatchSet(), this);
   this->motd();
-  this->setTimeout(DCC_IDLE_MAX);
+  this->_sock.setTimeout(DCC_IDLE_MAX);
 
   return true;
 }
@@ -189,7 +196,7 @@ DCC::parse(std::string text)
       if (at != std::string::npos)
       {
 	// Yes! Do I have permission?
-        if (!this->client->flags().has(UserFlags::REMOTE))
+        if (!this->flags().has(UserFlags::REMOTE))
         {
           this->send("*** You can't use remote commands!");
 	  return true;
@@ -203,7 +210,7 @@ DCC::parse(std::string text)
       {
         try
         {
-          parser.parse(this->client, command, text);
+          this->_parser.parse(this, command, text);
         }
         catch (CommandParser::exception & e)
         {
@@ -217,14 +224,14 @@ DCC::parse(std::string text)
       else
       {
 	// ISSUE REMOTE COMMAND
-	remotes.sendCommand(this->client, to, command, text);
+	remotes.sendCommand(this, to, command, text);
       }
     }
     else if (text != "Unknown command" ||
         !vars[VAR_IGNORE_UNKNOWN_COMMAND]->getBool())
     {
       // Chat
-      this->cmdChat(this->client, "CHAT", text);
+      this->cmdChat(this, "CHAT", text);
     }
   }
 
@@ -233,24 +240,24 @@ DCC::parse(std::string text)
 
 
 void
-DCC::cmdAuth(BotClient::ptr from, const std::string & command,
+DCC::cmdAuth(BotClient *from, const std::string & command,
   std::string parameters)
 {
   std::string authHandle = FirstWord(parameters);
   std::string handle;
   UserFlags flags;
 
-  if (Config::Auth(authHandle, this->UserHost, parameters, flags,
+  if (Config::Auth(authHandle, this->_userhost, parameters, flags,
     handle))
   {
-    this->client->handle(handle);
-    this->client->flags(flags);
-    this->setTimeout(0);
+    this->handle(handle);
+    this->flags(flags);
+    this->_sock.setTimeout(0);
     this->send("*** Authorization granted!");
 
-    std::string notice(this->client->handle() + " (" + this->UserHost +
+    std::string notice(this->handle() + " (" + this->userhost() +
       ") has been authorized");
-    ::SendAll(notice, UserFlags::AUTHED, WatchSet(), this->client);
+    ::SendAll(notice, UserFlags::AUTHED, WatchSet(), this);
     Log::Write(notice);
 
     this->loadConfig();
@@ -258,15 +265,15 @@ DCC::cmdAuth(BotClient::ptr from, const std::string & command,
   else
   {
     this->send("*** Authorization denied!");
-    ::SendAll(this->UserHost + " has failed authorization!", UserFlags::AUTHED,
-      WatchSet(), this->client);
-    Log::Write(this->UserHost + " has failed authorization!");
+    ::SendAll(this->userhost() + " has failed authorization!",
+      UserFlags::AUTHED, WatchSet(), this);
+    Log::Write(this->userhost() + " has failed authorization!");
   }
 }
 
 
 void
-DCC::cmdQuit(BotClient::ptr from, const std::string & command,
+DCC::cmdQuit(BotClient *from, const std::string & command,
   std::string parameters)
 {
   throw DCC::quit("*** Client issued QUIT command.");
@@ -278,13 +285,13 @@ DCC::cmdQuit(BotClient::ptr from, const std::string & command,
 // Handles any text which should be interpretted as chatter.
 //
 void
-DCC::cmdChat(BotClient::ptr from, const std::string & command,
+DCC::cmdChat(BotClient *from, const std::string & command,
   std::string parameters)
 {
   if (from->flags().has(UserFlags::AUTHED) ||
     vars[VAR_UNAUTHED_MAY_CHAT]->getBool())
   {
-    if (this->echoMyChatter)
+    if (this->_echoMyChatter)
     {
       clients.sendChat(from->handleAndBot(), parameters);
     }
@@ -308,23 +315,21 @@ DCC::cmdChat(BotClient::ptr from, const std::string & command,
 void
 DCC::motd(void)
 {
-  StrList output;
-  ::motd(output);
-  this->send(output);
+  ::motd(this);
 }
 
 
-// getFlags()
+// humanReadableFlags()
 //
 // Returns a fixed length string containing the user's flags
 //
 std::string
-DCC::getFlags(void) const
+DCC::humanReadableFlags(void) const
 {
   std::string temp = "";
   if (this->isAuthed())
   {
-    UserFlags flags = this->client->flags();
+    UserFlags flags = this->flags();
 
     if (flags.has(UserFlags::CHANOP)) temp += "C"; else temp += " ";
     if (flags.has(UserFlags::DLINE)) temp += "D"; else temp += " ";
@@ -346,13 +351,22 @@ DCC::getFlags(void) const
 
 
 void
+DCC::send(const std::string & message)
+{
+  if (this->isConnected())
+  {
+    this->_sock.write(message + '\n');
+  }
+}
+
+
+void
 DCC::send(const std::string & message, const UserFlags flags,
   const WatchSet & watches)
 {
-  if (this->isConnected() &&
-    ((flags == UserFlags::NONE) || (flags == (this->client->flags() & flags))))
+  if ((flags == UserFlags::NONE()) || (flags == (this->flags() & flags)))
   {
-    if (!this->watches.has(watches))
+    if (!this->_watches.has(watches))
     {
 #ifdef DCC_DEBUG
       std::cout << "DCC client not watching this type of message" << std::endl;
@@ -363,7 +377,7 @@ DCC::send(const std::string & message, const UserFlags flags,
 #ifdef DCC_DEBUG
     std::cout << "DCC << " << message << std::endl;
 #endif
-    this->write(message + "\n");
+    this->send(message);
   }
   else
   {
@@ -375,44 +389,79 @@ DCC::send(const std::string & message, const UserFlags flags,
 }
 
 
-// send(strings, flags, watches)
-//
-// Sends a list of strings to the DCC connection
-//
 void
-DCC::send(StrList & messages, const UserFlags flags, const WatchSet & watches)
+DCC::who(BotClient * client) const
 {
-  for (StrList::iterator pos = messages.begin(); pos != messages.end(); ++pos)
+  std::string text(this->humanReadableFlags());
+
+  text += ' ';
+  text += this->handle();
+  text += " (";
+  text += this->userhost();
+
+  if (this->isConnected())
   {
-    this->send((*pos), flags, watches);
+      text += ") ";
+      text += IntToStr(this->idleTime());
   }
+  else
+  {
+      text += ") -connecting-";
+  }
+
+  client->send(text);
+}
+
+
+bool
+DCC::statsP(StrList & output) const
+{
+  bool countMe = false;
+
+  if (this->isConnected() && this->isOper())
+  {
+    std::string notice(this->handle());
+
+    if (vars[VAR_STATSP_SHOW_USERHOST]->getBool())
+    {
+      notice += " (";
+      notice += this->userhost();
+      notice += ')';
+    }
+    if (vars[VAR_STATSP_SHOW_IDLE]->getBool())
+    {
+      notice += " Idle: ";
+      notice += IntToStr(this->idleTime());
+    }
+
+    output.push_back(notice);
+    countMe = true;
+  }
+
+  return countMe;
 }
 
 
 void
-DCC::cmdWatch(BotClient::ptr from, const std::string & command,
+DCC::cmdWatch(BotClient *from, const std::string & command,
   std::string parameters)
 {
   if (parameters == "")
   {
-    from->send("Watching: " + WatchSet::getWatchNames(this->watches, false));
+    from->send("Watching: " + WatchSet::getWatchNames(this->_watches, false));
   }
   else
   {
-    StrList output;
+    this->_watches.set(from, parameters);
 
-    this->watches.set(output, parameters);
-
-    from->send(output);
-
-    userConfig->setWatches(this->client->handle(),
-      WatchSet::getWatchNames(this->watches, true));
+    userConfig->setWatches(this->handle(),
+      WatchSet::getWatchNames(this->_watches, true));
   }
 }
 
 
 void
-DCC::cmdEcho(BotClient::ptr from, const std::string & command,
+DCC::cmdEcho(BotClient *from, const std::string & command,
   std::string parameters)
 {
   std::string parm = UpCase(FirstWord(parameters));
@@ -422,24 +471,24 @@ DCC::cmdEcho(BotClient::ptr from, const std::string & command,
     if (parm == "")
     {
       this->send(std::string("*** ECHO is ") +
-        (this->echoMyChatter ? "ON" : "OFF"));
+        (this->_echoMyChatter ? "ON" : "OFF"));
     }
     else if (parm == "ON")
     {
-      this->echoMyChatter = true;
+      this->_echoMyChatter = true;
       this->send("*** ECHO is now ON.");
       if (this->isAuthed())
       {
-        userConfig->setEcho(this->client->handle(), true);
+        userConfig->setEcho(this->handle(), true);
       }
     }
     else if (parm == "OFF")
     {
-      this->echoMyChatter = false;
+      this->_echoMyChatter = false;
       this->send("*** ECHO is now OFF.");
       if (this->isAuthed())
       {
-        userConfig->setEcho(this->client->handle(), false);
+        userConfig->setEcho(this->handle(), false);
       }
     }
     else
@@ -459,7 +508,7 @@ DCC::loadConfig(void)
 {
   try
   {
-    this->echoMyChatter = userConfig->getEcho(this->client->handle());
+    this->_echoMyChatter = userConfig->getEcho(this->handle());
   }
   catch (OOMon::norecord_error & e)
   {
@@ -472,8 +521,7 @@ DCC::loadConfig(void)
 
   try
   {
-    StrList output;
-    this->watches.set(output, userConfig->getWatches(this->client->handle()));
+    this->_watches.set(this, userConfig->getWatches(this->handle()), false);
   }
   catch (OOMon::norecord_error & e)
   {
@@ -487,7 +535,7 @@ DCC::loadConfig(void)
 
 
 void
-DCC::cmdHelp(BotClient::ptr from, const std::string & command,
+DCC::cmdHelp(BotClient *from, const std::string & command,
   std::string parameters)
 {
   std::string topic;
@@ -501,21 +549,13 @@ DCC::cmdHelp(BotClient::ptr from, const std::string & command,
     topic = parameters;
   }
 
-  StrList output = Help::getHelp(topic);
 
-  if (output.empty())
-  {
-    from->send("Help can be read at http://oomon.sourceforge.net/");
-  }
-  else
-  {
-    from->send(output);
-  }
+  Help::getHelp(from, topic);
 }
 
 
 void
-DCC::cmdLocops(BotClient::ptr from, const std::string & command,
+DCC::cmdLocops(BotClient *from, const std::string & command,
   std::string parameters)
 {
   if (!parameters.empty())

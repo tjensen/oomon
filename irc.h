@@ -91,15 +91,15 @@ public:
   void reloadKlines(const std::string &);
   void reloadDlines(void);
   void reloadDlines(const std::string &);
-  void findK(StrList &, const Pattern *, const bool count = false,
-    const bool searchPerms = true, const bool searchTemps = true,
-    const bool searchReason = false) const;
+  void findK(class BotClient * client, const Pattern *,
+    const bool count = false, const bool searchPerms = true,
+    const bool searchTemps = true, const bool searchReason = false) const;
   int findAndRemoveK(const std::string & from, const Pattern *userhost,
     const bool searchPerms = true, const bool searchTemps = true,
     const bool searchReason = false);
-  void findD(StrList &, const Pattern *, const bool count = false,
-    const bool searchPerms = true, const bool searchTemps = true,
-    const bool searchReason = false) const;
+  void findD(class BotClient * client, const Pattern *,
+    const bool count = false, const bool searchPerms = true,
+    const bool searchTemps = true, const bool searchReason = false) const;
   int findAndRemoveD(const std::string & from, const Pattern *userhost,
     const bool searchPerms = true, const bool searchTemps = true,
     const bool searchReason = false);
@@ -110,9 +110,9 @@ public:
 
   void checkUserDelta(void);
 
-  void status(StrList & output) const;
+  void status(class BotClient * client) const;
 
-  virtual bool onConnect();
+  bool onConnect(void);
 
   char upCase(const char c) const;
   std::string upCase(const std::string & text) const;
@@ -123,7 +123,7 @@ public:
   void onServerNotice(const std::string & text);
 
 protected:
-  virtual bool onRead(std::string text);
+  bool onRead(std::string text);
 
   void addServerNoticeParser(const std::string & pattern,
     const ParserFunction func);

@@ -32,7 +32,7 @@
 #include "oomon.h"
 #include "strtype"
 #include "botexcept.h"
-#include "botclient.h"
+#include "userflags.h"
 #include "util.h"
 
 
@@ -57,10 +57,10 @@ public:
     throw CommandParser::exception("*** Syntax: ." + command + " " + args);
   }
 
-  void parse(BotClient::ptr from, const std::string & command,
+  void parse(class BotClient *from, const std::string & command,
     const std::string & parameters);
 
-  typedef boost::function<void (BotClient::ptr, const std::string &,
+  typedef boost::function<void (class BotClient *, const std::string &,
     std::string)> CommandFunction;
 
   enum { NONE = 0, EXACT_ONLY = 1 } Option;
@@ -68,7 +68,7 @@ public:
 private:
   struct Command
   {
-    Command(const std::string & _name, const UserFlags _flags,
+    Command(const std::string & _name, const class UserFlags _flags,
       const int _options, CommandParser::CommandFunction _func)
       : name(DownCase(_name)), flags(_flags), func(_func)
     {
@@ -114,90 +114,87 @@ private:
 
 public:
   void addCommand(const std::string & command, 
-    CommandParser::CommandFunction func, const UserFlags flags,
+    CommandParser::CommandFunction func, const class UserFlags flags,
     const int options = NONE);
 
 private:
   void addCommand(const std::string & command,
-    void (CommandParser::*)(BotClient::ptr from, const std::string & command,
-    std::string parameters), const UserFlags flags, const int options = NONE);
+    void (CommandParser::*)(class BotClient *from, const std::string & command,
+    std::string parameters), const class UserFlags flags,
+    const int options = NONE);
 
-  void cmdWho(BotClient::ptr from, const std::string & command,
+  void cmdWho(class BotClient *from, const std::string & command,
     std::string parameters);
-  void cmdLinks(BotClient::ptr from, const std::string & command,
+  void cmdLinks(class BotClient *from, const std::string & command,
     std::string parameters);
-  void cmdMotd(BotClient::ptr from, const std::string & command,
+  void cmdMotd(class BotClient *from, const std::string & command,
     std::string parameters);
-  void cmdStatus(BotClient::ptr from, const std::string & command,
-    std::string parameters);
-
-  void cmdJoin(BotClient::ptr from, const std::string & command,
-    std::string parameters);
-  void cmdOp(BotClient::ptr from, const std::string & command,
-    std::string parameters);
-  void cmdPart(BotClient::ptr from, const std::string & command,
+  void cmdStatus(class BotClient *from, const std::string & command,
     std::string parameters);
 
-  void cmdKill(BotClient::ptr from, const std::string & command,
+  void cmdJoin(class BotClient *from, const std::string & command,
     std::string parameters);
-  void cmdKilllist(BotClient::ptr from, const std::string & command,
+  void cmdOp(class BotClient *from, const std::string & command,
     std::string parameters);
-  void cmdKillnfind(BotClient::ptr from, const std::string & command,
-    std::string parameters);
-  void cmdReload(BotClient::ptr from, const std::string & command,
-    std::string parameters);
-  void cmdTrap(BotClient::ptr from, const std::string & command,
-    std::string parameters);
-  void cmdSet(BotClient::ptr from, const std::string & command,
-    std::string parameters);
-  void cmdNfind(BotClient::ptr from, const std::string & command,
-    std::string parameters);
-  void cmdList(BotClient::ptr from, const std::string & command,
-    std::string parameters);
-  void cmdGlist(BotClient::ptr from, const std::string & command,
-    std::string parameters);
-  void cmdFindk(BotClient::ptr from, const std::string & command,
-    std::string parameters);
-  void cmdFindd(BotClient::ptr from, const std::string & command,
-    std::string parameters);
-  void cmdClass(BotClient::ptr from, const std::string & command,
-    std::string parameters);
-  void cmdDomains(BotClient::ptr from, const std::string & command,
-    std::string parameters);
-  void cmdMulti(BotClient::ptr from, const std::string & command,
-    std::string parameters);
-  void cmdClones(BotClient::ptr from, const std::string & command,
-    std::string parameters);
-  void cmdSeedrand(BotClient::ptr from, const std::string & command,
+  void cmdPart(class BotClient *from, const std::string & command,
     std::string parameters);
 
-  void cmdKline(BotClient::ptr from, const std::string & command,
+  void cmdKill(class BotClient *from, const std::string & command,
     std::string parameters);
-  void cmdUnkline(BotClient::ptr from, const std::string & command,
+  void cmdKilllist(class BotClient *from, const std::string & command,
+    std::string parameters);
+  void cmdKillnfind(class BotClient *from, const std::string & command,
+    std::string parameters);
+  void cmdReload(class BotClient *from, const std::string & command,
+    std::string parameters);
+  void cmdTrap(class BotClient *from, const std::string & command,
+    std::string parameters);
+  void cmdSet(class BotClient *from, const std::string & command,
+    std::string parameters);
+  void cmdNfind(class BotClient *from, const std::string & command,
+    std::string parameters);
+  void cmdList(class BotClient *from, const std::string & command,
+    std::string parameters);
+  void cmdGlist(class BotClient *from, const std::string & command,
+    std::string parameters);
+  void cmdFindk(class BotClient *from, const std::string & command,
+    std::string parameters);
+  void cmdFindd(class BotClient *from, const std::string & command,
+    std::string parameters);
+  void cmdClass(class BotClient *from, const std::string & command,
+    std::string parameters);
+  void cmdDomains(class BotClient *from, const std::string & command,
+    std::string parameters);
+  void cmdMulti(class BotClient *from, const std::string & command,
+    std::string parameters);
+  void cmdClones(class BotClient *from, const std::string & command,
+    std::string parameters);
+  void cmdSeedrand(class BotClient *from, const std::string & command,
     std::string parameters);
 
-  void cmdDline(BotClient::ptr from, const std::string & command,
+  void cmdKline(class BotClient *from, const std::string & command,
     std::string parameters);
-  void cmdUndline(BotClient::ptr from, const std::string & command,
+  void cmdUnkline(class BotClient *from, const std::string & command,
     std::string parameters);
 
-  void cmdDie(BotClient::ptr from, const std::string & command,
+  void cmdDline(class BotClient *from, const std::string & command,
     std::string parameters);
-  void cmdConn(BotClient::ptr from, const std::string & command,
+  void cmdUndline(class BotClient *from, const std::string & command,
     std::string parameters);
-  void cmdDisconn(BotClient::ptr from, const std::string & command,
+
+  void cmdDie(class BotClient *from, const std::string & command,
     std::string parameters);
-  void cmdRaw(BotClient::ptr from, const std::string & command,
+  void cmdRaw(class BotClient *from, const std::string & command,
     std::string parameters);
-  void cmdSave(BotClient::ptr from, const std::string & command,
+  void cmdSave(class BotClient *from, const std::string & command,
     std::string parameters);
-  void cmdLoad(BotClient::ptr from, const std::string & command,
+  void cmdLoad(class BotClient *from, const std::string & command,
     std::string parameters);
-  void cmdSpamsub(BotClient::ptr from, const std::string & command,
+  void cmdSpamsub(class BotClient *from, const std::string & command,
     std::string parameters);
-  void cmdSpamunsub(BotClient::ptr from, const std::string & command,
+  void cmdSpamunsub(class BotClient *from, const std::string & command,
     std::string parameters);
-  void cmdTest(BotClient::ptr from, const std::string & command,
+  void cmdTest(class BotClient *from, const std::string & command,
     std::string parameters);
 };
 

@@ -42,7 +42,7 @@ public:
 
   bool onNotice(const std::string & notice);
 
-  void status(StrList & output) const;
+  void status(class BotClient * client) const;
 
 private:
   class JupeJoinEntry

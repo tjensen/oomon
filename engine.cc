@@ -764,8 +764,11 @@ onKillNotice(std::string text)
 
       ::SendAll(notice, UserFlags::OPER, WATCH_KILLS);
       Log::Write(notice);
+
+      return true;
     }
   }
+  return false;
 }
 
 
@@ -1053,53 +1056,53 @@ CheckProxy(const std::string & ip, const std::string & host,
 
 
 void
-status(StrList & output)
+status(BotClient * client)
 {
-  output.push_back("Nick changers: " + IntToStr(nickChanges.size()));
-  output.push_back("Connect flooders: " + IntToStr(connects.size()));
+  client->send("Nick changers: " + IntToStr(nickChanges.size()));
+  client->send("Connect flooders: " + IntToStr(connects.size()));
   if (vars[VAR_WATCH_LINKS_NOTICES]->getBool())
   {
-    output.push_back("Links lookers: " + IntToStr(linkLookers.size()));
+    client->send("Links lookers: " + IntToStr(linkLookers.size()));
   }
   if (vars[VAR_WATCH_TRACE_NOTICES]->getBool())
   {
-    output.push_back("Trace lookers: " + IntToStr(traceLookers.size()));
+    client->send("Trace lookers: " + IntToStr(traceLookers.size()));
   }
   if (vars[VAR_WATCH_MOTD_NOTICES]->getBool())
   {
-    output.push_back("Motd lookers: " + IntToStr(motdLookers.size()));
+    client->send("Motd lookers: " + IntToStr(motdLookers.size()));
   }
   if (vars[VAR_WATCH_INFO_NOTICES]->getBool())
   {
-    output.push_back("Info lookers: " + IntToStr(infoLookers.size()));
+    client->send("Info lookers: " + IntToStr(infoLookers.size()));
   }
   if (vars[VAR_WATCH_STATS_NOTICES]->getBool())
   {
-    output.push_back("Stats lookers: " + IntToStr(statsLookers.size()));
+    client->send("Stats lookers: " + IntToStr(statsLookers.size()));
   }
   if (vars[VAR_WATCH_FLOODER_NOTICES]->getBool())
   {
-    output.push_back("Possible flooders: " + IntToStr(possibleFlooders.size()));
+    client->send("Possible flooders: " + IntToStr(possibleFlooders.size()));
   }
   if (vars[VAR_WATCH_SPAMBOT_NOTICES]->getBool())
   {
-    output.push_back("Possible spambots: " + IntToStr(spambots.size()));
+    client->send("Possible spambots: " + IntToStr(spambots.size()));
   }
   if (vars[VAR_WATCH_TOOMANY_NOTICES]->getBool())
   {
-    output.push_back("Too many connections: " + IntToStr(tooManyConn.size()));
+    client->send("Too many connections: " + IntToStr(tooManyConn.size()));
   }
   if (vars[VAR_WATCH_OPERFAIL_NOTICES]->getBool())
   {
-    output.push_back("Oper fails: " + IntToStr(operfails.size()));
+    client->send("Oper fails: " + IntToStr(operfails.size()));
   }
 
   if (vars[VAR_WATCH_JUPE_NOTICES]->getBool())
   {
-    jupeJoiners.status(output);
+    jupeJoiners.status(client);
   }
 
-  output.push_back("Up Time: " + ::getUptime());
+  client->send("Up Time: " + ::getUptime());
 }
 
 

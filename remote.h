@@ -32,16 +32,15 @@
 #include "botclient.h"
 #include "cmdparser.h"
 
-class Remote : public BotSock
+class Remote : public BotClient
 {
 public:
-  Remote(void);
   Remote(const std::string & handle);
   Remote(BotSock *listener);
   virtual ~Remote(void);
 
   bool isConnectedTo(const std::string &) const;
-  void getLinks(StrList &, const std::string &) const;
+  void getLinks(class BotClient * client, const std::string &) const;
 
   std::string getHandle(void) const { return this->_handle; };
   std::string getHostname(void) const { return this->_hostname; };
@@ -59,44 +58,41 @@ public:
     return Remote::STAGE_READY == this->_stage;
   }
 
+  int sendBroadcast(const std::string & from, const std::string & text,
+    const std::string & flags, const std::string & watches);
+  int sendBroadcastPtr(const std::string & from, const Remote *skip,
+    const std::string & text, const std::string & flags,
+    const std::string & watches);
+  int sendBroadcastId(const std::string & from, const std::string & skipId,
+    const std::string & skipBot, const std::string & text,
+    const std::string & flags, const std::string & watches);
+
+  int sendNotice(const std::string & from, const std::string & skipId,
+    const std::string & skipBot, const std::string & text);
+
   int sendError(const std::string & text);
   int sendChat(const std::string & from, const std::string & text);
   int sendBotJoin(const std::string & oldnode, const std::string & newnode);
   int sendBotPart(const std::string & from, const std::string & node);
 
-  virtual bool onConnect(void);
+  bool onConnect(void);
+
+  virtual UserFlags flags(void) const;
+  virtual std::string handle(void) const;
+  virtual std::string bot(void) const;
+  virtual std::string id(void) const;
+  virtual void send(const std::string & text);
+
+  void setFD(fd_set & readset, fd_set & writeset) const
+    { this->_sock.setFD(readset, writeset); }
+  bool process(const fd_set & readset, const fd_set & writeset)
+    { return this->_sock.process(readset, writeset); }
+  bool isConnected(void) const { return this->_sock.isConnected(); }
+  bool connect(const std::string & hostname, BotSock::Port port)
+    { return this->_sock.connect(hostname, port); }
 
 protected:
-  virtual bool onRead(std::string text);
-
-  class Client : public BotClient
-  {
-  public:
-    Client(Remote *owner) : _owner(owner) { }
-    ~Client(void) { }
-
-    virtual void send(const std::string & text)
-    {
-      this->_owner->write(text + '\n');
-    }
-    virtual UserFlags flags(void) const { return this->_flags; }
-    virtual std::string handle(void) const { return this->_handle; }
-    virtual std::string bot(void) const { return this->_bot; }
-    virtual std::string id(void) const { return this->_id; }
-
-    void flags(const UserFlags f) { this->_flags = f; }
-    void handle(const std::string & h) { this->_handle = h; }
-    void bot(const std::string & h) { this->_bot = h; }
-    void id(const std::string & id) { this->_id = id; }
-
-  private:
-    Remote *_owner;
-    std::string _handle;
-    std::string _bot;
-    std::string _id;
-    UserFlags _flags;
-  };
-  typedef boost::shared_ptr<Client> ClientPtr;
+  bool onRead(std::string text);
 
 private:
   bool isAuthorized(void) const;
@@ -113,6 +109,9 @@ private:
   bool onBotJoin(const std::string & from, const std::string & node);
   bool onBotPart(const std::string & from, const std::string & node);
   bool onChat(const std::string & from, const std::string & text);
+  bool onCommand(const std::string & from, std::string text);
+  bool onBroadcast(const std::string & from, std::string text);
+  bool onNotice(const std::string & from, std::string text);
 
   static bool isCompatibleProtocolVersion(std::string text);
 
@@ -132,7 +131,13 @@ private:
   Stage _stage;
   bool _client;
   std::string _sendQ;
-  CommandParser parser;
+  CommandParser _parser;
+  BotSock _sock;
+  bool _targetEstablished;
+  std::string _clientHandle;
+  std::string _clientBot;
+  std::string _clientId;
+  UserFlags _clientFlags;
 
   static const std::string PROTOCOL_NAME;
   static const int PROTOCOL_VERSION_MAJOR, PROTOCOL_VERSION_MINOR;

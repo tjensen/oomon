@@ -25,8 +25,6 @@
 #include <string>
 #include <list>
 
-// OOMon Headers
-#include "strtype"
 
 struct BotLink
 {
@@ -63,7 +61,7 @@ public:
     return Name;
   }
 
-  void getLinks(StrList &, const std::string &) const;
+  void getLinks(class BotClient * client, const std::string &) const;
   void getBotList(BotLinkList &) const;
 };
 

@@ -74,9 +74,22 @@ static time_t startTime = 0;
 
 void
 SendAll(const std::string & message, const UserFlags flags,
-  const WatchSet & watches, const BotClient::ptr skip)
+  const WatchSet & watches, const BotClient * skip)
 {
   clients.sendAll(message, flags, watches, skip);
+
+  if ((0 == skip) || Same(skip->bot(), Config::GetNick()))
+  {
+    remotes.sendBroadcast(Config::GetNick(), message,
+      UserFlags::getNames(flags, ','),
+      WatchSet::getWatchNames(watches, false, ','));
+  }
+  else
+  {
+    remotes.sendBroadcastId(Config::GetNick(), skip->id(), skip->bot(), message,
+      UserFlags::getNames(flags, ','),
+      WatchSet::getWatchNames(watches, false, ','));
+  }
 }
 
 
@@ -112,11 +125,6 @@ gracefuldie(int sig)
 
   Log::Stop();
 
-  if (userConfig)
-  {
-    delete userConfig;
-  }
-
   exit(EXIT_NOERROR);
 }
 
@@ -134,9 +142,9 @@ reload()
 
 
 void
-ReloadConfig(const std::string & From)
+ReloadConfig(const std::string & from)
 {
-  ::SendAll("Reload CONFIG requested by " + From, UserFlags::OPER);
+  ::SendAll("Reload CONFIG requested by " + from, UserFlags::OPER);
   reload();
 }
 
@@ -231,7 +239,7 @@ process()
 // Writes the Message Of The Day
 //
 void
-motd(StrList & Output)
+motd(BotClient * client)
 {
   std::ifstream	motdfile;
   char		line[MAX_BUFF];
@@ -239,15 +247,16 @@ motd(StrList & Output)
   motdfile.open(Config::GetMOTD().c_str());
   if (!motdfile.fail())
   {
-    Output.push_back("Message Of The Day:");
-    while (motdfile.getline(line, MAX_BUFF-1)) {
-      Output.push_back(std::string(line));
+    client->send("Message Of The Day:");
+    while (motdfile.getline(line, MAX_BUFF - 1))
+    {
+      client->send(std::string(line));
     }
-    Output.push_back("End of MOTD");
+    client->send("End of MOTD");
   }
   else
   {
-    Output.push_back("No MOTD");
+    client->send("No MOTD");
   }
   motdfile.close();
 }
@@ -347,7 +356,7 @@ main(int argc, char **argv)
 
   try
   {
-    userConfig = new UserDB(Config::getUserDBFile());
+    userConfig.reset(new UserDB(Config::getUserDBFile()));
   }
   catch (OOMon::botdb_error & reason)
   {
@@ -398,11 +407,6 @@ main(int argc, char **argv)
 
   Log::Write("OOMon stopped");
   Log::Stop();
-
-  if (userConfig)
-  {
-    delete userConfig;
-  }
 
   return EXIT_NOERROR;
 }

@@ -34,6 +34,7 @@
 #include "vars.h"
 #include "userhash.h"
 #include "botclient.h"
+#include "config.h"
 
 
 JupeJoinList jupeJoiners;
@@ -177,8 +178,8 @@ JupeJoinList::onNotice(const std::string & notice)
 
 
 void
-JupeJoinList::status(StrList & output) const
+JupeJoinList::status(BotClient * client) const
 {
-  output.push_back("Juped channel joiners: " + IntToStr(this->list.size()));
+  client->send("Juped channel joiners: " + IntToStr(this->list.size()));
 }
 

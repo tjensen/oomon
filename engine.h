@@ -78,19 +78,8 @@ void CheckProxy(const std::string &, const std::string &, const std::string &,
 bool checkForSpoof(const std::string & nick, const std::string & user, 
   const std::string & host, const std::string & ip);
 
-void status(StrList & output);
+void status(class BotClient * client);
 
-
-#define REASON_CLONES	"Clones are prohibited"
-#define REASON_FLOODING	"Flooding is prohibited"
-#define REASON_BOTS	"Bots are prohibited"
-#define REASON_SPAM	"Spamming is prohibited"
-#define REASON_LINKS	"Links lookers are prohibited"
-#define REASON_TRACE	"TRACE flooding is prohibited"
-#define REASON_MOTD	"MOTD flooding is prohibited"
-#define REASON_INFO	"INFO flooding is prohibited"
-#define REASON_STATS	"STATS flooding is prohibited"
-#define REASON_PROXY	"Open Proxy"
 
 #endif /* __ENGINE_H__ */
 

@@ -117,8 +117,11 @@ CommandParser::CommandParser(void)
   // UserFlags::MASTER commands
   this->addCommand("DIE", &CommandParser::cmdDie, UserFlags::MASTER,
     EXACT_ONLY);
-  this->addCommand("CONN", &CommandParser::cmdConn, UserFlags::MASTER);
-  this->addCommand("DISCONN", &CommandParser::cmdDisconn, UserFlags::MASTER);
+  this->addCommand("CONN",
+    boost::bind(&RemoteList::cmdConn, &remotes, _1, _2, _3), UserFlags::MASTER);
+  this->addCommand("CONN",
+    boost::bind(&RemoteList::cmdDisconn, &remotes, _1, _2, _3),
+    UserFlags::MASTER);
   this->addCommand("RAW", &CommandParser::cmdRaw, UserFlags::MASTER,
     EXACT_ONLY);
   this->addCommand("SAVE", &CommandParser::cmdSave, UserFlags::MASTER);
@@ -142,16 +145,17 @@ CommandParser::addCommand(const std::string & command,
 
 void
 CommandParser::addCommand(const std::string & command,
-  void (CommandParser::*func)(BotClient::ptr from, const std::string & command,
+  void (CommandParser::*func)(BotClient * from, const std::string & command,
   std::string parameters), const UserFlags flags, const int options)
 {
-  this->commands.push_back(Command(command, flags, options,
-    boost::bind(func, this, _1, _2, _3)));
+  Command tmp(command, flags, options, boost::bind(func, this, _1, _2, _3));
+
+  this->commands.push_back(tmp);
 }
 
 
 void
-CommandParser::parse(const BotClient::ptr from, const std::string & command,
+CommandParser::parse(BotClient * from, const std::string & command,
   const std::string & parameters)
 {
   CommandVector::iterator cmd = std::find_if(this->commands.begin(),
@@ -193,55 +197,43 @@ CommandParser::parse(const BotClient::ptr from, const std::string & command,
 
 
 void
-CommandParser::cmdWho(BotClient::ptr from, const std::string & command,
+CommandParser::cmdWho(BotClient * from, const std::string & command,
   std::string parameters)
 {
-  StrList output;
-
-  clients.who(output);
-  from->send(output);
+  clients.who(from);
 }
 
 
 void
-CommandParser::cmdLinks(BotClient::ptr from, const std::string & command,
+CommandParser::cmdLinks(BotClient * from, const std::string & command,
   std::string parameters)
 {
-  StrList output;
-
-  remotes.getLinks(output);
-  from->send(output);
+  remotes.getLinks(from);
 }
 
 
 void
-CommandParser::cmdMotd(BotClient::ptr from, const std::string & command,
+CommandParser::cmdMotd(BotClient * from, const std::string & command,
   std::string parameters)
 {
-  StrList output;
-
-  ::motd(output);
-  from->send(output);
+  ::motd(from);
 }
 
 
 void
-CommandParser::cmdStatus(BotClient::ptr from, const std::string & command,
+CommandParser::cmdStatus(BotClient * from, const std::string & command,
   std::string parameters)
 {
-  StrList output;
-
-  users.status(output);
-  ::status(output);
-  server.status(output);
-  clients.status(output);
-  proxies.status(output);
-  from->send(output);
+  users.status(from);
+  ::status(from);
+  server.status(from);
+  clients.status(from);
+  proxies.status(from);
 }
 
 
 void
-CommandParser::cmdKline(BotClient::ptr from, const std::string & command,
+CommandParser::cmdKline(BotClient * from, const std::string & command,
   std::string parameters)
 {
   unsigned int minutes = vars[VAR_DEFAULT_KLINE_TIMEOUT]->getInt();
@@ -337,7 +329,7 @@ CommandParser::cmdKline(BotClient::ptr from, const std::string & command,
 
 
 void
-CommandParser::cmdUnkline(BotClient::ptr from, const std::string & command,
+CommandParser::cmdUnkline(BotClient * from, const std::string & command,
   std::string parameters)
 {
   std::string target = FirstWord(parameters);
@@ -356,7 +348,7 @@ CommandParser::cmdUnkline(BotClient::ptr from, const std::string & command,
 
 
 void
-CommandParser::cmdDline(BotClient::ptr from, const std::string & command,
+CommandParser::cmdDline(BotClient * from, const std::string & command,
   std::string parameters)
 {
   unsigned int minutes = vars[VAR_DEFAULT_DLINE_TIMEOUT]->getInt();
@@ -398,7 +390,7 @@ CommandParser::cmdDline(BotClient::ptr from, const std::string & command,
 
 
 void
-CommandParser::cmdUndline(BotClient::ptr from, const std::string & command,
+CommandParser::cmdUndline(BotClient * from, const std::string & command,
   std::string parameters)
 {
   std::string target = FirstWord(parameters);
@@ -417,7 +409,7 @@ CommandParser::cmdUndline(BotClient::ptr from, const std::string & command,
 
 
 void
-CommandParser::cmdJoin(BotClient::ptr from, const std::string & command,
+CommandParser::cmdJoin(BotClient * from, const std::string & command,
   std::string parameters)
 {
   std::string channel = FirstWord(parameters);
@@ -435,7 +427,7 @@ CommandParser::cmdJoin(BotClient::ptr from, const std::string & command,
 
 
 void
-CommandParser::cmdOp(BotClient::ptr from, const std::string & command,
+CommandParser::cmdOp(BotClient * from, const std::string & command,
   std::string parameters)
 {
   std::string channel = FirstWord(parameters);
@@ -453,7 +445,7 @@ CommandParser::cmdOp(BotClient::ptr from, const std::string & command,
 
 
 void
-CommandParser::cmdPart(BotClient::ptr from, const std::string & command,
+CommandParser::cmdPart(BotClient * from, const std::string & command,
   std::string parameters)
 {
   std::string channel = FirstWord(parameters);
@@ -470,7 +462,7 @@ CommandParser::cmdPart(BotClient::ptr from, const std::string & command,
 
 
 void
-CommandParser::cmdKill(BotClient::ptr from, const std::string & command,
+CommandParser::cmdKill(BotClient * from, const std::string & command,
   std::string parameters)
 {
   std::string nick = FirstWord(parameters);
@@ -488,7 +480,7 @@ CommandParser::cmdKill(BotClient::ptr from, const std::string & command,
 
 
 void
-CommandParser::cmdKilllist(BotClient::ptr from, const std::string & command,
+CommandParser::cmdKilllist(BotClient * from, const std::string & command,
   std::string parameters)
 {
   ArgList args("-r", "-class");
@@ -516,11 +508,11 @@ CommandParser::cmdKilllist(BotClient::ptr from, const std::string & command,
     {
       if (args.haveUnary("-r"))
       {
-        pattern = std::auto_ptr<Pattern>(new RegExPattern(mask));
+        pattern.reset(new RegExPattern(mask));
       }
       else
       {
-        pattern = std::auto_ptr<Pattern>(smartPattern(mask, false));
+        pattern.reset(smartPattern(mask, false));
       }
     }
     catch (OOMon::regex_error & e)
@@ -530,19 +522,18 @@ CommandParser::cmdKilllist(BotClient::ptr from, const std::string & command,
 
     try
     {
-      StrList output;
       if (parameters.empty())
       {
         ::SendAll("KILLLIST " + mask + " [" + from->handleAndBot() + "]",
           UserFlags::OPER, WATCH_KILLS, from);
-        users.listUsers(output, pattern.get(), className, UserHash::LIST_KILL,
+        users.listUsers(from, pattern.get(), className, UserHash::LIST_KILL,
           from->handleAndBot(), vars[VAR_KILLLIST_REASON]->getString());
       }
       else
       {
         ::SendAll("KILLLIST " + mask + " (" + parameters + ") [" +
           from->handleAndBot() + "]", UserFlags::OPER, WATCH_KILLS, from);
-        users.listUsers(output, pattern.get(), className, UserHash::LIST_KILL,
+        users.listUsers(from, pattern.get(), className, UserHash::LIST_KILL,
 	  from->handleAndBot(), parameters);
       }
     }
@@ -555,7 +546,7 @@ CommandParser::cmdKilllist(BotClient::ptr from, const std::string & command,
 
 
 void
-CommandParser::cmdKillnfind(BotClient::ptr from, const std::string & command,
+CommandParser::cmdKillnfind(BotClient * from, const std::string & command,
   std::string parameters)
 {
   ArgList args("-r", "-class");
@@ -583,11 +574,11 @@ CommandParser::cmdKillnfind(BotClient::ptr from, const std::string & command,
     {
       if (args.haveUnary("-r"))
       {
-        pattern = std::auto_ptr<Pattern>(new RegExPattern(mask));
+        pattern.reset(new RegExPattern(mask));
       }
       else
       {
-        pattern = std::auto_ptr<Pattern>(smartPattern(mask, true));
+        pattern.reset(smartPattern(mask, true));
       }
     }
     catch (OOMon::regex_error & e)
@@ -597,19 +588,18 @@ CommandParser::cmdKillnfind(BotClient::ptr from, const std::string & command,
 
     try
     {
-      StrList output;
       if (parameters.empty())
       {
         ::SendAll("KILLNFIND " + mask + " [" + from->handleAndBot() + "]",
           UserFlags::OPER, WATCH_KILLS, from);
-        users.listNicks(output, pattern.get(), className, UserHash::LIST_KILL,
+        users.listNicks(from, pattern.get(), className, UserHash::LIST_KILL,
           from->handleAndBot(), vars[VAR_KILLNFIND_REASON]->getString());
       }
       else
       {
         ::SendAll("KILLNFIND " + mask + " (" + parameters + ") [" +
           from->handleAndBot() + "]", UserFlags::OPER, WATCH_KILLS, from);
-        users.listNicks(output, pattern.get(), className, UserHash::LIST_KILL,
+        users.listNicks(from, pattern.get(), className, UserHash::LIST_KILL,
 	  from->handleAndBot(), parameters);
       }
     }
@@ -622,7 +612,7 @@ CommandParser::cmdKillnfind(BotClient::ptr from, const std::string & command,
 
 
 void
-CommandParser::cmdReload(BotClient::ptr from, const std::string & command,
+CommandParser::cmdReload(BotClient * from, const std::string & command,
   std::string parameters)
 {
   if (command == "trace")
@@ -662,18 +652,15 @@ CommandParser::cmdReload(BotClient::ptr from, const std::string & command,
 
 
 void
-CommandParser::cmdTrap(BotClient::ptr from, const std::string & command,
+CommandParser::cmdTrap(BotClient * from, const std::string & command,
   std::string parameters)
 {
-  StrList output;
-  TrapList::cmd(output, parameters, from->flags().has(UserFlags::MASTER),
-    from->handleAndBot());
-  from->send(output);
+  TrapList::cmd(from, parameters);
 }
 
 
 void
-CommandParser::cmdSet(BotClient::ptr from, const std::string & command,
+CommandParser::cmdSet(BotClient * from, const std::string & command,
   std::string parameters)
 {
   std::string varName = FirstWord(parameters);
@@ -687,12 +674,7 @@ CommandParser::cmdSet(BotClient::ptr from, const std::string & command,
 
   if (parameters.empty() && !clearVar)
   {
-    StrList output;
-    if (vars.get(output, varName) > 0)
-    {
-      from->send(output);
-    }
-    else
+    if (!vars.get(from, varName) > 0)
     {
       from->send("No such variable \"" + varName + "\"");
     }
@@ -716,7 +698,7 @@ CommandParser::cmdSet(BotClient::ptr from, const std::string & command,
 
 
 void
-CommandParser::cmdNfind(BotClient::ptr from, const std::string & command,
+CommandParser::cmdNfind(BotClient * from, const std::string & command,
   std::string parameters)
 {
   ArgList args("-r -count", "-class");
@@ -742,17 +724,15 @@ CommandParser::cmdNfind(BotClient::ptr from, const std::string & command,
 
       if (args.haveUnary("-r"))
       {
-        pattern = std::auto_ptr<Pattern>(new RegExPattern(parameters));
+        pattern.reset(new RegExPattern(parameters));
       }
       else
       {
-        pattern = std::auto_ptr<Pattern>(smartPattern(parameters, true));
+        pattern.reset(smartPattern(parameters, true));
       }
 
-      StrList output;
-      users.listNicks(output, pattern.get(), className,
+      users.listNicks(from, pattern.get(), className,
         args.haveUnary("-count") ? UserHash::LIST_COUNT : UserHash::LIST_VIEW);
-      from->send(output);
     }
     catch (OOMon::regex_error & e)
     {
@@ -763,7 +743,7 @@ CommandParser::cmdNfind(BotClient::ptr from, const std::string & command,
 
 
 void
-CommandParser::cmdList(BotClient::ptr from, const std::string & command,
+CommandParser::cmdList(BotClient * from, const std::string & command,
   std::string parameters)
 {
   ArgList args("-r -count", "-class");
@@ -789,17 +769,15 @@ CommandParser::cmdList(BotClient::ptr from, const std::string & command,
 
       if (args.haveUnary("-r"))
       {
-        pattern = std::auto_ptr<Pattern>(new RegExPattern(parameters));
+        pattern.reset(new RegExPattern(parameters));
       }
       else
       {
-        pattern = std::auto_ptr<Pattern>(smartPattern(parameters, false));
+        pattern.reset(smartPattern(parameters, false));
       }
 
-      StrList output;
-      users.listUsers(output, pattern.get(), className,
+      users.listUsers(from, pattern.get(), className,
         args.haveUnary("-count") ? UserHash::LIST_COUNT : UserHash::LIST_VIEW);
-      from->send(output);
     }
     catch (OOMon::regex_error & e)
     {
@@ -810,7 +788,7 @@ CommandParser::cmdList(BotClient::ptr from, const std::string & command,
 
 
 void
-CommandParser::cmdGlist(BotClient::ptr from, const std::string & command,
+CommandParser::cmdGlist(BotClient * from, const std::string & command,
   std::string parameters)
 {
   ArgList args("-r -count", "-class");
@@ -836,17 +814,15 @@ CommandParser::cmdGlist(BotClient::ptr from, const std::string & command,
 
       if (args.haveUnary("-r"))
       {
-        pattern = std::auto_ptr<Pattern>(new RegExPattern(parameters));
+        pattern.reset(new RegExPattern(parameters));
       }
       else
       {
-        pattern = std::auto_ptr<Pattern>(smartPattern(parameters, false));
+        pattern.reset(smartPattern(parameters, false));
       }
 
-      StrList output;
-      users.listGecos(output, pattern.get(), className,
+      users.listGecos(from, pattern.get(), className,
 	args.haveUnary("-count"));
-      from->send(output);
     }
     catch (OOMon::regex_error & e)
     {
@@ -857,7 +833,7 @@ CommandParser::cmdGlist(BotClient::ptr from, const std::string & command,
 
 
 void
-CommandParser::cmdFindk(BotClient::ptr from, const std::string & command,
+CommandParser::cmdFindk(BotClient * from, const std::string & command,
   std::string parameters)
 {
   ArgList args("-r -count -remove -temp -perm -reason", "");
@@ -900,11 +876,11 @@ CommandParser::cmdFindk(BotClient::ptr from, const std::string & command,
 
       if (args.haveUnary("-r"))
       {
-        pattern = std::auto_ptr<Pattern>(new RegExPattern(parameters));
+        pattern.reset(new RegExPattern(parameters));
       }
       else
       {
-        pattern = std::auto_ptr<Pattern>(smartPattern(parameters, false));
+        pattern.reset(smartPattern(parameters, false));
       }
 
       if (args.haveUnary("-remove"))
@@ -915,10 +891,8 @@ CommandParser::cmdFindk(BotClient::ptr from, const std::string & command,
       }
       else
       {
-        StrList output;
-        server.findK(output, pattern.get(), args.haveUnary("-count"),
+        server.findK(from, pattern.get(), args.haveUnary("-count"),
 	  searchPerms, searchTemps, searchReason);
-        from->send(output);
       }
     }
     catch (OOMon::regex_error & e)
@@ -930,7 +904,7 @@ CommandParser::cmdFindk(BotClient::ptr from, const std::string & command,
 
 
 void
-CommandParser::cmdFindd(BotClient::ptr from, const std::string & command,
+CommandParser::cmdFindd(BotClient * from, const std::string & command,
   std::string parameters)
 {
   ArgList args("-r -count -remove -temp -perm -reason", "");
@@ -973,11 +947,11 @@ CommandParser::cmdFindd(BotClient::ptr from, const std::string & command,
 
       if (args.haveUnary("-r"))
       {
-        pattern = std::auto_ptr<Pattern>(new RegExPattern(parameters));
+        pattern.reset(new RegExPattern(parameters));
       }
       else
       {
-        pattern = std::auto_ptr<Pattern>(smartPattern(parameters, false));
+        pattern.reset(smartPattern(parameters, false));
       }
 
       if (args.haveUnary("-remove"))
@@ -988,10 +962,8 @@ CommandParser::cmdFindd(BotClient::ptr from, const std::string & command,
       }
       else
       {
-        StrList output;
-        server.findD(output, pattern.get(), args.haveUnary("-count"),
+        server.findD(from, pattern.get(), args.haveUnary("-count"),
 	  searchPerms, searchTemps, searchReason);
-        from->send(output);
       }
     }
     catch (OOMon::regex_error & e)
@@ -1003,19 +975,17 @@ CommandParser::cmdFindd(BotClient::ptr from, const std::string & command,
 
 
 void
-CommandParser::cmdClass(BotClient::ptr from, const std::string & command,
+CommandParser::cmdClass(BotClient * from, const std::string & command,
   std::string parameters)
 {
   std::string className = FirstWord(parameters);
 
-  StrList output;
-  users.reportClasses(output, className);
-  from->send(output);
+  users.reportClasses(from, className);
 }
 
 
 void
-CommandParser::cmdDomains(BotClient::ptr from, const std::string & command,
+CommandParser::cmdDomains(BotClient * from, const std::string & command,
   std::string parameters)
 {
   std::string min_str = FirstWord(parameters);
@@ -1028,16 +998,14 @@ CommandParser::cmdDomains(BotClient::ptr from, const std::string & command,
 
   if (min >= 1)
   {
-    StrList output;
     if (command == "domains")
     {
-      users.reportDomains(output, min);
+      users.reportDomains(from, min);
     }
     else if (command == "nets")
     {
-      users.reportNets(output, min);
+      users.reportNets(from, min);
     }
-    from->send(output);
   }
   else
   {
@@ -1047,45 +1015,41 @@ CommandParser::cmdDomains(BotClient::ptr from, const std::string & command,
 
 
 void
-CommandParser::cmdMulti(BotClient::ptr from, const std::string & command,
+CommandParser::cmdMulti(BotClient * from, const std::string & command,
   std::string parameters)
 {
   std::string min_str = FirstWord(parameters);
   int min = atoi(min_str.c_str());
 
-  StrList output;
   if ((command == "multi") || (command == "bots"))
   {
-    users.reportMulti(output, min);
+    users.reportMulti(from, min);
   }
   else if (command == "hmulti")
   {
-    users.reportHMulti(output, min);
+    users.reportHMulti(from, min);
   }
   else if (command == "umulti")
   {
-    users.reportUMulti(output, min);
+    users.reportUMulti(from, min);
   }
   else if ((command == "vmulti") || (command == "vbots"))
   {
-    users.reportVMulti(output, min);
+    users.reportVMulti(from, min);
   }
-  from->send(output);
 }
 
 
 void
-CommandParser::cmdClones(BotClient::ptr from, const std::string & command,
+CommandParser::cmdClones(BotClient * from, const std::string & command,
   std::string parameters)
 {
-  StrList output;
-  users.reportClones(output);
-  from->send(output);
+  users.reportClones(from);
 }
 
 
 void
-CommandParser::cmdSeedrand(BotClient::ptr from, const std::string & command,
+CommandParser::cmdSeedrand(BotClient * from, const std::string & command,
   std::string parameters)
 {
   ArgList args("-r -count", "-min");
@@ -1103,27 +1067,25 @@ CommandParser::cmdSeedrand(BotClient::ptr from, const std::string & command,
     threshhold = atoi(parm.c_str());
   }
 
-  StrList output;
   try
   {
     std::auto_ptr<Pattern> pattern;
 
     if (parameters.empty())
     {
-      pattern = std::auto_ptr<Pattern>(new NickClusterPattern("*"));
+      pattern.reset(new NickClusterPattern("*"));
     }
     else if (args.haveUnary("-r"))
     {
-      pattern = std::auto_ptr<Pattern>(new RegExPattern(parameters));
+      pattern.reset(new RegExPattern(parameters));
     }
     else
     {
-      pattern = std::auto_ptr<Pattern>(smartPattern(parameters, true));
+      pattern.reset(smartPattern(parameters, true));
     }
 
-    users.reportSeedrand(output, pattern.get(), threshhold,
+    users.reportSeedrand(from, pattern.get(), threshhold,
       args.haveUnary("-count"));
-    from->send(output);
   }
   catch (OOMon::regex_error & e)
   {
@@ -1133,14 +1095,14 @@ CommandParser::cmdSeedrand(BotClient::ptr from, const std::string & command,
 
 
 void
-CommandParser::cmdDie(BotClient::ptr from, const std::string & command,
+CommandParser::cmdDie(BotClient * from, const std::string & command,
   std::string parameters)
 {
   from->send("As you wish...");
   if (!parameters.empty())
   {
     ::SendAll(from->handleAndBot() + " says I have to die now... (" +
-      parameters + ")", UserFlags::NONE, WatchSet(), from);
+      parameters + ")", UserFlags::NONE(), WatchSet(), from);
     Log::Write("DIE requested by " + from->handleAndBot() + " (" +
       parameters + ")");
     server.quit(parameters);
@@ -1148,7 +1110,7 @@ CommandParser::cmdDie(BotClient::ptr from, const std::string & command,
   else
   {
     ::SendAll(from->handleAndBot() + " says I have to die now...",
-      UserFlags::NONE, WatchSet(), from);
+      UserFlags::NONE(), WatchSet(), from);
     Log::Write("DIE requested by " + from->handleAndBot());
   }
   ::gracefuldie(SIGTERM); 
@@ -1156,39 +1118,23 @@ CommandParser::cmdDie(BotClient::ptr from, const std::string & command,
 
 
 void
-CommandParser::cmdConn(BotClient::ptr from, const std::string & command,
+CommandParser::cmdConn(BotClient * from, const std::string & command,
   std::string parameters)
 {
-  std::string bot = FirstWord(parameters);
-  if (bot.empty())
-  {
-    from->send("*** Please specify the bot to connect");
-  }
-  else
-  {
-    remotes.conn(from->handleAndBot(), bot);
-  }
+  remotes.cmdConn(from, command, parameters);
 }
 
 
 void
-CommandParser::cmdDisconn(BotClient::ptr from, const std::string & command,
+CommandParser::cmdDisconn(BotClient * from, const std::string & command,
   std::string parameters)
 {
-  std::string bot = FirstWord(parameters);
-  if (bot.empty())
-  {
-    from->send("*** Please specify the bot to disconnect");
-  }
-  else
-  {
-    remotes.disconn(from->handleAndBot(), bot);
-  }
+  remotes.cmdDisconn(from, command, parameters);
 }
 
 
 void
-CommandParser::cmdRaw(BotClient::ptr from, const std::string & command,
+CommandParser::cmdRaw(BotClient * from, const std::string & command,
   std::string parameters)
 {
   Log::Write("RAW by " + from->handleAndBot() + ": " + parameters);
@@ -1197,7 +1143,7 @@ CommandParser::cmdRaw(BotClient::ptr from, const std::string & command,
 
 
 void
-CommandParser::cmdSave(BotClient::ptr from, const std::string & command,
+CommandParser::cmdSave(BotClient * from, const std::string & command,
   std::string parameters)
 {
   if (Config::saveSettings())
@@ -1214,7 +1160,7 @@ CommandParser::cmdSave(BotClient::ptr from, const std::string & command,
 
 
 void
-CommandParser::cmdLoad(BotClient::ptr from, const std::string & command,
+CommandParser::cmdLoad(BotClient * from, const std::string & command,
   std::string parameters)
 {
   if (Config::loadSettings())
@@ -1231,7 +1177,7 @@ CommandParser::cmdLoad(BotClient::ptr from, const std::string & command,
 
 
 void
-CommandParser::cmdSpamsub(BotClient::ptr from, const std::string & command,
+CommandParser::cmdSpamsub(BotClient * from, const std::string & command,
   std::string parameters)
 {
   std::string notice("*** " + from->handleAndBot() +
@@ -1245,7 +1191,7 @@ CommandParser::cmdSpamsub(BotClient::ptr from, const std::string & command,
 
 
 void
-CommandParser::cmdSpamunsub(BotClient::ptr from, const std::string & command,
+CommandParser::cmdSpamunsub(BotClient * from, const std::string & command,
   std::string parameters)
 {
   std::string notice("*** " + from->handleAndBot() +
@@ -1259,7 +1205,7 @@ CommandParser::cmdSpamunsub(BotClient::ptr from, const std::string & command,
 
 
 void
-CommandParser::cmdTest(BotClient::ptr from, const std::string & command,
+CommandParser::cmdTest(BotClient * from, const std::string & command,
   std::string parameters)
 {
   server.onServerNotice(parameters);

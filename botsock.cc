@@ -87,7 +87,27 @@ BotSock::BotSock(const BotSock *listener, const bool blocking,
 }
 
 
-BotSock::~BotSock()
+BotSock::BotSock(const BotSock & copy)
+{
+  // Don't copy the OnConnect and OnRead handlers because we can't
+  // guarantee they still exist (or are correct)!
+  this->buffer = copy.buffer;
+  this->bindAddress = copy.bindAddress;
+  this->timeout = copy.timeout;
+  this->lastActivity = copy.lastActivity;
+  this->connectTime = copy.connectTime;
+  this->connected = copy.connected;
+  this->connecting = copy.connecting;
+  this->listening = copy.listening;
+  this->blocking = copy.blocking;
+  this->lineBuffered = copy.lineBuffered;
+  this->binary = copy.binary;
+  this->plug = copy.plug;
+  this->backlog = copy.backlog;
+}
+
+
+BotSock::~BotSock(void)
 {
   if (0 != ::close(this->plug))
   {
@@ -143,10 +163,6 @@ BotSock::connect(const BotSock::Address address, const BotSock::Port port)
   this->gotActivity();
   
   this->connectTime = ::time(NULL);
-
-#ifdef BOTSOCK_DEBUG
-  std::cout << "BotSock::connect(): this->onConnect()" << std::endl;
-#endif
 
   return this->onConnect();
 }
@@ -252,9 +268,6 @@ BotSock::process(const fd_set & readset, const fd_set & writeset)
 
         this->gotActivity();
 
-#ifdef BOTSOCK_DEBUG
-        std::cout << "BotSock::process(): this->onRead()" << std::endl;
-#endif
         if (this->isBinary() && (this->buffer.length() == 0))
 	{
           return this->onRead(buff, n);
@@ -315,10 +328,6 @@ BotSock::process(const fd_set & readset, const fd_set & writeset)
 
         this->connectTime = ::time(NULL);
 
-#ifdef BOTSOCK_DEBUG
-        std::cout << "BotSock::process(): this->onConnect()" << std::endl;
-#endif
-
         if (!this->onConnect())
         {
 	  return false;
@@ -362,7 +371,7 @@ BotSock::bindTo(const std::string & address)
 
 
 BotSock::Address
-BotSock::getLocalAddress() const
+BotSock::getLocalAddress(void) const
 {
   struct sockaddr_in localaddr;
   socklen_t size = sizeof(localaddr);
@@ -380,7 +389,7 @@ BotSock::getLocalAddress() const
 
 
 BotSock::Port
-BotSock::getLocalPort() const
+BotSock::getLocalPort(void) const
 {
   struct sockaddr_in localaddr;
   socklen_t size = sizeof(localaddr);
@@ -398,7 +407,7 @@ BotSock::getLocalPort() const
 
 
 BotSock::Address
-BotSock::getRemoteAddress() const
+BotSock::getRemoteAddress(void) const
 {
   struct sockaddr_in remoteaddr;
   socklen_t size = sizeof(remoteaddr);
@@ -416,7 +425,7 @@ BotSock::getRemoteAddress() const
 
 
 BotSock::Port
-BotSock::getRemotePort() const
+BotSock::getRemotePort(void) const
 {
   struct sockaddr_in remoteaddr;
   socklen_t size = sizeof(remoteaddr);
@@ -532,7 +541,7 @@ BotSock::inet_ntoa(const BotSock::Address & address)
 
 
 void
-BotSock::setOptions()
+BotSock::setOptions(void)
 {
   int optval = 1;
 
@@ -567,7 +576,7 @@ BotSock::bind(const BotSock::Address & address, const BotSock::Port & port)
 
 
 bool
-BotSock::reset()
+BotSock::reset(void)
 {
   ::close(this->plug);
 
@@ -604,6 +613,90 @@ bool
 BotSock::sameClassC(const BotSock::Address & ip1, const BotSock::Address & ip2)
 {
   return ((ip1 & BotSock::ClassCNetMask) == (ip2 & BotSock::ClassCNetMask));
+}
+
+
+void
+BotSock::registerOnConnectHandler(OnConnectHandler func)
+{
+  this->onConnectHandler = func;
+}
+
+
+void
+BotSock::registerOnReadHandler(OnReadHandler func)
+{
+  this->onReadHandler = func;
+}
+
+
+void
+BotSock::registerOnBinaryReadHandler(OnBinaryReadHandler func)
+{
+  this->onBinaryReadHandler = func;
+}
+
+
+bool
+BotSock::onConnect(void)
+{
+  bool result = true;
+
+  if (!this->onConnectHandler.empty())
+  {
+#ifdef BOTSOCK_DEBUG
+    std::cout << "BotSock::onConnect()" << std::endl;
+#endif
+
+    if (!this->onConnectHandler())
+    {
+      result = false;
+    }
+  }
+
+  return result;
+}
+
+
+bool
+BotSock::onRead(const std::string & text)
+{
+  bool result = true;
+
+  if (!this->onReadHandler.empty())
+  {
+#ifdef BOTSOCK_DEBUG
+    std::cout << "BotSock::onRead()" << std::endl;
+#endif
+
+    if (!this->onReadHandler(text))
+    {
+      result = false;
+    }
+  }
+
+  return result;
+}
+
+
+bool
+BotSock::onRead(const char *data, const int size)
+{
+  bool result = true;
+
+  if (!this->onBinaryReadHandler.empty())
+  {
+#ifdef BOTSOCK_DEBUG
+    std::cout << "BotSock::onBinaryRead()" << std::endl;
+#endif
+
+    if (!this->onBinaryReadHandler(data, size))
+    {
+      result = false;
+    }
+  }
+
+  return result;
 }
 
 

@@ -32,10 +32,7 @@ class Http : public Proxy
 {
 public:
   Http(const std::string & hostname, const std::string & nick,
-    const std::string & userhost) : Proxy(hostname, nick, userhost)
-  {
-    this->setBuffering(true);
-  }
+    const std::string & userhost);
   virtual ~Http(void)
   {
     if (!this->_detectedProxy)
@@ -44,12 +41,12 @@ public:
     }
   }
 
-  virtual bool onConnect();
+  virtual bool onConnect(void);
 
 protected:
-  virtual bool onRead(std::string);
+  bool onRead(std::string);
   virtual std::string typeName(void) const { return "HTTP CONNECT"; };
-  virtual Proxy::Protocol type(void) const { Proxy::HTTP; };
+  virtual Proxy::Protocol type(void) const { return Proxy::HTTP; };
 };
 
 #endif

@@ -69,11 +69,10 @@ void KlineList::Add(const std::string & userhost, const std::string & reason,
 
 
 void
-KlineList::find(StrList & Output, const Pattern *pattern, const bool count,
+KlineList::find(BotClient * client, const Pattern *pattern, const bool count,
   const bool searchPerms, const bool searchTemps, const bool searchReason) const
 {
   int matches = 0;
-  Output.clear();
   for (std::list<KlineItem>::const_iterator pos = Klines.begin();
     pos != Klines.end(); ++pos)
   {
@@ -85,16 +84,16 @@ KlineList::find(StrList & Output, const Pattern *pattern, const bool count,
       {
         if (!count)
         {
-          Output.push_back("  " + pos->getUserhost() + " (" +
-	    pos->getReason() + ')');
+          client->send("  " + pos->getUserhost() + " (" + pos->getReason() +
+	    ')');
         }
         matches++;
       }
     }
   }
-  Output.push_back(std::string("End of FIND") + lineType + " " +
-    pattern->get() + " (" + IntToStr(Klines.size()) + " " + lineType +
-    "-lines, " + IntToStr(matches) + " matches)");
+  client->send(std::string("End of FIND") + lineType + " " + pattern->get() +
+    " (" + IntToStr(Klines.size()) + " " + lineType + "-lines, " +
+    IntToStr(matches) + " matches)");
 }
 
 

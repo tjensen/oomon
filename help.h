@@ -36,10 +36,10 @@ private:
   static StrList topicList;
 
   static bool haveTopic(const std::string &);
-  static StrList getIndex(void);
+  static bool getIndex(class BotClient * client);
 
 public:
-  static StrList getHelp(const std::string &);
+  static void getHelp(class BotClient * client, const std::string & topic);
   static void flush(void);
 };
 

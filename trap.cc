@@ -29,6 +29,7 @@
 // OOMon Headers
 #include "strtype"
 #include "botexcept.h"
+#include "botclient.h"
 #include "trap.h"
 #include "util.h"
 #include "irc.h"
@@ -579,14 +580,13 @@ TrapList::add(const TrapAction action, const long timeout,
 
 
 void
-TrapList::cmd(StrList & output, std::string line, const bool master,
-  const std::string & handle)
+TrapList::cmd(BotClient * client, std::string line)
 {
   ArgList args("-a -t", "");
 
   if (-1 == args.parseCommand(line))
   {
-    output.push_back("*** Invalid parameter: " + args.getInvalid());
+    client->send("*** Invalid parameter: " + args.getInvalid());
     return;
   }
 
@@ -607,35 +607,38 @@ TrapList::cmd(StrList & output, std::string line, const bool master,
 
   if (flag == "" || flag == "LIST")
   {
-    TrapList::list(output, showCounts, showTimes);
+    TrapList::list(client, showCounts, showTimes);
   }
   else if (flag == "REMOVE")
   {
-    if (master)
+    if (client->flags().has(UserFlags::MASTER))
     {
       if (TrapList::remove(line))
       {
         modified = true;
-        if (handle.size() > 0)
+
+        if (0 != client->id().compare("CONFIG"))
         {
-          ::SendAll(handle + " removed trap: " + line, UserFlags::OPER,
-	    WATCH_TRAPS);
-          Log::Write(handle + " removed trap: " + line);
+	  std::string notice(client->handleAndBot());
+	  notice += " removed trap: ";
+	  notice += line;
+          ::SendAll(notice, UserFlags::OPER, WATCH_TRAPS);
+          Log::Write(notice);
         }
       }
       else
       {
-        output.push_back(std::string("*** No trap exists for: ") + line);
+        client->send(std::string("*** No trap exists for: ") + line);
       }
     }
     else
     {
-      output.push_back("*** You don't have access to remove traps!");
+      client->send("*** You don't have access to remove traps!");
     }
   }
   else
   {
-    if (master)
+    if (client->flags().has(UserFlags::MASTER))
     {
       try
       {
@@ -645,29 +648,32 @@ TrapList::cmd(StrList & output, std::string line, const bool master,
 
         modified = true;
 
-        if (handle.length() > 0)
+        if (0 != client->id().compare("CONFIG"))
         {
-          std::string notice(handle + " added trap " + node.getString());
+          std::string notice(client->handleAndBot());
+	  notice +=" added trap ";
+	  notice += node.getString();
           ::SendAll(notice, UserFlags::OPER, WATCH_TRAPS);
           Log::Write(notice);
         }
       }
       catch (OOMon::invalid_action & e)
       {
-        output.push_back("*** Invalid TRAP action: " + e.what());
+        client->send("*** Invalid TRAP action: " + e.what());
       }
       catch (OOMon::regex_error & e)
       {
-        output.push_back("*** RegEx error: " + e.what());
+        client->send("*** RegEx error: " + e.what());
       }
     }
     else
     {
-      output.push_back("*** You don't have access to add traps!");
+      client->send("*** You don't have access to add traps!");
     }
   }
 
-  if (modified && (handle.length() > 0) && vars[VAR_AUTO_SAVE]->getBool())
+  if (modified && (0 != client->id().compare("CONFIG")) &&
+    vars[VAR_AUTO_SAVE]->getBool())
   {
     Config::saveSettings();
   }
@@ -735,22 +741,22 @@ TrapList::match(const std::string & nick, const std::string & userhost,
 }
 
 void
-TrapList::list(StrList & output, bool showCounts, bool showTimes)
+TrapList::list(BotClient * client, bool showCounts, bool showTimes)
 {
   int count = 0;
 
   for (std::list<Trap>::iterator pos = traps.begin(); pos != traps.end(); ++pos)
   {
-    output.push_back(pos->getString(showCounts, showTimes));
+    client->send(pos->getString(showCounts, showTimes));
     count++;
   }
   if (count > 0)
   {
-    output.push_back("*** End of TRAP list.");
+    client->send("*** End of TRAP list.");
   }
   else
   {
-    output.push_back("*** TRAP list is empty!");
+    client->send("*** TRAP list is empty!");
   }
 }
 

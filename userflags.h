@@ -24,6 +24,9 @@
 // Std C++ Headers
 #include <bitset>
 
+// OOMon Headers
+#include "botexcept.h"
+
 
 class UserFlags
 {
@@ -39,6 +42,7 @@ public:
   UserFlags(void);
   UserFlags(const Bit b);
   UserFlags(const Bit b, const Bit b);
+  UserFlags(const std::string & bits, const char separator);
 
   ~UserFlags() { }
 
@@ -49,7 +53,17 @@ public:
 
   bool has(const Bit b) const;
 
-  const static UserFlags NONE;
+  static UserFlags NONE(void);
+  static UserFlags ALL(void);
+
+  static std::string getName(const Bit b);
+  static std::string getNames(const UserFlags & flags, const char separator);
+
+  class invalid_flag : public OOMon::oomon_error
+  {
+  public:
+    invalid_flag(const std::string & arg) : oomon_error(arg) { }
+  };
 
 private:
   std::bitset<MAX_UF_BITS> bits;

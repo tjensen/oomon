@@ -19,18 +19,21 @@
 
 // $Id$
 
-// Std C headers
+// Std C++ Headers
+#include <iostream>
+#include <fstream>
+#include <string>
+
+// Boost C++ Headers
+#include <boost/bind.hpp>
+
+// Std C Headers
 #include <stdio.h>				// for sprintf(4)
 #include <sys/types.h> 				// for getpwuid(3)
 #include <pwd.h>				// for getpwuid(3)
 #include <errno.h>				// for errno
 
-// Std C++ headers
-#include <iostream>
-#include <fstream>
-#include <string>
-
-// OOMon headers
+// OOMon Headers
 #include "oomon.h"
 #include "socks5.h"
 #include "log.h"
@@ -38,11 +41,22 @@
 #include "engine.h"
 #include "irc.h"
 #include "util.h"
+#include "config.h"
 
 
 #ifdef DEBUG
 # define SOCKS5_DEBUG
 #endif
+
+
+Socks5::Socks5(const std::string & hostname, const std::string & nick,
+  const std::string & userhost)
+  : Proxy(hostname, nick, userhost), state(STATE_WAIT1)
+{
+  registerOnConnectHandler(boost::bind(&Socks5::onConnect, this));
+  registerOnBinaryReadHandler(boost::bind(&Socks5::onRead, this, _1, _2));
+  this->setBinary(true);
+}
 
 
 // OnConnect()

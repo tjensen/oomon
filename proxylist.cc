@@ -51,6 +51,7 @@
 #include "socks5.h"
 #include "wingate.h"
 #include "botexcept.h"
+#include "botclient.h"
 #include "http.h"
 #include "config.h"
 #include "log.h"
@@ -125,7 +126,7 @@ ProxyList::check(const std::string & address, const std::string & hostname,
     { Proxy::HTTP, 8080 }
   };
 
-  for (int i = 0; i < (sizeof(defs) / sizeof(ScanDef)); ++i)
+  for (unsigned long i = 0; i < (sizeof(defs) / sizeof(ScanDef)); ++i)
   {
     try
     {
@@ -284,9 +285,9 @@ ProxyList::isVerifiedClean(const std::string & address,
 
 
 void
-ProxyList::status(StrList & output) const
+ProxyList::status(BotClient * client) const
 {
-  output.push_back("Proxy scanners: " + IntToStr(this->scanners.size()));
+  client->send("Proxy scanners: " + IntToStr(this->scanners.size()));
 
   int cacheCount = 0;
   for (ProxyList::Cache::const_iterator pos = this->safeHosts.begin();
@@ -297,7 +298,7 @@ ProxyList::status(StrList & output) const
       ++cacheCount;
     }
   }
-  output.push_back("Proxy cache: " + IntToStr(cacheCount) + "/" +
+  client->send("Proxy cache: " + IntToStr(cacheCount) + "/" +
     IntToStr(this->safeHosts.size()));
 }
 

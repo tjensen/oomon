@@ -52,8 +52,8 @@ public:
   }
 
   bool hadError(void) const { return error; }
-  StrList getHelp(void);
-  StrList getHelp(const std::string &);
+  bool getHelp(class BotClient * client);
+  bool getHelp(class BotClient * client, const std::string &);
 };
 
 #endif /* __HELPTOPIC_H__ */

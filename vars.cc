@@ -31,6 +31,8 @@
 #include "main.h"
 #include "log.h"
 #include "util.h"
+#include "config.h"
+#include "botclient.h"
 
 
 #ifdef DEBUG
@@ -506,7 +508,7 @@ Vars::set(const std::string & name, const std::string & value,
 
 
 int
-Vars::get(StrList & output, const std::string & name) const
+Vars::get(BotClient * client, const std::string & name) const
 {
   int count = 0;
 
@@ -517,11 +519,11 @@ Vars::get(StrList & output, const std::string & name) const
       std::string value = this->vec[i]->get();
       if (value.length() > 0)
       {
-        output.push_back("*** " + this->vec[i]->getName() + " = " + value);
+        client->send("*** " + this->vec[i]->getName() + " = " + value);
       }
       else
       {
-        output.push_back("*** " + this->vec[i]->getName() + " is empty.");
+        client->send("*** " + this->vec[i]->getName() + " is empty.");
       }
 
       ++count;

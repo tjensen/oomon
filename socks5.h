@@ -31,11 +31,7 @@ class Socks5 : public Proxy
 {
 public:
   Socks5(const std::string & hostname, const std::string & nick,
-    const std::string & userhost)
-    : Proxy(hostname, nick, userhost), state(STATE_WAIT1)
-  {
-    this->setBinary(true);
-  }
+    const std::string & userhost);
   virtual ~Socks5(void)
   {
     if (!this->_detectedProxy)
@@ -44,12 +40,12 @@ public:
     }
   }
 
-  virtual bool onConnect();
+  bool onConnect(void);
 
 protected:
-  virtual bool onRead(const char *text, const int size);
+  bool onRead(const char *text, const int size);
   virtual std::string typeName(void) const { return "SOCKS5"; };
-  virtual Proxy::Protocol type(void) const { Proxy::SOCKS5; };
+  virtual Proxy::Protocol type(void) const { return Proxy::SOCKS5; };
 
   enum { STATE_WAIT1, STATE_WAIT2 } state;
 };

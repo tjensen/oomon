@@ -29,6 +29,7 @@
 #include "watch.h"
 #include "util.h"
 #include "botexcept.h"
+#include "botclient.h"
 
 
 #ifdef DEBUG
@@ -99,7 +100,7 @@ WatchSet::getWatchValue(const std::string & watch)
 
 
 void
-WatchSet::set(StrList & output, std::string line)
+WatchSet::set(BotClient * client, std::string line, const bool noisy)
 {
   std::string word;
 
@@ -126,31 +127,31 @@ WatchSet::set(StrList & output, std::string line)
     if ((!minus && !plus && (word == "NONE")) || (minus && (word == "ALL")))
     {
       this->clear();
-      output.push_back("*** Removed ALL watches.");
+      if (noisy) client->send("*** Removed ALL watches.");
     }
     else if ((word == "DEFAULT") || (word == "DEFAULTS"))
     {
       if (minus)
       {
         this->remove(WatchSet::defaults());
-        output.push_back("*** Removed DEFAULT watches.");
+        if (noisy) client->send("*** Removed DEFAULT watches.");
       }
       else if (plus)
       {
         this->add(WatchSet::defaults());
-        output.push_back("*** Added DEFAULT watches.");
+        if (noisy) client->send("*** Added DEFAULT watches.");
       }
       else
       {
         this->clear();
         this->add(WatchSet::defaults());
-        output.push_back("*** Set DEFAULT watches.");
+        if (noisy) client->send("*** Set DEFAULT watches.");
       }
     }
     else if (word == "ALL")
     {
       this->add(WatchSet::all());
-      output.push_back("*** Added ALL watches.");
+      if (noisy) client->send("*** Added ALL watches.");
     }
     else
     {
@@ -161,18 +162,20 @@ WatchSet::set(StrList & output, std::string line)
         if (minus)
 	{
           this->remove(type);
-          output.push_back("*** Removed watch: " +
+          if (noisy) client->send("*** Removed watch: " +
 	    WatchSet::getWatchName(type));
 	}
         else
 	{
           this->add(type);
-          output.push_back("*** Added watch: " + WatchSet::getWatchName(type));
+          if (noisy) client->send("*** Added watch: " + 
+	    WatchSet::getWatchName(type));
 	}
       }
       catch (OOMon::invalid_watch_name & e)
       {
-        output.push_back(std::string("*** Invalid WATCH type: ") + e.what());
+        if (noisy) client->send(std::string("*** Invalid WATCH type: ") +
+	  e.what());
       }
     }
   }
@@ -290,30 +293,35 @@ WatchSet::getWatchName(const Watch watch)
 
 
 std::string
-WatchSet::getWatchNames(const WatchSet & watches, bool distinct)
+WatchSet::getWatchNames(const WatchSet & watches, const bool distinct,
+  const char separator)
 {
-  StrVector result;
+  std::string result;
 
   if (distinct)
   {
     for (int i = WATCH_MIN; i <= WATCH_MAX; ++i)
     {
       std::string name = WatchSet::getWatchName((Watch) i);
+
+      if (!result.empty()) result += separator;
+
       if (watches.has((Watch) i))
       {
-        result.push_back("+" + name);
+        result += '+';
       }
       else
       {
-        result.push_back("-" + name);
+        result += '-';
       }
+      result += name;
     }
   }
   else
   {
     if (watches.none())
     {
-      result.push_back("NONE");
+      result = "NONE";
     }
     else
     {
@@ -321,13 +329,14 @@ WatchSet::getWatchNames(const WatchSet & watches, bool distinct)
       {
 	if (watches.contents.test(bit))
 	{
-          result.push_back(WatchSet::getWatchName(static_cast<Watch>(bit)));
+	  if (!result.empty()) result += separator;
+	  result += WatchSet::getWatchName(static_cast<Watch>(bit));
 	}
       }
     }
   }
 
-  return StrJoin(' ', result);
+  return result;
 }
 
 

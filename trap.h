@@ -88,8 +88,7 @@ private:
 class TrapList
 {
 public:
-  static void cmd(StrList & output, std::string line, const bool master,
-    const std::string & handle = "");
+  static void cmd(class BotClient * client, std::string line);
   static bool remove(const Trap & pattern);
   static bool remove(const std::string & pattern);
   static void clear(void) { TrapList::traps.clear(); };
@@ -102,7 +101,7 @@ public:
     TrapList::match(nick, userhost, BotSock::inet_ntoa(ip), gecos);
   };
 
-  static void list(StrList & output, bool showCounts, bool showTimes);
+  static void list(class BotClient * client, bool showCounts, bool showTimes);
 
   static void save(std::ofstream & file);
 

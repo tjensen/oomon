@@ -27,6 +27,7 @@
 #include "help.h"
 #include "config.h"
 #include "util.h"
+#include "botclient.h"
 
 
 std::list<HelpTopic> Help::topics;
@@ -42,10 +43,9 @@ Help::haveTopic(const std::string & topic)
 }
 
 
-StrList
-Help::getIndex(void)
+bool
+Help::getIndex(BotClient * client)
 {
-  StrList	result;
   std::string	row = std::string("");
   char 		line[MAX_BUFF];
   char		*topic;
@@ -86,8 +86,7 @@ Help::getIndex(void)
     helpFile.close();
   }
 
-  result.clear();
-  result.push_back("\002Help Index:\002");
+  client->send("\002Help Index:\002");
 
   for (StrList::iterator pos = topicList.begin();
     pos != topicList.end(); ++pos)
@@ -102,31 +101,33 @@ Help::getIndex(void)
       {
         if ((row.length() + pos->length() + 1) >= 40)
         {
-          result.push_back(row);
-          row = std::string("  ") + DownCase(*pos);
+          client->send(row);
+          row = "  ";
+	  row += DownCase(*pos);
         }
         else
         {
-          row += std::string(" ") + DownCase(*pos);
+          row += " ";
+	  row += DownCase(*pos);
         }
       }
     }
   }
   if (row.length() > 0)
   {
-    result.push_back(row);
+    client->send(row);
   }
 
-  return result;
+  return true;
 }
 
 
-StrList
-Help::getHelp(const std::string & topic)
+void
+Help::getHelp(BotClient * client, const std::string & topic)
 {
   if (topic == std::string(""))
   {
-    return getIndex();
+    getIndex(client);
   }
   else if (haveTopic(topic))
   {
@@ -135,23 +136,18 @@ Help::getHelp(const std::string & topic)
 
     if (pos != topics.end())
     {
-      return pos->getHelp();
+      pos->getHelp(client);
     }
     else
     {
-      StrList result;
-      result.push_back(std::string("No help available for: ") + topic);
-      return result;
+      client->send("No help available for: " + topic);
     }
   }
   else
   {
     HelpTopic newTopic;
-    StrList result;
 
-    result = newTopic.getHelp(topic);
-
-    if (result.size() > 0)
+    if (newTopic.getHelp(client, topic))
     {
       topics.push_back(newTopic);
     }
@@ -159,16 +155,14 @@ Help::getHelp(const std::string & topic)
     {
       if (newTopic.hadError())
       {
-        result.push_back(std::string("Error reading help file!"));
-        result.push_back(
-	  std::string("Try http://oomon.sourceforge.net/ for help."));
+        client->send("Error reading help file!");
+        client->send("Try http://oomon.sourceforge.net/ for help.");
       }
       else
       {
-        result.push_back(std::string("No help available for: ") + topic);
+        client->send("No help available for: " + topic);
       }
     }
-    return result;
   }
 }
 

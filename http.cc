@@ -19,12 +19,15 @@
 
 // $Id$
 
-// Std C++ headers
+// Std C++ Headers
 #include <iostream>
 #include <fstream>
 #include <string>
 
-// OOMon headers
+// Boost C++ Headers
+#include <boost/bind.hpp>
+
+// OOMon Headers
 #include "oomon.h"
 #include "http.h"
 #include "log.h"
@@ -38,6 +41,15 @@
 #ifdef DEBUG
 # define HTTP_DEBUG
 #endif
+
+
+Http::Http(const std::string & hostname, const std::string & nick,
+  const std::string & userhost) : Proxy(hostname, nick, userhost)
+{
+  registerOnConnectHandler(boost::bind(&Http::onConnect, this));
+  registerOnReadHandler(boost::bind(&Http::onRead, this, _1));
+  this->setBuffering(true);
+}
 
 
 // OnConnect()

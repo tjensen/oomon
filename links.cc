@@ -27,6 +27,7 @@
 #include "oomon.h"
 #include "links.h"
 #include "util.h"
+#include "botclient.h"
 
 
 #ifdef DEBUG
@@ -135,9 +136,9 @@ void Links::setName(const std::string & name)
 }
 
 void
-Links::getLinks(StrList & Output, const std::string & prefix) const
+Links::getLinks(BotClient * client, const std::string & prefix) const
 {
-  Output.push_back(prefix + Name);
+  client->send(prefix + Name);
   if (Children.size() > 0)
   {
     std::list<Links>::size_type i = 0;
@@ -146,13 +147,13 @@ Links::getLinks(StrList & Output, const std::string & prefix) const
     {
       if (i < Children.size() - 1)
       {
-	Output.push_back(prefix + "|\\");
-	pos->getLinks(Output, prefix + "| ");
+	client->send(prefix + "|\\");
+	pos->getLinks(client, prefix + "| ");
       }
       else
       {
-	Output.push_back(prefix + " \\");
-	pos->getLinks(Output, prefix + "  ");
+	client->send(prefix + " \\");
+	pos->getLinks(client, prefix + "  ");
       }
       i++;
     }

@@ -40,6 +40,7 @@ typedef std::list<class OperDef> OperList;
 typedef std::list<class LinkDef> LinkList;
 typedef std::list<class ConnDef> ConnList;
 typedef std::list<class YLine> YLineList;
+typedef std::list<class RemoteClient> RemoteClientList;
 
 class Config
 {
@@ -51,6 +52,7 @@ private:
   static LinkList Links;
   static ConnList Connections;
   static YLineList YLines;
+  static RemoteClientList remoteClients;
   static std::string Nick, UserName, IRCName, OperNick, OperPass;
   static std::string OurHostName;
   static std::string LogFile;
@@ -71,6 +73,8 @@ private:
     const std::string & Passwd, const BotSock::Port port);
   static void AddYLine(const std::string & YClass,
     const std::string & Description);
+  static void addRemoteClient(const std::string & mask,
+    const std::string & flags);
 public:
   static void Clear();
   static void Load(const std::string filename = DEFAULT_CFGFILE);
@@ -104,6 +108,8 @@ public:
   static bool AuthBot(const std::string &, const std::string &,
     const std::string &);
   static std::string GetYLineDescription(const std::string &);
+  static UserFlags getRemoteFlags(const std::string & client);
+  static UserFlags parseUserFlags(const std::string & text);
   static std::string getProxyVhost();
   static bool IsSpoofer(const std::string &);
   static std::string getHelpFilename() { return helpFilename; }
