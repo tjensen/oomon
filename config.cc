@@ -1352,6 +1352,10 @@ Config::exemptFlags(const std::string & text)
     {
       result.set(Config::EXEMPT_VERSION);
     }
+    else if (0 == flag.compare("INVALID"))
+    {
+      result.set(Config::EXEMPT_INVALID);
+    }
     else
     {
       throw Config::syntax_error("bad exempt flag '" + *pos + "'");

@@ -1298,10 +1298,13 @@ onInvalidUsername(std::string text)
     userhost.erase(userhost.end() - 1);
   }
 
-  doAction(nick, userhost, INADDR_NONE,
-    vars[VAR_INVALID_USERNAME_ACTION]->getAction(),
-    vars[VAR_INVALID_USERNAME_ACTION]->getInt(),
-    vars[VAR_INVALID_USERNAME_REASON]->getString(), false);
+  if (!config.isExempt(userhost, Config::EXEMPT_INVALID))
+  {
+    doAction(nick, userhost, INADDR_NONE,
+      vars[VAR_INVALID_USERNAME_ACTION]->getAction(),
+      vars[VAR_INVALID_USERNAME_ACTION]->getInt(),
+      vars[VAR_INVALID_USERNAME_REASON]->getString(), false);
+  }
 
   return true;
 }

@@ -132,6 +132,8 @@ I:scanner.cf
 #           TRAP     - Don't match against traps.
 #           PROXY    - Don't scan for open proxies.
 #           VERSION  - Don't check its CTCP VERSION reply.
+#           INVALID  - Don't kill/kline/etc. for having an invalid
+#                      username.
 #           ALL      - All of the above.
 #
 # userhost pattern - A regex or cluster-style pattern to match against
