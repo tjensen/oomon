@@ -226,7 +226,14 @@ Vars::set(BotClient * client, const std::string & name,
     error += name;
     client->send(error);
   }
-  else if (1 == std::distance(begin, end))
+  else if ((std::distance(begin, end) > 1) &&
+      (0 != ucName.compare(begin->first.get())))
+  {
+    std::string error("*** Ambiguous variable name: ");
+    error += name;
+    client->send(error);
+  }
+  else
   {
     Vars::VarMap::iterator pos(begin);
     std::string error(pos->second.set(value));
@@ -266,12 +273,6 @@ Vars::set(BotClient * client, const std::string & name,
     {
       client->send(error);
     }
-  }
-  else
-  {
-    std::string error("*** Ambiguous variable name: ");
-    error += name;
-    client->send(error);
   }
 }
 
