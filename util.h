@@ -51,9 +51,6 @@ void SplitFrom(std::string, std::string &, std::string &);
 // Returns the nick in a nick!user@host thingy
 std::string getNick(const std::string &);
 
-// Converts ASCII to an unsigned long
-unsigned long atoul(const char *);
-
 // Retrieves the first word in a string
 std::string FirstWord(std::string &);
 
@@ -77,10 +74,6 @@ std::string timeStamp(const TimeStampFormat format = TIMESTAMP_LOG,
 
 // Returns a string representation of an integer
 std::string IntToStr(int i, std::string::size_type len = 0);
-std::string ULongToStr(unsigned long, std::string::size_type len = 0);
-
-// Returns a string representation of a pointer
-std::string ptrToStr(void *ptr);
 
 std::string GetBotHB(std::string);
 std::string GetHandleHB(std::string);

@@ -27,6 +27,9 @@
 #include <fstream>
 #include <string>
 
+// Boost C++ Headers
+#include <boost/lexical_cast.hpp>
+
 // OOMon Headers
 #include "config.h"
 #include "util.h"
@@ -303,7 +306,8 @@ Config::addRemoteClient(const std::string & mask, const std::string & flags)
 //
 // I ought to trim any leading white space before parsing, but oh well.
 //
-void Config::Load(const std::string filename)
+void
+Config::Load(const std::string filename)
 {
   char		line[MAX_BUFF];
   char		*key,
@@ -371,8 +375,15 @@ void Config::Load(const std::string filename)
 	  handle = Parameters[0];
 	  hostname = Parameters[1];
 	  passwd = Parameters[2];
-	  port = atoi(Parameters[3].c_str());
-	  AddConn(handle, hostname, passwd, port);
+	  try
+	  {
+	    port = boost::lexical_cast<BotSock::Port>(Parameters[3]);
+	    AddConn(handle, hostname, passwd, port);
+	  }
+	  catch (boost::bad_lexical_cast)
+	  {
+	    std::cerr << "Bad port number in C: line!" << std::endl;
+	  }
 	}
 	break;
       case 'e':
@@ -451,10 +462,17 @@ void Config::Load(const std::string filename)
 	if (Parameters.size() > 0)
 	{
 	  // Port number
-	  Config::port = atoi(Parameters[0].c_str());
+	  try
+	  {
+	    Config::port = boost::lexical_cast<BotSock::Port>(Parameters[0]);
 #ifdef CONFIG_DEBUG
-          std::cout << "Port: " << Config::port << std::endl;
+            std::cout << "Port: " << Config::port << std::endl;
 #endif
+          }
+	  catch (boost::bad_lexical_cast)
+	  {
+	    std::cerr << "Bad port number in P: line!" << std::endl;
+	  }
 	}
 	break;
       case 'r':
@@ -476,7 +494,14 @@ void Config::Load(const std::string filename)
 	{
 	  // Server Parameters
 	  Server.Hostname = Parameters[0];
-	  Server.port = atoi(Parameters[1].c_str());
+	  try
+	  {
+	    Server.port = boost::lexical_cast<BotSock::Port>(Parameters[1]);
+	  }
+	  catch (boost::bad_lexical_cast)
+	  {
+	    std::cerr << "Bad port number in S: line!" << std::endl;
+	  }
 	  Server.Password = Parameters[2];
 	  Server.Channels =  Parameters[3];
 	}

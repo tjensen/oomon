@@ -97,9 +97,14 @@ DCCList::listen(const std::string & nick, const std::string & userhost)
 
     if (newListener->listen(nick, userhost))
     {
-      server.ctcp(nick, std::string("DCC CHAT chat ") +
-        ULongToStr(htonl(server.getLocalAddress())) + " " +
-        ULongToStr(htons(newListener->getLocalPort())));
+      std::string request("DCC CHAT chat ");
+      request += boost::lexical_cast<std::string>(htonl(
+	server.getLocalAddress()));
+      request += ' ';
+      request += boost::lexical_cast<std::string>(htons(
+	newListener->getLocalPort()));
+
+      server.ctcp(nick, request);
       listeners.push_back(newListener);
       return true;
     }

@@ -24,6 +24,9 @@
 // Std C++ Headers
 #include <string>
 
+// Boost C++ Headers
+#include <boost/lexical_cast.hpp>
+
 // Std C Headers
 #include <limits.h>
 
@@ -156,24 +159,28 @@ public:
     this->_max = max;
   }
 
-  virtual std::string get() const { return IntToStr(this->_value); };
+  virtual std::string get() const
+  {
+    return boost::lexical_cast<std::string>(this->_value);
+  }
   virtual std::string setString(std::string value)
   {
-    if (isNumeric(value))
+    try
     {
-      int num = atoi(value.c_str());
+      int num = boost::lexical_cast<int>(value);
       if ((num >= this->_min) && (num <= this->_max))
       {
-        this->_value = atoi(value.c_str());
+        this->_value = num;
         return "";
       }
       else
       {
-        return "*** Numeric value between " + IntToStr(this->_min) + " and " +
-	  IntToStr(this->_max) + " expected!";
+        return "*** Numeric value between " +
+	  boost::lexical_cast<std::string>(this->_min) + " and " +
+	  boost::lexical_cast<std::string>(this->_max) + " expected!";
       }
     }
-    else
+    catch (boost::bad_lexical_cast)
     {
       return "*** Numeric value expected!";
     }
@@ -198,10 +205,11 @@ public:
 
   virtual std::string get() const
   {
-    std::string duration = "";
+    std::string duration;
     if (this->getInt() > 0)
     {
-      duration = " " + IntToStr(this->getInt());
+      duration += ' ';
+      duration += boost::lexical_cast<std::string>(this->getInt());
     }
 
     switch (this->_value)
@@ -267,16 +275,14 @@ public:
     else
       return "*** NOTHING, KILL, KLINE, KLINE_HOST, KLINE_DOMAIN, KLINE_IP, KLINE_USERNET, KLINE_NET, SMART_KLINE, SMART_KLINE_HOST, SMART_KLINE_IP, DLINE_IP, or DLINE_NET expected!";
 
-    this->_duration = 0;
-
     std::string duration = FirstWord(value);
-    if (isNumeric(duration))
+    try
     {
-      int num = atoi(duration.c_str());
-      if (num > 0)
-      {
-	this->_duration = num;
-      }
+      this->_duration = boost::lexical_cast<int>(duration);
+    }
+    catch (boost::bad_lexical_cast)
+    {
+      this->_duration = 0;
     }
 
     return "";

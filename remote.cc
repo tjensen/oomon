@@ -275,14 +275,23 @@ Remote::isCompatibleProtocolVersion(std::string text)
   {
     std::string majorVersion = FirstWord(text);
 
-    if (Remote::PROTOCOL_VERSION_MAJOR == atoi(majorVersion.c_str()))
+    try
     {
-      std::string minorVersion = FirstWord(text);
-
-      if (Remote::PROTOCOL_VERSION_MINOR == atoi(minorVersion.c_str()))
+      if (Remote::PROTOCOL_VERSION_MAJOR ==
+	boost::lexical_cast<int>(majorVersion))
       {
-	result = true;
+        std::string minorVersion = FirstWord(text);
+
+        if (Remote::PROTOCOL_VERSION_MINOR ==
+	  boost::lexical_cast<int>(minorVersion))
+        {
+	  result = true;
+        }
       }
+    }
+    catch (boost::bad_lexical_cast)
+    {
+      // just ignore the error
     }
   }
 

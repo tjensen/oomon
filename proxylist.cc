@@ -323,9 +323,9 @@ ProxyList::status(BotClient * client) const
   cache += '/';
   cache += boost::lexical_cast<std::string>(this->safeHosts.size());
   cache += " (";
-  cache += ULongToStr(this->cacheHits);
+  cache += boost::lexical_cast<std::string>(this->cacheHits);
   cache += " hits, ";
-  cache += ULongToStr(this->cacheMisses);
+  cache += boost::lexical_cast<std::string>(this->cacheMisses);
   cache += " misses)";
   client->send(cache);
 }

@@ -228,11 +228,12 @@ IRC::onRead(std::string text)
   SplitFrom(params[0], from, userhost);
 
   std::string command = params[1];
-  int numeric;
 
-  if ((numeric = atoi(command.c_str())) > 0)
+  try
   {
-    switch(numeric)
+    int numeric = boost::lexical_cast<int>(command);
+
+    switch (numeric)
     {
       case 001:
         serverName = from;
@@ -435,7 +436,7 @@ IRC::onRead(std::string text)
 	break;
     }
   }
-  else
+  catch (boost::bad_lexical_cast)
   {
     switch (IRC::getCommand(command))
     {
@@ -566,25 +567,37 @@ IRC::onCtcp(const std::string & from, const std::string & userhost,
       {
         FirstWord(text);	// Ignore "chat" parameter
 
-        BotSock::Address address = atoul(FirstWord(text).c_str());;
-        BotSock::Port port = atoi(FirstWord(text).c_str());
+        try
+	{
+          BotSock::Address address =
+	    boost::lexical_cast<BotSock::Address>(FirstWord(text));
+          BotSock::Port port =
+	    boost::lexical_cast<BotSock::Port>(FirstWord(text));
 
-        if ((address == INADDR_ANY) || (address == INADDR_NONE))
-        {
-          this->notice(from,
-	    "Invalid address specified for DCC CHAT. Not funny.");
-          return;
+          if ((address == INADDR_ANY) || (address == INADDR_NONE))
+          {
+            this->notice(from,
+	      "Invalid address specified for DCC CHAT. Not funny.");
+          }
+          else if (port < 1024)
+          {
+            this->notice(from,
+	      "Invalid port specified for DCC CHAT. Not funny.");
+          }
+	  else
+	  {
+            Log::Write("DCC CHAT request from " + from + " (" + userhost + ")");
+
+            if (!clients.connect(address, port, from, userhost))
+            {
+              Log::Write("DCC CHAT failed for " + from);
+	    }
+	  }
         }
-        if (port < 1024)
-        {
-          this->notice(from, "Invalid port specified for DCC CHAT. Not funny.");
-          return;
-        }
-        Log::Write("DCC CHAT request from " + from + " (" + userhost + ")");
-        if (!clients.connect(address, port, from, userhost))
-        {
-          Log::Write("DCC CHAT failed for " + from);
-        }
+	catch (boost::bad_lexical_cast)
+	{
+          this->notice(from, "Malformed DCC CHAT request. Not funny.");
+	}
       }
     }
   }

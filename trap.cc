@@ -238,12 +238,14 @@ Trap::getString(bool showCount, bool showTime) const
 
   if (showCount)
   {
-    result += ULongToStr(this->getMatchCount()) + " ";
+    result += boost::lexical_cast<std::string>(this->getMatchCount());
+    result += ' ';
   }
 
   if (showTime && (0 != this->getLastMatch()))
   {
-    result += timeStamp(TIMESTAMP_LOG, this->getLastMatch()) + " ";
+    result += timeStamp(TIMESTAMP_LOG, this->getLastMatch());
+    result += ' ';
   }
 
   result += TrapList::actionString(this->getAction()) + ": ";
@@ -266,12 +268,19 @@ Trap::getString(bool showCount, bool showTime) const
     case TRAP_KLINE_NET:
       if (this->getTimeout() > 0)
       {
-        result += ULongToStr(this->getTimeout()) + " " + this->getPattern() +
-	  " (" + this->getReason() + ")";
+        result += boost::lexical_cast<std::string>(this->getTimeout());
+	result += ' ';
+	result += this->getPattern();
+	result += " (";
+	result += this->getReason();
+	result += ')';
       }
       else
       {
-        result += this->getPattern() + " (" + this->getReason() + ")";
+        result += this->getPattern();
+	result += " (";
+	result += this->getReason();
+	result += ')';
       }
       break;
     default:

@@ -26,6 +26,7 @@
 
 // Boost C++ Headers
 #include <boost/bind.hpp>
+#include <boost/lexical_cast.hpp>
 
 // OOMon Headers
 #include "oomon.h"
@@ -63,8 +64,11 @@ Http::onConnect()
     this->getAddress() << ":" << this->getPort() << std::endl;
 #endif
 
-  std::string buffer("CONNECT " + Config::GetServerHostName() +
-    ":" + ULongToStr(Config::GetServerPort()) + " HTTP/1.0\n\n");
+  std::string buffer("CONNECT ");
+  buffer += Config::GetServerHostName();
+  buffer += ':';
+  buffer += boost::lexical_cast<std::string>(Config::GetServerPort());
+  buffer += " HTTP/1.0\n\n";
 
 #ifdef HTTP_DEBUG
   std::cout << "HTTP << " << buffer << std::endl;

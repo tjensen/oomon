@@ -88,7 +88,14 @@ Services::onXoNotice(std::string text)
   if ((parms.size() > 3) && server.same("users", parms[3]))
   {
     this->cloningUserhost = parms[0];
-    this->cloneCount = atoi(parms[2].c_str());
+    try
+    {
+      this->cloneCount = boost::lexical_cast<int>(parms[2]);
+    }
+    catch (boost::bad_lexical_cast)
+    {
+      this->cloneCount = 0;
+    }
     this->suggestKline = true;
   }
   else if ((parms.size() > 2) && server.same("on", parms[1]) &&
@@ -274,28 +281,35 @@ Services::onSpamtrapMessage(const std::string & text)
       std::string host = FirstWord(copy);
       std::string userhost = user + '@' + host;
 
-      int score = atoi(FirstWord(copy).c_str());
-
-      if (score >= vars[VAR_SPAMTRAP_MIN_SCORE]->getInt())
+      try
       {
-        std::string klineType = FirstWord(copy);
+        int score = boost::lexical_cast<int>(FirstWord(copy));
 
-        std::string notice("*** SpamTrap report: ");
-	notice += nick;
-	notice += " (";
-	notice += userhost;
-	notice += ") Score: ";
-	notice += boost::lexical_cast<std::string>(score);
-	notice += " [";
-	notice += copy;
-	notice += ']';
+        if (score >= vars[VAR_SPAMTRAP_MIN_SCORE]->getInt())
+        {
+          std::string klineType = FirstWord(copy);
 
-        ::SendAll(notice, UserFlags::OPER, WATCH_SPAMTRAP);
-        Log::Write(notice);
+          std::string notice("*** SpamTrap report: ");
+	  notice += nick;
+	  notice += " (";
+	  notice += userhost;
+	  notice += ") Score: ";
+	  notice += boost::lexical_cast<std::string>(score);
+	  notice += " [";
+	  notice += copy;
+	  notice += ']';
 
-        doAction(nick, userhost, users.getIP(nick, userhost),
-	  vars[VAR_SPAMTRAP_ACTION]->getAction(),
-	  vars[VAR_SPAMTRAP_ACTION]->getInt(), copy, false);
+          ::SendAll(notice, UserFlags::OPER, WATCH_SPAMTRAP);
+          Log::Write(notice);
+
+          doAction(nick, userhost, users.getIP(nick, userhost),
+	    vars[VAR_SPAMTRAP_ACTION]->getAction(),
+	    vars[VAR_SPAMTRAP_ACTION]->getInt(), copy, false);
+        }
+      }
+      catch (boost::bad_lexical_cast)
+      {
+	// just ignore the error
       }
     }
     return;
@@ -348,32 +362,39 @@ Services::onSpamtrapNotice(const std::string & text)
 	if ((scoreText.length() > 1) &&
 	  (scoreText[scoreText.length() - 1] == ')'))
 	{
-	  int score = atoi(scoreText.substr(0, scoreText.length() - 1).c_str());
-
-	  if (0 == server.downCase(FirstWord(copy)).compare("on"))
+	  try
 	  {
-	    std::string serverName = FirstWord(copy);
+	    int score = boost::lexical_cast<int>(scoreText.substr(0,
+	      scoreText.length() - 1));
 
-	    if ((score >= vars[VAR_SPAMTRAP_MIN_SCORE]->getInt()) &&
-	      server.same(serverName, server.getServerName()))
+	    if (0 == server.downCase(FirstWord(copy)).compare("on"))
 	    {
-              std::string notice("*** SpamTrap report: ");
-	      notice += nick;
-	      notice += " (";
-	      notice += userhost;
-	      notice += ") Score: ";
-	      notice += boost::lexical_cast<std::string>(score);
+	      std::string serverName = FirstWord(copy);
 
-              ::SendAll(notice, UserFlags::OPER, WATCH_SPAMTRAP);
-              Log::Write(notice);
+	      if ((score >= vars[VAR_SPAMTRAP_MIN_SCORE]->getInt()) &&
+	        server.same(serverName, server.getServerName()))
+	      {
+                std::string notice("*** SpamTrap report: ");
+	        notice += nick;
+	        notice += " (";
+	        notice += userhost;
+	        notice += ") Score: ";
+	        notice += boost::lexical_cast<std::string>(score);
 
-              doAction(nick, userhost, users.getIP(nick, userhost),
-	        vars[VAR_SPAMTRAP_ACTION]->getAction(),
-	        vars[VAR_SPAMTRAP_ACTION]->getInt(),
-	        vars[VAR_SPAMTRAP_DEFAULT_REASON]->getString(), false);
+                ::SendAll(notice, UserFlags::OPER, WATCH_SPAMTRAP);
+                Log::Write(notice);
 
+                doAction(nick, userhost, users.getIP(nick, userhost),
+	          vars[VAR_SPAMTRAP_ACTION]->getAction(),
+	          vars[VAR_SPAMTRAP_ACTION]->getInt(),
+	          vars[VAR_SPAMTRAP_DEFAULT_REASON]->getString(), false);
+	      }
+              return;
 	    }
-            return;
+	  }
+	  catch (boost::bad_lexical_cast)
+	  {
+	    // just ignore the error
 	  }
 	}
       }

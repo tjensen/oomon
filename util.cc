@@ -214,31 +214,6 @@ getNick(const std::string & text)
 
 
 //////////////////////////////////////////////////////////////////////
-// atoul(text)
-//
-// Description:
-//  Converts a string to an unsigned long.  The function will stop
-//  converting at the first non-numeric character.
-//
-// Parameters:
-//  text - A string containing a decimal representation of an unsigned
-//         long integer.
-//
-// Return Value:
-//  The function returns the converted unsigned long.  If the string
-//  begins with a non-numeric character, the function will return 0.
-//////////////////////////////////////////////////////////////////////
-unsigned long
-atoul(const char *text)
-{
-  unsigned long temp = 0;
-  while ((*text >= '0') && (*text <= '9'))
-    temp = temp * 10 + (*(text++) - '0');
-  return temp;
-}
-
-
-//////////////////////////////////////////////////////////////////////
 // FirstWord(text)
 //
 // Description:
@@ -547,78 +522,6 @@ IntToStr(int i, std::string::size_type len)
     }
     return result;
   }
-}
-
-
-//////////////////////////////////////////////////////////////////////
-// ULongToStr(i, len)
-//
-// Description:
-//  Converts an unsigned long to a string.
-//
-// Parameters:
-//  i   - The unsigned long to convert.
-//  len - The desired width of the resulting string.
-//
-// Return Value:
-//  The function returns string containing the decimal representation
-//  of the unsigned long, right-aligned with spaces to fill the
-//  desired width if necessary.
-//////////////////////////////////////////////////////////////////////
-std::string
-ULongToStr(unsigned long i, std::string::size_type len)
-{
-  std::string result;
-
-  if (i == 0)
-  {
-    result = "0";
-  }
-  else
-  {
-    while (i != 0)
-    {
-      result.insert(result.begin(), 1,
-	(std::string::value_type)((i % 10) + '0'));
-      i /= 10;
-    }
-  }
-
-  std::string::size_type l = result.length();
-  if (l < len)
-  {
-    result.insert(result.begin(), len - l, ' ');
-  }
-  return result;
-}
-
-
-//////////////////////////////////////////////////////////////////////
-// ptrToStr(ptr)
-//
-// Description:
-//  Converts an int to a string.
-//
-// Parameters:
-//  ptr - The pointer to convert.
-//
-// Return Value:
-//  The function returns string containing the representation of the
-//  pointer.
-//////////////////////////////////////////////////////////////////////
-std::string
-ptrToStr(void *ptr)
-{
-  char buffer[64];
-
-#ifdef HAVE_SNPRINTF
-  ::snprintf(buffer, sizeof(buffer),
-#else
-  ::sprintf(buffer,
-#endif
-    "%p", ptr);
-
-  return std::string(reinterpret_cast<char *>(buffer));
 }
 
 

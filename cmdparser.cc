@@ -239,13 +239,17 @@ void
 CommandParser::cmdKline(BotClient * from, const std::string & command,
   std::string parameters)
 {
-  unsigned int minutes = vars[VAR_DEFAULT_KLINE_TIMEOUT]->getInt();
+  unsigned int minutes = 0;
 
   std::string parm = FirstWord(parameters);
-  if (isNumeric(parm))
+  try
   {
-    minutes = atoi(parm.c_str());
+    minutes = boost::lexical_cast<unsigned int>(parm);
     parm = FirstWord(parameters);
+  }
+  catch (boost::bad_lexical_cast)
+  {
+    minutes = vars[VAR_DEFAULT_KLINE_TIMEOUT]->getInt();
   }
 
   if (!parm.empty())
@@ -357,10 +361,14 @@ CommandParser::cmdDline(BotClient * from, const std::string & command,
   unsigned int minutes = vars[VAR_DEFAULT_DLINE_TIMEOUT]->getInt();
 
   std::string parm = FirstWord(parameters);
-  if (isNumeric(parm))
+  try
   {
-    minutes = atoi(parm.c_str());
+    minutes = boost::lexical_cast<unsigned int>(parm);
     parm = FirstWord(parameters);
+  }
+  catch (boost::bad_lexical_cast)
+  {
+    minutes = vars[VAR_DEFAULT_DLINE_TIMEOUT]->getInt();
   }
 
   if (!parm.empty())
@@ -998,7 +1006,14 @@ CommandParser::cmdDomains(BotClient * from, const std::string & command,
 
   if (!min_str.empty())
   {
-    min = atoi(min_str.c_str());
+    try
+    {
+      min = boost::lexical_cast<int>(min_str);
+    }
+    catch (boost::bad_lexical_cast)
+    {
+      // just ignore the error
+    }
   }
 
   if (min >= 1)
@@ -1024,7 +1039,16 @@ CommandParser::cmdMulti(BotClient * from, const std::string & command,
   std::string parameters)
 {
   std::string min_str = FirstWord(parameters);
-  int min = atoi(min_str.c_str());
+
+  int min;
+  try
+  {
+    min = boost::lexical_cast<int>(min_str);
+  }
+  catch (boost::bad_lexical_cast)
+  {
+    min = 0;
+  }
 
   if ((command == "multi") || (command == "bots"))
   {
@@ -1069,7 +1093,14 @@ CommandParser::cmdSeedrand(BotClient * from, const std::string & command,
   std::string parm;
   if (args.haveBinary("-min", parm))
   {
-    threshhold = atoi(parm.c_str());
+    try
+    {
+      threshhold = boost::lexical_cast<int>(parm);
+    }
+    catch (boost::bad_lexical_cast)
+    {
+      threshhold = 0;
+    }
   }
 
   try

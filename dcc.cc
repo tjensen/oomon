@@ -62,7 +62,7 @@ DCC::DCC(const std::string & nick, const std::string & userhost)
   this->_userhost = userhost;
   this->_nick = nick;
   this->_watches = WatchSet::defaults();
-  this->_id = ptrToStr(this);
+  this->_id = boost::lexical_cast<std::string>(this);
 
   this->addCommands();
 }
@@ -79,7 +79,7 @@ DCC::DCC(DCC *listener, const std::string & nick, const std::string & userhost)
   this->_userhost = listener->_userhost;
   this->_nick = listener->_nick;
   this->_watches = listener->_watches;
-  this->_id = ptrToStr(this);
+  this->_id = boost::lexical_cast<std::string>(this);
 
   this->addCommands();
 }

@@ -64,7 +64,14 @@ UserDB::getEcho(const std::string & handle)
     throw OOMon::botdb_error("Failed to get ECHO record for " + handle);
   }
 
-  return (0 != atoi(value.c_str()));
+  try
+  {
+    return (0 != boost::lexical_cast<int>(value));
+  }
+  catch (boost::bad_lexical_cast)
+  {
+    throw OOMon::botdb_error("Bad ECHO record for " + handle);
+  }
 }
 
 
