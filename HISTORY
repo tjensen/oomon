@@ -1,3 +1,92 @@
+OOMon-2.2                                                (01 Apr 2004)
+---------
+	* Fixed the remote bot linking code.  Bot linking now works!!!
+	  See the "remotes.cf" file for examples of how to set up 'R'
+	  lines to give remote users access.
+
+	* Added the ability to send CTCP VERSION requests to all
+	  connecting users and to .trap on CTCP VERSION replies.  Also
+	  added the ability to perform an action when the OOMon does
+	  not receive a CTCP VERSION reply within a configurable
+	  timeout.  See the ".set CTCPVERSION_ENABLE" help for details.
+
+	* Added ability to restore default watches using the ".watch
+	  defaults" command.
+
+	* Added connect flood detection.
+
+	* Greatly improved the virtual host clone detection.  It now
+	  detects vhosted clones instead of connect floods! :-)
+
+	* On servers supporting it, send KNOCKs to +i channels when
+	  unable to join them.  Also, automatically join when invited
+	  to those channels.
+
+	* Added watch type, "JUPES", for watching notices indicating
+	  a user attempted to join a juped channel.
+
+	* Added support for ircd CASEMAPPING types: ascii, rfc1459, and
+	  strict-rfc1459.  The default is assumed to be rfc1459.
+
+	* Added "-a" and "-t" arguments to the ".trap list" command to
+	  allow users to display the number of matches and the timestamp
+	  of the last match.
+
+	* Added the ability to query multiple Open Proxy DNSBL zones.
+	  See the ".set DNSBL_PROXY_ZONE" help for details.
+	  Note:  Make sure you have ADNS installed before you set up
+	         your OOMon to query multiple zones.
+
+	* Client usernames and hostnames are now stored internally
+	  in their original upper- and lowercase formatting.
+
+	* Fixed bug #857688 - User watches don't get loaded from the
+	  db file.
+
+	* When responding to "/stats p" requests, don't use the plural
+	  form of "oper" if there is only 1 OOMon oper connected.
+
+	* Added a ".locops" command.
+
+	* Added ".drones" to be a synonym for ".seedrand".
+
+	* Renamed the SMART_KLINE action type to SMART_KLINE_HOST and
+	  added a new SMART_KLINE that klines *@hostname if the hostname
+	  appears dynamic or klines *user@net.* (or *user@*.domain if
+	  no IP address is available) if the hostname does not appear
+	  dynamic.
+
+	* Added the ability to monitor failed /oper attempts.  See
+	  ".watch OPERFAILS".
+
+	* Added a very simple "mkpasswd" utility to generating
+	  passwords suitable for .cf files.
+
+	* Added support for the GNU ADNS library.  This should help
+	  keep OOMon responsive even when it is doing lots of DNSBL
+	  queries.
+
+	* Show the number of proxy cache hits and misses in .status
+	  command output.
+
+	* Added settings: CLONE_MAX_TIME, CLONE_MIN_COUNT,
+	  CLONE_REPORT_FORMAT, CLONE_REPORT_INTERVAL, CTCPVERSION_ENABLE,
+	  CTCPVERSION_TIMEOUT, CTCPVERSION_TIMEOUT_ACTION,
+	  CTCPVERSION_TIMEOUT_REASON, CONNECT_FLOOD_ACTION,
+	  CONNECT_FLOOD_MAX_COUNT, CONNECT_FLOOD_MAX_TIME,
+	  CONNECT_FLOOD_REASON, OPERFAIL_ACTION, OPERFAIL_MAX_COUNT,
+	  OPERFAIL_MAX_TIME, OPERFAIL_REASON, SERVER_TIMEOUT,
+	  TRACK_PERM_DLINES, TRACK_PERM_KLINES, WATCH_OPERFAIL_NOTICES,
+	  XO_SERVICES_CLONE_ACTION, XO_SERVICES_CLONE_REASON
+
+	* Internal change: Added support for Boost libraries.  This has
+	  grown the source tarball quite a bit.
+
+	* Internal change: Lots of optimizations and clean-ups.
+
+	* Internal change: Rewrote the XO-style services handler code.
+
+
 OOMon-2.1                                                (20 Nov 2003)
 ---------
 	* Added regular expressions support!  Use ".info regex"
