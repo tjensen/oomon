@@ -95,8 +95,8 @@ public:
   void reportClasses(class BotClient * client, const std::string & className);
   void reportSeedrand(class BotClient * client, const PatternPtr mask,
     const int threshold, const bool count = false) const;
-  void reportDomains(class BotClient * client, const int num);
-  void reportNets(class BotClient * client, const int num);
+  void reportDomains(class BotClient * client, const int minimum);
+  void reportNets(class BotClient * client, const int minimum);
   void reportClones(class BotClient * client);
   void reportMulti(class BotClient * client, const int minimum);
   void reportUMulti(class BotClient * client, const int minimum);
@@ -124,13 +124,6 @@ private:
   private:
     UserEntryPtr info_;
     int score_;
-  };
-
-  class SortEntry
-  {
-  public:
-    UserEntryPtr rec;
-    int count;
   };
 
   static int hashFunc(const BotSock::Address & key);

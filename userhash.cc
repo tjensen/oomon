@@ -927,182 +927,118 @@ UserHash::reportSeedrand(BotClient * client, const PatternPtr mask,
 
 
 void
-UserHash::reportDomains(BotClient * client, const int num)
+UserHash::reportDomains(BotClient * client, const int minimum)
 {
-  std::list<UserHash::SortEntry> sort;
-  int maxCount = 1;
-  int foundany = 0;
+  typedef std::map<std::string, int> UnsortedMap;
+  typedef std::multimap<int, std::string> SortedMap;
+  UnsortedMap unsorted;
+  SortedMap sorted;
 
-  if (num < 1)
+  if (minimum < 1)
   {
     client->send("*** Parameter must be greater than 0!");
-    return;
   }
-
-  for (UserEntryTable::iterator i = this->hosttable.begin();
-    i != this->hosttable.end(); ++i)
+  else
   {
-    for (UserEntryList::iterator userptr = i->begin(); userptr != i->end();
-      ++userptr)
+    for (UserEntryTable::iterator i = this->hosttable.begin();
+        i != this->hosttable.end(); ++i)
     {
-      bool found = false;
-
-      for (std::list<UserHash::SortEntry>::iterator pos = sort.begin();
-	pos != sort.end(); ++pos)
+      for (UserEntryList::iterator userptr = i->begin(); userptr != i->end();
+          ++userptr)
       {
-        if (server.same((*userptr)->getDomain(), pos->rec->getDomain()))
-	{
-	  found = true;
-          if (++(pos->count) > maxCount)
-	  {
-	    maxCount = pos->count;
-	  }
-	  break;
-	}
-      }
-      if (!found)
-      {
-	UserHash::SortEntry newEntry;
-
-        newEntry.rec = *userptr;
-        newEntry.count = 1;
-
-	sort.push_back(newEntry);
+        std::string domain(server.downCase((*userptr)->getDomain()));
+        ++unsorted[domain];
       }
     }
-  }
 
-  /* Print 'em out from highest to lowest */
-  while (maxCount >= num)
-  {
-    int currentCount = maxCount;
-
-    maxCount = 0;
-
-    for (std::list<UserHash::SortEntry>::iterator pos = sort.begin();
-      pos != sort.end(); ++pos)
+    for (UnsortedMap::iterator pos = unsorted.begin(); pos != unsorted.end();
+        ++pos)
     {
-      if (pos->count >= currentCount)
+      if (pos->second >= minimum)
       {
-        if (!foundany++)
-	{
-          client->send("Domains with most users on the server:");
-	}
+        sorted.insert(SortedMap::value_type(pos->second, pos->first));
+      }
+    }
 
+    if (sorted.empty())
+    {
+      std::string outmsg("*** No domains have ");
+      outmsg += boost::lexical_cast<std::string>(minimum);
+      outmsg += " or more users.";
+      client->send(outmsg);
+    }
+    else
+    {
+      client->send("Domains with most users on the server:");
+
+      for (SortedMap::reverse_iterator pos = sorted.rbegin();
+          pos != sorted.rend(); ++pos)
+      {
         char outmsg[MAX_BUFF];            
-        sprintf(outmsg, "  %-40s %3d user%s", pos->rec->getDomain().c_str(),
-	  pos->count, (pos->count == 1) ? "" : "s");
-
+        sprintf(outmsg, "  %-40s %3d user%s", pos->second.c_str(),
+          pos->first, (pos->first == 1) ? "" : "s");
         client->send(outmsg);
-
-	sort.erase(pos);
-	--pos;
-      }
-      else if (pos->count >= maxCount)
-      {
-	maxCount = pos->count;
       }
     }
-  }
-
-  if (!foundany)
-  {  
-    char outmsg[MAX_BUFF];            
-    sprintf(outmsg, "No domains have %d or more users.", num);
-    client->send(outmsg);
   }
 }
 
 
 void
-UserHash::reportNets(BotClient * client, const int num)
+UserHash::reportNets(BotClient * client, const int minimum)
 {
-  std::list<UserHash::SortEntry> sort;
-  int maxCount = 1;
-  int foundany = 0;
+  typedef std::map<BotSock::Address, int> UnsortedMap;
+  typedef std::multimap<int, BotSock::Address> SortedMap;
+  UnsortedMap unsorted;
+  SortedMap sorted;
 
-  if (num < 1)
+  if (minimum < 1)
   {
     client->send("*** Parameter must be greater than 0!");
-    return;
   }
-
-  for (UserEntryTable::iterator i = this->hosttable.begin();
-    i != this->hosttable.end(); ++i)
+  else
   {
-    for (UserEntryList::iterator userptr = i->begin(); userptr != i->end();
-      ++userptr)
+    for (UserEntryTable::iterator i = this->hosttable.begin();
+        i != this->hosttable.end(); ++i)
     {
-      if ((*userptr)->getIP() != INADDR_NONE)
+      for (UserEntryList::iterator userptr = i->begin(); userptr != i->end();
+          ++userptr)
       {
-        bool found = false;
-
-        for (std::list<UserHash::SortEntry>::iterator pos = sort.begin();
-	  pos != sort.end(); ++pos)
-        {
-          if (((*userptr)->getIP() & BotSock::ClassCNetMask) ==
-	    (pos->rec->getIP() & BotSock::ClassCNetMask))
-	  {
-	    found = true;
-            if (++(pos->count) > maxCount)
-	    {
-	      maxCount = pos->count;
-	    }
-	    break;
-	  }
-        }
-        if (!found)
-        {
-	  UserHash::SortEntry newEntry;
-
-          newEntry.rec = *userptr;
-          newEntry.count = 1;
-
-	  sort.push_back(newEntry);
-        }
+        BotSock::Address net((*userptr)->getIP() & BotSock::ClassCNetMask);
+        ++unsorted[net];
       }
     }
-  }
 
-  /* Print 'em out from highest to lowest */
-  while (maxCount >= num)
-  {
-    int currentCount = maxCount;
-
-    maxCount = 0;
-
-    for (std::list<UserHash::SortEntry>::iterator pos = sort.begin();
-      pos != sort.end(); ++pos)
+    for (UnsortedMap::iterator pos = unsorted.begin(); pos != unsorted.end();
+        ++pos)
     {
-      if (pos->count >= currentCount)
+      if (pos->second >= minimum)
       {
-        if (!foundany++)
-	{
-          client->send("Nets with most users on the server:");
-	}
+        sorted.insert(SortedMap::value_type(pos->second, pos->first));
+      }
+    }
 
+    if (sorted.empty())
+    {
+      std::string outmsg("*** No nets have ");
+      outmsg += boost::lexical_cast<std::string>(minimum);
+      outmsg += " or more users.";
+      client->send(outmsg);
+    }
+    else
+    {
+      client->send("Nets with most users on the server:");
+
+      for (SortedMap::reverse_iterator pos = sorted.rbegin();
+          pos != sorted.rend(); ++pos)
+      {
         char outmsg[MAX_BUFF];            
         sprintf(outmsg, "  %-40s %3d user%s",
-	  classCMask(BotSock::inet_ntoa(pos->rec->getIP())).c_str(),
-	  pos->count, (pos->count == 1) ? "" : "s");
-
+	  classCMask(BotSock::inet_ntoa(pos->second)).c_str(), pos->first,
+          (pos->first == 1) ? "" : "s");
         client->send(outmsg);
-
-	sort.erase(pos);
-	--pos;
-      }
-      else if (pos->count >= maxCount)
-      {
-	maxCount = pos->count;
       }
     }
-  }
-
-  if (!foundany)
-  {  
-    char outmsg[MAX_BUFF];            
-    sprintf(outmsg, "No nets have %d or more users.", num);
-    client->send(outmsg);
   }
 }
 
