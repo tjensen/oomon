@@ -40,67 +40,67 @@
 Watch
 WatchSet::getWatchValue(const std::string & watch)
 {
-  if (watch == "CHAT")
+  if (partialCompare(watch, "CHAT", 2))
     return WATCH_CHAT;
-  else if (watch == "CONNECTS")
+  else if (partialCompare(watch, "CONNECTS", 5))
     return WATCH_CONNECTS;
-  else if (watch == "CONNFLOOD")
+  else if (partialCompare(watch, "CONNFLOOD", 5))
     return WATCH_CONNFLOOD;
-  else if (watch == "CTCPVERSIONS")
+  else if (partialCompare(watch, "CTCPVERSIONS", 2))
     return WATCH_CTCPVERSIONS;
-  else if (watch == "DISCONNECTS")
+  else if (partialCompare(watch, "DISCONNECTS", 2))
     return WATCH_DISCONNECTS;
-  else if (watch == "DLINES")
+  else if (partialCompare(watch, "DLINES", 6))
     return WATCH_DLINES;
-  else if (watch == "DLINE_MATCHES")
+  else if (partialCompare(watch, "DLINE_MATCHES", 6))
     return WATCH_DLINE_MATCHES;
-  else if (watch == "DNSBL")
+  else if (partialCompare(watch, "DNSBL", 2))
     return WATCH_DNSBL;
-  else if (watch == "GLINES")
+  else if (partialCompare(watch, "GLINES", 6))
     return WATCH_GLINES;
-  else if (watch == "GLINE_MATCHES")
+  else if (partialCompare(watch, "GLINE_MATCHES", 6))
     return WATCH_GLINE_MATCHES;
-  else if (watch == "FLOODERS")
+  else if (partialCompare(watch, "FLOODERS", 1))
     return WATCH_FLOODERS;
-  else if (watch == "INFOS")
+  else if (partialCompare(watch, "INFOS", 1))
     return WATCH_INFOS;
-  else if (watch == "JUPES")
+  else if (partialCompare(watch, "JUPES", 1))
     return WATCH_JUPES;
-  else if (watch == "KILLS")
+  else if (partialCompare(watch, "KILLS", 2))
     return WATCH_KILLS;
-  else if (watch == "KLINES")
+  else if (partialCompare(watch, "KLINES", 6))
     return WATCH_KLINES;
-  else if (watch == "KLINE_MATCHES")
+  else if (partialCompare(watch, "KLINE_MATCHES", 6))
     return WATCH_KLINE_MATCHES;
-  else if (watch == "LINKS")
+  else if (partialCompare(watch, "LINKS", 1))
     return WATCH_LINKS;
-  else if (watch == "MOTDS")
+  else if (partialCompare(watch, "MOTDS", 2))
     return WATCH_MOTDS;
-  else if (watch == "MSGS")
+  else if (partialCompare(watch, "MSGS", 2))
     return WATCH_MSGS;
-  else if (watch == "NICK_CHANGES")
+  else if (partialCompare(watch, "NICK_CHANGES", 2))
     return WATCH_NICK_CHANGES;
-  else if (watch == "NOTICES")
+  else if (partialCompare(watch, "NOTICES", 3))
     return WATCH_NOTICES;
-  else if (watch == "OPERFAILS")
+  else if (partialCompare(watch, "OPERFAILS", 1))
     return WATCH_OPERFAILS;
-  else if (watch == "PROXYSCANS")
+  else if (partialCompare(watch, "PROXYSCANS", 1))
     return WATCH_PROXYSCANS;
-  else if (watch == "SEEDRAND")
+  else if (partialCompare(watch, "SEEDRAND", 2))
     return WATCH_SEEDRAND;
-  else if (watch == "SPAMBOTS")
+  else if (partialCompare(watch, "SPAMBOTS", 5))
     return WATCH_SPAMBOTS;
-  else if (watch == "SPAMTRAP")
+  else if (partialCompare(watch, "SPAMTRAP", 5))
     return WATCH_SPAMTRAP;
-  else if (watch == "STATS")
+  else if (partialCompare(watch, "STATS", 2))
     return WATCH_STATS;
-  else if (watch == "TOOMANYS")
+  else if (partialCompare(watch, "TOOMANYS", 2))
     return WATCH_TOOMANYS;
-  else if (watch == "TRACES")
+  else if (partialCompare(watch, "TRACES", 4))
     return WATCH_TRACES;
-  else if (watch == "TRAPS")
+  else if (partialCompare(watch, "TRAPS", 4))
     return WATCH_TRAPS;
-  else if (watch == "WALLOPS")
+  else if (partialCompare(watch, "WALLOPS", 1))
     return WATCH_WALLOPS;
   else
     throw OOMon::invalid_watch_name(watch);
@@ -132,12 +132,13 @@ WatchSet::set(BotClient * client, std::string line, const bool noisy)
       }
     }
 
-    if ((!minus && !plus && (word == "NONE")) || (minus && (word == "ALL")))
+    if ((!minus && !plus && partialCompare(word, "NONE", 3)) ||
+        (minus && partialCompare(word, "ALL", 1)))
     {
       this->clear();
       if (noisy) client->send("*** Removed ALL watches.");
     }
-    else if ((word == "DEFAULT") || (word == "DEFAULTS"))
+    else if (partialCompare(word, "DEFAULTS", 2))
     {
       if (minus)
       {
@@ -156,7 +157,7 @@ WatchSet::set(BotClient * client, std::string line, const bool noisy)
         if (noisy) client->send("*** Set DEFAULT watches.");
       }
     }
-    else if (word == "ALL")
+    else if (partialCompare(word, "ALL", 1))
     {
       this->add(WatchSet::all());
       if (noisy) client->send("*** Added ALL watches.");

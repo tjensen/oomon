@@ -124,17 +124,17 @@ Action::parse(BotClient * client, std::string text, const FormatSet & formats)
 
   std::string cmd(UpCase(FirstWord(text)));
 
-  if (cmd.empty() || (0 == cmd.compare("LIST")))
-  {
-    result.reset(new Action::List(client, formats));
-  }
-  else if (0 == cmd.compare("COUNT"))
+  if (partialCompare(cmd, "COUNT", 1))
   {
     result.reset(new Action::Nothing(client));
   }
-  else if (0 == cmd.compare("KILL"))
+  else if (partialCompare(cmd, "KILL", 1))
   {
     result.reset(new Action::Kill(client, text));
+  }
+  else if (cmd.empty() || partialCompare(cmd, "LIST", 1))
+  {
+    result.reset(new Action::List(client, formats));
   }
   else
   {

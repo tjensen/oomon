@@ -106,58 +106,58 @@ AutoAction::set(AutoAction * value, const std::string & newValue)
     StrSplit(value->server_, action.substr(at + 1), ",", true);
   }
 
-  if (0 == text.compare("NOTHING"))
+  if (partialCompare(text, "DLINE_IP", 7))
   {
-    value->type_ = AutoAction::NOTHING;
+    value->type_ = AutoAction::DLINE_IP;
   }
-  else if (0 == text.compare("KILL"))
+  else if (partialCompare(text, "DLINE_NET", 7))
+  {
+    value->type_ = AutoAction::DLINE_NET;
+  }
+  else if (partialCompare(text, "KILL", 2))
   {
     value->type_ = AutoAction::KILL;
   }
   else if ((0 == text.compare("KLINE")) ||
-      (0 == text.compare("KLINE_USERDOMAIN")))
+      partialCompare(text, "KLINE_USERDOMAIN", 11))
   {
     value->type_ = AutoAction::KLINE;
   }
-  else if (0 == text.compare("KLINE_HOST"))
-  {
-    value->type_ = AutoAction::KLINE_HOST;
-  }
-  else if (0 == text.compare("KLINE_DOMAIN"))
+  else if (partialCompare(text, "KLINE_DOMAIN", 7))
   {
     value->type_ = AutoAction::KLINE_DOMAIN;
   }
-  else if (0 == text.compare("KLINE_IP"))
+  else if (partialCompare(text, "KLINE_HOST", 7))
+  {
+    value->type_ = AutoAction::KLINE_HOST;
+  }
+  else if (partialCompare(text, "KLINE_IP", 7))
   {
     value->type_ = AutoAction::KLINE_IP;
   }
-  else if (0 == text.compare("KLINE_USERNET"))
+  else if (partialCompare(text, "KLINE_NET", 7))
+  {
+    value->type_ = AutoAction::KLINE_NET;
+  }
+  else if (partialCompare(text, "KLINE_USERNET", 11))
   {
     value->type_ = AutoAction::KLINE_USERNET;
   }
-  else if (0 == text.compare("KLINE_NET"))
+  else if (partialCompare(text, "NOTHING", 1))
   {
-    value->type_ = AutoAction::KLINE_NET;
+    value->type_ = AutoAction::NOTHING;
   }
   else if (0 == text.compare("SMART_KLINE"))
   {
     value->type_ = AutoAction::SMART_KLINE;
   }
-  else if (0 == text.compare("SMART_KLINE_HOST"))
+  else if (partialCompare(text, "SMART_KLINE_HOST", 13))
   {
     value->type_ = AutoAction::SMART_KLINE_HOST;
   }
-  else if (0 == text.compare("SMART_KLINE_IP"))
+  else if (partialCompare(text, "SMART_KLINE_IP", 13))
   {
     value->type_ = AutoAction::SMART_KLINE_IP;
-  }
-  else if (0 == text.compare("DLINE_IP"))
-  {
-    value->type_ = AutoAction::DLINE_IP;
-  }
-  else if (0 == text.compare("DLINE_NET"))
-  {
-    value->type_ = AutoAction::DLINE_NET;
   }
   else
   {
