@@ -1301,24 +1301,26 @@ checkForSpoof(const std::string & nick, const std::string & user,
 	  {
 	    legal_top_level = true;
 	  }
-          else if (3 == len)
+          else
           {
-            // Don't forget .ARPA !!!! :P
-            if (0 == tld.compare("net")) legal_top_level = true;
-            if (0 == tld.compare("com")) legal_top_level = true;
-            if (0 == tld.compare("org")) legal_top_level = true;
-            if (0 == tld.compare("gov")) legal_top_level = true;
-            if (0 == tld.compare("edu")) legal_top_level = true;
-            if (0 == tld.compare("mil")) legal_top_level = true;
-            if (0 == tld.compare("int")) legal_top_level = true;
-            if (0 == tld.compare("biz")) legal_top_level = true;
-          }
-	  else if (4 == len)
-	  {
+            if (0 == tld.compare("aero")) legal_top_level = true;
             if (0 == tld.compare("arpa")) legal_top_level = true;
+            if (0 == tld.compare("biz")) legal_top_level = true;
+            if (0 == tld.compare("com")) legal_top_level = true;
+            if (0 == tld.compare("coop")) legal_top_level = true;
+            if (0 == tld.compare("edu")) legal_top_level = true;
+            if (0 == tld.compare("gov")) legal_top_level = true;
             if (0 == tld.compare("info")) legal_top_level = true;
+            if (0 == tld.compare("int")) legal_top_level = true;
+            if (0 == tld.compare("mil")) legal_top_level = true;
+            if (0 == tld.compare("museum")) legal_top_level = true;
             if (0 == tld.compare("name")) legal_top_level = true;
-	  }
+            if (0 == tld.compare("net")) legal_top_level = true;
+            if (0 == tld.compare("org")) legal_top_level = true;
+            if (0 == tld.compare("post")) legal_top_level = true;
+            if (0 == tld.compare("pro")) legal_top_level = true;
+            if (0 == tld.compare("travel")) legal_top_level = true;
+          }
 
           if (!legal_top_level)
           {
