@@ -481,8 +481,12 @@ Remote::onBotJoin(const std::string & from, const std::string & command,
     this->_sock.setTimeout(0);
 
     remotes.sendBotJoin(Config::GetNick(), this->getHandle(), this);
-    clients.sendAll("*** Bot " + this->getHandle() + " has connected",
-      UserFlags::OPER);
+
+    std::string notice("*** Bot ");
+    notice += this->getHandle();
+    notice += " has connected";
+    clients.sendAll(notice, UserFlags::OPER);
+    Log::Write(notice);
 
     if (this->isServer())
     {
@@ -512,8 +516,13 @@ Remote::onBotJoin(const std::string & from, const std::string & command,
 
       if (this->ready())
       {
-        clients.sendAll("*** Bot " + node + " has connected to " + from,
-          UserFlags::OPER);
+	std::string notice("*** Bot ");
+	notice += node;
+	notice += " has connected to ";
+	notice += from;
+
+        clients.sendAll(from, UserFlags::OPER);
+        Log::Write(from);
       }
     }
   }
@@ -542,8 +551,13 @@ Remote::onBotPart(const std::string & from, const std::string & command,
       this->_children.Unlink(node);
       remotes.sendBotPart(from, node, this);
 
-      clients.sendAll("*** Bot " + node + " has disconnected from " + from,
-        UserFlags::OPER);
+      std::string notice("*** Bot ");
+      notice += node;
+      notice += " has disconnected from ";
+      notice += from;
+
+      clients.sendAll(notice, UserFlags::OPER);
+      Log::Write(notice);
 
       result = true;
     }
