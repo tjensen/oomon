@@ -182,28 +182,31 @@ ProxyList::initiateCheck(const Proxy::Protocol type, const std::string & port,
 void
 ProxyList::check(const BotSock::Address & address, const UserEntryPtr user)
 {
-  StrVector http, socks4, socks5, wingate;
+  if (vars[VAR_SCAN_FOR_PROXIES]->getBool())
+  {
+    StrVector http, socks4, socks5, wingate;
 
-  StrSplit(http, vars[VAR_SCAN_HTTP_CONNECT_PORTS]->getString(), " ,", true);
-  StrSplit(socks4, vars[VAR_SCAN_SOCKS4_PORTS]->getString(), " ,", true);
-  StrSplit(socks4, vars[VAR_SCAN_SOCKS5_PORTS]->getString(), " ,", true);
-  StrSplit(wingate, vars[VAR_SCAN_WINGATE_PORTS]->getString(), " ,", true);
+    StrSplit(http, vars[VAR_SCAN_HTTP_CONNECT_PORTS]->getString(), " ,", true);
+    StrSplit(socks4, vars[VAR_SCAN_SOCKS4_PORTS]->getString(), " ,", true);
+    StrSplit(socks4, vars[VAR_SCAN_SOCKS5_PORTS]->getString(), " ,", true);
+    StrSplit(wingate, vars[VAR_SCAN_WINGATE_PORTS]->getString(), " ,", true);
 
-  for (StrVector::iterator pos = http.begin(); pos != http.end(); ++pos)
-  {
-    ProxyList::initiateCheck(Proxy::HTTP, *pos, address, user);
-  }
-  for (StrVector::iterator pos = socks4.begin(); pos != socks4.end(); ++pos)
-  {
-    ProxyList::initiateCheck(Proxy::SOCKS4, *pos, address, user);
-  }
-  for (StrVector::iterator pos = socks5.begin(); pos != socks5.end(); ++pos)
-  {
-    ProxyList::initiateCheck(Proxy::SOCKS5, *pos, address, user);
-  }
-  for (StrVector::iterator pos = wingate.begin(); pos != wingate.end(); ++pos)
-  {
-    ProxyList::initiateCheck(Proxy::WINGATE, *pos, address, user);
+    for (StrVector::iterator pos = http.begin(); pos != http.end(); ++pos)
+    {
+      ProxyList::initiateCheck(Proxy::HTTP, *pos, address, user);
+    }
+    for (StrVector::iterator pos = socks4.begin(); pos != socks4.end(); ++pos)
+    {
+      ProxyList::initiateCheck(Proxy::SOCKS4, *pos, address, user);
+    }
+    for (StrVector::iterator pos = socks5.begin(); pos != socks5.end(); ++pos)
+    {
+      ProxyList::initiateCheck(Proxy::SOCKS5, *pos, address, user);
+    }
+    for (StrVector::iterator pos = wingate.begin(); pos != wingate.end(); ++pos)
+    {
+      ProxyList::initiateCheck(Proxy::WINGATE, *pos, address, user);
+    }
   }
 }
 
@@ -341,28 +344,32 @@ void
 ProxyList::status(BotClient * client) const
 {
   ProxyList::SockList::size_type size(this->scanners.size());
-  std::string scanCount("Proxy scanners: ");
-  scanCount += boost::lexical_cast<std::string>(size);
-  client->send(scanCount);
 
-  int cacheCount = 0;
-  for (ProxyList::Cache::const_iterator pos = this->safeHosts.begin();
-    pos < this->safeHosts.end(); ++pos)
+  if ((size > 0) || vars[VAR_SCAN_FOR_PROXIES]->getBool())
   {
-    if (!pos->isEmpty())
+    std::string scanCount("Proxy scanners: ");
+    scanCount += boost::lexical_cast<std::string>(size);
+    client->send(scanCount);
+
+    int cacheCount = 0;
+    for (ProxyList::Cache::const_iterator pos = this->safeHosts.begin();
+      pos < this->safeHosts.end(); ++pos)
     {
-      ++cacheCount;
+      if (!pos->isEmpty())
+      {
+        ++cacheCount;
+      }
     }
+    std::string cache("Proxy cache: ");
+    cache += boost::lexical_cast<std::string>(cacheCount);
+    cache += '/';
+    cache += boost::lexical_cast<std::string>(this->safeHosts.size());
+    cache += " (";
+    cache += boost::lexical_cast<std::string>(this->cacheHits);
+    cache += " hits, ";
+    cache += boost::lexical_cast<std::string>(this->cacheMisses);
+    cache += " misses)";
+    client->send(cache);
   }
-  std::string cache("Proxy cache: ");
-  cache += boost::lexical_cast<std::string>(cacheCount);
-  cache += '/';
-  cache += boost::lexical_cast<std::string>(this->safeHosts.size());
-  cache += " (";
-  cache += boost::lexical_cast<std::string>(this->cacheHits);
-  cache += " hits, ";
-  cache += boost::lexical_cast<std::string>(this->cacheMisses);
-  cache += " misses)";
-  client->send(cache);
 }
 

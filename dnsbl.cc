@@ -175,8 +175,11 @@ void
 Dnsbl::status(BotClient * client) const
 {
 #ifdef HAVE_LIBADNS
-  client->send("DNSBL queries: " +
-    boost::lexical_cast<std::string>(this->queries_.size()));
+  if (!this->queries_.empty() || vars[VAR_DNSBL_PROXY_ENABLE]->getBool())
+  {
+    client->send("DNSBL queries: " +
+        boost::lexical_cast<std::string>(this->queries_.size()));
+  }
 #endif /* HAVE_LIBADNS */
 }
 
