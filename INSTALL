@@ -16,6 +16,13 @@ following options are specific to OOMon:
     where the PCRE files are located if it is unable to locate them
     on its own.
     
+  --enable-adns[=DIR]
+    By default, the configure script will attempt to automatically
+    determine if the ADNS Alternative DNS resolver library is
+    available on your system.  Use this option to tell configure
+    where the ADNS files are located if it is unable to locate them
+    on its own.
+    
   --enable-gdbm[=DIR]
     By default, the configure script will attempt to automatically
     determine if GDBM database routines are available on your system.
