@@ -280,7 +280,13 @@ void
 doAction(const UserEntryPtr & user, const AutoAction & action,
     int duration, const std::string & reason, bool suggestKlineAfterKill)
 {
-  doAction(user->getNick(), user->getUserHost(), user->getIP(), action,
-      duration, reason, suggestKlineAfterKill);
+  // If we're about to perform a KILL action, make sure the user is still
+  // connected to prevent ourselves from accidentally killing someone
+  // else who just took the same nickname!
+  if (user->connected() || (ACTION_KILL != action))
+  {
+    doAction(user->getNick(), user->getUserHost(), user->getIP(), action,
+        duration, reason, suggestKlineAfterKill);
+  }
 }
 

@@ -54,7 +54,7 @@ UserEntry::UserEntry(const std::string & aNick,
   : user(aUser), host(aHost), fakeHost(aFakeHost),
   domain(::getDomain(aHost, false)), userClass(::server.downCase(aUserClass)),
   gecos(aGecos), ip(anIp), connectTime(aConnectTime), reportTime(0),
-  versioned(0), isOper(oper)
+  versioned(0), isOper(oper), connected_(true)
 {
   this->setNick(aNick);
 #ifdef USERHASH_DEBUG

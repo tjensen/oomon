@@ -45,8 +45,8 @@ public:
   virtual ~UserEntry(void);
 
   void setNick(const std::string & aNick);
-  void setOper(const bool oper) { this->isOper = oper; };
-  void setReportTime(const std::time_t t) { this->reportTime = t; };
+  void setOper(const bool oper) { this->isOper = oper; }
+  void setReportTime(const std::time_t t) { this->reportTime = t; }
   void version(void);
   void hasVersion(const std::string & version);
 
@@ -60,14 +60,17 @@ public:
   std::time_t checkVersionTimeout(const std::time_t now,
       const std::time_t timeout);
 
-  std::string getNick(void) const { return this->nick; };
-  std::string getUser(void) const { return this->user; };
-  std::string getHost(void) const { return this->host; };
-  std::string getFakeHost(void) const { return this->fakeHost; };
-  std::string getDomain(void) const { return this->domain; };
-  std::string getClass(void) const { return this->userClass; };
-  std::string getGecos(void) const { return this->gecos; };
-  BotSock::Address getIP(void) const { return this->ip; };
+  void disconnect(void) { this->connected_ = false; }
+  bool connected(void) const { return this->connected_; }
+
+  std::string getNick(void) const { return this->nick; }
+  std::string getUser(void) const { return this->user; }
+  std::string getHost(void) const { return this->host; }
+  std::string getFakeHost(void) const { return this->fakeHost; }
+  std::string getDomain(void) const { return this->domain; }
+  std::string getClass(void) const { return this->userClass; }
+  std::string getGecos(void) const { return this->gecos; }
+  BotSock::Address getIP(void) const { return this->ip; }
   std::string getTextIP(void) const
   {
     return BotSock::inet_ntoa(this->ip);
@@ -76,8 +79,8 @@ public:
   {
     return (this->getIP() & BotSock::ClassCNetMask);
   }
-  bool getOper(void) const { return this->isOper; };
-  int getScore(void) const { return this->randScore; };
+  bool getOper(void) const { return this->isOper; }
+  int getScore(void) const { return this->randScore; }
   std::string getUserHost(void) const
   {
     std::string result(this->user);
@@ -132,8 +135,8 @@ public:
     result += this->gecos;
     return result;
   }
-  std::time_t getConnectTime(void) const { return this->connectTime; };
-  std::time_t getReportTime(void) const { return this->reportTime; };
+  std::time_t getConnectTime(void) const { return this->connectTime; }
+  std::time_t getReportTime(void) const { return this->reportTime; }
 
   std::string output(const std::string & format) const;
 
@@ -150,6 +153,7 @@ private:
   std::time_t reportTime;
   std::time_t versioned;
   bool isOper;
+  bool connected_;
   int randScore;
 };
 

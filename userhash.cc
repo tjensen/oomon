@@ -512,6 +512,8 @@ UserHash::removeFromHashEntry(UserEntryList & list, const std::string & host,
 
   if (find != list.end())
   {
+    (*find)->disconnect();
+
     list.erase(find);
     result = true;
   }
