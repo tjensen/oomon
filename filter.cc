@@ -25,6 +25,7 @@
 // OOMon Headers
 #include "strtype"
 #include "filter.h"
+#include "format.h"
 #include "util.h"
 
 
@@ -263,6 +264,36 @@ Filter::matches(const Filter::Field & field) const
     case FIELD_NOTICE:
       result = (this->fields_.end() != this->fields_.find(field));
       break;
+  }
+
+  return result;
+}
+
+
+FormatSet
+Filter::formats(void) const
+{
+  FormatSet result;
+
+  if (this->matches(FIELD_NICK))
+  {
+    result.set(FORMAT_NICK);
+  }
+  if (this->matches(FIELD_USER) || this->matches(FIELD_HOST))
+  {
+    result.set(FORMAT_USERHOST);
+  }
+  if (this->matches(FIELD_IP))
+  {
+    result.set(FORMAT_IP);
+  }
+  if (this->matches(FIELD_CLASS))
+  {
+    result.set(FORMAT_CLASS);
+  }
+  if (this->matches(FIELD_GECOS))
+  {
+    result.set(FORMAT_GECOS);
   }
 
   return result;

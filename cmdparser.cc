@@ -90,20 +90,21 @@ CommandParser::CommandParser(void)
     EXACT_ONLY);
   this->addCommand("KL", &CommandParser::cmdKilllist, UserFlags::OPER,
     EXACT_ONLY);
-  this->addCommand("KILLNFIND", &CommandParser::cmdKillnfind, UserFlags::OPER,
+  this->addCommand("KILLNFIND", &CommandParser::cmdKilllist, UserFlags::OPER,
     EXACT_ONLY);
-  this->addCommand("KN", &CommandParser::cmdKillnfind, UserFlags::OPER,
+  this->addCommand("KN", &CommandParser::cmdKilllist, UserFlags::OPER,
     EXACT_ONLY);
   this->addCommand("RELOAD", &CommandParser::cmdReload, UserFlags::OPER);
   this->addCommand("TRACE", &CommandParser::cmdReload, UserFlags::OPER);
   this->addCommand("TRAP", &CommandParser::cmdTrap, UserFlags::OPER);
   this->addCommand("SET", &CommandParser::cmdSet, UserFlags::OPER);
-  this->addCommand("NFIND", &CommandParser::cmdFindu, UserFlags::OPER);
-  this->addCommand("LIST", &CommandParser::cmdFindu, UserFlags::OPER);
-  this->addCommand("GLIST", &CommandParser::cmdFindu, UserFlags::OPER);
-  this->addCommand("ULIST", &CommandParser::cmdFindu, UserFlags::OPER);
-  this->addCommand("HLIST", &CommandParser::cmdFindu, UserFlags::OPER);
-  this->addCommand("IPLIST", &CommandParser::cmdFindu, UserFlags::OPER);
+  this->addCommand("LIST", &CommandParser::cmdList, UserFlags::OPER);
+  this->addCommand("NFIND", &CommandParser::cmdList, UserFlags::OPER);
+  this->addCommand("NLIST", &CommandParser::cmdList, UserFlags::OPER);
+  this->addCommand("GLIST", &CommandParser::cmdList, UserFlags::OPER);
+  this->addCommand("ULIST", &CommandParser::cmdList, UserFlags::OPER);
+  this->addCommand("HLIST", &CommandParser::cmdList, UserFlags::OPER);
+  this->addCommand("IPLIST", &CommandParser::cmdList, UserFlags::OPER);
   this->addCommand("FINDU", &CommandParser::cmdFindu, UserFlags::OPER);
   this->addCommand("FINDK", &CommandParser::cmdFindk, UserFlags::OPER);
   this->addCommand("FINDD", &CommandParser::cmdFindd, UserFlags::OPER);
@@ -499,132 +500,70 @@ void
 CommandParser::cmdKilllist(BotClient * from, const std::string & command,
   std::string parameters)
 {
-  ArgList args("-r", "-class");
-
-  if (-1 == args.parseCommand(parameters))
+  try
   {
-    throw CommandParser::exception("*** Invalid parameter: " +
-      args.getInvalid());
-  }
+    ArgList args;
+    args.addPatterns("-class");
 
-  std::string className;
-  args.haveBinary("-class", className);
-
-  std::string mask = FirstWord(parameters);
-
-  if (mask.empty())
-  {
-    CommandParser::syntax(command, "[-class <name>] <pattern> [<reason>]");
-  }
-  else
-  {
-    PatternPtr pattern;
-
-    try
+    if (-1 == args.parseCommand(parameters))
     {
-      if (args.haveUnary("-r"))
-      {
-        PatternPtr tmp(new RegExPattern(mask));
-        pattern.swap(tmp);
-      }
-      else
-      {
-        pattern = smartPattern(mask, false);
-      }
-    }
-    catch (OOMon::regex_error & e)
-    {
-      throw CommandParser::exception("*** RegEx error: " + e.what());
+      throw CommandParser::exception("*** Invalid parameter: " +
+        args.getInvalid());
     }
 
-    try
+    if (parameters.empty())
     {
-      if (parameters.empty())
-      {
-        ::SendAll("KILLLIST " + mask + " [" + from->handleAndBot() + "]",
-          UserFlags::OPER, WATCH_KILLS, from);
-        users.listUsers(from, pattern, className, UserHash::LIST_KILL,
-          from->handleAndBot(), vars[VAR_KILLLIST_REASON]->getString());
-      }
-      else
-      {
-        ::SendAll("KILLLIST " + mask + " (" + parameters + ") [" +
-          from->handleAndBot() + "]", UserFlags::OPER, WATCH_KILLS, from);
-        users.listUsers(from, pattern, className, UserHash::LIST_KILL,
-	  from->handleAndBot(), parameters);
-      }
+      CommandParser::syntax(command, "[-class <pattern>] <pattern> [<reason>]");
     }
-    catch (OOMon::regex_error & e)
+    else
     {
-      throw CommandParser::exception("*** RegEx error: " + e.what());
+      std::string pattern(grabPattern(parameters));
+
+      std::string defaultReason(vars[VAR_KILLNFIND_REASON]->getString());
+      Filter::Field field(Filter::FIELD_NICK);
+      if ((0 == command.compare("kl")) || (0 == command.compare("killlist")))
+      {
+        field = Filter::FIELD_UH;
+        defaultReason = vars[VAR_KILLLIST_REASON]->getString();
+      }
+
+      Filter filter(field, smartPattern(pattern, Filter::FIELD_NICK == field));
+
+      PatternPtr classPattern;
+      if (args.havePattern("-class", classPattern))
+      {
+        filter.add(Filter::FIELD_CLASS, classPattern);
+      }
+
+      std::string reason(trimLeft(filter.rest()));
+
+      if (reason.empty())
+      {
+        reason = defaultReason;
+      }
+
+      ActionPtr action(new Action::Kill(from, reason));
+
+      std::string notice(UpCase(command));
+      notice += ' ';
+      notice += filter.get();
+      notice += " (";
+      notice += reason;
+      notice += ") [";
+      notice += from->handleAndBot();
+      notice += ']';
+      ::SendAll(notice, UserFlags::OPER, WATCH_KILLS, from);
+
+      users.findUsers(from, filter, action);
     }
   }
-}
-
-
-void
-CommandParser::cmdKillnfind(BotClient * from, const std::string & command,
-  std::string parameters)
-{
-  ArgList args("-r", "-class");
-
-  if (-1 == args.parseCommand(parameters))
+  catch (OOMon::regex_error & e)
   {
-    throw CommandParser::exception("*** Invalid parameter: " +
-      args.getInvalid());
+    throw CommandParser::exception("*** RegEx error: " + e.what());
   }
-
-  std::string className;
-  args.haveBinary("-class", className);
-
-  std::string mask = FirstWord(parameters);
-
-  if (mask.empty())
+  catch (Filter::bad_field & e)
   {
-    CommandParser::syntax(command, "[-class <name>] <pattern> [<reason>]");
-  }
-  else
-  {
-    PatternPtr pattern;
-
-    try
-    {
-      if (args.haveUnary("-r"))
-      {
-        PatternPtr tmp(new RegExPattern(mask));
-        pattern.swap(tmp);
-      }
-      else
-      {
-        pattern = smartPattern(mask, true);
-      }
-    }
-    catch (OOMon::regex_error & e)
-    {
-      throw CommandParser::exception("*** RegEx error: " + e.what());
-    }
-
-    try
-    {
-      if (parameters.empty())
-      {
-        ::SendAll("KILLNFIND " + mask + " [" + from->handleAndBot() + "]",
-          UserFlags::OPER, WATCH_KILLS, from);
-        users.listNicks(from, pattern, className, UserHash::LIST_KILL,
-          from->handleAndBot(), vars[VAR_KILLNFIND_REASON]->getString());
-      }
-      else
-      {
-        ::SendAll("KILLNFIND " + mask + " (" + parameters + ") [" +
-          from->handleAndBot() + "]", UserFlags::OPER, WATCH_KILLS, from);
-        users.listNicks(from, pattern, className, UserHash::LIST_KILL,
-	  from->handleAndBot(), parameters);
-      }
-    }
-    catch (OOMon::regex_error & e)
-    {
-      throw CommandParser::exception("*** RegEx error: " + e.what());
-    }
+    throw CommandParser::exception(e.what());
   }
 }
 
@@ -716,81 +655,121 @@ CommandParser::cmdSet(BotClient * from, const std::string & command,
 
 
 void
-CommandParser::cmdFindu(BotClient * from, const std::string & command,
+CommandParser::cmdList(BotClient * from, const std::string & command,
   std::string parameters)
 {
   try
   {
-    if (0 == command.compare("findu"))
-    {
-      if (parameters.empty())
-      {
-        CommandParser::syntax(command, "<filter>");
-      }
-      else
-      {
-        Filter filter(parameters, Filter::FIELD_NUHG);
+    ArgList args("-count");
+    args.addPatterns("-class");
 
-        users.findUsers(from, filter, false);
-      }
+    if (-1 == args.parseCommand(parameters))
+    {
+      throw CommandParser::exception("*** Invalid parameter: " +
+        args.getInvalid());
+    }
+
+    if (parameters.empty())
+    {
+      CommandParser::syntax(command, "[-count] [-class <pattern>] <pattern>");
     }
     else
     {
-      ArgList args("-count");
-      args.addPatterns("-class");
+      std::string pattern(grabPattern(parameters));
 
-      if (-1 == args.parseCommand(parameters))
+      Filter::Field field(Filter::FIELD_NICK);
+      if (0 == command.compare("ulist"))
       {
-        throw CommandParser::exception("*** Invalid parameter: " +
-          args.getInvalid());
+        field = Filter::FIELD_USER;
+      }
+      else if (0 == command.compare("hlist"))
+      {
+        field = Filter::FIELD_HOST;
+      }
+      else if (0 == command.compare("list"))
+      {
+        field = Filter::FIELD_UH;
+      }
+      else if (0 == command.compare("iplist"))
+      {
+        field = Filter::FIELD_IP;
+      }
+      else if (0 == command.compare("glist"))
+      {
+        field = Filter::FIELD_GECOS;
       }
 
-      if (parameters.empty())
+      Filter filter(field, smartPattern(pattern,
+            Filter::FIELD_NICK == field));
+
+      PatternPtr classPattern;
+      if (args.havePattern("-class", classPattern))
       {
-        CommandParser::syntax(command, "[-count] [-class <pattern>] <pattern>");
+        filter.add(Filter::FIELD_CLASS, classPattern);
+      }
+
+      ActionPtr action;
+      if (args.haveUnary("-count"))
+      {
+        ActionPtr tmp(new Action::Nothing(from));
+        action.swap(tmp);
       }
       else
       {
-        std::string pattern(grabPattern(parameters));
+        FormatSet formats(filter.formats());
+        formats.set(FORMAT_NICK);
+        formats.set(FORMAT_USERHOST);
+        formats.set(FORMAT_IP);
 
-        Filter::Field field(Filter::FIELD_NICK);
-        if (0 == command.compare("ulist"))
-        {
-          field = Filter::FIELD_USER;
-        }
-        else if (0 == command.compare("hlist"))
-        {
-          field = Filter::FIELD_HOST;
-        }
-        else if (0 == command.compare("list"))
-        {
-          field = Filter::FIELD_UH;
-        }
-        else if (0 == command.compare("iplist"))
-        {
-          field = Filter::FIELD_IP;
-        }
-        else if (0 == command.compare("glist"))
-        {
-          field = Filter::FIELD_GECOS;
-        }
-
-        Filter filter(field, smartPattern(pattern,
-              Filter::FIELD_NICK == field));
-
-        PatternPtr classPattern;
-        if (args.havePattern("-class", classPattern))
-        {
-          filter.add(Filter::FIELD_CLASS, classPattern);
-        }
-
-        users.findUsers(from, filter, args.haveUnary("-count"));
+        ActionPtr tmp(new Action::List(from, formats));
+        action.swap(tmp);
       }
+
+      users.findUsers(from, filter, action);
     }
   }
   catch (OOMon::regex_error & e)
   {
     throw CommandParser::exception("*** RegEx error: " + e.what());
+  }
+  catch (Filter::bad_field & e)
+  {
+    throw CommandParser::exception(e.what());
+  }
+}
+
+
+void
+CommandParser::cmdFindu(BotClient * from, const std::string & command,
+  std::string parameters)
+{
+  try
+  {
+    if (parameters.empty())
+    {
+      CommandParser::syntax(command, "<filter|pattern> [<action>]");
+    }
+    else
+    {
+      Filter filter(parameters, Filter::FIELD_NUHG);
+
+      FormatSet formats(filter.formats());
+      formats.set(FORMAT_NICK);
+      formats.set(FORMAT_USERHOST);
+      formats.set(FORMAT_IP);
+
+      ActionPtr action(Action::parse(from, filter.rest(), formats));
+
+      users.findUsers(from, filter, action);
+    }
+  }
+  catch (OOMon::regex_error & e)
+  {
+    throw CommandParser::exception("*** RegEx error: " + e.what());
+  }
+  catch (Action::bad_action & e)
+  {
+    throw CommandParser::exception("*** Bad action: " + e.what());
   }
   catch (Filter::bad_field & e)
   {

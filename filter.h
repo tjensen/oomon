@@ -32,6 +32,7 @@
 #include "botexcept.h"
 #include "pattern.h"
 #include "userentry.h"
+#include "format.h"
 
 
 class Filter
@@ -60,6 +61,8 @@ public:
       const std::string & privmsg, const std::string & notice) const;
   bool matches(const UserEntryPtr & user) const;
   bool matches(const Filter::Field & field) const;
+
+  FormatSet formats(void) const;
 
   std::string get(void) const;
 

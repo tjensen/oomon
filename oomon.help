@@ -190,8 +190,8 @@ findk
 .l.kline
 .l.unkline
 findu
-.s.findu <filter>
-.s.findu <pattern>
+.s.findu <filter> [<action>]
+.s.findu <pattern> [<action>]
 .d.The first syntax searches for users matching
 .d.the provided filter.  Filters should be of
 .d.the following syntax:
@@ -199,6 +199,15 @@ findu
 .d.
 .d.The second syntax matches the pattern against
 .d.the "nick!user@host#gecos" field.
+.d.
+.d.The optional <action> field can be used to
+.d.perform specific action on each matching user.
+.d.The default action is "list", which causes the
+.d.command to display all matching clients.  The
+.d."count" action will only display the number of
+.d.matching clients.  The "kill" action takes a
+.d.reason parameter and performs a kill on each
+.d.matching client.
 .e.> .findu /^([a-z]+)[0-9]+!.*@.*#\1$/
 .e.  fnerd67 (~root@adsl-10-0-2-27.lsan03.pacdell.net) [10.0.2.27]
 .e.  bort989 (~owned@D7894510.ipt.bol.com) [10.0.37.16]
@@ -206,6 +215,7 @@ findu
 .e.3 matches for nuhg=/^([a-z]+)[0-9]+!.*@.*#\1$/ found.
 .f.o
 .l.glist
+.l.kill
 .l.list
 .l.nfind
 gline
@@ -599,7 +609,6 @@ links
 .l.disconn
 list
 .s.list [-count] [-class <pattern>] <mask>
-.s.iplist [-count] [-class <name>] <mask>
 .d.Lists all users whose user@host match the mask
 .d.parameter.  Use the "-count" argument to display
 .d.the number of matching clients.  Use the
@@ -679,7 +688,7 @@ nets
 .l.domains
 .l.list
 .l.multi
-nfind
+nfind.nlist
 .s.nfind [-count] [-class <name>] <pattern>
 .d.Lists all users whose nicknames match the
 .d.pattern parameter.  Use the "-class" argument

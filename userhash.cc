@@ -50,6 +50,7 @@
 #include "filter.h"
 #include "botclient.h"
 #include "format.h"
+#include "action.h"
 
 
 const static int CLONE_DETECT_INC = 15;
@@ -586,7 +587,7 @@ UserHash::clear()
 
 
 int
-UserHash::findUsers(BotClient * client, const Filter & filter, const bool count)
+UserHash::findUsers(BotClient * client, const Filter & filter, ActionPtr action)
   const
 {
   int numfound = 0;
@@ -600,36 +601,7 @@ UserHash::findUsers(BotClient * client, const Filter & filter, const bool count)
       if (filter.matches(*pos))
       {
 	++numfound;
-        if (!count)
-        {
-          std::string buffer("  ");
-          buffer += (*pos)->getNick();
-          buffer += " (";
-          buffer += (*pos)->getUserHost();
-          if ((*pos)->getIP() != INADDR_NONE)
-          {
-            buffer += ") [";
-            buffer += (*pos)->getTextIP();
-            buffer += ']';
-          }
-          else
-          {
-            buffer += ')';
-          }
-          if (filter.matches(Filter::FIELD_CLASS))
-          {
-            buffer += " {";
-            buffer += (*pos)->getClass();
-            buffer += '}';
-          }
-          if (filter.matches(Filter::FIELD_GECOS))
-          {
-            buffer += " <";
-            buffer += (*pos)->getGecos();
-            buffer += '>';
-          }
-          client->send(buffer);
-        }
+        (*action)(*pos);
       }
     }
   }
@@ -641,129 +613,6 @@ UserHash::findUsers(BotClient * client, const Filter & filter, const bool count)
   outmsg += " for ";
   outmsg += filter.get();
   outmsg += " found.";
-  client->send(outmsg);
-
-  return numfound;
-}
-
-
-int
-UserHash::listUsers(BotClient * client, const PatternPtr userhost,
-  std::string className, const ListAction action, const std::string & from,
-  const std::string & reason) const
-{
-  int numfound = 0;
-
-  if ((0 == userhost->get().compare("*")) ||
-    (0 == userhost->get().compare("*@*")))
-  {
-    client->send("Listing all users is not recommended. To do it anyway,");
-    client->send("use 'list ?*@*'.");
-  }
-  else
-  {
-    if (action == UserHash::LIST_KILL)
-    {
-      Log::Write("KILLLIST " + userhost->get() + " (" + reason + ") [" +
-	from + "]");
-    }
-
-    // Convert our class name to uppercase now
-    className = server.downCase(className);
-
-    for (UserEntryTable::const_iterator index = this->domaintable.begin();
-      index != this->domaintable.end(); ++index)
-    {
-      for (UserEntryList::const_iterator userptr = index->begin();
-        userptr != index->end(); ++userptr)
-      {
-	bool matchesUH = userhost->match((*userptr)->getUserHost());
-	bool matchesUIP = false;
-	if (INADDR_NONE != (*userptr)->getIP())
-	{
-	  matchesUIP = userhost->match((*userptr)->getUserIP());
-	}
-	if ((matchesUH || matchesUIP) && ((0 == className.length()) ||
-	  (0 == className.compare((*userptr)->getClass()))))
-	{
-	  ++numfound;
-	  std::string outmsg((*userptr)->output(vars[VAR_LIST_FORMAT]->getString()));
-	  if (action == UserHash::LIST_KILL)
-	  {
-	    server.kill(from, (*userptr)->getNick(), reason);
-	  }
-	  if (action == UserHash::LIST_VIEW)
-	  {
-	    client->send(outmsg);
-	  }
-	}
-      }
-    }
-
-    std::string outmsg;
-    if (numfound > 0)
-    {
-      outmsg = boost::lexical_cast<std::string>(numfound) + " matches for " +
-	userhost->get() + " found.";
-    }
-    else
-    {
-      outmsg = "No matches for " + userhost->get() + " found.";
-    }
-    client->send(outmsg);
-  }
-
-  return numfound;
-}
-
-
-int
-UserHash::listNicks(BotClient * client, const PatternPtr nick,
-  std::string className, const ListAction action, const std::string & from,
-  const std::string & reason) const
-{
-  int numfound = 0;
-
-  if (action == UserHash::LIST_KILL)
-  {
-    Log::Write("KILLNFIND " + nick->get() + " (" + reason + ") [" + from + "]");
-  }
-
-  // Convert class name to uppercase now
-  className = server.downCase(className);
-
-  for (UserEntryTable::const_iterator index = this->domaintable.begin();
-    index != this->domaintable.end(); ++index)
-  {
-    for (UserEntryList::const_iterator userptr = index->begin();
-      userptr != index->end(); ++userptr)
-    {
-      if (nick->match((*userptr)->getNick()) && (className.empty() ||
-	(0 == className.compare((*userptr)->getClass()))))
-      {
-        ++numfound;
-	if (action == UserHash::LIST_KILL)
-	{
-	  server.kill(from, (*userptr)->getNick(), reason);
-	}
-	if (action == UserHash::LIST_VIEW)
-	{
-	  client->send((*userptr)->output(vars[VAR_NFIND_FORMAT]->getString()));
-	}
-      }
-    }
-  }
-
-  std::string outmsg;
-  if (numfound > 0)
-  {
-    outmsg = boost::lexical_cast<std::string>(numfound) + " matches for " +
-      nick->get() + " found.";
-  }
-  else
-  {
-    outmsg = "No matches for " + nick->get() + " found.";
-  }
   client->send(outmsg);
 
   return numfound;

@@ -31,6 +31,7 @@
 #include "pattern.h"
 #include "filter.h"
 #include "userentry.h"
+#include "action.h"
 
 
 #define HASHTABLESIZE 3001
@@ -83,13 +84,7 @@ public:
   void checkIpClones(const BotSock::Address & ip);
 
   int findUsers(class BotClient * client, const Filter & filter,
-    const bool count) const;
-  int listUsers(class BotClient * client, const PatternPtr userhost,
-    std::string className, const ListAction action = LIST_VIEW,
-    const std::string & from = "", const std::string & reason = "") const;
-  int listNicks(class BotClient * client, const PatternPtr nick,
-    std::string className, const ListAction action = LIST_VIEW,
-    const std::string & from = "", const std::string & reason = "") const;
+    ActionPtr action) const;
 
   void reportClasses(class BotClient * client, const std::string & className)
     const;

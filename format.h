@@ -25,6 +25,7 @@
 // Std C++ Headers
 #include <string>
 #include <map>
+#include <bitset>
 
 
 class Format
@@ -41,6 +42,17 @@ private:
   typedef std::map<char, std::string> TokenMap;
   TokenMap tokens;
 };
+
+
+enum FormatType
+{
+  FORMAT_NICK, FORMAT_USERHOST, FORMAT_IP, FORMAT_CLASS, FORMAT_GECOS,
+
+  MAX_FORMAT
+};
+
+
+typedef std::bitset<MAX_FORMAT> FormatSet;
 
 
 #endif /* __FORMAT_H__ */

@@ -144,13 +144,13 @@ private:
     std::string parameters);
   void cmdKilllist(class BotClient *from, const std::string & command,
     std::string parameters);
-  void cmdKillnfind(class BotClient *from, const std::string & command,
-    std::string parameters);
   void cmdReload(class BotClient *from, const std::string & command,
     std::string parameters);
   void cmdTrap(class BotClient *from, const std::string & command,
     std::string parameters);
   void cmdSet(class BotClient *from, const std::string & command,
+    std::string parameters);
+  void cmdList(class BotClient *from, const std::string & command,
     std::string parameters);
   void cmdFindu(class BotClient *from, const std::string & command,
     std::string parameters);
