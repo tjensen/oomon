@@ -1620,10 +1620,12 @@ engine_init(void)
       Setting::IntegerSetting(nickChangeT2Time, 1));
   vars.insert("NICK_FLOOD_ACTION", AutoAction::Setting(nickFloodAction));
   vars.insert("NICK_FLOOD_REASON", Setting::StringSetting(nickFloodReason));
-  vars.insert("STATSP_REPLY",
-      Setting::BooleanSetting(statspReply));
   vars.insert("STATSP_CASE_INSENSITIVE",
       Setting::BooleanSetting(statspCaseInsensitive));
+  vars.insert("STATSP_MESSAGE",
+      Setting::StringSetting(statspMessage));
+  vars.insert("STATSP_REPLY",
+      Setting::BooleanSetting(statspReply));
   vars.insert("WATCH_FLOODER_NOTICES",
       Setting::BooleanSetting(watchFlooderNotices));
   vars.insert("WATCH_INFO_NOTICES",

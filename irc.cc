@@ -1668,6 +1668,8 @@ IRC::setServerTimeout(const std::string & newValue)
 void
 IRC::init(void)
 {
+  KlineList::init();
+
   vars.insert("OPER_NICK_IN_REASON",
       Setting::BooleanSetting(IRC::operNickInReason_));
   vars.insert("RELAY_MSGS_TO_LOCOPS",

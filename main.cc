@@ -368,6 +368,7 @@ initModules(void)
   Config::init();
   CommandParser::init();
   IRC::init();
+  DCC::init();
   Services::init();
   UserHash::init();
   Dnsbl::init();
