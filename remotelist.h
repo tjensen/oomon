@@ -45,7 +45,7 @@ public:
   void setFD(fd_set & readset, fd_set & writeset) const;
   void processAll(const fd_set & readset, const fd_set & writeset);
 
-  bool connect(const std::string & handle);
+  bool connect(class BotClient * from, const std::string & handle);
   void listen(void);
 
   void sendBroadcast(const std::string & from, const std::string & text,

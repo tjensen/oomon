@@ -152,6 +152,11 @@ Remote::onConnect(void)
   if (this->isAuthorized())
   {
     result = true;
+
+    Log::Write("Connection initiated with host " +
+      BotSock::inet_ntoa(this->_sock.getRemoteAddress()) + ":" +
+      IntToStr(ntohs(this->_sock.getRemotePort())));
+
     if (this->isClient())
     {
       this->sendVersion();
@@ -437,15 +442,24 @@ Remote::onError(const std::string & from, const std::string & command,
 
   notice += handle.empty() ? "<unknown>" : handle;
 
+  std::string log(notice);
+  log += '[';
+  log += this->getHostname();
+  log += ']';
+
   if (parameters.size() > 0)
   {
     notice += " reports error: ";
+    log += " reports error: ";
     notice += parameters[0];
+    log += parameters[0];
   }
   else
   {
     notice += " reported an error.";
+    log += " reported an error.";
   }
+  Log::Write(log);
   clients.sendAll(notice, UserFlags::OPER);
 
   return false;
@@ -797,10 +811,17 @@ Remote::sendError(const std::string & text)
 
   std::string notice("*** Error on link with ");
   notice += (handle.empty()) ? "<unknown>" : handle;
+  std::string log(notice);
   notice += ": ";
   notice += text;
 
+  log += '[';
+  log += this->getHostname();
+  log += "]: ";
+  log += text;
+
   clients.sendAll(notice, UserFlags::OPER);
+  Log::Write(log);
 
   return result;
 }

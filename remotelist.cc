@@ -310,7 +310,7 @@ RemoteList::cmdConn(BotClient * from, const std::string & command,
   }
   else
   {
-    if (!this->connect(bot))
+    if (!this->connect(from, bot))
     {
       std::string notice("*** Unknown bot name: ");
       notice += bot;
@@ -352,7 +352,7 @@ RemoteList::cmdDisconn(BotClient * from, const std::string & command,
       notice += from->handleAndBot();
       notice += " disconnecting ";
       notice += bot;
-      ::SendAll(notice, UserFlags::NONE(), WatchSet(), from);
+      ::SendAll(notice, UserFlags::OPER, WatchSet(), from);
       Log::Write(notice);
 
       this->_connections.remove(remote);
@@ -437,7 +437,7 @@ RemoteList::listen(void)
 
 
 bool
-RemoteList::connect(const std::string & handle)
+RemoteList::connect(BotClient * from, const std::string & handle)
 {
   std::string _handle(handle);
   std::string host;
@@ -448,6 +448,13 @@ RemoteList::connect(const std::string & handle)
   if (Config::GetConn(_handle, host, port, password))
   {
     RemotePtr temp(new Remote(_handle));
+
+    std::string notice("*** ");
+    notice += from->handleAndBot();
+    notice += " initiating connection with ";
+    notice += _handle;
+    ::SendAll(notice, UserFlags::OPER, WatchSet(), from);
+    Log::Write(notice);
 
     temp->connect(host, port);
 
