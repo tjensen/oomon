@@ -92,16 +92,17 @@ public:
   int listGecos(class BotClient * client, const PatternPtr gecos,
     std::string className, const bool count = false) const;
 
-  void reportClasses(class BotClient * client, const std::string & className);
+  void reportClasses(class BotClient * client, const std::string & className)
+    const;
   void reportSeedrand(class BotClient * client, const PatternPtr mask,
     const int threshold, const bool count = false) const;
-  void reportDomains(class BotClient * client, const int minimum);
-  void reportNets(class BotClient * client, const int minimum);
-  void reportClones(class BotClient * client);
-  void reportMulti(class BotClient * client, const int minimum);
-  void reportUMulti(class BotClient * client, const int minimum);
-  void reportHMulti(class BotClient * client, const int minimum);
-  void reportVMulti(class BotClient * client, const int minimum);
+  void reportDomains(class BotClient * client, const int minimum) const;
+  void reportNets(class BotClient * client, const int minimum) const;
+  void reportClones(class BotClient * client) const;
+  void reportMulti(class BotClient * client, const int minimum) const;
+  void reportUMulti(class BotClient * client, const int minimum) const;
+  void reportHMulti(class BotClient * client, const int minimum) const;
+  void reportVMulti(class BotClient * client, const int minimum) const;
 
   void status(class BotClient * client);
 

@@ -829,35 +829,88 @@ UserHash::findUser(const std::string & nick, const std::string & userhost) const
 
 
 void
-UserHash::reportClasses(BotClient * client, const std::string & className)
+UserHash::reportClasses(BotClient * client, const std::string & className) const
 {
-  typedef std::map<std::string,int> ClassType;
-  ClassType Classes;
+  typedef std::map<std::string, int> UnsortedMap;
+  UnsortedMap unsorted;
+  std::string::size_type maxLength = 5;
 
-  for (UserEntryTable::iterator i = this->domaintable.begin();
-    i != this->domaintable.end(); ++i)
+  for (UserEntryTable::const_iterator index = this->domaintable.begin();
+      index != this->domaintable.end(); ++index)
   {
-    for (UserEntryList::iterator userptr = i->begin(); userptr != i->end();
-      ++userptr)
+    for (UserEntryList::const_iterator userptr = index->begin();
+        userptr != index->end(); ++userptr)
     {
-      Classes[server.downCase((*userptr)->getClass())]++;
+      std::string name(server.downCase((*userptr)->getClass()));
+      ++unsorted[name];
     }
   }
 
-  char outmsg[MAX_BUFF];
-  snprintf(outmsg, sizeof(outmsg), "%-10s %-6s %s", "Class", "Count",
-    "Description");
-  client->send(outmsg);
-
-  for (ClassType::iterator pos = Classes.begin(); pos != Classes.end();
-    ++pos)
+  if (className.empty())
   {
-    if (className.empty() ||
-      (0 == pos->first.compare(server.downCase(className))))
+    if (unsorted.empty())
     {
-      snprintf(outmsg, sizeof(outmsg), "%-10s %-6d %s", pos->first.c_str(),
-	pos->second, Config::GetYLineDescription(pos->first).c_str());
-      client->send(outmsg);
+      client->send("*** No users!");
+    }
+    else
+    {
+      std::string header(padRight("Class", maxLength));
+      header += "  Count  Description";
+      client->send(header);
+
+      typedef std::multimap<int, std::string> SortedMap;
+      SortedMap sorted;
+
+      // Sort the list
+      for (UnsortedMap::const_iterator pos = unsorted.begin();
+          pos != unsorted.end(); ++pos)
+      {
+        sorted.insert(SortedMap::value_type(pos->second, pos->first));
+
+        std::string::size_type length(pos->first.length());
+        if (length > maxLength)
+        {
+          maxLength = length;
+        }
+      }
+
+      // Now display class user counts in decreasing order
+      for (SortedMap::reverse_iterator pos = sorted.rbegin();
+          pos != sorted.rend(); ++pos)
+      {
+        std::string buffer(padRight(pos->second, maxLength));
+        buffer += "  ";
+        buffer += padRight(boost::lexical_cast<std::string>(pos->first), 5);
+        buffer += "  ";
+        buffer += Config::GetYLineDescription(pos->second);
+        client->send(buffer);
+      }
+    }
+  }
+  else
+  {
+    UnsortedMap::const_iterator pos = unsorted.find(server.downCase(className));
+    if (pos == unsorted.end())
+    {
+      client->send("*** No users found with class \"" + className + "\"");
+    }
+    else
+    {
+      if (pos->first.length() > maxLength)
+      {
+        maxLength = pos->first.length();
+      }
+
+      std::string header(padRight("Class", maxLength));
+      header += "  Count  Description";
+      client->send(header);
+
+      std::string buffer(padRight(pos->first, maxLength));
+      buffer += "  ";
+      buffer += padRight(boost::lexical_cast<std::string>(pos->second), 5);
+      buffer += "  ";
+      buffer += Config::GetYLineDescription(pos->first);
+      client->send(buffer);
     }
   }
 }
@@ -927,7 +980,7 @@ UserHash::reportSeedrand(BotClient * client, const PatternPtr mask,
 
 
 void
-UserHash::reportDomains(BotClient * client, const int minimum)
+UserHash::reportDomains(BotClient * client, const int minimum) const
 {
   typedef std::map<std::string, int> UnsortedMap;
   typedef std::multimap<int, std::string> SortedMap;
@@ -940,23 +993,31 @@ UserHash::reportDomains(BotClient * client, const int minimum)
   }
   else
   {
-    for (UserEntryTable::iterator i = this->hosttable.begin();
+    for (UserEntryTable::const_iterator i = this->hosttable.begin();
         i != this->hosttable.end(); ++i)
     {
-      for (UserEntryList::iterator userptr = i->begin(); userptr != i->end();
-          ++userptr)
+      for (UserEntryList::const_iterator userptr = i->begin();
+          userptr != i->end(); ++userptr)
       {
         std::string domain(server.downCase((*userptr)->getDomain()));
         ++unsorted[domain];
       }
     }
 
-    for (UnsortedMap::iterator pos = unsorted.begin(); pos != unsorted.end();
-        ++pos)
+    std::string::size_type maxLength(0);
+
+    // Sort the list
+    for (UnsortedMap::const_iterator pos = unsorted.begin();
+        pos != unsorted.end(); ++pos)
     {
       if (pos->second >= minimum)
       {
         sorted.insert(SortedMap::value_type(pos->second, pos->first));
+
+        if (pos->first.length() > maxLength)
+        {
+          maxLength = pos->first.length();
+        }
       }
     }
 
@@ -974,10 +1035,16 @@ UserHash::reportDomains(BotClient * client, const int minimum)
       for (SortedMap::reverse_iterator pos = sorted.rbegin();
           pos != sorted.rend(); ++pos)
       {
-        char outmsg[MAX_BUFF];            
-        sprintf(outmsg, "  %-40s %3d user%s", pos->second.c_str(),
-          pos->first, (pos->first == 1) ? "" : "s");
-        client->send(outmsg);
+        std::string buffer("  ");
+        buffer += padRight(pos->second, maxLength);
+        buffer += "  ";
+        buffer += padLeft(boost::lexical_cast<std::string>(pos->first), 3);
+        buffer += " user";
+        if (pos->first != 1)
+        {
+          buffer += 's';
+        }
+        client->send(buffer);
       }
     }
   }
@@ -985,7 +1052,7 @@ UserHash::reportDomains(BotClient * client, const int minimum)
 
 
 void
-UserHash::reportNets(BotClient * client, const int minimum)
+UserHash::reportNets(BotClient * client, const int minimum) const
 {
   typedef std::map<BotSock::Address, int> UnsortedMap;
   typedef std::multimap<int, BotSock::Address> SortedMap;
@@ -998,11 +1065,11 @@ UserHash::reportNets(BotClient * client, const int minimum)
   }
   else
   {
-    for (UserEntryTable::iterator i = this->hosttable.begin();
+    for (UserEntryTable::const_iterator i = this->hosttable.begin();
         i != this->hosttable.end(); ++i)
     {
-      for (UserEntryList::iterator userptr = i->begin(); userptr != i->end();
-          ++userptr)
+      for (UserEntryList::const_iterator userptr = i->begin();
+          userptr != i->end(); ++userptr)
       {
         BotSock::Address ip((*userptr)->getIP());
 
@@ -1013,8 +1080,9 @@ UserHash::reportNets(BotClient * client, const int minimum)
       }
     }
 
-    for (UnsortedMap::iterator pos = unsorted.begin(); pos != unsorted.end();
-        ++pos)
+    // Sort the list
+    for (UnsortedMap::const_iterator pos = unsorted.begin();
+        pos != unsorted.end(); ++pos)
     {
       if (pos->second >= minimum)
       {
@@ -1036,11 +1104,16 @@ UserHash::reportNets(BotClient * client, const int minimum)
       for (SortedMap::reverse_iterator pos = sorted.rbegin();
           pos != sorted.rend(); ++pos)
       {
-        char outmsg[MAX_BUFF];            
-        sprintf(outmsg, "  %-40s %3d user%s",
-	  classCMask(BotSock::inet_ntoa(pos->second)).c_str(), pos->first,
-          (pos->first == 1) ? "" : "s");
-        client->send(outmsg);
+        std::string buffer("  ");
+        buffer += padRight(classCMask(BotSock::inet_ntoa(pos->second)), 15);
+        buffer += "  ";
+        buffer += padLeft(boost::lexical_cast<std::string>(pos->first), 3);
+        buffer += " user";
+        if (pos->first != 1)
+        {
+          buffer += 's';
+        }
+        client->send(buffer);
       }
     }
   }
@@ -1048,17 +1121,17 @@ UserHash::reportNets(BotClient * client, const int minimum)
 
 
 void
-UserHash::reportClones(BotClient * client)
+UserHash::reportClones(BotClient * client) const
 {
   bool foundany = false;
 
-  for (UserEntryTable::iterator i = this->hosttable.begin();
-    i != this->hosttable.end(); ++i)
+  for (UserEntryTable::const_iterator i = this->hosttable.begin();
+      i != this->hosttable.end(); ++i)
   {
-    for (UserEntryList::iterator userptr = i->begin(); userptr != i->end();
-      ++userptr)
+    for (UserEntryList::const_iterator userptr = i->begin();
+        userptr != i->end(); ++userptr)
     {
-      UserEntryList::iterator temp = i->begin();
+      UserEntryList::const_iterator temp = i->begin();
       for (; temp != userptr; ++temp)
       {
         if (server.same((*temp)->getHost(), (*userptr)->getHost()))
@@ -1135,7 +1208,7 @@ UserHash::reportClones(BotClient * client)
 
 
 void
-UserHash::reportMulti(BotClient * client, const int minimum)
+UserHash::reportMulti(BotClient * client, const int minimum) const
 {
   int numfound;
   char notip, foundany = 0;
@@ -1145,15 +1218,15 @@ UserHash::reportMulti(BotClient * client, const int minimum)
   if (minimum > 0)
     minclones = minimum;
 
-  for (UserEntryTable::iterator i = this->domaintable.begin();
-    i != this->domaintable.end(); ++i)
+  for (UserEntryTable::const_iterator i = this->domaintable.begin();
+      i != this->domaintable.end(); ++i)
   {
-    for (UserEntryList::iterator userptr = i->begin(); userptr != i->end();
-      ++userptr)
+    for (UserEntryList::const_iterator userptr = i->begin();
+        userptr != i->end(); ++userptr)
     {
       numfound = 0;
       /* Ensure we haven't already checked this user & domain */
-      UserEntryList::iterator temp = i->begin();
+      UserEntryList::const_iterator temp = i->begin();
       for (; temp != userptr; ++temp)
       {
         if (server.same((*temp)->getUser(), (*userptr)->getUser()) &&
@@ -1172,7 +1245,7 @@ UserHash::reportMulti(BotClient * client, const int minimum)
             if (vars[VAR_OPER_IN_MULTI]->getBool() || (!(*temp)->getOper() &&
 	      !Config::IsOper((*temp)->getUserHost(), (*temp)->getIP())))
             {
-              numfound++;       /* - zaph & Dianora :-) */
+              ++numfound;       /* - zaph & Dianora :-) */
 	    }
 	  }
         }
@@ -1188,7 +1261,7 @@ UserHash::reportMulti(BotClient * client, const int minimum)
             strlen((*userptr)->getDomain().c_str())) ||
             (strlen((*userptr)->getDomain().c_str()) ==
 	    strlen((*userptr)->getHost().c_str()));
-          numfound++; /* - zaph and next line*/
+          ++numfound; /* - zaph and next line*/
           sprintf(outmsg, " %s %2d -- %s@%s%s",
             (numfound > minclones) ? "==>" : "   ", numfound,
 	    (*userptr)->getUser().c_str(),
@@ -1205,8 +1278,9 @@ UserHash::reportMulti(BotClient * client, const int minimum)
   }
 }
 
+
 void
-UserHash::reportHMulti(BotClient * client, const int minimum)
+UserHash::reportHMulti(BotClient * client, const int minimum) const
 {
   int numfound;
   char foundany = 0;
@@ -1216,15 +1290,15 @@ UserHash::reportHMulti(BotClient * client, const int minimum)
   if (minimum > 0)
     minclones = minimum;
 
-  for (UserEntryTable::iterator i = this->domaintable.begin();
-    i != this->domaintable.end(); ++i)
+  for (UserEntryTable::const_iterator i = this->domaintable.begin();
+      i != this->domaintable.end(); ++i)
   {
-    for (UserEntryList::iterator userptr = i->begin(); userptr != i->end();
-      ++userptr)
+    for (UserEntryList::const_iterator userptr = i->begin();
+        userptr != i->end(); ++userptr)
     {
       numfound = 0;
       // Ensure we haven't already checked this hostname
-      UserEntryList::iterator temp = i->begin();
+      UserEntryList::const_iterator temp = i->begin();
       for (; temp != userptr; ++temp)
       {
         if (server.same((*temp)->getHost(), (*userptr)->getHost()))
@@ -1241,7 +1315,7 @@ UserHash::reportHMulti(BotClient * client, const int minimum)
             if (vars[VAR_OPER_IN_MULTI]->getBool() || (!(*temp)->getOper() &&
 	      !Config::IsOper((*temp)->getUserHost(), (*temp)->getIP())))
             {
-              numfound++;       /* - zaph & Dianora :-) */
+              ++numfound;       /* - zaph & Dianora :-) */
 	    }
 	  }
         }
@@ -1252,7 +1326,7 @@ UserHash::reportHMulti(BotClient * client, const int minimum)
             client->send("Multiple clients from the following hosts:");
 	  }
 
-          numfound++; /* - zaph and next line*/
+          ++numfound; /* - zaph and next line*/
           sprintf(outmsg, " %s %2d -- *@%s",
 	    (numfound > minclones) ? "==>" : "   ", numfound,
 	    (*userptr)->getHost().c_str());
@@ -1268,7 +1342,7 @@ UserHash::reportHMulti(BotClient * client, const int minimum)
 }
 
 void
-UserHash::reportUMulti(BotClient * client, const int minimum)
+UserHash::reportUMulti(BotClient * client, const int minimum) const
 {
   int numfound;
   char foundany = 0;
@@ -1278,15 +1352,15 @@ UserHash::reportUMulti(BotClient * client, const int minimum)
   if (minimum > 0)
     minclones = minimum;
 
-  for (UserEntryTable::iterator i = this->usertable.begin();
-    i != this->usertable.end(); ++i)
+  for (UserEntryTable::const_iterator i = this->usertable.begin();
+      i != this->usertable.end(); ++i)
   {
-    for (UserEntryList::iterator userptr = i->begin(); userptr != i->end();
-      ++userptr)
+    for (UserEntryList::const_iterator userptr = i->begin();
+        userptr != i->end(); ++userptr)
     {
       numfound = 0;
       // Ensure we haven't already checked this username
-      UserEntryList::iterator temp = i->begin();
+      UserEntryList::const_iterator temp = i->begin();
       for (; temp != userptr; ++temp)
       {
         if (server.same((*temp)->getUser(), (*userptr)->getUser()))
@@ -1330,7 +1404,7 @@ UserHash::reportUMulti(BotClient * client, const int minimum)
 }
 
 void
-UserHash::reportVMulti(BotClient * client, const int minimum)
+UserHash::reportVMulti(BotClient * client, const int minimum) const
 {
   int numfound;
   char foundany = 0;
@@ -1340,15 +1414,15 @@ UserHash::reportVMulti(BotClient * client, const int minimum)
   if (minimum > 0)
     minclones = minimum;
 
-  for (UserEntryTable::iterator i = this->iptable.begin();
-    i != this->iptable.end(); ++i)
+  for (UserEntryTable::const_iterator i = this->iptable.begin();
+      i != this->iptable.end(); ++i)
   {
-    for (UserEntryList::iterator userptr = i->begin(); userptr != i->end();
-      ++userptr)
+    for (UserEntryList::const_iterator userptr = i->begin();
+        userptr != i->end(); ++userptr)
     {
       numfound = 0;
       /* Ensure we haven't already checked this user & domain */
-      UserEntryList::iterator temp = i->begin();
+      UserEntryList::const_iterator temp = i->begin();
       for (; temp != userptr; ++temp)
       {
         if (server.same((*temp)->getUser(), (*userptr)->getUser()) &&
