@@ -353,7 +353,8 @@ DCCList::statsP(StrList & Output)
       operCount++;
     }
   }
-  Output.push_back(IntToStr(operCount) + " OOMon opers");
+  Output.push_back(IntToStr(operCount) + " OOMon oper" +
+    (operCount == 1 ? "" : "s"));
 }
 
 
