@@ -116,7 +116,7 @@ Proxy::detectedProxy(void)
 
 
 bool
-Proxy::connect(const BotSock::Address & address, const BotSock::Port port)
+Proxy::connect(const BotSock::Port port)
 {
   this->port_ = port;
 

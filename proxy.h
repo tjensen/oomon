@@ -43,7 +43,7 @@ public:
   Proxy(const UserEntryPtr user);
   virtual ~Proxy(void);
 
-  bool connect(const BotSock::Address & address, const BotSock::Port port);
+  bool connect(const BotSock::Port port);
 
   BotSock::Address address(void) const { return this->user_->getIP(); }
   std::string textAddress(void) const { return this->user_->getTextIP(); }

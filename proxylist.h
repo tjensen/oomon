@@ -51,8 +51,7 @@ public:
   virtual ~ProxyList(void) { }
 
   void check(const UserEntryPtr user);
-  bool connect(ProxyPtr newProxy, const BotSock::Address & address,
-      const BotSock::Port port);
+  bool connect(ProxyPtr newProxy, const BotSock::Port port);
   void processAll(const fd_set & readset, const fd_set & writeset);
   void setAllFD(fd_set & readset, fd_set & writeset);
   bool isChecking(const BotSock::Address &, const BotSock::Port,

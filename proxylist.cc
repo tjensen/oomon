@@ -86,20 +86,21 @@ ProxyList::ProxyList(void) : safeHosts(ProxyList::CACHE_SIZE), cacheHits(0),
 // Returns true if no errors occurred
 //
 bool
-ProxyList::connect(ProxyPtr newProxy, const BotSock::Address & address,
-    const BotSock::Port port)
+ProxyList::connect(ProxyPtr newProxy, const BotSock::Port port)
 {
 #ifdef PROXYLIST_DEBUG
-  std::cout << "Creating proxy connection to address " << address << ":" <<
-    port << std::endl;
+  std::cout << "Creating proxy connection to address " <<
+    newProxy->address() << ":" << port << std::endl;
 #endif
 
   newProxy->bindTo(config.proxyVhost());
   newProxy->setTimeout(PROXY_IDLE_MAX);
 
-  if (!newProxy->connect(address, port))
+  if (!newProxy->connect(port))
   {
-    std::cerr << "Connect to proxy failed (other)" << std::endl;
+#ifdef PROXYLIST_DEBUG
+    std::cout << "Connect to proxy failed (other)" << std::endl;
+#endif
     return false;
   }
 
@@ -122,35 +123,25 @@ ProxyList::initiateCheck(const UserEntryPtr user, const BotSock::Port port,
     switch (protocol)
     {
       case Proxy::HTTP_CONNECT:
-        {
-          ProxyPtr tmp(new Http(user));
-          newProxy.swap(tmp);
-        }
+        newProxy.reset(new Http(user));
         break;
+
       case Proxy::HTTP_POST:
-        {
-          ProxyPtr tmp(new HttpPost(user));
-          newProxy.swap(tmp);
-        }
+        newProxy.reset(new HttpPost(user));
         break;
+
       case Proxy::WINGATE:
-        {
-          ProxyPtr tmp(new WinGate(user));
-          newProxy.swap(tmp);
-        }
+        newProxy.reset(new WinGate(user));
         break;
+
       case Proxy::SOCKS4:
-        {
-          ProxyPtr tmp(new Socks4(user));
-          newProxy.swap(tmp);
-        }
+        newProxy.reset(new Socks4(user));
         break;
+
       case Proxy::SOCKS5:
-        {
-          ProxyPtr tmp(new Socks5(user));
-          newProxy.swap(tmp);
-        }
+        newProxy.reset(new Socks5(user));
         break;
+
       default:
         std::cerr << "Unknown proxy type?" << std::endl;
         break;
@@ -158,7 +149,8 @@ ProxyList::initiateCheck(const UserEntryPtr user, const BotSock::Port port,
 
     if (newProxy)
     {
-      result = this->connect(newProxy, user->getIP(), port);
+      result = true;
+      this->connect(newProxy, port);
     }
   }
   catch (OOMon::errno_error & e)
