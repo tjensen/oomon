@@ -24,6 +24,8 @@ OOMon-2.3                                                (?? Oct 2004)
 
         * Deprecated "O:" lines with empty handle fields.
 
+        * Fixed case sensitivity of top level domain spoof checks.
+
         * Added support for "EC:" lines for exluding entire user
           classes.
 

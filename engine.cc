@@ -1223,7 +1223,7 @@ checkForSpoof(const std::string & nick, const std::string & user,
         std::string::size_type lastDot = host.rfind('.');
         if (std::string::npos != lastDot)
         {
-          std::string tld = host.substr(lastDot + 1);
+          std::string tld = server.downCase(host.substr(lastDot + 1));
 
           std::string::size_type len = tld.length();
 
