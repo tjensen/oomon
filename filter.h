@@ -39,8 +39,8 @@ class Filter
 public:
   enum Field
   {
-    FIELD_NICK, FIELD_USER, FIELD_HOST, FIELD_UH, FIELD_NUH, FIELD_GECOS,
-    FIELD_NUHG, FIELD_CLASS,
+    FIELD_NICK, FIELD_USER, FIELD_HOST, FIELD_UH, FIELD_NUH, FIELD_IP,
+    FIELD_GECOS, FIELD_NUHG, FIELD_CLASS,
     // Extended fields:
     FIELD_VERSION, FIELD_PRIVMSG, FIELD_NOTICE
   };
@@ -48,6 +48,7 @@ public:
   Filter(const std::string & text, const bool extended = false);
   Filter(const std::string & text, const Filter::Field & defaultField,
       const bool extended = false);
+  Filter(const Filter::Field & field, const PatternPtr & pattern);
   Filter(const Filter & copy);
   virtual ~Filter(void);
 

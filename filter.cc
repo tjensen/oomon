@@ -53,6 +53,12 @@ Filter::Filter(const std::string & text, const Filter::Field & defaultField,
 }
 
 
+Filter::Filter(const Filter::Field & field, const PatternPtr & pattern)
+{
+  this->fields_[field] = pattern;
+}
+
+
 Filter::Filter(const Filter & copy) : fields_(copy.fields_), rest_(copy.rest_)
 {
 }
@@ -139,6 +145,13 @@ Filter::matches(const UserEntryPtr & user, const std::string & version,
       case FIELD_NUH:
         if (!pos->second->match(user->getNickUserHost()) &&
             !pos->second->match(user->getNickUserIP()))
+        {
+          return false;
+        }
+        break;
+
+      case FIELD_IP:
+        if (!pos->second->match(user->getTextIP()))
         {
           return false;
         }
@@ -246,6 +259,10 @@ Filter::fieldType(const std::string & field, const bool extended)
   {
     return Filter::FIELD_NUH;
   }
+  else if (0 == uc.compare("IP"))
+  {
+    return Filter::FIELD_IP;
+  }
   else if ((0 == uc.compare("G")) || (0 == uc.compare("GECOS")))
   {
     return Filter::FIELD_GECOS;
@@ -290,6 +307,8 @@ Filter::fieldName(const Filter::Field & field)
       return "uh";
     case FIELD_NUH:
       return "nuh";
+    case FIELD_IP:
+      return "ip";
     case FIELD_GECOS:
       return "g";
     case FIELD_NUHG:
