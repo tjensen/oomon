@@ -125,6 +125,7 @@ AC_CHECK_FUNC(memmove, AC_DEFINE(HAVE_MEMMOVE, 1, [Define if your system has a m
 AC_CHECK_FUNC(uname, AC_DEFINE(HAVE_UNAME, 1, [Define if your system has a uname() function.]),)
 AC_CHECK_FUNC(getcwd, AC_DEFINE(HAVE_GETCWD, 1, [Define if your system has a getcwd() function.]),)
 AC_CHECK_FUNC(fchmod, AC_DEFINE(HAVE_FCHMOD, 1, [Define if your system has a fchmod() function.]),)
+AC_CHECK_FUNC(flock, AC_DEFINE(HAVE_FLOCK, 1, [Define if your system has a flock() function.]),)
 AC_CHECK_FUNC(strerror, AC_DEFINE(HAVE_STRERROR, 1, [Define if your system has a strerror() function.]),)
 AC_CHECK_FUNC(regcomp, AC_DEFINE(HAVE_POSIX_REGEX, 1, [Define if using POSIX regular expressions.]),)
 AC_CHECK_FUNC(snprintf, AC_DEFINE(HAVE_SNPRINTF, 1, [Define if your system has a snprintf() function.]),)
