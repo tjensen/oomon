@@ -46,7 +46,7 @@ fi
 
 #
 # If we're running GNU C++, add helpful command line arguments, including
-# -ftemplate-depth-19 if it's an old version.
+# -ftemplate-depth-20 if it's an old version.
 #
 if test x$GXX = xyes; then
 	dnl Grab G++ version
@@ -55,7 +55,7 @@ if test x$GXX = xyes; then
 	CXXFLAGS="$CXXFLAGS -Wall"
 
 	case $gxx_version in
-	  2.9*)	CXXFLAGS="$CXXFLAGS -ftemplate-depth-19";;
+	  2.9*)	CXXFLAGS="$CXXFLAGS -ftemplate-depth-20";;
 	esac
 fi
 

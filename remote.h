@@ -23,14 +23,20 @@
 
 #include "oomon.h"
 
+// Std C++ Headers
 #include <string>
-#include <list>
+#include <map>
 
+// Boost C++ Headers
+#include <boost/function.hpp>
+
+// OOMon Headers
 #include "strtype"
 #include "links.h"
 #include "botsock.h"
 #include "botclient.h"
 #include "cmdparser.h"
+
 
 class Remote : public BotClient
 {
@@ -102,19 +108,33 @@ private:
   bool authenticate(std::string text);
   bool parse(std::string text);
 
+  void configureCallbacks(void);
+
+  void registerCommand(const std::string & command,
+    bool (Remote::*callback)(const std::string & from,
+    const std::string & command, const StrVector & parameters));
+
   int sendVersion(void);
   int sendAuth(void);
   int sendUnknownCommand(const std::string & command);
+  int sendSyntaxError(const std::string & command);
   int sendCommand(const std::string & from, const std::string & command,
     const std::string & parameters = "");
   int sendMyBotNet(void);
 
-  bool onBotJoin(const std::string & from, const std::string & node);
-  bool onBotPart(const std::string & from, const std::string & node);
-  bool onChat(const std::string & from, const std::string & text);
-  bool onCommand(const std::string & from, std::string text);
-  bool onBroadcast(const std::string & from, std::string text);
-  bool onNotice(const std::string & from, std::string text);
+  // Callbacks
+  bool onBotJoin(const std::string & from, const std::string & command,
+    const StrVector & parameters);
+  bool onBotPart(const std::string & from, const std::string & command,
+    const StrVector & parameters);
+  bool onChat(const std::string & from, const std::string & command,
+    const StrVector & parameters);
+  bool onCommand(const std::string & from, const std::string & command,
+    const StrVector & parameters);
+  bool onBroadcast(const std::string & from, const std::string & command,
+    const StrVector & parameters);
+  bool onNotice(const std::string & from, const std::string & command,
+    const StrVector & parameters);
 
   static bool isCompatibleProtocolVersion(std::string text);
 
@@ -127,6 +147,10 @@ private:
   //  READY - remote bot has relayed its botnet and link is ready for normal
   //          communications
   enum Stage { STAGE_INIT, STAGE_GOODVERSION, STAGE_AUTHED, STAGE_READY };
+
+  typedef boost::function<bool (const std::string &, const std::string &,
+    const StrVector &)> CommandCallback;
+  typedef std::map<std::string, CommandCallback> CommandMap;
 
   Links _children;
   std::string _handle;
@@ -141,6 +165,7 @@ private:
   std::string _clientBot;
   std::string _clientId;
   UserFlags _clientFlags;
+  CommandMap commands;
 
   static const std::string PROTOCOL_NAME;
   static const int PROTOCOL_VERSION_MAJOR, PROTOCOL_VERSION_MINOR;

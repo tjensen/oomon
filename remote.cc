@@ -50,9 +50,8 @@ Remote::Remote(const std::string & handle)
   : _handle(handle), _stage(Remote::STAGE_INIT), _client(true),
   _sock(false, true), _targetEstablished(false)
 {
-  this->_sock.registerOnConnectHandler(boost::bind(&Remote::onConnect, this));
-  this->_sock.registerOnReadHandler(boost::bind(&Remote::onRead, this, _1));
   this->_sock.setBuffering(true);
+  this->configureCallbacks();
 }
 
 
@@ -60,9 +59,35 @@ Remote::Remote(BotSock *listener)
   : _stage(Remote::STAGE_INIT), _client(false), _sock(listener, false, true),
   _targetEstablished(false)
 {
+  this->_sock.setBuffering(true);
+  this->configureCallbacks();
+}
+
+
+void
+Remote::configureCallbacks(void)
+{
+  // BotSock callbacks
   this->_sock.registerOnConnectHandler(boost::bind(&Remote::onConnect, this));
   this->_sock.registerOnReadHandler(boost::bind(&Remote::onRead, this, _1));
-  this->_sock.setBuffering(true);
+
+  // Remote callbacks
+  this->registerCommand("BOTJOIN", &Remote::onBotJoin);
+  this->registerCommand("BOTPART", &Remote::onBotPart);
+  this->registerCommand("CHAT", &Remote::onChat);
+  this->registerCommand("COMMAND", &Remote::onCommand);
+  this->registerCommand("BROADCAST", &Remote::onBroadcast);
+  this->registerCommand("NOTICE", &Remote::onNotice);
+}
+
+
+void
+Remote::registerCommand(const std::string & command,
+  bool (Remote::*callback)(const std::string & from,
+  const std::string & command, const StrVector & parameters))
+{
+  this->commands.insert(std::make_pair(UpCase(command),
+    boost::bind(callback, this, _1, _2, _3)));
 }
 
 
@@ -371,29 +396,14 @@ Remote::parse(std::string text)
 
     std::string command = UpCase(FirstWord(text));
 
-    if (0 == command.compare("BOTJOIN"))
+    StrVector parameters;
+    SplitIRC(parameters, text);
+
+    Remote::CommandMap::iterator pos = this->commands.find(command);
+
+    if (pos != this->commands.end())
     {
-      result = this->onBotJoin(from, FirstWord(text));
-    }
-    else if (0 == command.compare("BOTPART"))
-    {
-      result = this->onBotPart(from, FirstWord(text));
-    }
-    else if (0 == command.compare("CHAT"))
-    {
-      result = this->onChat(from, text);
-    }
-    else if (0 == command.compare("COMMAND"))
-    {
-      result = this->onCommand(from, text);
-    }
-    else if (0 == command.compare("BROADCAST"))
-    {
-      result = this->onBroadcast(from, text);
-    }
-    else if (0 == command.compare("NOTICE"))
-    {
-      result = this->onNotice(from, text);
+      result = pos->second(from, pos->first, parameters);
     }
     else
     {
@@ -423,28 +433,16 @@ Remote::parse(std::string text)
 
 
 bool
-Remote::onBotJoin(const std::string & from, const std::string & node)
+Remote::onBotJoin(const std::string & from, const std::string & command,
+  const StrVector & parameters)
 {
-  if (remotes.isConnected(node))
-  {
-    this->sendError(node + " is already connected to botnet!");
-    return false;
-  }
+  // <from> BOTJOIN <node>
+  bool result = false;
 
-  if (!node.empty())
+  if (0 == parameters.size())
   {
-    this->_children.Link(from, node);
-    remotes.sendBotJoin(from, node, this);
-  }
+    result = true;
 
-  if (this->ready())
-  {
-    clients.sendAll("*** Bot " + node + " has connected to " + from,
-      UserFlags::OPER);
-    remotes.sendBotJoin(from, node, this);
-  }
-  else if (node.empty())
-  {
     this->_stage = Remote::STAGE_READY;
     this->_sock.setTimeout(0);
 
@@ -463,29 +461,91 @@ Remote::onBotJoin(const std::string & from, const std::string & node)
       this->_sendQ = "";
     }
   }
+  else if (1 == parameters.size())
+  {
+    std::string node(parameters[0]);
 
-  return true;
+    if (remotes.isConnected(node))
+    {
+      this->sendError(node + " is already connected to botnet!");
+    }
+    else
+    {
+      result = true;
+
+      this->_children.Link(from, node);
+      remotes.sendBotJoin(from, node, this);
+
+      if (this->ready())
+      {
+        clients.sendAll("*** Bot " + node + " has connected to " + from,
+          UserFlags::OPER);
+      }
+    }
+  }
+  else
+  {
+    this->sendSyntaxError(command);
+  }
+
+  return result;
 }
 
 
 bool
-Remote::onBotPart(const std::string & from, const std::string & node)
+Remote::onBotPart(const std::string & from, const std::string & command,
+  const StrVector & parameters)
 {
+  // <from> BOTPART <node>
   bool result = false;
 
-  if (this->ready())
+  if (1 == parameters.size())
   {
-    this->_children.Unlink(node);
-    remotes.sendBotPart(from, node, this);
+    std::string node(parameters[0]);
 
-    clients.sendAll("*** Bot " + node + " has disconnected from " + from,
-      UserFlags::OPER);
+    if (this->ready())
+    {
+      this->_children.Unlink(node);
+      remotes.sendBotPart(from, node, this);
+
+      clients.sendAll("*** Bot " + node + " has disconnected from " + from,
+        UserFlags::OPER);
+
+      result = true;
+    }
+    else
+    {
+      this->sendUnknownCommand(command);
+    }
+  }
+  else
+  {
+    this->sendSyntaxError(command);
+  }
+
+  return result;
+}
+
+
+bool
+Remote::onChat(const std::string & from, const std::string & command,
+  const StrVector & parameters)
+{
+  // <handle@bot> CHAT :<text>
+  bool result = false;
+
+  if (1 == parameters.size())
+  {
+    std::string text(parameters[0]);
+
+    clients.sendChat(from, text);
+    remotes.sendChat(from, text, this);
 
     result = true;
   }
   else
   {
-    this->sendUnknownCommand("BOTPART");
+    this->sendSyntaxError(command);
   }
 
   return result;
@@ -493,122 +553,151 @@ Remote::onBotPart(const std::string & from, const std::string & node)
 
 
 bool
-Remote::onChat(const std::string & from, const std::string & text)
+Remote::onCommand(const std::string & from, const std::string & command,
+  const StrVector & parameters)
 {
-  clients.sendChat(from, text);
-  remotes.sendChat(from, text, this);
+  // <handle@bot> COMMAND <to> <id> :<command> <parameters>
+  bool result = false;
 
-  return true;
-}
-
-
-bool
-Remote::onCommand(const std::string & from, std::string text)
-{
-  bool result = true;
-  try
+  if (3 == parameters.size())
   {
     std::string::size_type at(from.find('@'));
-    if (std::string::npos != at)
+    if (std::string::npos == at)
+    {
+      this->sendError("Only users can send remote commands!");
+    }
+    else
     {
       std::string handle(from.substr(0, at));
       std::string bot(from.substr(at + 1));
 
-      std::string to(FirstWord(text));
-      std::string id(FirstWord(text));
-      std::string command(FirstWord(text));
-      std::string parameters(text);
+      std::string to(parameters[0]);
+      std::string id(parameters[1]);
+      std::string cmdline(parameters[2]);
 
-      this->_clientHandle = handle;
-      this->_clientBot = bot;
-      this->_clientId = id;
-      this->_clientFlags = Config::getRemoteFlags(from);
+      std::string cmd(FirstWord(cmdline));
+      std::string args(cmdline);
 
-#ifdef REMOTE_DEBUG
-      std::cout << handle << "@" << bot << " flags: " <<
-	UserFlags::getNames(this->_clientFlags, ' ') << std::endl;
-#endif /* REMOTE_DEBUG */
-
-      this->_targetEstablished = true;
-      if (Same(to, Config::GetNick()))
+      try
       {
-        try
+        this->_clientHandle = handle;
+        this->_clientBot = bot;
+        this->_clientId = id;
+        this->_clientFlags = Config::getRemoteFlags(from);
+
+        this->_targetEstablished = true;
+        if (Same(to, Config::GetNick()))
         {
-          this->_parser.parse(this, command, parameters);
+          try
+          {
+            this->_parser.parse(this, cmd, args);
+          }
+          catch (CommandParser::exception & e)
+          {
+            this->send(e.what());
+          }
         }
-        catch (CommandParser::exception & e)
+        else
         {
-          this->send(e.what());
+	  remotes.sendCommand(this, to, cmd, args);
         }
+        this->_targetEstablished = false;
+
+	result = true;
       }
-      else
+      catch (...)
       {
-	remotes.sendCommand(this, to, command, parameters);
+        _targetEstablished = false;
+        throw;
       }
-      this->_targetEstablished = false;
-    }
-    else
-    {
-      this->sendError("Only users can send remote commands!");
-      result = false;
     }
   }
-  catch (...)
+  else
   {
-    _targetEstablished = false;
-    throw;
+    this->sendSyntaxError(command);
   }
+
   return result;
 }
 
 
 bool
-Remote::onBroadcast(const std::string & from, std::string text)
+Remote::onBroadcast(const std::string & from, const std::string & command,
+  const StrVector & parameters)
 {
-  std::string skip(FirstWord(text));
-  std::string flags(FirstWord(text));
-  std::string watches(FirstWord(text));
+  // <from> BROADCAST <skip> <flags> <watches> :<text>
+  bool result = false;
 
-  std::string::size_type at(skip.find('@'));
-  if (std::string::npos != at)
+  if (4 == parameters.size())
   {
-    std::string skipId = skip.substr(0, at);
-    std::string skipBot = skip.substr(at + 1);
+    std::string skip(parameters[0]);
+    std::string flags(parameters[1]);
+    std::string watches(parameters[2]);
+    std::string text(parameters[3]);
 
-    if (Same(skipBot, Config::GetNick()))
+    std::string::size_type at(skip.find('@'));
+    if (std::string::npos != at)
     {
-      clients.sendAll(from, skipId, text, flags, watches);
+      std::string skipId = skip.substr(0, at);
+      std::string skipBot = skip.substr(at + 1);
+
+      if (Same(skipBot, Config::GetNick()))
+      {
+        clients.sendAll(from, skipId, text, flags, watches);
+        remotes.sendBroadcastPtr(from, this, text, flags, watches);
+      }
+      else
+      {
+        clients.sendAll(from, text, flags, watches);
+        remotes.sendBroadcastId(from, skipId, skipBot, text, flags, watches);
+      }
+
+      result = true;
+    }
+    else if (0 == skip.compare("*"))
+    {
+      clients.sendAll(from, text, flags, watches);
       remotes.sendBroadcastPtr(from, this, text, flags, watches);
+
+      result = true;
     }
     else
     {
-      clients.sendAll(from, text, flags, watches);
-      remotes.sendBroadcastId(from, skipId, skipBot, text, flags, watches);
+      this->sendError("Malformed skip ID in broadcast!");
     }
-  }
-  else if (0 == skip.compare("*"))
-  {
-    clients.sendAll(from, text, flags, watches);
-    remotes.sendBroadcastPtr(from, this, text, flags, watches);
   }
   else
   {
-    this->sendError("Malformed skip ID in broadcast!");
+    this->sendSyntaxError(command);
   }
 
-  return true;
+  return result;
 }
 
 
 bool
-Remote::onNotice(const std::string & from, std::string text)
+Remote::onNotice(const std::string & from, const std::string & command,
+  const StrVector & parameters)
 {
-  std::string clientId(FirstWord(text));
-  std::string clientBot(FirstWord(text));
+  // <from> NOTICE <clientId> <clientBot> :<text>
+  bool result = false;
 
-  remotes.sendNotice(from, clientId, clientBot, text);
+  if (3 == parameters.size())
+  {
+    std::string clientId(parameters[0]);
+    std::string clientBot(parameters[1]);
+    std::string text(parameters[2]);
 
-  return true;
+    remotes.sendNotice(from, clientId, clientBot, text);
+
+    result = true;
+  }
+  else
+  {
+    this->sendSyntaxError(command);
+  }
+
+  return result;
 }
 
 
@@ -620,7 +709,7 @@ Remote::sendBroadcast(const std::string & from, const std::string & text,
   msg += flags;
   msg += ' ';
   msg += watches;
-  msg += ' ';
+  msg += " :";
   msg += text;
   msg += '\n';
 
@@ -656,7 +745,7 @@ Remote::sendBroadcastId(const std::string & from, const std::string & skipId,
   msg += flags;
   msg += ' ';
   msg += watches;
-  msg += ' ';
+  msg += " :";
   msg += text;
   msg += '\n';
 
@@ -671,7 +760,7 @@ Remote::sendNotice(const std::string & from, const std::string & clientId,
   std::string msg(clientId);
   msg += ' ';
   msg += clientBot;
-  msg += ' ';
+  msg += " :";
   msg += text;
   msg += '\n';
 
@@ -682,7 +771,9 @@ Remote::sendNotice(const std::string & from, const std::string & clientId,
 int
 Remote::sendError(const std::string & text)
 {
-  return this->sendCommand("", "ERROR", text);
+  int result = this->sendCommand("", "ERROR", text);
+
+  return result;
 }
 
 
@@ -691,6 +782,14 @@ Remote::sendUnknownCommand(const std::string & command)
 {
   std::cerr << "Unknown remote command: " << command << std::endl;
   return this->sendError("Unknown command: " + command);
+}
+
+
+int
+Remote::sendSyntaxError(const std::string & command)
+{
+  std::cerr << "Syntax error: " << command << std::endl;
+  return this->sendError("Syntax error: " + command);
 }
 
 
@@ -723,7 +822,7 @@ Remote::sendChat(const std::string & from, const std::string & text)
 {
   int result = 0;
 
-  std::string cmd(":" + from + " CHAT " + text + '\n');
+  std::string cmd(":" + from + " CHAT :" + text + '\n');
 
   if (this->ready())
   {
@@ -848,7 +947,7 @@ Remote::sendCommand(const std::string & from, const std::string & to,
   std::string msg(to);
   msg += ' ';
   msg += clientId;
-  msg += ' ';
+  msg += " :";
   msg += command;
   msg += ' ';
   msg += parameters;
