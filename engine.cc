@@ -233,7 +233,7 @@ klineClones(const bool kline, const std::string & rate,
     std::string suggestedHost;
     if (INADDR_NONE == ip)
     {
-      if (isIP(Host))
+      if (isNumericIPv4(Host))
       {
 	// Get subnet from hostname
         suggestedHost = classCMask(Host);
@@ -1154,25 +1154,22 @@ checkForSpoof(const std::string & nick, const std::string & user,
     if (!Config::IsOper(userhost, ip) && !Config::IsOKHost(userhost, ip) &&
       !Config::IsSpoofer(ip))
     {
-      if (isIP(host))
+      if (isNumericIPv4(host))
       {
         // If we're dealing with an IP that that doesn't reverse-resolve,
         // make sure the "hostname" and ip match up.
-        if ((ip != "") && isIP(host))
-        {
-          if ((host != ip))
-          {
-            std::string notice("Fake IP Spoof: " + nick + " (" + userhost +
-	      ") [" + ip + "]");
-	    Log::Write(notice);
-	    ::SendAll(notice, UserFlags::OPER);
-	    doAction(nick, userhost, BotSock::inet_addr(ip),
-	      vars[VAR_FAKE_IP_SPOOF_ACTION]->getAction(),
-	      vars[VAR_FAKE_IP_SPOOF_ACTION]->getInt(),
-	      vars[VAR_FAKE_IP_SPOOF_REASON]->getString(), false);
-            return true;
-          }
-        }
+	if ((host != ip))
+	{
+	  std::string notice("Fake IP Spoof: " + nick + " (" + userhost +
+	    ") [" + ip + "]");
+	  Log::Write(notice);
+	  ::SendAll(notice, UserFlags::OPER);
+	  doAction(nick, userhost, BotSock::inet_addr(ip),
+	    vars[VAR_FAKE_IP_SPOOF_ACTION]->getAction(),
+	    vars[VAR_FAKE_IP_SPOOF_ACTION]->getInt(),
+	    vars[VAR_FAKE_IP_SPOOF_REASON]->getString(), false);
+	  return true;
+	}
       }
       else
       {

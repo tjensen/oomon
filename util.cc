@@ -609,32 +609,77 @@ CountChars(const std::string & text, const std::string::value_type ch)
 
 
 //////////////////////////////////////////////////////////////////////
-// isIP(host)
+// isNumericIPv4(host)
 //
 // Description:
-//  Determines if a hostname is an IP address.  The checking is fairly
-//  ignorant about correctness of an IP address.  It merely checks if
-//  the string contains 3 dots and the remaining characters are all
-//  numeric.  So, the following are all considered IPs by this
+//  Determines if a hostname is a numeric IPv4 address.  The checking
+//  is fairly ignorant about correctness of an IP address.  It merely
+//  checks if the string contains 3 dots and the remaining characters
+//  are all numeric.  So, the following are all considered IPs by this
 //  function:
 //    1.2.3.4
 //    999999999.2.3.4
 //    1...2
-//  The probably ought to be changed so that only valid IP addresses
+//  The probably ought to be changed so that only valid IPv4 addresses
 //  are identified.
 //
 // Parameters:
 //  host - A string containing a hostname or IP address.
 //
 // Return Value:
-//  The function returns true if host contains an IP address or false
-//  if it contains a hostname.
+//  The function returns true if host contains an IPv4 address or
+//  false if it contains a hostname.
 //////////////////////////////////////////////////////////////////////
 bool
-isIP(const std::string & host)
+isNumericIPv4(const std::string & host)
 {
   return ((std::string::npos == host.find_first_not_of(".0123456789")) &&
     (3 == CountChars(host, '.')));
+}
+
+
+//////////////////////////////////////////////////////////////////////
+// isNumericIPv6(host)
+//
+// Description:
+//  Determines if a hostname is a numeric IPv6 address.  The checking
+//  is fairly ignorant about correctness of an IP address.  It merely
+//  checks if the string contains hexadecimal digits and colons.  This
+//  probably ought to be changed so that only valid IPv6 addresses are
+//  identified.
+//
+// Parameters:
+//  host - A string containing a hostname or IP address.
+//
+// Return Value:
+//  The function returns true if host contains an IPv4 address or
+//  false if it contains a hostname.
+//////////////////////////////////////////////////////////////////////
+bool
+isNumericIPv6(const std::string & host)
+{
+  return (std::string::npos ==
+    host.find_first_not_of(":0123456789ABCDEFabcdef"));
+}
+
+
+//////////////////////////////////////////////////////////////////////
+// isNumericIP(host)
+//
+// Description:
+//  Determines if a hostname is a numeric IPv4 or IPv6 address.
+//
+// Parameters:
+//  host - A string containing a hostname or IP address.
+//
+// Return Value:
+//  The function returns true if host contains a numeric IP address or
+//  false if it contains a hostname.
+//////////////////////////////////////////////////////////////////////
+bool
+isNumericIP(const std::string & host)
+{
+  return (isNumericIPv4(host) || isNumericIPv6(host));
 }
 
 
@@ -654,7 +699,7 @@ isIP(const std::string & host)
 std::string
 getDomain(std::string host, bool withDot)
 {
-  if (isIP(host))
+  if (isNumericIPv4(host))
   {
     // 1.2.3.4
     std::string::size_type lastDot = host.rfind('.');
@@ -773,7 +818,7 @@ std::string klineMask(const std::string & userhost)
 
     std::string domain = getDomain(host, true);
 
-    if (isIP(host))
+    if (isNumericIPv4(host))
     {
       return (user + "@" + domain + "*");
     }

@@ -81,7 +81,9 @@ std::string GetHandleHB(std::string);
 std::string::size_type CountChars(const std::string & text,
   const std::string::value_type ch);
 
-bool isIP(const std::string & host);
+bool isNumericIPv4(const std::string & host);
+bool isNumericIPv6(const std::string & host);
+bool isNumericIP(const std::string & host);
 std::string getDomain(std::string host, bool withDot = false);
 std::string klineMask(const std::string & userhost);
 std::string classCMask(const std::string & ip);

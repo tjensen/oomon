@@ -134,7 +134,7 @@ doAction(const std::string & nick, const std::string & userhost,
 
   if (ip == INADDR_NONE)
   {
-    if (isIP(host))
+    if (isNumericIPv4(host))
     {
       ip = BotSock::inet_addr(host);
     }
