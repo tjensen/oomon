@@ -159,7 +159,8 @@ DCCList::ListenProcessor::operator()(DCCPtr listener)
 
     try
     {
-      newConnection = DCCPtr(new DCC(listener.get()));
+      DCCPtr tmp(new DCC(listener.get()));
+      newConnection.swap(tmp);
     }
     catch (OOMon::errno_error & e)
     {

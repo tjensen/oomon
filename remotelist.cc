@@ -89,7 +89,8 @@ RemoteList::ListenProcess::operator()(BotSock::ptr s)
 
     try
     {
-      temp = RemotePtr(new Remote(s.get()));
+      RemotePtr foo(new Remote(s.get()));
+      temp.swap(foo);
     }
     catch (OOMon::errno_error & e)
     {

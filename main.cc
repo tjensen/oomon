@@ -406,7 +406,8 @@ main(int argc, char **argv)
 
   try
   {
-    userConfig.reset(new UserDB(config.userDBFilename()));
+    boost::shared_ptr<UserDB> newConfig(new UserDB(config.userDBFilename()));
+    userConfig.swap(newConfig);
   }
   catch (OOMon::botdb_error & reason)
   {

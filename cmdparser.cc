@@ -524,7 +524,8 @@ CommandParser::cmdKilllist(BotClient * from, const std::string & command,
     {
       if (args.haveUnary("-r"))
       {
-        pattern.reset(new RegExPattern(mask));
+        PatternPtr tmp(new RegExPattern(mask));
+        pattern.swap(tmp);
       }
       else
       {
@@ -590,7 +591,8 @@ CommandParser::cmdKillnfind(BotClient * from, const std::string & command,
     {
       if (args.haveUnary("-r"))
       {
-        pattern.reset(new RegExPattern(mask));
+        PatternPtr tmp(new RegExPattern(mask));
+        pattern.swap(tmp);
       }
       else
       {
@@ -841,7 +843,8 @@ CommandParser::cmdFindk(BotClient * from, const std::string & command,
 
       if (args.haveUnary("-r"))
       {
-        pattern.reset(new RegExPattern(parameters));
+        PatternPtr tmp(new RegExPattern(parameters));
+        pattern.swap(tmp);
       }
       else
       {
@@ -913,7 +916,8 @@ CommandParser::cmdFindd(BotClient * from, const std::string & command,
 
       if (args.haveUnary("-r"))
       {
-        pattern.reset(new RegExPattern(parameters));
+        PatternPtr tmp(new RegExPattern(parameters));
+        pattern.swap(tmp);
       }
       else
       {
@@ -1070,11 +1074,13 @@ CommandParser::cmdSeedrand(BotClient * from, const std::string & command,
 
     if (parameters.empty())
     {
-      pattern.reset(new NickClusterPattern("*"));
+      PatternPtr tmp(new NickClusterPattern("*"));
+      pattern.swap(tmp);
     }
     else if (args.haveUnary("-r"))
     {
-      pattern.reset(new RegExPattern(parameters));
+      PatternPtr tmp(new RegExPattern(parameters));
+      pattern.swap(tmp);
     }
     else
     {

@@ -129,23 +129,35 @@ ProxyList::initiateCheck(const Proxy::Protocol type, const std::string & port,
       switch (type)
       {
 	case Proxy::HTTP:
-	  newProxy = ProxyPtr(new Http(hostname, nick, userhost));
+          {
+            ProxyPtr tmp(new Http(hostname, nick, userhost));
+            newProxy.swap(tmp);
+          }
 	  break;
 	case Proxy::WINGATE:
-	  newProxy = ProxyPtr(new WinGate(hostname, nick, userhost));
+          {
+            ProxyPtr tmp(new WinGate(hostname, nick, userhost));
+            newProxy.swap(tmp);
+          }
 	  break;
 	case Proxy::SOCKS4:
-	  newProxy = ProxyPtr(new Socks4(hostname, nick, userhost));
+          {
+            ProxyPtr tmp(new Socks4(hostname, nick, userhost));
+            newProxy.swap(tmp);
+          }
 	  break;
 	case Proxy::SOCKS5:
-	  newProxy = ProxyPtr(new Socks5(hostname, nick, userhost));
+          {
+            ProxyPtr tmp(new Socks5(hostname, nick, userhost));
+            newProxy.swap(tmp);
+          }
 	  break;
 	default:
 	  std::cerr << "Unknown proxy type?" << std::endl;
 	  break;
       }
 
-      if (0 != newProxy)
+      if (newProxy)
       {
 	this->connect(newProxy, address, portNum);
       }
