@@ -46,7 +46,7 @@ TrapList::TrapMap TrapList::traps;
 Trap::Trap(const TrapAction action, const long timeout,
   const std::string & line)
   : action_(action), timeout_(timeout), filter_(line, Filter::FIELD_NUH),
-  lastMatch_(0), matchCount_(0)
+  lastMatch_(0), matchCount_(0), loaded_(false)
 {
   std::string rest = this->filter_.rest();
   this->reason_ = trimLeft(rest);
@@ -56,7 +56,7 @@ Trap::Trap(const TrapAction action, const long timeout,
 Trap::Trap(const Trap & copy)
   : action_(copy.action_), timeout_(copy.timeout_), filter_(copy.filter_),
   reason_(copy.reason_), lastMatch_(copy.lastMatch_),
-  matchCount_(copy.matchCount_)
+  matchCount_(copy.matchCount_), loaded_(copy.loaded_)
 {
 }
 
@@ -73,6 +73,23 @@ Trap::updateStats(void)
 }
 
 
+void
+Trap::update(const TrapAction action, const long timeout,
+  const std::string & reason)
+{
+  if ((this->action_ != action) || (this->timeout_ != timeout) ||
+      (this->reason_ != reason))
+  {
+    this->matchCount_ = 0;
+    this->lastMatch_ = 0;
+
+    this->action_ = action;
+    this->timeout_ = timeout;
+    this->reason_ = reason;
+  }
+}
+
+
 bool
 Trap::matches(const UserEntryPtr user, const std::string & version,
   const std::string & privmsg, const std::string & notice) const
@@ -84,14 +101,14 @@ Trap::matches(const UserEntryPtr user, const std::string & version,
 bool
 Trap::operator==(const Trap & other) const
 {
-  return (0 == this->filter_.get().compare(other.filter_.get()));
+  return (0 == this->getFilter().compare(other.getFilter()));
 }
 
 
 bool
 Trap::operator==(const std::string & pattern) const
 {
-  return (0 == this->filter_.get().compare(pattern));
+  return (0 == this->getFilter().compare(pattern));
 }
 
 
@@ -344,15 +361,19 @@ TrapList::add(const TrapKey key, const TrapAction action,
   {
     if (pos->second == trap)
     {
+      pos->second.update(action, timeout, trap.getReason());
       break;
     }
   }
   if (pos == end)
   {
-    traps.insert(std::make_pair(key ? key : TrapList::getMaxKey() + 100, trap));
+    pos = traps.insert(std::make_pair(key ? key : TrapList::getMaxKey() + 100,
+      trap));
   }
 
-  return trap;
+  pos->second.loaded(true);
+
+  return pos->second;
 }
 
 
@@ -620,5 +641,33 @@ TrapList::save(std::ofstream & file)
       pos->second.getTimeout() << " " << pos->second.getFilter() << " " <<
       pos->second.getReason() << std::endl;
   }
+}
+
+
+void
+TrapList::preLoad(void)
+{
+  for (TrapMap::iterator pos = TrapList::traps.begin();
+    pos != TrapList::traps.end(); ++pos)
+  {
+    pos->second.loaded(false);
+  }
+}
+
+
+void
+TrapList::postLoad(void)
+{
+  TrapMap copy;
+
+  for (TrapMap::const_iterator pos = traps.begin(); pos != traps.end(); ++pos)
+  {
+    if (pos->second.loaded())
+    {
+      copy.insert(*pos);
+    }
+  }
+
+  traps.swap(copy);
 }
 

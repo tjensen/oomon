@@ -991,12 +991,14 @@ public:
 bool
 Config::loadSettings()
 {
+  bool result = true;
+
   std::ifstream file(settingsFile.c_str());
 
   if (file)
   {
-    // First clear out the TRAP list!
-    TrapList::clear();
+    // Prepare TRAP list for load
+    TrapList::preLoad();
 
     std::string line;
 
@@ -1034,20 +1036,23 @@ Config::loadSettings()
       else
       {
         std::cerr << "Unknown setting type: " << cmd << std::endl;
-	file.close();
-	return false;
+	result = false;
+        break;
       }
     }
 
     // Done!
     file.close();
 
-    return true;
+    // Perform post-loading actions on TRAP list
+    TrapList::postLoad();
   }
   else
   {
-     return false;
+     result = false;
   }
+
+  return result;
 }
 
 

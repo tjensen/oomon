@@ -55,10 +55,13 @@ public:
   Trap(const Trap & copy);
   virtual ~Trap(void);
 
+  void update(const TrapAction action, const long timeout,
+    const std::string & reason);
+
   bool matches(const UserEntryPtr user, const std::string & version,
     const std::string & privmsg, const std::string & notice) const;
   bool operator==(const Trap & other) const;
-  bool operator==(const std::string & other) const;
+  bool operator==(const std::string & pattern) const;
   void doAction(const TrapKey key, const UserEntryPtr user) const;
 
   void updateStats(void);
@@ -71,6 +74,9 @@ public:
   std::time_t getLastMatch(void) const { return this->lastMatch_; };
   unsigned long getMatchCount(void) const { return this->matchCount_; };
 
+  bool loaded(void) const { return this->loaded_; }
+  void loaded(const bool value) { this->loaded_ = value; }
+
 private:
   typedef boost::shared_ptr<Pattern> PatternPtr;
   TrapAction	action_;
@@ -79,6 +85,7 @@ private:
   std::string	reason_;	// For Kills, K-Lines, and D-Lines only
   std::time_t	lastMatch_;
   unsigned long	matchCount_;
+  bool          loaded_;
 };
 
 
@@ -102,6 +109,9 @@ public:
   static void list(class BotClient * client, bool showCounts, bool showTimes);
 
   static void save(std::ofstream & file);
+
+  static void preLoad(void);
+  static void postLoad(void);
 
   static TrapAction actionType(const std::string & text);
   static std::string actionString(const TrapAction & action);
