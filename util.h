@@ -109,5 +109,8 @@ std::string chopNick(std::string NUH);
 
 std::string expandPath(const std::string & filename, const std::string & cwd);
 
+bool partialCompare(const std::string & input, const std::string & token,
+    const std::string::size_type minimum);
+
 #endif /* __UTIL_H__ */
 

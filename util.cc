@@ -1406,3 +1406,37 @@ expandPath(const std::string & filename, const std::string & cwd)
   return result;
 }
 
+
+//////////////////////////////////////////////////////////////////////
+// partialCompare(input, token, minimum)
+//
+// Description:
+//  This function compares the input string to the token string, but
+//  tolerates the possibilty that the input string is missing some
+//  characters at the end.  The input string must match at least
+//  minimum characters in the token string.
+//
+// Parameters:
+//  input   - the user-input (possibly partial) string
+//  token   - the expected string to compare against
+//  minimum - the minimum number of matching characters
+//
+// Return value:
+//  The function returns true if the input and token strings have a
+//  partial match.
+//////////////////////////////////////////////////////////////////////
+bool
+partialCompare(const std::string & input, const std::string & token,
+    const std::string::size_type minimum)
+{
+  const std::string::size_type length = input.length();
+  bool result = false;
+
+  if ((length >= minimum) && (length <= token.length()))
+  {
+    result = (0 == input.compare(token.substr(0, length)));
+  }
+
+  return result;
+}
+
