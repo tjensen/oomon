@@ -403,6 +403,11 @@ initFloodTables()
   motdLookers.clear();
   infoLookers.clear();
   statsLookers.clear();
+  spambots.clear();
+  possibleFlooders.clear();
+  tooManyConn.clear();
+  connects.clear();
+  operfails.clear();
 }
 
 
@@ -660,7 +665,7 @@ onClientConnect(std::string text)
     gecos.erase(gecos.end() - 1);
   }
 
-  connects.onNotice(nick + ' ' + userhost + ' ' + ipString);
+  //connects.onNotice(nick + ' ' + userhost + ' ' + ipString);
 
   users.add(nick, userhost, ipString, false, false, classString, gecos);
 

@@ -57,9 +57,9 @@ public:
 
   void parseFilter(std::string & text, const bool extended);
 
-  bool matches(const UserEntryPtr & user, const std::string & version,
+  bool matches(const UserEntryPtr user, const std::string & version,
       const std::string & privmsg, const std::string & notice) const;
-  bool matches(const UserEntryPtr & user) const;
+  bool matches(const UserEntryPtr user) const;
   bool matches(const Filter::Field & field) const;
 
   FormatSet formats(void) const;

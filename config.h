@@ -96,7 +96,7 @@ class Config
         const Config::ExemptFlag flag) const;
     bool isExempt(const std::string & userhost, const BotSock::Address & ip,
         const Config::ExemptFlag flag) const;
-    bool isExempt(const UserEntryPtr & user, const Config::ExemptFlag flag)
+    bool isExempt(const UserEntryPtr user, const Config::ExemptFlag flag)
       const;
     bool isExemptClass(const std::string & name, const Config::ExemptFlag flag)
       const;
@@ -104,7 +104,7 @@ class Config
     bool isOper(const std::string & userhost, const std::string & ip) const;
     bool isOper(const std::string & userhost, const BotSock::Address & ip)
       const;
-    bool isOper(const UserEntryPtr & user) const;
+    bool isOper(const UserEntryPtr user) const;
 
     bool spoofer(const std::string & ip) const;
 

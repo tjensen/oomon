@@ -71,7 +71,7 @@ std::string IRC::umode_(DEFAULT_UMODE);
 int IRC::userCountDeltaMax_(DEFAULT_USER_COUNT_DELTA_MAX);
 
 
-IRC::IRC(): BotSock(false, true), supportETrace(false), supportKnock(false),
+IRC::IRC(): sock_(false, true), supportETrace(false), supportKnock(false),
   caseMapping(CASEMAP_RFC1459), klines('K'), dlines('D')
 {
   this->amIAnOper = false;
@@ -84,8 +84,8 @@ IRC::IRC(): BotSock(false, true), supportETrace(false), supportKnock(false),
   this->lastUserDeltaCheck = 0;
   this->lastCtcpVersionTimeoutCheck = 0;
 
-  registerOnConnectHandler(boost::bind(&IRC::onConnect, this));
-  registerOnReadHandler(boost::bind(&IRC::onRead, this, _1));
+  this->sock_.registerOnConnectHandler(boost::bind(&IRC::onConnect, this));
+  this->sock_.registerOnReadHandler(boost::bind(&IRC::onRead, this, _1));
 
   addServerNoticeParser("Client connecting: *", ::onClientConnect);
   addServerNoticeParser("Client exiting: *", ::onClientExit);
@@ -158,7 +158,7 @@ IRC::process(const fd_set & readset, const fd_set & writeset)
     this->lastCtcpVersionTimeoutCheck = now;
   }
 
-  return BotSock::process(readset, writeset);
+  return this->sock_.process(readset, writeset);
 }
 
 
@@ -197,7 +197,7 @@ IRC::write(const std::string & text)
   std::cout << "IRC << " << text;
 #endif
 
-  return BotSock::write(text);
+  return this->sock_.write(text);
 }
 
 
@@ -944,7 +944,7 @@ IRC::kill(const std::string & from, const std::string & target,
 void
 IRC::trace(const std::string & target)
 {
-  if (0 == target.length())
+  if (target.empty())
   {
     users.clear();
     this->gettingTrace = true;

@@ -60,7 +60,7 @@ class AutoAction
 void doAction(const std::string & nick, const std::string & userhost,
     BotSock::Address ip, const AutoAction & action, const std::string & reason,
     bool suggestKlineAfterKill);
-void doAction(const UserEntryPtr & user, const AutoAction & action,
+void doAction(const UserEntryPtr user, const AutoAction & action,
     const std::string & reason, bool suggestKlineAfterKill);
 
 

@@ -410,7 +410,7 @@ doAction(const std::string & nick, const std::string & userhost,
 
 
 void
-doAction(const UserEntryPtr & user, const AutoAction & action,
+doAction(const UserEntryPtr user, const AutoAction & action,
     const std::string & reason, bool suggestKlineAfterKill)
 {
   // If we're about to perform a KILL action, make sure the user is still

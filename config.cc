@@ -808,7 +808,7 @@ Config::isExempt(const std::string & userhost, const BotSock::Address & ip,
 
 
 bool
-Config::isExempt(const UserEntryPtr & user, const Config::ExemptFlag flag) const
+Config::isExempt(const UserEntryPtr user, const Config::ExemptFlag flag) const
 {
   return (this->isExempt(user->getUserHost(), user->getIP(), flag) ||
       this->isExemptClass(user->getClass(), flag));
@@ -890,7 +890,7 @@ Config::isOper(const std::string & userhost, const BotSock::Address & ip) const
 
 
 bool
-Config::isOper(const UserEntryPtr & user) const
+Config::isOper(const UserEntryPtr user) const
 {
   return this->isOper(user->getUserHost(), user->getIP());
 }

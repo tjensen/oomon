@@ -29,12 +29,13 @@
 
 // Boost C++ Headers
 #include <boost/shared_ptr.hpp>
+#include <boost/utility.hpp>
 
 // OOMon Headers
 #include "botsock.h"
 
 
-class UserEntry
+class UserEntry : private boost::noncopyable
 {
 public:
   static void init(void);

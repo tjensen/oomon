@@ -115,9 +115,9 @@ private:
   static unsigned int hashFunc(const std::string & key);
 
   static void addToHash(UserEntryTable & table, const BotSock::Address & key,
-    const UserEntryPtr & item);
+    UserEntryPtr item);
   static void addToHash(UserEntryTable & table, const std::string & key,
-    const UserEntryPtr & item);
+    UserEntryPtr item);
 
   static bool removeFromHashEntry(UserEntryList & list,
     const std::string & host, const std::string & user,

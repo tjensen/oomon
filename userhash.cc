@@ -462,7 +462,7 @@ UserHash::remove(const std::string & nick, const std::string & userhost,
       domain = "";
     }
 
-    this->userCount--;
+    --this->userCount;
 
     if (!UserHash::removeFromHash(this->hosttable, host, host, user, nick))
     {
@@ -524,7 +524,7 @@ UserHash::remove(const std::string & nick, const std::string & userhost,
 
 void
 UserHash::addToHash(UserEntryTable & table, const std::string & key,
-  const UserEntryPtr & item)
+  UserEntryPtr item)
 {
   const unsigned int index = UserHash::hashFunc(key);
 
@@ -534,7 +534,7 @@ UserHash::addToHash(UserEntryTable & table, const std::string & key,
 
 void
 UserHash::addToHash(UserEntryTable & table, const BotSock::Address & key,
-  const UserEntryPtr & item)
+  UserEntryPtr item)
 {
   const unsigned int index = UserHash::hashFunc(key);
 
@@ -549,7 +549,7 @@ UserHash::removeFromHashEntry(UserEntryList & list, const std::string & host,
   bool result = false;
 
   UserEntryList::iterator find = std::find_if(list.begin(), list.end(),
-    boost::bind(&UserEntry::same, _1, nick, user, host));
+      boost::bind(&UserEntry::same, _1, nick, user, host));
 
   if (find != list.end())
   {
@@ -567,18 +567,18 @@ bool
 UserHash::removeFromHash(UserEntryTable & table, const std::string & key,
   const std::string & host, const std::string & user, const std::string & nick)
 {
-  if (key.length() > 0)
+  if (!key.empty())
   {
     const unsigned int index = UserHash::hashFunc(key);
 
-    return removeFromHashEntry(table[index], host, user, nick);
+    return UserHash::removeFromHashEntry(table[index], host, user, nick);
   }
   else
   {
     for (UserEntryTable::iterator pos = table.begin(); pos != table.end();
-      ++pos)
+        ++pos)
     {
-      if (removeFromHashEntry(*pos, host, user, nick))
+      if (UserHash::removeFromHashEntry(*pos, host, user, nick))
       {
 	return true;
       }
@@ -594,7 +594,7 @@ UserHash::removeFromHash(UserEntryTable & table, const BotSock::Address & key,
 {
   const unsigned int index = UserHash::hashFunc(key);
 
-  if (removeFromHashEntry(table[index], host, user, nick))
+  if (UserHash::removeFromHashEntry(table[index], host, user, nick))
   {
     return true;
   }
@@ -603,7 +603,7 @@ UserHash::removeFromHash(UserEntryTable & table, const BotSock::Address & key,
     // Didn't find it, try it without an IP
     if (INADDR_NONE != key)
     {
-      return removeFromHash(table, INADDR_NONE, host, user, nick);
+      return UserHash::removeFromHash(table, INADDR_NONE, host, user, nick);
     }
   }
 
@@ -1173,7 +1173,7 @@ UserHash::reportVClones(BotClient * client) const
 	    }
 
             boost::format outfmt(
-                "  %2d connections in %3ld seconds (%2d total) from %s%s");
+                "  %2d connections in %3ld seconds (%2d total) from %s@%s");
             client->send(str(outfmt % (k + 1) %
                   (connectTime[j] - connectTime[j + k]) % numfound %
                   (*userptr)->getUser() %

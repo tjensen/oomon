@@ -49,7 +49,7 @@ enum CaseMapping
 };
 
 
-class IRC : public BotSock
+class IRC
 {
 public:
   IRC();
@@ -121,6 +121,29 @@ public:
 
   bool opered(void) const { return this->amIAnOper; }
 
+  bool isConnected(void) const { return this->sock_.isConnected(); }
+  bool isConnecting(void) const { return this->sock_.isConnecting(); }
+  std::time_t getIdle(void) const { return this->sock_.getIdle(); }
+  std::time_t getWriteIdle(void) const { return this->sock_.getWriteIdle(); }
+  std::time_t getTimeout(void) const { return this->sock_.getTimeout(); }
+  void setTimeout(const std::time_t value) { this->sock_.setTimeout(value); }
+  std::string getUptime(void) const { return this->sock_.getUptime(); }
+  BotSock::Address getLocalAddress(void) const
+  {
+    return this->sock_.getLocalAddress();
+  }
+  BotSock::Address getRemoteAddress(void) const
+  {
+    return this->sock_.getRemoteAddress();
+  }
+  void bindTo(const std::string & name) { this->sock_.bindTo(name); }
+  bool connect(const std::string & address, const BotSock::Port port)
+  {
+    return this->sock_.connect(address, port);
+  }
+  void setFD(fd_set & r, fd_set & w) const { this->sock_.setFD(r, w); }
+  void reset(void) { this->sock_.reset(); }
+
   static bool validNick(const std::string & nick);
 
   static bool trackTempKlines(void) { return IRC::trackTempKlines_; }
@@ -146,6 +169,7 @@ private:
   };
   typedef std::vector<Parser> ParserVector;
 
+  BotSock sock_;
   ParserVector serverNotices;
   bool amIAnOper;
   bool gettingTrace;

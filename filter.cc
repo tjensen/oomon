@@ -112,7 +112,7 @@ Filter::parseFilter(std::string & text, const bool extended)
 
 
 bool
-Filter::matches(const UserEntryPtr & user, const std::string & version,
+Filter::matches(const UserEntryPtr user, const std::string & version,
     const std::string & privmsg, const std::string & notice) const
 {
   for (FieldMap::const_iterator pos = this->fields_.begin();
@@ -214,7 +214,7 @@ Filter::matches(const UserEntryPtr & user, const std::string & version,
 
 
 bool
-Filter::matches(const UserEntryPtr & user) const
+Filter::matches(const UserEntryPtr user) const
 {
   return this->matches(user, "", "", "");
 }
