@@ -66,9 +66,10 @@ bool onCsNickFlood(std::string text);
 
 bool onKillNotice(std::string text);
 
-void klineClones(const bool kline, const std::string & User,
-  const std::string & Host, const BotSock::Address & ip,
-  const bool differentUser, const bool differentIp, const bool identd);
+void klineClones(const bool kline, const std::string & rate,
+  const std::string & User, const std::string & Host,
+  const BotSock::Address & ip, const bool differentUser, const bool differentIp,
+  const bool identd);
 
 void CheckProxy(const std::string &, const std::string &, const std::string &,
   const std::string &);

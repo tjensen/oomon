@@ -47,6 +47,7 @@
 #include "engine.h"
 #include "pattern.h"
 #include "botclient.h"
+#include "format.h"
 
 
 const static int CLONE_DETECT_INC = 15;
@@ -134,21 +135,35 @@ UserHash::add(const std::string & nick, const std::string & userhost,
 
           if (newuser->getScore() >= vars[VAR_SEEDRAND_REPORT_MIN]->getInt())
           {
-	    std::string notice("Random (score: " +
-	      IntToStr(newuser->getScore()) + ") nick connect: " + nick +
-	      " (" + userhost + ")");
+	    std::string scoreStr(IntToStr(newuser->getScore()));
+
+	    std::string notice("Random (score: ");
+	    notice += scoreStr;
+	    notice += ") nick connect: ";
+	    notice += nick;
+	    notice += " (";
+	    notice += userhost;
+	    notice += ")";
 	    if ("" != ip)
 	    {
-	      notice = notice + " [" + ip + "]";
+	      notice += " [";
+	      notice += ip;
+	      notice += "]";
 	    }
 
 	    ::SendAll(notice, UserFlags::OPER, WATCH_SEEDRAND);
 	    Log::Write(notice);
 
+	    Format reason;
+	    reason.setStringToken('n', nick);
+	    reason.setStringToken('u', userhost);
+	    reason.setStringToken('i', ip);
+	    reason.setStringToken('s', scoreStr);
+
 	    doAction(nick, userhost, BotSock::inet_addr(ip),
 	      vars[VAR_SEEDRAND_ACTION]->getAction(),
 	      vars[VAR_SEEDRAND_ACTION]->getInt(),
-	      vars[VAR_SEEDRAND_REASON]->getString(), false);
+	      reason.format(vars[VAR_SEEDRAND_REASON]->getString()), false);
           }
 
           if (ip != "")
@@ -301,21 +316,34 @@ UserHash::updateNick(const std::string & oldNick, const std::string & userhost,
 	  !Config::IsOKHost(userhost, find->info->getIp()) &&
 	  !find->info->getOper())
         {
-	  std::string notice("Random (score: " +
-	    IntToStr(find->info->getScore()) + ") nick change: " +
-	    find->info->getNick() + " (" + userhost + ")");
+	  std::string scoreStr(IntToStr(find->info->getScore()));
+
+	  std::string notice("Random (score: ");
+	  notice += scoreStr;
+	  notice += ") nick change: ";
+	  notice += find->info->getNick();
+	  notice += " (";
+	  notice += userhost;
+	  notice += ")";
 	  if (INADDR_NONE != find->info->getIp())
 	  {
-	    notice = notice + " [" + BotSock::inet_ntoa(find->info->getIp()) +
-	      "]";
+	    notice += " [";
+	    notice += BotSock::inet_ntoa(find->info->getIp());
+	    notice += "]";
 	  }
 	  ::SendAll(notice, UserFlags::OPER, WATCH_SEEDRAND);
 	  Log::Write(notice);
 
+	  Format reason;
+	  reason.setStringToken('n', find->info->getNick());
+	  reason.setStringToken('u', userhost);
+	  reason.setStringToken('i', BotSock::inet_ntoa(find->info->getIp()));
+	  reason.setStringToken('s', scoreStr);
+
 	  doAction(find->info->getNick(), userhost, find->info->getIp(),
 	    vars[VAR_SEEDRAND_ACTION]->getAction(),
 	    vars[VAR_SEEDRAND_ACTION]->getInt(),
-	    vars[VAR_SEEDRAND_REASON]->getString(), false);
+	    reason.format(vars[VAR_SEEDRAND_REASON]->getString()), false);
         }
 
         // There shouldn't be any more, so just return
@@ -1469,17 +1497,36 @@ UserHash::checkHostClones(const std::string & host)
     return;
   }
 
+  std::string rate(IntToStr(cloneCount + reportedClones));
+  rate += " connect";
+  if (1 != (cloneCount + reportedClones))
+  {
+    rate += 's';
+  }
+  rate += " in ";
+  rate += IntToStr(now - oldest);
+  rate += " second";
+  if (1 != (now - oldest))
+  {
+    rate += 's';
+  }
+
   std::string notice;
   if (reportedClones)
   {
-    notice = IntToStr(cloneCount) + " more possible clones (" +
-      IntToStr(cloneCount + reportedClones) + " total) from " + host + ":";
+    notice = IntToStr(cloneCount);
+    notice += " more possible clones (";
+    notice += IntToStr(cloneCount + reportedClones);
+    notice += " total) from ";
+    notice += host;
+    notice += ':';
   }
   else
   {
-    notice = "Possible clones from " + host + " detected: " +
-      IntToStr(cloneCount) + " connects in " + IntToStr(now - oldest) +
-      " seconds";
+    notice = "Possible clones from ";
+    notice += host;
+    notice += " detected: ";
+    notice += rate;
   }
   ::SendAll(notice, UserFlags::OPER);
   Log::Write(notice);
@@ -1547,7 +1594,7 @@ UserHash::checkHostClones(const std::string & host)
           differentUser = true;
         }
 
-        klineClones(true, currentUser, find->info->getHost(),
+        klineClones(true, rate, currentUser, find->info->getHost(),
 	  find->info->getIp(), differentUser, false,
 	  lastIdentd | currentIdentd);
       }
@@ -1628,18 +1675,36 @@ UserHash::checkIpClones(const BotSock::Address & ip)
     return;
   }
 
+  std::string rate(IntToStr(cloneCount + reportedClones));
+  rate += " connect";
+  if (1 != (cloneCount + reportedClones))
+  {
+    rate += 's';
+  }
+  rate += " in ";
+  rate += IntToStr(now - oldest);
+  rate += " second";
+  if (1 != (now - oldest))
+  {
+    rate += 's';
+  }
+
   std::string notice;
   if (reportedClones)
   {
-    notice = IntToStr(cloneCount) + " more possible clones (" +
-      IntToStr(cloneCount + reportedClones) + " total) from " +
-      BotSock::inet_ntoa(ip) + ":";
+    notice = IntToStr(cloneCount);
+    notice += " more possible clones (";
+    notice += IntToStr(cloneCount + reportedClones);
+    notice += " total) from ";
+    notice += BotSock::inet_ntoa(ip);
+    notice += ':';
   }
   else
   {
-    notice = "Possible clones from " + BotSock::inet_ntoa(ip) + " detected: " +
-      IntToStr(cloneCount) + " connects in " + IntToStr(now - oldest) +
-      " seconds";
+    notice = "Possible clones from ";
+    notice += BotSock::inet_ntoa(ip);
+    notice += " detected: ";
+    notice += rate;
   }
   ::SendAll(notice, UserFlags::OPER);
   Log::Write(notice);
@@ -1717,7 +1782,7 @@ UserHash::checkIpClones(const BotSock::Address & ip)
 	  differentIp = true;
 	}
 
-        klineClones(true, currentUser, find->info->getHost(),
+        klineClones(true, rate, currentUser, find->info->getHost(),
 	  find->info->getIp(), differentUser, differentIp,
 	  lastIdentd | currentIdentd);
       }

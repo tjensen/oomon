@@ -830,6 +830,8 @@ set auto_kline_host_reason
 .s.set auto_kline_host_reason [<text>]
 .d.This setting determines the k-line reason to
 .d.use when same-hostname clones are detected.
+.d.Instances of "%r" will be replaced by the
+.d.connection rate of the clones.
 .f.mo
 .l.set auto_kline_host
 .l.set auto_kline_host_time
@@ -853,6 +855,8 @@ set auto_kline_net_reason
 .s.set auto_kline_net_reason [<text>]
 .d.This setting determines the k-line reason to
 .d.use when same-subnet clones are detected.
+.d.Instances of "%r" will be replaced by the
+.d.connection rate of the clones.
 .f.mo
 .l.set auto_kline_net
 .l.set auto_kline_net_time
@@ -875,6 +879,8 @@ set auto_kline_noident_reason
 .s.set auto_kline_noident_reason [<text>]
 .d.This setting determines the k-line reason to
 .d.use when clones without identd are detected.
+.d.Instances of "%r" will be replaced by the
+.d.connection rate of the clones.
 .f.mo
 .l.set auto_kline_noident
 .l.set auto_kline_noident_time
@@ -897,7 +903,9 @@ set auto_kline_userhost_reason
 .s.set auto_kline_userhost_reason [<text>]
 .d.This setting determines the k-line reason to
 .d.use when clones with the same username and
-.d.domain are detected.
+.d.domain are detected.  Instances of "%r" will
+.d.be replaced by the connection rate of the
+.d.clones.
 .f.mo
 .l.set auto_kline_userhost
 .l.set auto_kline_userhost_time
@@ -921,7 +929,9 @@ set auto_kline_usernet_reason
 .s.set auto_kline_usernet_reason [<text>]
 .d.This setting determines the k-line reason to
 .d.use when clones with the same username and
-.d.subnet are detected.
+.d.subnet are detected.  Instances of "%r" will
+.d.be replaced by the connection rate of the
+.d.clones.
 .f.mo
 .l.set auto_kline_usernet
 .l.set auto_kline_usernet_time
@@ -1498,7 +1508,12 @@ set nick_flood_reason
 .s.set nick_flood_reason [<text>]
 .d.This setting determines the kill, k-line, or
 .d.d-line reason to use when a client is
-.d.detected to be nick flooding.
+.d.detected to be nick flooding.  Instances of
+.d."%n" will be replaced by the client's nick,
+.d."%u" will be replaced by the client's
+.d.userhost, "%i" will be replaced by the
+.d.client's IP address, and "%r" will be
+.d.replaced by the client's nick change rate.
 .f.mo
 .l.set nick_change_max_count
 .l.set nick_change_t1_time
@@ -1633,6 +1648,11 @@ set seedrand_reason
 .d.d-line reason to use when a client is
 .d.detected to have a seedrand score greater
 .d.than or equal to SEEDRAND_REPORT_MIN.
+.d.Instances of "%n" will be replaced by the
+.d.client's nick, "%u" will be replaced by the
+.d.client's userhost, "%i" will be replaced by
+.d.the client's IP address, and "%s" will be
+.d.replaced by the client's seedrand score.
 .f.mo
 .l.seedrand
 .l.set seedrand_action
