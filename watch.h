@@ -35,7 +35,7 @@
 
 // Std C++ Headers
 #include <string>
-#include <set>
+#include <bitset>
 
 // OOMon Headers
 #include "strtype"
@@ -48,7 +48,7 @@ enum Watch
   WATCH_INFOS, WATCH_JUPES, WATCH_KILLS, WATCH_KLINES, WATCH_KLINE_MATCHES,
   WATCH_LINKS, WATCH_MOTDS, WATCH_MSGS, WATCH_NICK_CHANGES, WATCH_SEEDRAND,
   WATCH_SPAMBOTS, WATCH_SPAMTRAP, WATCH_STATS, WATCH_TOOMANYS, WATCH_TRACES,
-  WATCH_TRAPS, WATCH_WALLOPS, 
+  WATCH_TRAPS, WATCH_WALLOPS, NUM_WATCHES,
 
   WATCH_MIN = WATCH_CHAT, WATCH_MAX = WATCH_WALLOPS
 };
@@ -61,24 +61,18 @@ public:
   ~WatchSet(void) { };
 
   // Remove all watch types from this set.
-  void clear(void) { this->contents.clear(); };
-
-  // Return the number of watch types in this set.
-  std::set<Watch>::size_type size(void) const { return this->contents.size(); };
+  void clear(void) { this->contents.reset(); };
 
   // Add a watch type or set of watch types to this set.
-  void add(const Watch watch) { this->contents.insert(watch); };
-  void add(const WatchSet & watches);
-
-  // Remove a watch type or set of watch types from this set.
-  void remove(const Watch watch) { this->contents.erase(watch); };
-  void remove(const WatchSet & watches);
+  void add(const Watch watch) { this->contents.set(watch); };
+  void add(const WatchSet & watches) { this->contents |= watches.contents; };
 
   // Return true if this set contains the desired watch type or set of
   // watch types.
   bool has(const Watch watch) const
-    { return (this->contents.end() != this->contents.find(watch)); };
-  bool has(const WatchSet & watches) const;
+    { return this->contents.test(watch); };
+  bool has(const WatchSet & watches) const
+    { return (watches.contents == (this->contents & watches.contents)); };
 
   void set(StrList & output, std::string line);
 
@@ -107,7 +101,18 @@ public:
   static WatchSet getWatchValues(StrVector & watches);
 
 private:
-  typedef std::set<Watch> _WatchSet;
+  typedef std::bitset<NUM_WATCHES> _WatchSet;
+
+  // Return the number of watch types in this set.
+  size_t count(void) const { return this->contents.count(); };
+
+  // Return true if set is empty
+  bool none(void) const { return this->contents.none(); };
+
+  // Remove a watch type or set of watch types from this set.
+  void remove(const Watch watch) { this->contents.reset(watch); };
+  void remove(const WatchSet & watches)
+    { this->contents &= ~watches.contents; };
 
   _WatchSet contents;
 };

@@ -21,7 +21,7 @@
 
 // Std C++ Headers
 #include <string>
-#include <set>
+#include <bitset>
 #include <algorithm>
 
 // OOMon Headers
@@ -34,28 +34,6 @@
 #ifdef DEBUG
 # define WATCH_DEBUG
 #endif
-
-
-void
-WatchSet::add(const WatchSet & watches)
-{
-  for (_WatchSet::iterator pos = watches.contents.begin();
-    pos != watches.contents.end(); ++pos)
-  {
-    this->contents.insert(*pos);
-  }
-}
-
-
-void
-WatchSet::remove(const WatchSet & watches)
-{
-  for (_WatchSet::iterator pos = watches.contents.begin();
-    pos != watches.contents.end(); ++pos)
-  {
-    this->contents.erase(*pos);
-  }
-}
 
 
 Watch
@@ -115,14 +93,6 @@ WatchSet::getWatchValue(const std::string & watch)
     return WATCH_WALLOPS;
   else
     throw OOMon::invalid_watch_name(watch);
-}
-
-
-bool
-WatchSet::has(const WatchSet & watches) const
-{
-  return std::includes(this->contents.begin(), this->contents.end(),
-    watches.contents.begin(), watches.contents.end());
 }
 
 
@@ -212,10 +182,7 @@ WatchSet::all(void)
 {
   WatchSet result;
 
-  for (int i = WATCH_MIN; i <= WATCH_MAX; i++)
-  {
-    result.add((Watch) i);
-  }
+  result.contents.set();
 
   return result;
 }
@@ -339,16 +306,18 @@ WatchSet::getWatchNames(const WatchSet & watches, bool distinct)
   }
   else
   {
-    if (watches.size() == 0)
+    if (watches.none())
     {
       result.push_back("NONE");
     }
     else
     {
-      for (_WatchSet::iterator elem = watches.contents.begin();
-	elem != watches.contents.end(); ++elem)
+      for (size_t bit = 0; bit < watches.contents.size(); ++bit)
       {
-        result.push_back(WatchSet::getWatchName(*elem));
+	if (watches.contents.test(bit))
+	{
+          result.push_back(WatchSet::getWatchName(static_cast<Watch>(bit)));
+	}
       }
     }
   }
