@@ -354,11 +354,11 @@ fi
 dnl
 dnl check for pthreads
 dnl
-ACX_PTHREAD(
-	[
-		LIBS="${PTHREAD_LIBS} $LIBS"
-		CXXFLAGS="$CXXFLAGS ${PTHREAD_CFLAGS}"
-	], AC_MSG_ERROR([No pthreads? Uh-oh!]))
+dnl ACX_PTHREAD(
+dnl	[
+dnl		LIBS="${PTHREAD_LIBS} $LIBS"
+dnl		CXXFLAGS="$CXXFLAGS ${PTHREAD_CFLAGS}"
+dnl	], AC_MSG_ERROR([No pthreads? Uh-oh!]))
 
 dnl
 dnl check for hpux, and hpux version
