@@ -58,9 +58,9 @@ const static int CLONE_DETECT_INC = 15;
 UserHash users;
 
 
-#ifdef DEBUG_USERHASH
+#ifdef USERHASH_DEBUG
 unsigned long userEntryCount = 0;
-#endif
+#endif /* USERHASH_DEBUG */
 
 
 UserHash::UserHash(void)
@@ -1665,7 +1665,7 @@ UserHash::checkHostClones(const std::string & host)
 #ifdef USERHASH_DEBUG
       std::cout << "clone(" << cloneCount << "): " <<
 	(*find)->output("%n %@ %i") << std::endl;
-#endif
+#endif /* USERHASH_DEBUG */
 
       std::string notice;
       if (cloneCount == 1)
@@ -1842,7 +1842,7 @@ UserHash::checkIpClones(const BotSock::Address & ip)
 #ifdef USERHASH_DEBUG
       std::cout << "clone(" << cloneCount << "): " <<
 	(*find)->output("%n %@ %i") << std::endl;
-#endif
+#endif /* USERHASH_DEBUG */
 
       std::string notice;
       if (cloneCount == 1)
@@ -1926,7 +1926,7 @@ UserHash::checkIpClones(const BotSock::Address & ip)
 }
 
 
-#ifdef DEBUG_USERHASH
+#ifdef USERHASH_DEBUG
 void
 UserHash::debugStatus(BotClient * client, const UserEntryTable & table,
     const std::string & label, const int userCount)
@@ -1965,17 +1965,17 @@ UserHash::debugStatus(BotClient * client, const UserEntryTable & table,
     client->send(notice);
   }
 }
-#endif
+#endif /* USERHASH_DEBUG */
 
 
 void
 UserHash::status(BotClient * client)
 {
   client->send("Users: " + boost::lexical_cast<std::string>(this->userCount));
-#ifdef DEBUG_USERHASH
+#ifdef USERHASH_DEBUG
   client->send("userEntryCount: " +
     boost::lexical_cast<std::string>(userEntryCount));
-#endif
+#endif /* USERHASH_DEBUG */
 
   int userHashCount = 0;
   long scoreSum = 0;
@@ -2035,12 +2035,12 @@ UserHash::status(BotClient * client)
     ((this->userCount > 0) ?
     boost::lexical_cast<std::string>(scoreSum / this->userCount) : "N/A"));
 
-#ifdef DEBUG_USERHASH
+#ifdef USERHASH_DEBUG
   this->debugStatus(client, this->usertable, "usertable", this->userCount);
   this->debugStatus(client, this->hosttable, "hosttable", this->userCount);
   this->debugStatus(client, this->domaintable, "domaintable", this->userCount);
   this->debugStatus(client, this->iptable, "iptable", this->userCount);
-#endif
+#endif /* USERHASH_DEBUG */
 }
 
 

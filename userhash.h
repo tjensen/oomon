@@ -147,10 +147,10 @@ private:
 
   static void clearHash(UserEntryTable & table);
 
-#ifdef DEBUG_USERHASH
+#ifdef USERHASH_DEBUG
   static void debugStatus(BotClient * client, const UserEntryTable & table,
       const std::string & label, const int userCount);
-#endif
+#endif /* USERHASH_DEBUG */
 
   UserEntryTable hosttable;
   UserEntryTable domaintable;

@@ -395,12 +395,12 @@ addToNickChangeList(const std::string & userhost, const std::string & oldNick,
     // how many T1 intervals do we have?
     int timeTicks = timeDifference / vars[VAR_NICK_CHANGE_T1_TIME]->getInt();
 
-#ifdef DEBUG_ENGINE
+#ifdef ENGINE_DEBUG
     std::cout << "lastNick=" << ncp->lastNick << ", userhost=" <<
       ncp->userhost << ", count=" << ncp->nickChangeCount << ", diff=" <<
       timeDifference << ", ticks=" << timeTicks << ", next=" <<
       ncp->nextNotice << std::endl;
-#endif
+#endif /* ENGINE_DEBUG */
 
     // just decrement T1 units of nick changes
     ncp->nickChangeCount = (ncp->nickChangeCount - timeTicks) + 1;
