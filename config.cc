@@ -267,7 +267,7 @@ void
 Config::parseBLine(const StrVector & fields)
 {
   this->nick_ = fields[0];
-  if (this->nick_.empty())
+  if (!IRC::validNick(this->nick_))
   {
     throw Config::syntax_error("bad nickname '" + fields[0] + "'");
   }
@@ -294,7 +294,7 @@ void
 Config::parseCLine(const StrVector & fields)
 {
   std::string handle(fields[0]);
-  if (handle.empty())
+  if (!IRC::validNick(handle))
   {
     throw Config::syntax_error("bad bot handle '" + handle + "'");
   }
@@ -378,7 +378,7 @@ void
 Config::parseLLine(const StrVector & fields)
 {
   std::string handle(fields[0]);
-  if (handle.empty())
+  if (!IRC::validNick(handle))
   {
     throw Config::syntax_error("bad bot handle '" + handle + "'");
   }
@@ -409,7 +409,7 @@ void
 Config::parseOLine(const StrVector & fields)
 {
   std::string handle(fields[0]);
-  if (handle.empty())
+  if (!handle.empty() && !IRC::validNick(handle))
   {
     throw Config::syntax_error("bad user handle '" + handle + "'");
   }

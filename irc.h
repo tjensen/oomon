@@ -121,6 +121,8 @@ public:
 
   bool opered(void) const { return this->amIAnOper; }
 
+  static bool validNick(const std::string & nick);
+
 protected:
   bool onRead(std::string text);
 

@@ -1556,3 +1556,27 @@ IRC::onServerNotice(const std::string & text)
     boost::bind(&Parser::match, _1, text));
 }
 
+
+bool
+IRC::validNick(const std::string & nick)
+{
+  bool result = false;
+
+  if (!nick.empty() && (nick.length() <= 32))
+  {
+    const std::string invalidFirst("-0123456789");
+
+    if (std::string::npos == invalidFirst.find(nick[0]))
+    {
+      const std::string validRest("-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}");
+
+      if (std::string::npos == nick.find_first_not_of(validRest))
+      {
+        result = true;
+      }
+    }
+  }
+
+  return result;
+}
+
