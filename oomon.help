@@ -2191,7 +2191,14 @@ set xo_services_clone_reason
 .s.set xo_services_clone_reason [<text>]
 .d.This setting determines the kill, k-line, or
 .d.d-line reason to use when XO-style services
-.d.reports a clone the local server.
+.d.reports a clone the local server.  Instances
+.d.of "%n" will be replaced by the clone's
+.d.nick, "%u" will be replaced by the clone's
+.d.userhost, "%i" will be replaced by the
+.d.clone's IP address, "%c" will be replaced by
+.d.the number of clones detected, and "%s" will
+.d.be replaced by the value of the
+.d.xo_services_response setting.
 .f.mo
 .l.set xo_services_clone_action
 .l.set xo_services_enable

@@ -36,6 +36,7 @@
 #include "main.h"
 #include "log.h"
 #include "vars.h"
+#include "format.h"
 
 
 Services services;
@@ -91,20 +92,33 @@ Services::onXoNotice(std::string text)
     server.same(server.getServerName(), parms[2]))
   {
     std::string nick = parms[0];
+    std::string count(IntToStr(this->cloneCount));
 
-    std::string notice = vars[VAR_XO_SERVICES_RESPONSE]->getString() +
-      " reports " + IntToStr(this->cloneCount) + " users cloning " +
-      this->cloningUserhost + " nick " + nick;
+    std::string notice(vars[VAR_XO_SERVICES_RESPONSE]->getString());
+    notice += " reports ";
+    notice += count;
+    notice += " users cloning ";
+    notice += this->cloningUserhost;
+    notice += " nick ";
+    notice += nick;
 
     ::SendAll(notice, UserFlags::OPER);
     Log::Write(notice);
 
     BotSock::Address ip = users.getIP(nick, this->cloningUserhost);
 
+    Format reason;
+    reason.setStringToken('n', nick);
+    reason.setStringToken('u', this->cloningUserhost);
+    reason.setStringToken('i', BotSock::inet_ntoa(ip));
+    reason.setStringToken('c', count);
+    reason.setStringToken('s', vars[VAR_XO_SERVICES_RESPONSE]->getString());
+
     doAction(nick, this->cloningUserhost, ip,
       vars[VAR_XO_SERVICES_CLONE_ACTION]->getAction(),
       vars[VAR_XO_SERVICES_CLONE_ACTION]->getInt(),
-      vars[VAR_XO_SERVICES_CLONE_REASON]->getString(), this->suggestKline);
+      reason.format(vars[VAR_XO_SERVICES_CLONE_REASON]->getString()),
+      this->suggestKline);
 
     this->suggestKline = false;
   }
