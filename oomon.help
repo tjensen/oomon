@@ -227,11 +227,13 @@ glist
 .f.o
 .l.list
 hlist
-.s.hlist [-class <pattern>] <pattern>
+.s.hlist [-count] [-class <pattern>] <pattern>
 .d.Searches clients' hostnames for a particular
 .d.pattern and displays matching clients.  Use
-.d.the "-class" argument to search only clients
-.d.in matching user classes.
+.d.the "-count" argument to display the number
+.d.of matching clients.  Use the "-class"
+.d.argument to search only clients in matching
+.d.user classes.
 .e.> .hlist /goat/
 .e.  foo (bar@chesgoat.felafel.net) [4.5.6.7]
 .e.  baz (quux@bingo.goats.fi) [9.8.7.6]
@@ -414,11 +416,13 @@ info traps
 .l.set trap_privmsgs
 .l.trap
 iplist
-.s.iplist [-class <pattern>] <pattern>
+.s.iplist [-count] [-class <pattern>] <pattern>
 .d.Searches clients' IPs for a particular
 .d.pattern and displays matching clients.  Use
-.d.the "-class" argument to search only clients
-.d.in matching user classes.
+.d.the "-count" argument to display the number
+.d.of matching clients.  Use the "-class"
+.d.argument to search only clients in matching
+.d.user classes.
 .e.> .iplist /^192\./
 .e.  foo (bar@argle.bargle) [192.168.1.2]
 .e.  baz (quux@razzle.dazzle) [192.168.52.69]
@@ -2532,8 +2536,10 @@ ulist
 .s.ulist [-class <pattern>] <pattern>
 .d.Searches clients' usernames for a particular
 .d.pattern and displays matching clients.  Use
-.d.the "-class" argument to search only clients
-.d.in matching user classes.
+.d.the "-count" argument to display the number
+.d.of matching clients.  Use the "-class"
+.d.argument to search only clients in matching
+.d.user classes.
 .e.> .ulist /haz/
 .e.  foo (shazbot@argle.bargle) [192.168.1.2]
 .e.  baz (hazmat@razzle.dazzle) [192.168.52.69]
