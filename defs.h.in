@@ -170,6 +170,13 @@
 /* define this if you are on svr3/twg */
 #undef WINS
 
+/* Define to the necessary symbol if this constant
+                           uses a non-standard name on your system. */
+#undef PTHREAD_CREATE_JOINABLE
+
+/* Define if you have POSIX threads libraries and header files. */
+#undef HAVE_PTHREAD
+
 /* define this if you have hpux version 8 */
 #undef HPUX8
 

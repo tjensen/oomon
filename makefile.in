@@ -25,7 +25,6 @@
 .SUFFIXES: .cc .o
 
 CXX = @CXX@
-LD = @LD@
 RM = @RM@
 CP = @CP@
 MV = @MV@
@@ -42,8 +41,7 @@ libexecdir = @libexecdir@
 sysconfdir = @sysconfdir@
 logdir = @localstatedir@/logs
 
-CXXFLAGS = @CXXFLAGS@
-CPPFLAGS = @CPPFLAGS@
+CXXFLAGS = @CXXFLAGS@ -I./libs
 
 OBJS =	arglist.o autoaction.o botdb.o botsock.o config.o dcc.o dcclist.o \
 	engine.o flood.o help.o helptopic.o http.o irc.o jupe.o klines.o \
@@ -64,10 +62,10 @@ RM = @RM@
 VERSION = @VERSION@
 
 $(EXE): $(OBJS)
-	$(LD) -o $@ $(OBJS) $(LDFLAGS) $(LIBS)
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)
 
 .cc.o:
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(OOMON_DEFS) -c $<
+	$(CXX) $(CXXFLAGS) $(OOMON_DEFS) -c $<
 
 install: $(EXE) install-mkdirs
 	$(INSTALL_BIN) $(EXE) $(bindir)
@@ -117,7 +115,7 @@ distclean: clean
 	$(RM) makefile sig.inc config.status config.cache config.log defs.h
 
 depend:
-	mkdep $(CPPFLAGS) $(SRCS)
+	mkdep $(CXXFLAGS) $(SRCS)
 
 love:
 	@echo not war?

@@ -9,6 +9,7 @@ AC_INIT(oomon.h)
 AC_CONFIG_HEADER(defs.h)
 AC_LANG_CPLUSPLUS
 AC_PREFIX_DEFAULT(/usr/local/oomon)
+AC_CANONICAL_HOST
 
 dnl
 dnl grok the version number - from oomon.h
@@ -188,14 +189,14 @@ if test "X$cf_enable_pcre" != "Xno" ; then
   dnl Now check cf_pcre_basedir to see if we found anything.
   if test "X$cf_pcre_basedir" != "X" ; then
     if test -f "${cf_pcre_basedir}/include/pcre.h" ; then
-      echo "${CPPFLAGS}" | grep -e "-I${cf_pcre_basedir}/include" > /dev/null 2>&1
+      echo "${CXXFLAGS}" | grep -e "-I${cf_pcre_basedir}/include" > /dev/null 2>&1
       if test $? -ne 0; then
         PCRE_INCLUDES="-I${cf_pcre_basedir}/include"
       fi
       PCRE_LIBS="-lpcre"
-      echo "${LDFLAGS}" | grep -e "-L${cf_pcre_basedir}/lib" > /dev/null 2>&1
+      echo "${LIBS}" | grep -e "-L${cf_pcre_basedir}/lib" > /dev/null 2>&1
       if test $? -ne 0; then
-        PCRE_LDFLAGS="-L${cf_pcre_basedir}/lib"
+        PCRE_LIBS="-L${cf_pcre_basedir}/lib $PCRE_LIBS"
       fi
     else
       dnl PCRE wasn't found in the directory specified.
@@ -225,10 +226,7 @@ fi
 
 if test "X$cf_enable_pcre" != "Xno" ; then
   if test ! -z "$PCRE_INCLUDES"; then
-    CPPFLAGS="$CPPFLAGS $PCRE_INCLUDES"
-  fi
-  if test ! -z "$PCRE_LDFLAGS"; then
-    LDFLAGS="$LDFLAGS $PCRE_LDFLAGS"
+    CXXFLAGS="$CXXFLAGS $PCRE_INCLUDES"
   fi
   if test ! -z "$PCRE_LIBS"; then
     LIBS="$PCRE_LIBS $LIBS"
@@ -266,14 +264,14 @@ if test "X$cf_enable_gdbm" != "Xno" ; then
   dnl Now check cf_gdbm_basedir to see if we found anything.
   if test "X$cf_gdbm_basedir" != "X" ; then
     if test -f "${cf_gdbm_basedir}/include/gdbm.h" ; then
-      echo "${CPPFLAGS}" | grep -e "-I${cf_gdbm_basedir}/include" > /dev/null 2>&1
+      echo "${CXXFLAGS}" | grep -e "-I${cf_gdbm_basedir}/include" > /dev/null 2>&1
       if test $? -ne 0; then
         GDBM_INCLUDES="-I${cf_gdbm_basedir}/include"
       fi
       GDBM_LIBS="-lgdbm"
-      echo "${LDFLAGS}" | grep -e "-L${cf_gdbm_basedir}/lib" > /dev/null 2>&1
+      echo "${LIBS}" | grep -e "-L${cf_gdbm_basedir}/lib" > /dev/null 2>&1
       if test $? -ne 0; then
-        GDBM_LDFLAGS="-L${cf_gdbm_basedir}/lib"
+        GDBM_LIBS="-L${cf_gdbm_basedir}/lib $GDBM_LIBS"
       fi
     else
       dnl GDBM wasn't found in the directory specified.
@@ -303,13 +301,10 @@ fi
 
 if test "X$cf_enable_gdbm" != "Xno" ; then
   if test ! -z "$GDBM_INCLUDES"; then
-    CPPFLAGS="$CPPFLAGS $GDBM_INCLUDES"
-  fi
-  if test ! -z "$GDBM_LDFLAGS"; then
-    LDFLAGS="$LDFLAGS $GDBM_LDFLAGS"
+    CXXFLAGS="$CXXFLAGS $GDBM_INCLUDES"
   fi
   if test ! -z "$GDBM_LIBS"; then
-    LIBS="$GDBM_LIBS $LIBS"
+    LIBS="$LIBS $GDBM_LIBS"
   fi
   AC_DEFINE(HAVE_LIBGDBM, 1, [Define if using GDBM style DB.])
   GDBM_MSG="yes"
@@ -355,6 +350,15 @@ if test x$ac_cv_header_sys_twg_config_h = xyes
 then
   AC_DEFINE(WINS, 1, [define this if you are on svr3/twg])
 fi
+
+dnl
+dnl check for pthreads
+dnl
+ACX_PTHREAD(
+	[
+		LIBS="${PTHREAD_LIBS} $LIBS"
+		CXXFLAGS="$CXXFLAGS ${PTHREAD_CFLAGS}"
+	], AC_MSG_ERROR([No pthreads? Uh-oh!]))
 
 dnl
 dnl check for hpux, and hpux version
@@ -847,7 +851,6 @@ echo "                 GNU Database Manager (GDBM): ${GDBM_MSG}"
 echo ""
 echo "            Compiler: ${CXX}"
 echo "      Compiler flags: ${CXXFLAGS}"
-echo "  Preprocessor flags: ${CPPFLAGS}"
 echo "        Linker flags: ${LDFLAGS}"
 echo "           Libraries: ${LIBS}"
 
