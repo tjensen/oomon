@@ -32,7 +32,10 @@
 // C headers
 #include <stdio.h>
 #include <sys/time.h>
+#include <sys/types.h>
+#include <sys/socket.h>
 #include <unistd.h>
+#include <netdb.h>
 
 #include "strtype"
 #include "oomon.h"
@@ -660,9 +663,9 @@ isNumericIPv6(const std::string & host)
   struct addrinfo hints;
 
   memset(&hints, 0, sizeof(hints));
-  hints.flags = AI_NUMERICHOST;
+  hints.ai_flags = AI_NUMERICHOST;
 
-  if (0 == getaddrinfo(host, 0, &hints, &info))
+  if (0 == getaddrinfo(host.c_str(), 0, &hints, &info))
   {
     freeaddrinfo(info);
 
