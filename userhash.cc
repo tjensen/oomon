@@ -1192,71 +1192,55 @@ UserHash::reportVClones(BotClient * client) const
 
 
 void
-UserHash::reportMulti(BotClient * client, const int minimum) const
+UserHash::reportMulti(BotClient * client, const unsigned int minimum) const
 {
-  char foundany(0);
-  int minclones((minimum > 0) ? minimum : UserHash::multiMin);
+  unsigned int minclones((minimum > 0) ? minimum : UserHash::multiMin);
+  bool foundAny(false);
 
-  for (UserEntryTable::const_iterator i = this->domaintable.begin();
-      i != this->domaintable.end(); ++i)
+  typedef std::map<std::string, unsigned int> UnsortedMap;
+  UnsortedMap unsorted;
+  for (UserEntryTable::const_iterator i = this->hosttable.begin();
+      i != this->hosttable.end(); ++i)
   {
     for (UserEntryList::const_iterator userptr = i->begin();
         userptr != i->end(); ++userptr)
     {
-      if (UserHash::operInMulti || (!(*userptr)->getOper() &&
-            !config.isOper(*userptr)))
+      if (UserHash::operInMulti ||
+          (!(*userptr)->getOper() && !config.isOper(*userptr)))
       {
-        int numfound(1);
+        std::string user((*userptr)->getUser());
+        std::string domain((*userptr)->getDomain());
+        bool isIP(isNumericIP(domain));
 
-        /* Ensure we haven't already checked this user & domain */
-        UserEntryList::const_iterator temp = i->begin();
-        for (; temp != userptr; ++temp)
+        if (isIP)
         {
-          if (server.same((*temp)->getUser(), (*userptr)->getUser()) &&
-              server.same((*temp)->getDomain(), (*userptr)->getDomain()) &&
-              (UserHash::operInMulti || (!(*temp)->getOper() &&
-                                         !config.isOper(*temp))))
-          {
-            break;
-          }
+          ++unsorted[server.downCase(user + '@' + domain + '*')];
         }
-
-        if (temp == userptr)
+        else
         {
-          for (++temp; temp != i->end(); ++temp)
-          {
-            if (server.same((*temp)->getUser(), (*userptr)->getUser()) &&
-                server.same((*temp)->getDomain(), (*userptr)->getDomain()) &&
-                (UserHash::operInMulti || (!(*temp)->getOper() &&
-                                           !config.isOper(*temp))))
-            {
-              ++numfound;
-            }
-          }
-
-          if (numfound >= minclones)
-          {
-            if (!foundany++)
-            {
-              client->send("Multiple clients from the following userhosts:");
-            }
-
-            std::string domain((*userptr)->getDomain());
-            std::string host((*userptr)->getHost());
-
-            bool isIP(isNumericIP(domain));
-
-            boost::format outfmt(" %s %2d -- %s@%s%s");
-            client->send(str(outfmt % ((numfound > minclones) ? "==>" : "   ") %
-                  numfound % (*userptr)->getUser() % (isIP ? domain : "*") %
-                  (isIP ? "*" : domain)));
-          }
+          ++unsorted[server.downCase(user + "@*" + domain)];
         }
       }
     }
   }
 
-  if (!foundany)
+  for (UnsortedMap::const_iterator pos = unsorted.begin();
+      pos != unsorted.end(); ++pos)
+  {
+    if (pos->second >= minclones)
+    {
+      if (!foundAny)
+      {
+        foundAny = true;
+        client->send("Multiple clients from the following userhosts:");
+      }
+      boost::format outfmt(" %s %2u -- %s");
+      client->send(str(outfmt % ((pos->second > minclones) ? "==>" : "   ") %
+            pos->second % pos->first));
+    }
+  }
+
+  if (!foundAny)
   {
     client->send("No multiple logins found.");
   }
@@ -1264,200 +1248,140 @@ UserHash::reportMulti(BotClient * client, const int minimum) const
 
 
 void
-UserHash::reportHMulti(BotClient * client, const int minimum) const
+UserHash::reportHMulti(BotClient * client, const unsigned int minimum) const
 {
-  char foundany(0);
-  int minclones((minimum > 0) ? minimum : UserHash::multiMin);
+  unsigned int minclones((minimum > 0) ? minimum : UserHash::multiMin);
+  bool foundAny(false);
 
-  for (UserEntryTable::const_iterator i = this->domaintable.begin();
-      i != this->domaintable.end(); ++i)
+  typedef std::map<std::string, unsigned int> UnsortedMap;
+  UnsortedMap unsorted;
+  for (UserEntryTable::const_iterator i = this->hosttable.begin();
+      i != this->hosttable.end(); ++i)
   {
     for (UserEntryList::const_iterator userptr = i->begin();
         userptr != i->end(); ++userptr)
     {
-      if (UserHash::operInMulti || (!(*userptr)->getOper() &&
-            !config.isOper(*userptr)))
+      if (UserHash::operInMulti ||
+          (!(*userptr)->getOper() && !config.isOper(*userptr)))
       {
-        int numfound(1);
-
-        // Ensure we haven't already checked this hostname
-        UserEntryList::const_iterator temp = i->begin();
-        for (; temp != userptr; ++temp)
-        {
-          if (server.same((*temp)->getHost(), (*userptr)->getHost()) &&
-              (UserHash::operInMulti || (!(*temp)->getOper() &&
-                                         !config.isOper(*temp))))
-          {
-            break;
-          }
-        }
-
-        if (temp == userptr)
-        {
-          for (++temp; temp != i->end(); ++temp)
-          {
-            if (server.same((*temp)->getHost(), (*userptr)->getHost()) &&
-                (UserHash::operInMulti || (!(*temp)->getOper() &&
-                                           !config.isOper(*temp))))
-            {
-              ++numfound;
-            }
-          }
-
-          if (numfound >= minclones)
-          {
-            if (!foundany++)
-            {
-              client->send("Multiple clients from the following hosts:");
-            }
-
-            boost::format outfmt(" %s %2d -- *@%s");
-            client->send(str(outfmt % ((numfound > minclones) ? "==>" : "   ") %
-                  numfound % (*userptr)->getHost()));
-          }
-        }
+        ++unsorted[server.downCase((*userptr)->getHost())];
       }
     }
   }
 
-  if (!foundany)
+  for (UnsortedMap::const_iterator pos = unsorted.begin();
+      pos != unsorted.end(); ++pos)
+  {
+    if (pos->second >= minclones)
+    {
+      if (!foundAny)
+      {
+        foundAny = true;
+        client->send("Multiple clients from the following hosts:");
+      }
+      boost::format outfmt(" %s %2u -- *@%s");
+      client->send(str(outfmt % ((pos->second > minclones) ? "==>" : "   ") %
+            pos->second % pos->first));
+    }
+  }
+
+  if (!foundAny)
   {
     client->send("No multiple logins found.");
   }
 }
 
 void
-UserHash::reportUMulti(BotClient * client, const int minimum) const
+UserHash::reportUMulti(BotClient * client, const unsigned int minimum) const
 {
-  char foundany(0);
-  int minclones((minimum > 0) ? minimum : UserHash::multiMin);
+  unsigned int minclones((minimum > 0) ? minimum : UserHash::multiMin);
+  bool foundAny(false);
 
+  typedef std::map<std::string, unsigned int> UnsortedMap;
+  UnsortedMap unsorted;
   for (UserEntryTable::const_iterator i = this->usertable.begin();
       i != this->usertable.end(); ++i)
   {
     for (UserEntryList::const_iterator userptr = i->begin();
         userptr != i->end(); ++userptr)
     {
-      if (UserHash::operInMulti || (!(*userptr)->getOper() &&
-            !config.isOper(*userptr)))
+      if (UserHash::operInMulti ||
+          (!(*userptr)->getOper() && !config.isOper(*userptr)))
       {
-        int numfound(1);
-
-        // Ensure we haven't already checked this username
-        UserEntryList::const_iterator temp = i->begin();
-        for (; temp != userptr; ++temp)
-        {
-          if (server.same((*temp)->getUser(), (*userptr)->getUser()) &&
-              (UserHash::operInMulti || (!(*temp)->getOper() &&
-                                         !config.isOper(*temp))))
-          {
-            break;
-          }
-        }
-
-        if (temp == userptr)
-        {
-          for (++temp; temp != i->end(); ++temp)
-          {
-            if (server.same((*temp)->getUser(), (*userptr)->getUser()) &&
-                (UserHash::operInMulti || (!(*temp)->getOper() &&
-                                           !config.isOper(*temp))))
-            {
-              ++numfound;
-            }
-          }
-
-          if (numfound >= minclones)
-          {
-            if (!foundany++)
-            {
-              client->send("Multiple clients from the following usernames:");
-            }
-
-            boost::format outfmt(" %s %2d -- %s@*");
-            client->send(str(outfmt % ((numfound > minclones) ? "==>" : "   ") %
-                  numfound % (*userptr)->getUser()));
-          }
-        }
+        ++unsorted[server.downCase((*userptr)->getUser())];
       }
     }
   }
 
-  if (!foundany)
+  for (UnsortedMap::const_iterator pos = unsorted.begin();
+      pos != unsorted.end(); ++pos)
+  {
+    if (pos->second >= minclones)
+    {
+      if (!foundAny)
+      {
+        foundAny = true;
+        client->send("Multiple clients from the following usernames:");
+      }
+      boost::format outfmt(" %s %2u -- %s@*");
+      client->send(str(outfmt % ((pos->second > minclones) ? "==>" : "   ") %
+            pos->second % pos->first));
+    }
+  }
+
+  if (!foundAny)
   {
     client->send("No multiple logins found.");
   }
 }
 
 void
-UserHash::reportVMulti(BotClient * client, const int minimum) const
+UserHash::reportVMulti(BotClient * client, const unsigned int minimum) const
 {
-  char foundany(0);
-  int minclones((minimum > 0) ? minimum : UserHash::multiMin);
+  unsigned int minclones((minimum > 0) ? minimum : UserHash::multiMin);
+  bool foundAny(false);
 
-  for (UserEntryTable::const_iterator i = this->iptable.begin();
-      i != this->iptable.end(); ++i)
+  typedef std::map<std::string, unsigned int> UnsortedMap;
+  UnsortedMap unsorted;
+  for (UserEntryTable::const_iterator i = this->hosttable.begin();
+      i != this->hosttable.end(); ++i)
   {
     for (UserEntryList::const_iterator userptr = i->begin();
         userptr != i->end(); ++userptr)
     {
-      if (UserHash::operInMulti || (!(*userptr)->getOper() &&
-            !config.isOper(*userptr)))
+      if (UserHash::operInMulti ||
+          (!(*userptr)->getOper() && !config.isOper(*userptr)))
       {
-        int numfound(1);
-
-        /* Ensure we haven't already checked this user & domain */
-        UserEntryList::const_iterator temp = i->begin();
-        for (; temp != userptr; ++temp)
+        std::string user((*userptr)->getUser());
+        std::string IP((*userptr)->getTextIP());
+        std::string::size_type lastDot = IP.rfind('.');
+        if (std::string::npos != lastDot)
         {
-          if (server.same((*temp)->getUser(), (*userptr)->getUser()) &&
-              (((*userptr)->getIP() & BotSock::ClassCNetMask) ==
-               ((*userptr)->getIP() & BotSock::ClassCNetMask)) &&
-              (UserHash::operInMulti || (!(*temp)->getOper() &&
-                                         !config.isOper(*temp))))
-          {
-            break;
-          }
+          IP = IP.substr(0, lastDot);
         }
 
-        if (temp == userptr)
-        {
-          for (++temp; temp != i->end(); ++temp)
-          {
-            if (server.same((*temp)->getUser(), (*userptr)->getUser()) &&
-                (((*userptr)->getIP() & BotSock::ClassCNetMask) ==
-                 ((*userptr)->getIP() & BotSock::ClassCNetMask)) &&
-                (UserHash::operInMulti || (!(*temp)->getOper() &&
-                                           !config.isOper(*temp))))
-            {
-              ++numfound;
-            }
-          }
-
-          if (numfound >= minclones)
-          {
-            if (!foundany++)
-            {
-              client->send("Multiple clients from the following vhosts:");
-            }
-
-            std::string IP = BotSock::inet_ntoa((*userptr)->getIP());
-            std::string::size_type lastDot = IP.rfind('.');
-            if (std::string::npos != lastDot)
-            {
-              IP = IP.substr(0, lastDot);
-            }
-
-            boost::format outfmt(" %s %2d -- %s@%s.*");
-            client->send(str(outfmt % ((numfound > minclones) ? "==>" : "   ") %
-                  numfound % (*userptr)->getUser() % IP));
-          }
-        }
+        ++unsorted[server.downCase(user + '@' + IP + ".*")];
       }
     }
   }
 
-  if (!foundany)
+  for (UnsortedMap::const_iterator pos = unsorted.begin();
+      pos != unsorted.end(); ++pos)
+  {
+    if (pos->second >= minclones)
+    {
+      if (!foundAny)
+      {
+        foundAny = true;
+        client->send("Multiple clients from the following vhosts:");
+      }
+      boost::format outfmt(" %s %2u -- %s");
+      client->send(str(outfmt % ((pos->second > minclones) ? "==>" : "   ") %
+            pos->second % pos->first));
+    }
+  }
+
+  if (!foundAny)
   {
     client->send("No multiple logins found.");
   }

@@ -981,10 +981,10 @@ CommandParser::cmdMulti(BotClient * from, const std::string & command,
 {
   std::string min_str = FirstWord(parameters);
 
-  int min;
+  unsigned int min;
   try
   {
-    min = boost::lexical_cast<int>(min_str);
+    min = boost::lexical_cast<unsigned int>(min_str);
   }
   catch (boost::bad_lexical_cast)
   {

@@ -97,10 +97,10 @@ public:
   void reportNets(class BotClient * client, const int minimum) const;
   void reportClones(class BotClient * client) const;
   void reportVClones(class BotClient * client) const;
-  void reportMulti(class BotClient * client, const int minimum) const;
-  void reportUMulti(class BotClient * client, const int minimum) const;
-  void reportHMulti(class BotClient * client, const int minimum) const;
-  void reportVMulti(class BotClient * client, const int minimum) const;
+  void reportMulti(class BotClient * client, const unsigned int minimum) const;
+  void reportUMulti(class BotClient * client, const unsigned int minimum) const;
+  void reportHMulti(class BotClient * client, const unsigned int minimum) const;
+  void reportVMulti(class BotClient * client, const unsigned int minimum) const;
 
   void status(class BotClient * client);
 
