@@ -54,6 +54,8 @@ WatchSet::getWatchValue(const std::string & watch)
     return WATCH_DLINES;
   else if (watch == "DLINE_MATCHES")
     return WATCH_DLINE_MATCHES;
+  else if (watch == "DNSBL")
+    return WATCH_DNSBL;
   else if (watch == "GLINES")
     return WATCH_GLINES;
   else if (watch == "GLINE_MATCHES")
@@ -82,6 +84,8 @@ WatchSet::getWatchValue(const std::string & watch)
     return WATCH_NOTICES;
   else if (watch == "OPERFAILS")
     return WATCH_OPERFAILS;
+  else if (watch == "PROXYSCANS")
+    return WATCH_PROXYSCANS;
   else if (watch == "SEEDRAND")
     return WATCH_SEEDRAND;
   else if (watch == "SPAMBOTS")
@@ -209,6 +213,7 @@ WatchSet::defaults(void)
   //result.add(WATCH_DISCONNECTS);
   result.add(WATCH_DLINES);
   //result.add(WATCH_DLINE_MATCHES);
+  result.add(WATCH_DNSBL);
   //result.add(WATCH_GLINES);
   //result.add(WATCH_GLINE_MATCHES);
   result.add(WATCH_FLOODERS);
@@ -223,6 +228,7 @@ WatchSet::defaults(void)
   //result.add(WATCH_NICK_CHANGES);
   //result.add(WATCH_NOTICES);
   //result.add(WATCH_OPERFAILS);
+  result.add(WATCH_PROXYSCANS);
   result.add(WATCH_SEEDRAND);
   result.add(WATCH_SPAMBOTS);
   result.add(WATCH_SPAMTRAP);
@@ -253,6 +259,8 @@ WatchSet::getWatchName(const Watch watch)
     return "DLINES";
   else if (watch == WATCH_DLINE_MATCHES)
     return "DLINE_MATCHES";
+  else if (watch == WATCH_DNSBL)
+    return "DNSBL";
   else if (watch == WATCH_GLINES)
     return "GLINES";
   else if (watch == WATCH_GLINE_MATCHES)
@@ -281,6 +289,8 @@ WatchSet::getWatchName(const Watch watch)
     return "NOTICES";
   else if (watch == WATCH_OPERFAILS)
     return "OPERFAILS";
+  else if (watch == WATCH_PROXYSCANS)
+    return "PROXYSCANS";
   else if (watch == WATCH_SEEDRAND)
     return "SEEDRAND";
   else if (watch == WATCH_SPAMBOTS)

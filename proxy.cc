@@ -107,7 +107,7 @@ Proxy::detectedProxy(void)
   notice += ":";
   notice += portString;
   notice += "]";
-  ::SendAll(notice, UserFlags::OPER);
+  ::SendAll(notice, UserFlags::OPER, WATCH_PROXYSCANS);
   Log::Write(notice);
 
   doAction(this->nick(), this->userhost(),

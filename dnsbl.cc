@@ -42,6 +42,7 @@
 #include "autoaction.h"
 #include "log.h"
 #include "main.h"
+#include "watch.h"
 #include "botclient.h"
 #include "format.h"
 
@@ -204,7 +205,7 @@ Dnsbl::openProxyDetected(const BotSock::Address & addr,
   notice += ip;
   notice += ']';
   Log::Write(notice);
-  ::SendAll(notice, UserFlags::OPER);
+  ::SendAll(notice, UserFlags::OPER, WATCH_DNSBL);
 
   doAction(nick, userhost, addr, vars[VAR_DNSBL_PROXY_ACTION]->getAction(),
     vars[VAR_DNSBL_PROXY_ACTION]->getInt(),
