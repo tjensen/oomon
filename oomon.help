@@ -311,6 +311,14 @@ info regex
 .d.regular expression (allowing you to drop the
 .d.surrounding "/" characters), however it is optional
 .d.and regex may be used without "-r".
+.d.
+.d.For more information about regular expressions and
+.d.how to use the effectively, see the web tutorial at:
+.d.        http://www.regular-expressions.info/
+.d.
+.d.Note that it is important to know which regex engine
+.d.you are using.  OOMon supports the PCRE library and
+.d.POSIX regular expressions.
 .e.> .glist /stolen by/i
 .e.The following clients match /stolen by/i:
 .e.  GVZ-011 (~mmmmmm@hh1120001.direcpc.com) [206.71.120.1] <I Got My Bandwith Stolen By Gangsta>
