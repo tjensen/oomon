@@ -883,9 +883,7 @@ Config::loadSettings()
       }
       else
       {
-#ifdef CONFIG_DEBUG
-        std::cout << "Unknown setting type: " << cmd << std::endl;
-#endif
+        std::cerr << "Unknown setting type: " << cmd << std::endl;
 	file.close();
 	return false;
       }

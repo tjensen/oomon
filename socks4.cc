@@ -40,9 +40,9 @@
 #include "util.h"
 
 
-//#ifdef DEBUG
+#ifdef DEBUG
 # define SOCKS4_DEBUG
-//#endif
+#endif
 
 
 // OnConnect()

@@ -138,10 +138,8 @@ seedrandScore(const std::string & text)
     std::string::size_type offset = allChars.find(ch);
     if (std::string::npos == offset)
     {
-#ifdef SEEDRAND_DEBUG
-      std::cout << "Invalid character '" << ch << "' (asc:" << IntToStr(ch) <<
+      std::cerr << "Invalid character '" << ch << "' (asc:" << IntToStr(ch) <<
 	") in '" << text << "'.  Skipping..." << std::endl;
-#endif
       return 0;
     }
 

@@ -191,17 +191,13 @@ DCCList::processAll(const fd_set & readset, const fd_set & writeset)
       }
       catch (OOMon::errno_error & e)
       {
-#ifdef DCCLIST_DEBUG
-        std::cout << "DCC::accept() threw exception: " << e.what() << std::endl;
-#endif
+        std::cerr << "DCC::accept() threw exception: " << e.what() << std::endl;
         keepListener = (EWOULDBLOCK == e.getErrno());
       }
     }
     catch (OOMon::timeout_error)
     {
-#ifdef DCCLIST_DEBUG
-      std::cout << "DCC listener socket timed out!" << std::endl;
-#endif
+      std::cerr << "DCC listener socket timed out!" << std::endl;
       keepListener = false;
     }
 
@@ -239,10 +235,8 @@ DCCList::processAll(const fd_set & readset, const fd_set & writeset)
     catch (OOMon::errno_error & e)
     {
       keepConnection = false;
-#ifdef DCCLIST_DEBUG
-      std::cout << "DCC::process() threw exception: errno_error: " <<
+      std::cerr << "DCC::process() threw exception: errno_error: " <<
 	e.what() << std::endl;
-#endif
     }
 
     if (!keepConnection)

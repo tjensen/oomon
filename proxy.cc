@@ -58,9 +58,9 @@
 #include "vars.h"
 
 
-//#ifdef DEBUG
+#ifdef DEBUG
 # define PROXY_DEBUG
-//#endif
+#endif
 
 Proxy::ProxyList Proxy::items;
 

@@ -42,7 +42,7 @@
 
 
 #ifdef DEBUG
-//# define BOTSOCK_DEBUG
+# define BOTSOCK_DEBUG
 #endif
 
 
@@ -132,9 +132,7 @@ BotSock::connect(const BotSock::Address address, const BotSock::Port port)
     }
     else
     { 
-#ifdef BOTSOCK_DEBUG
-      std::cout << "connect() error: " << errno << std::endl;
-#endif
+      std::cerr << "connect() error: " << errno << std::endl;
       this->connected = this->connecting = true;
       return false;
     }
@@ -185,9 +183,7 @@ BotSock::listen(const BotSock::Port port, const int backlog)
 
   if (::listen(this->plug, backlog) < 0)
   {
-#ifdef BOTSOCK_DEBUG
-    std::cout << "connect() error: " << errno << std::endl;
-#endif
+    std::cerr << "listen() error: " << errno << std::endl;
     this->connected = this->connecting = this->listening = false;
     return false;
   }
@@ -298,17 +294,13 @@ BotSock::process(const fd_set & readset, const fd_set & writeset)
       }
       else if (n == 0)
       {
-#ifdef BOTSOCK_DEBUG
-        std::cout << "BotSock::process(): EOF of socket" << std::endl;
-#endif
+        std::cerr << "BotSock::process(): EOF of socket" << std::endl;
 
         return false;
       }
       else
       {
-#ifdef BOTSOCK_DEBUG
-        std::cout << "BotSock::read() error " << errno << std::endl;
-#endif
+        std::cerr << "BotSock::read() error " << errno << std::endl;
 
         return false;
       }
@@ -461,9 +453,7 @@ BotSock::setBlocking(const bool value)
 
     if (-1 == ::fcntl(this->plug, F_SETFL, flags))
     {
-#ifdef BOTSOCK_DEBUG
-      std::cout << "fcntl() error: " << errno << std::endl;
-#endif
+      std::cerr << "fcntl() error: " << errno << std::endl;
       return false;
     }
   }
@@ -568,9 +558,7 @@ BotSock::bind(const BotSock::Address & address, const BotSock::Port & port)
   if (::bind(this->plug, reinterpret_cast<struct sockaddr *>(&localaddr),
     sizeof(localaddr)) < 0)
   {
-#ifdef BOTSOCK_DEBUG
-    std::cout << "bind() error: " << errno << std::endl;
-#endif
+    std::cerr << "bind() error: " << errno << std::endl;
     return false;
   }
 

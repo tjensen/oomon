@@ -295,11 +295,9 @@ UserHash::remove(const std::string & nick, const std::string & userhost,
       {
         error = true;
 
-#ifdef USERHASH_DEBUG
-        std::cout << "Error removing user from host table: " << nick << " (" <<
+        std::cerr << "Error removing user from host table: " << nick << " (" <<
 	  user << "@" << host << ") [" << BotSock::inet_ntoa(ip) << "]" <<
 	  std::endl;
-#endif
       }
     }
 
@@ -309,11 +307,9 @@ UserHash::remove(const std::string & nick, const std::string & userhost,
       {
         error = true;
 
-#ifdef USERHASH_DEBUG
-        std::cout << "Error removing user from domain table: " << nick <<
+        std::cerr << "Error removing user from domain table: " << nick <<
 	  " (" << user << "@" << host << ") [" << BotSock::inet_ntoa(ip) <<
 	  "]" << std::endl;
-#endif
       }
     }
 
@@ -323,11 +319,9 @@ UserHash::remove(const std::string & nick, const std::string & userhost,
       {
 	error = true;
 
-#ifdef USERHASH_DEBUG
-        std::cout << "Error removing user from user table: " << nick << " (" <<
+        std::cerr << "Error removing user from user table: " << nick << " (" <<
 	  user << "@" << host << ") [" << BotSock::inet_ntoa(ip) << "]" <<
 	  std::endl;
-#endif
       }
     }
 
@@ -337,11 +331,9 @@ UserHash::remove(const std::string & nick, const std::string & userhost,
       {
 	error = true;
 
-#ifdef USERHASH_DEBUG
-        std::cout << "Error removing user from IP table: " << nick << " (" <<
+        std::cerr << "Error removing user from IP table: " << nick << " (" <<
 	  user << "@" << host << ") [" << BotSock::inet_ntoa(ip) << "]" <<
 	  std::endl;
-#endif
       }
     }
 

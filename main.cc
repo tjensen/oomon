@@ -219,9 +219,7 @@ process()
       }
       catch (OOMon::timeout_error)
       {
-#ifdef MAIN_DEBUG
-        std::cout << "Connection from IRC server timed out." << std::endl;
-#endif
+        std::cerr << "Connection from IRC server timed out." << std::endl;
         server.quit("Server inactive for " + IntToStr(server.getIdle()) +
           " seconds");
       }

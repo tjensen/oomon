@@ -219,9 +219,7 @@ Remote::onRead(std::string text)
 	result = parse(text);
 	break;
       default:
-#ifdef REMOTE_DEBUG
-        std::cout << "Invalid Remote stage reached!" << std::endl;
-#endif
+        std::cerr << "Invalid Remote stage reached!" << std::endl;
         result = false;
         this->sendError("Invalid stage reached");
         break;
@@ -406,9 +404,7 @@ Remote::sendError(const std::string & text)
 int
 Remote::sendUnknownCommand(const std::string & command)
 {
-#ifdef REMOTE_DEBUG
-  std::cout << "Unknown command: " << command << std::endl;
-#endif
+  std::cerr << "Unknown remote command: " << command << std::endl;
   return this->sendError("Unknown command: " + command);
 }
 
