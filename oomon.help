@@ -409,6 +409,11 @@ info traps
 .d.the TRAP_PRIVMSGS setting must be ON!  To trap
 .d.against NOTICEs, the TRAP_NOTICES setting must
 .d.be ON!
+.d.
+.d.Trap reasons may contain any of the following
+.d.format specifiers:  "%n" for nickname, "%u" for
+.d.userhost, "%i" for IP address, "%g" for GECOS,
+.d."%c" for class, and "%t" for the trap index.
 .e.> .trap kline_host userhost=*.aol.com,version=/iroffer/ No iroffer bots allowed from AOL!
 .e.*** Toast@OOMon added trap KLINE_HOST: uh=*.aol.com,version=/iroffer/ (No iroffer bots allowed from AOL!)
 .l.info filters

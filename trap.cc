@@ -248,6 +248,16 @@ Trap::doAction(const TrapKey key, const UserEntryPtr user) const
   notice += user->getTextIP();
   notice += "]";
 
+  Format fmt;
+  fmt.setStringToken('n', user->getNick());
+  fmt.setStringToken('u', user->getUserHost());
+  fmt.setStringToken('i', user->getTextIP());
+  fmt.setStringToken('g', user->getGecos());
+  fmt.setStringToken('c', user->getClass());
+  fmt.setStringToken('t', boost::lexical_cast<std::string>(key));
+
+  std::string reason(fmt.format(this->getReason()));
+
   Log::Write(notice);
   switch (this->getAction())
   {
@@ -255,35 +265,34 @@ Trap::doAction(const TrapKey key, const UserEntryPtr user) const
       ::SendAll(notice, UserFlags::OPER, WATCH_TRAPS);
       break;
     case TRAP_KILL:
-      server.kill("Auto-Kill", user->getNick(), this->getReason());
+      server.kill("Auto-Kill", user->getNick(), reason);
       break;
     case TRAP_KLINE:
       server.kline("Auto-Kline", this->getTimeout(),
-	klineMask(user->getUserHost()), this->getReason());
+          klineMask(user->getUserHost()), reason);
       break;
     case TRAP_KLINE_HOST:
       {
 	server.kline("Auto-Kline", this->getTimeout(), "*@" + user->getHost(),
-	  this->getReason());
+            reason);
       }
       break;
     case TRAP_KLINE_DOMAIN:
       {
 	std::string domain = getDomain(user->getHost(), true);
-	server.kline("Auto-Kline", this->getTimeout(), "*@" + domain,
-	  this->getReason());
+	server.kline("Auto-Kline", this->getTimeout(), "*@" + domain, reason);
       }
       break;
     case TRAP_KLINE_IP:
       if (INADDR_NONE != user->getIP())
       {
         server.kline("Auto-Kline", this->getTimeout(), "*@" + user->getTextIP(),
-          this->getReason());
+            reason);
       }
       else
       {
         std::cerr << "Missing or invalid IP address -- unable to KLINE!" <<
-	  std::endl;
+          std::endl;
       }
       break;
     case TRAP_KLINE_USERNET:
@@ -296,12 +305,12 @@ Trap::doAction(const TrapKey key, const UserEntryPtr user) const
 	if (INADDR_NONE != user->getIP())
 	{
 	  server.kline("Auto-Kline", this->getTimeout(), "*" + username + "@" +
-	    classCMask(user->getTextIP()), this->getReason());
+              classCMask(user->getTextIP()), reason);
 	}
 	else
 	{
 	  std::cerr << "Missing or invalid IP address -- unable to KLINE!" <<
-	    std::endl;
+            std::endl;
 	}
       }
       break;
@@ -309,7 +318,7 @@ Trap::doAction(const TrapKey key, const UserEntryPtr user) const
       if (INADDR_NONE != user->getIP())
       {
         server.kline("Auto-Kline", this->getTimeout(), "*@" +
-	  classCMask(user->getTextIP()), this->getReason());
+            classCMask(user->getTextIP()), reason);
       }
       else
       {
@@ -321,7 +330,7 @@ Trap::doAction(const TrapKey key, const UserEntryPtr user) const
       if (INADDR_NONE != user->getIP())
       {
         server.dline("Auto-Dline", this->getTimeout(), user->getTextIP(),
-	  this->getReason());
+            reason);
       }
       else
       {
@@ -333,7 +342,7 @@ Trap::doAction(const TrapKey key, const UserEntryPtr user) const
       if (INADDR_NONE != user->getIP())
       {
         server.dline("Auto-Dline", this->getTimeout(),
-	  classCMask(user->getTextIP()), this->getReason());
+            classCMask(user->getTextIP()), reason);
       }
       else
       {
