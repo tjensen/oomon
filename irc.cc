@@ -568,7 +568,9 @@ IRC::onCtcp(const std::string & from, const std::string & userhost,
 
   if ((command == "DCC") && (this->same(to, this->myNick)))
   {
-    if (!vars[VAR_OPER_ONLY_DCC]->getBool() || config.isOper(userhost, ip))
+    Log::Write("DCC CHAT request from " + from + " (" + userhost + ")");
+
+    if (config.mayChat(userhost, ip))
     {
       std::string dccCommand = FirstWord(text);
       if (dccCommand == "CHAT")
@@ -594,8 +596,6 @@ IRC::onCtcp(const std::string & from, const std::string & userhost,
           }
 	  else
 	  {
-            Log::Write("DCC CHAT request from " + from + " (" + userhost + ")");
-
             if (!clients.connect(address, port, from, userhost, ip))
             {
               Log::Write("DCC CHAT failed for " + from);
@@ -609,9 +609,10 @@ IRC::onCtcp(const std::string & from, const std::string & userhost,
       }
     }
   }
-  else if (config.isOper(userhost, ip) && (command == "CHAT"))
+  else if (config.mayChat(userhost, ip) && (command == "CHAT"))
   {
-    Log::Write("CHAT request from " + from + " (" + userhost + ")");
+    Log::Write("CTCP CHAT request from " + from + " (" + userhost + ")");
+
     if (!clients.listen(from, userhost, ip))
     {
       Log::Write("DCC CHAT listen failed for " + from);

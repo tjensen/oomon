@@ -455,7 +455,7 @@ void
 Config::parseOLine(const StrVector & fields)
 {
   std::string handle(fields[0]);
-  if (!handle.empty() && !IRC::validNick(handle))
+  if (!IRC::validNick(handle))
   {
     throw Config::syntax_error("bad user handle '" + handle + "'");
   }
@@ -601,13 +601,8 @@ Config::authUser(const std::string & handle, const std::string & userhost,
           std::cout << "Config::authUser(): password is correct" << std::endl;
 #endif
 	  flags = UserFlags::AUTHED;
-          if (!pos->second->handle.empty())
-	  {
-	    // Only people with registered handles should be allowed to do
-	    // anything
-            newHandle = pos->second->handle;
-	    flags |= pos->second->flags;
-          }
+          newHandle = pos->second->handle;
+          flags |= pos->second->flags;
           return true;
         }
         else
@@ -648,6 +643,52 @@ Config::username(void) const
   }
 
   return result;
+}
+
+
+bool
+Config::mayChat(const std::string & userhost) const
+{
+  bool result(false);
+
+  if (vars[VAR_OPER_ONLY_DCC]->getBool())
+  {
+    try
+    {
+      for (Config::OperMap::const_iterator pos = this->opers_.begin();
+          pos != this->opers_.end(); ++pos)
+      {
+        if (pos->second->pattern->match(userhost))
+        {
+          result = true;
+          break;
+        }
+      }
+    }
+    catch (OOMon::regex_error & e)
+    {
+      Log::Write("RegEx error in Config::mayChat(): " + e.what());
+      std::cerr << "RegEx error in Config::mayChat(): " << e.what() <<
+                                                           std::endl;
+    }
+  }
+  else
+  {
+    result = true;
+  }
+
+  return result;
+}
+
+
+bool
+Config::mayChat(const std::string & userhost, const BotSock::Address & ip)
+  const
+{
+  std::string user = userhost.substr(0, userhost.find('@'));
+  std::string userip = user + "@" + BotSock::inet_ntoa(ip);
+
+  return this->mayChat(userhost) || this->mayChat(userip);
 }
 
 

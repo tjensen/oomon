@@ -21,15 +21,14 @@
 # $Id$
 
 # I chose to put operators in a seperate file
-#:Handle:userhostmask:password:flags:
+#:Handle:pattern:password:flags:
 #
 # Handle - Similar to a nick.  In fact, you may want to set this to be the
 #          oper's preferred nick.  More than one O: line can have the same
-#          handle.  If no handle is specified, the user's nick on IRC will
-#          be used for chatting, etc.
+#          handle.
 #
-# userhostmask - In the form of user@host with asterisks and/or question
-#                marks to make it pretty :P
+# pattern - A user@host mask or regular expression (if supported) to match
+#           against users.
 #
 # password - Plaintext or crypted password, depending on whether USE_CRYPT
 #            was defined (see oomon.h) and if configure could find a
@@ -50,4 +49,3 @@
 O:Toast:toast@plasma.toast.pc:9oXu/uVLpyWCQ:CDGKMNORWX:
 O:Narcotic:crusher@chalupa.monkeys.smelt:8fMPqfJqkeI6M:CKOWX:
 O:LarZ:mjr@blackened.is.the.end:exVKOvn/mjRr.:CDGKNOWX:
-O::*@*:::

@@ -38,11 +38,11 @@
 #                   us, where they are the initiator.
 #
 # Syntax:
-#  L:Bot:hostmask:password:
+#  L:Bot:pattern:password:
 #
 # Bot - The name of the bot allowed to connect to us.
 #
-# hostmask - A pattern matching the hostname or IP of the bot.
+# pattern - A pattern matching the hostname or IP of the bot.
 #
 # password - Plaintext password the bot must use to authenticate
 #            itself.  This should match the remote bot's C: line
@@ -81,8 +81,9 @@ C:OOMon3:wheat.toast.pc:botsecret:9000:
 # Syntax:
 #  R:handle@bot:flags:
 #
-# handle@bot - The handle and bot of the user(s) to give access.  This
-#              field can also contain a mask or regex pattern.
+# pattern - A pattern matching the handle@bot value(s) of the user(s)
+#           to give access.  This field can contain a mask or regex
+#           pattern.
 #
 # flags - This defines which commands the user may use.  With the
 #         exception of the "R" flag, all user flags allowed in O:

@@ -84,6 +84,10 @@ class Config
       MAX_EXEMPT
     };
 
+    bool mayChat(const std::string & userhost) const;
+    bool mayChat(const std::string & userhost, const BotSock::Address & ip)
+      const;
+
     bool isExempt(const std::string & userhost, const Config::ExemptFlag flag)
       const;
     bool isExempt(const std::string & userhost, const std::string & ip,
