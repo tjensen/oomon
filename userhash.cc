@@ -1215,7 +1215,7 @@ UserHash::reportMulti(BotClient * client, const unsigned int minimum) const
 
         if (isIP)
         {
-          ++unsorted[server.downCase(user + '@' + domain + '*')];
+          ++unsorted[server.downCase(user + '@' + domain + ".*")];
         }
         else
         {
@@ -1355,8 +1355,8 @@ UserHash::reportVMulti(BotClient * client, const unsigned int minimum) const
     for (UserEntryList::const_iterator userptr = i->begin();
         userptr != i->end(); ++userptr)
     {
-      if (UserHash::operInMulti ||
-          (!(*userptr)->getOper() && !config.isOper(*userptr)))
+      if (UserHash::operInMulti || (((*userptr)->getIP() != INADDR_NONE) &&
+            !(*userptr)->getOper() && !config.isOper(*userptr)))
       {
         std::string user((*userptr)->getUser());
         std::string IP((*userptr)->getTextIP());

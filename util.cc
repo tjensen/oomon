@@ -655,7 +655,7 @@ isNumericIPv4(const std::string & host)
 
   memset(&hints, 0, sizeof(hints));
   hints.ai_flags = AI_NUMERICHOST;
-  hints.ai_protocol = PF_INET;
+  hints.ai_family = PF_INET;
 
   if (0 == getaddrinfo(host.c_str(), 0, &hints, &info))
   {
@@ -694,7 +694,7 @@ isNumericIPv6(const std::string & host)
 
   memset(&hints, 0, sizeof(hints));
   hints.ai_flags = AI_NUMERICHOST;
-  hints.ai_protocol = PF_INET6;
+  hints.ai_family = PF_INET6;
 
   if (0 == getaddrinfo(host.c_str(), 0, &hints, &info))
   {
