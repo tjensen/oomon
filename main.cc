@@ -53,6 +53,8 @@
 #include "botexcept.h"
 #include "botclient.h"
 #include "userdb.h"
+#include "adnswrap.h"
+#include "dnsbl.h"
 
 
 #ifdef DEBUG
@@ -178,22 +180,29 @@ process()
       }
     }
 
-    fd_set readfds, writefds;
+    fd_set readfds, writefds, exceptfds;
     FD_ZERO(&readfds);
     FD_ZERO(&writefds);
-    server.setFD(readfds, writefds);
-    clients.setAllFD(readfds, writefds);
-    remotes.setFD(readfds, writefds);
-    proxies.setAllFD(readfds, writefds);
+    FD_ZERO(&exceptfds);
+    int maxfd = 0;
 
     struct timeval time_out;
     time_out.tv_sec = 5;
     time_out.tv_usec = 0;
 
-    int fds = select(FD_SETSIZE, &readfds, &writefds, NULL, &time_out);
+    struct timeval * tv_mod = &time_out;
+    adns.beforeselect(maxfd, readfds, writefds, exceptfds, tv_mod);
+    server.setFD(readfds, writefds);
+    clients.setAllFD(readfds, writefds);
+    remotes.setFD(readfds, writefds);
+    proxies.setAllFD(readfds, writefds);
+
+    int fds = select(FD_SETSIZE, &readfds, &writefds, NULL, tv_mod);
 
     if (fds >= 0)
     {
+      adns.afterselect(maxfd, readfds, writefds, exceptfds);
+
       try
       {
         if ((server.isConnected() || server.isConnecting()) &&
@@ -217,6 +226,10 @@ process()
       clients.processAll(readfds, writefds);
 
       remotes.processAll(readfds, writefds);
+
+#ifdef HAVE_LIBADNS
+      dnsbl.process();
+#endif /* HAVE_LIBADNS */
 
       proxies.processAll(readfds, writefds);
 

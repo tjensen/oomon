@@ -49,6 +49,7 @@
 #include "notice.h"
 #include "botexcept.h"
 #include "botclient.h"
+#include "dnsbl.h"
 
 
 #ifdef DEBUG
@@ -988,69 +989,17 @@ onTooManyConnNotice(const std::string & text)
 
 
 void
-onDetectDNSBLOpenProxy(const std::string & ip, const std::string & nick,
-  const std::string & userhost)
-{
-  // This is a proxy listed by the DNSBL
-  std::string notice = std::string("DNSBL Open Proxy detected for ") +
-    nick + "!" + userhost + " [" + ip + "]";
-  Log::Write(notice);
-  ::SendAll(notice, UserFlags::OPER);
-
-  doAction(nick, userhost, BotSock::inet_addr(ip),
-    vars[VAR_DNSBL_PROXY_ACTION]->getAction(),
-    vars[VAR_DNSBL_PROXY_ACTION]->getInt(),
-    vars[VAR_DNSBL_PROXY_REASON]->getString(), false);
-}
-
-
-static	bool
-CheckDNSBL(const std::string & ip, const std::string & nick,
-  const std::string & userhost)
-{
-  std::string dns = vars[VAR_DNSBL_PROXY_ZONE]->getString();
-
-  if ((dns.length() > 0) && isIP(ip))
-  {
-    std::string::size_type pos = 0;
-
-    // Reverse the order of the octets and use them to prefix the blackhole
-    // zone.
-    int dots = CountChars(ip, '.');
-    while (dots >= 0)
-    {
-      std::string::size_type nextDot = ip.find('.', pos);
-      dns = ip.substr(pos, nextDot - pos) + "." + dns;
-      pos = nextDot + 1;
-      dots--;
-    }
-
-    struct hostent *result = gethostbyname(dns.c_str());
-
-    if (NULL != result)
-    {
-      onDetectDNSBLOpenProxy(ip, nick, userhost);
-
-      return true;
-    }
-  }
-  return false;
-}
-
-void
 CheckProxy(const std::string & ip, const std::string & host,
   const std::string & nick, const std::string & userhost)
 {
   // If the IP is listed by the DNSBL, there's no reason to do a Wingate
   // or SOCKS proxy check of our own!
-  if (CheckDNSBL(ip, nick, userhost))
+  if (!dnsbl.check(BotSock::inet_addr(ip), nick, userhost))
   {
-    return;
-  }
-
-  if (vars[VAR_SCAN_FOR_PROXIES]->getBool())
-  {
-    proxies.check(ip, host, nick, userhost);
+    if (vars[VAR_SCAN_FOR_PROXIES]->getBool())
+    {
+      proxies.check(ip, host, nick, userhost);
+    }
   }
 }
 

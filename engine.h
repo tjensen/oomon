@@ -70,8 +70,6 @@ void klineClones(const bool kline, const std::string & User,
   const std::string & Host, const BotSock::Address & ip,
   const bool differentUser, const bool differentIp, const bool identd);
 
-void onDetectDNSBLOpenProxy(const std::string & ip, const std::string & nick,
-  const std::string & userhost);
 void CheckProxy(const std::string &, const std::string &, const std::string &,
   const std::string &);
 
