@@ -30,7 +30,10 @@ following options are specific to OOMon:
     if it is unable to locate them on its own.
 
 Another commonly used option is "--prefix=PREFIX", which you should use
-if you want OOMon to be installed in a location other than the default.
+if you want OOMon to be installed in a location other than the default
+of "/usr/local/oomon".  Many users may find it desireable to use the
+option, "--prefix=$HOME/OOMon", to have OOMon installed into their
+home directory.
 
 If the script is unable to find your C++ compiler (this is NOT the same
 as not being able to find the GNU C++ libraries), you might try the
