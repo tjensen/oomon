@@ -581,12 +581,29 @@ UserHash::findUsers(BotClient * client, const Filter & filter, const bool count)
         {
           std::string buffer("  ");
           buffer += (*pos)->getNick();
-          buffer += ' ';
+          buffer += " (";
           buffer += (*pos)->getUserHost();
           if ((*pos)->getIP() != INADDR_NONE)
           {
-            buffer += ' ';
+            buffer += ") [";
             buffer += (*pos)->getTextIP();
+            buffer += ']';
+          }
+          else
+          {
+            buffer += ')';
+          }
+          if (filter.matches(Filter::FIELD_CLASS))
+          {
+            buffer += " {";
+            buffer += (*pos)->getClass();
+            buffer += '}';
+          }
+          if (filter.matches(Filter::FIELD_GECOS))
+          {
+            buffer += " <";
+            buffer += (*pos)->getGecos();
+            buffer += '>';
           }
           client->send(buffer);
         }

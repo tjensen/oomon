@@ -219,6 +219,56 @@ Filter::matches(const UserEntryPtr & user) const
 }
 
 
+bool
+Filter::matches(const Filter::Field & field) const
+{
+  bool result(false);
+
+  switch (field)
+  {
+    case FIELD_NICK:
+      result = ((this->fields_.end() != this->fields_.find(FIELD_NICK)) ||
+          (this->fields_.end() != this->fields_.find(FIELD_UH)) ||
+          (this->fields_.end() != this->fields_.find(FIELD_NUH)) ||
+          (this->fields_.end() != this->fields_.find(FIELD_NUHG)));
+      break;
+    case FIELD_USER:
+      result = ((this->fields_.end() != this->fields_.find(FIELD_USER)) ||
+          (this->fields_.end() != this->fields_.find(FIELD_UH)) ||
+          (this->fields_.end() != this->fields_.find(FIELD_NUH)) ||
+          (this->fields_.end() != this->fields_.find(FIELD_NUHG)));
+      break;
+    case FIELD_HOST:
+      result = ((this->fields_.end() != this->fields_.find(FIELD_HOST)) ||
+          (this->fields_.end() != this->fields_.find(FIELD_UH)) ||
+          (this->fields_.end() != this->fields_.find(FIELD_NUH)) ||
+          (this->fields_.end() != this->fields_.find(FIELD_NUHG)));
+      break;
+    case FIELD_IP:
+      result = ((this->fields_.end() != this->fields_.find(FIELD_IP)) ||
+          (this->fields_.end() != this->fields_.find(FIELD_UH)) ||
+          (this->fields_.end() != this->fields_.find(FIELD_NUH)) ||
+          (this->fields_.end() != this->fields_.find(FIELD_NUHG)));
+      break;
+    case FIELD_GECOS:
+      result = ((this->fields_.end() != this->fields_.find(FIELD_GECOS)) ||
+          (this->fields_.end() != this->fields_.find(FIELD_NUHG)));
+      break;
+    case FIELD_UH:
+    case FIELD_NUH:
+    case FIELD_NUHG:
+    case FIELD_CLASS:
+    case FIELD_VERSION:
+    case FIELD_PRIVMSG:
+    case FIELD_NOTICE:
+      result = (this->fields_.end() != this->fields_.find(field));
+      break;
+  }
+
+  return result;
+}
+
+
 std::string
 Filter::get(void) const
 {
