@@ -1834,6 +1834,14 @@ set scan_proxy_exec
 .d.is running, so the program or script that
 .d.is run should be designed to finish as
 .d.quickly as possible.
+.d.
+.d.Instances of "%n" will be replaced by the
+.d.offender's nick, "%u" will be replaced by the
+.d.offender's userhost, "%i" will be replaced by
+.d.the offender's IP address, "%p" will be
+.d.replaced by the port number of the open
+.d.proxy, and "%t" will be replaced by the type
+.d.of proxy detected.
 .f.mo
 .l.scan_for_proxies
 set scan_proxy_reason
