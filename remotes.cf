@@ -20,6 +20,7 @@
 # Sample included config file
 # $Id$
 
+
 # ====================================================================
 # Botnet Listener Port - This defines on what port number we accept
 #                        remote bot connections.  By default, we
@@ -100,6 +101,7 @@ R:cheese@OOMon2:DKO:
 # Give access to channel commands to Mayo on any bot
 R:mayo@*:C:
 
-# Give access to kline and oper commands to everyone on the bot named OOMon3
+# Give access to kline and oper commands to everyone on the bot named
+# OOMon3
 R:*@OOMon3:KO:
 

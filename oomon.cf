@@ -20,26 +20,89 @@
 # Example OOMon config file
 # $Id$
 
-# Confused? Visit the following URL:
-#
-#    http://oomon.sourceforge.net/oomon_cf.html
 
-# Bot parameters
-#:Nick:username:vhost:realname:opernick:operpass:
+# ====================================================================
+# Bot Parameters - Controls how OOMon appears on IRC and how it
+#                  becomes an IRC operator.
+#
+# Syntax
+#  B:<nick>:<username>:<hostname>:<realname>:<opernick>:<operpass>
+#
+# nick - A valid IRC nickname for identifying the bot.  This nick is
+#        also used as the bot's handle when linking with other OOMons.
+#
+# username - Optional parameter for specifying the bot's username.  If
+#            identd is running, this parameter probably won't have
+#            any effect.
+#
+# hostname - Optional parameter for specifying the address from which
+#            the bot will connect.  Use this field to bind your OOMon
+#            to a specific IP or virtual host.
+#
+# realname - Sometimes referred to as GECOS.
+#
+# opernick - The nickname the bot uses to oper up.
+#
+# operpass - The password the bot uses to oper up.
+# ====================================================================
 B:OOMon:::Object Oriented Monitor Bot:oomon:Cabbages:
 
-# Server info and channel(s)
-#:hostname:port:password:channel(s):
+
+# ====================================================================
+# Server Information - Controls how OOMon connects to an IRC server
+#                      and the channels it joins automatically.
+#
+# Syntax
+#  S:<server>:<port>:<password>:<channels>
+#
+# server - The IP address or hostname of the IRC server.
+#
+# port - The TCP port number of the IRC server to connect to.  Most
+#        IRC servers listen to port 6667, but other ports also work
+#        sometimes.  See your ircd configuration for details.
+#
+# password - Optional parameter used if the IRC server requires a
+#            password to connect.
+#
+# channels - Optional parameter containing one or more channel names
+#            separated by commas.
+# ====================================================================
 S:plasma.toast.pc:6667::#monitors:
 
-# Include other config files here
+
+# ====================================================================
+# Include File - A nice way to organize your OOMon's settings.
+#                Multiple I: lines are permitted for including more
+#                than one file.
+#
+# Syntax
+#  I:<filename>
+#
+# filename - The name of the config file to include.
+# ====================================================================
 I:userlist.cf
 I:remotes.cf
 I:scanner.cf
 
-# DCC Listen port number.  Default is 0, which means let the OS pick a
-# port number for us.
+
+# ====================================================================
+# DCC Listen Port - Open a listening socket on a particular TCP port
+#                   number when an authorized user sends a CTCP CHAT
+#                   request to the OOMon.
+#
+#                   This setting is useful in instances where the bot
+#                   is behind a firewall that blocks most ports.
+#
+#                   The default port is 0, which instructs OOMon to
+#                   listen to whatever port number the OS gives it.
+#
+# Syntax
+#  D:<port>
+#
+# port - The TCP port number to listen to.
+# ====================================================================
 #D:0:
+
 
 # ====================================================================
 # Exempt - This defines userhost and class patterns that may be
@@ -57,48 +120,126 @@ I:scanner.cf
 #  EC:<class pattern>
 #  EC:<flags>:<class pattern>
 #
-# flags            - One or more of the following, separated by spaces
-#                    and/or commas:
-#                      CLONE    - Don't kill/kline/etc. for clones.
-#                      FLOOD    - Don't kill/kline/etc. for flooding.
-#                      SPOOF    - Don't kill/kline/etc. for spoofs.
-#                      JUPE     - Don't kill/kline/etc. for joining
-#                                 juped channels.
-#                      SEEDRAND - Don't kill/kline/etc. for having a
-#                                 a randomly generated nickname.
-#                      TRAP     - Don't match against traps.
-#                      PROXY    - Don't scan for open proxies.
-#                      VERSION  - Don't check its CTCP VERSION reply.
-#                      ALL      - All of the above.
+# flags - One or more of the following, separated by spaces and/or
+#         commas:
+#           CLONE    - Don't kill/kline/etc. for clones.
+#           FLOOD    - Don't kill/kline/etc. for flooding.
+#           SPOOF    - Don't kill/kline/etc. for spoofs.
+#           JUPE     - Don't kill/kline/etc. for joining juped
+#                      channels.
+#           SEEDRAND - Don't kill/kline/etc. for having a a randomly
+#                      generated nickname.
+#           TRAP     - Don't match against traps.
+#           PROXY    - Don't scan for open proxies.
+#           VERSION  - Don't check its CTCP VERSION reply.
+#           ALL      - All of the above.
+#
 # userhost pattern - A regex or cluster-style pattern to match against
 #                    users' user@host fields.
-# class pattern    - A regex or cluster-style pattern to match against
-#                    users' class name fields.
+#
+# class pattern - A regex or cluster-style pattern to match against
+#                 users' class name fields.
 # ====================================================================
 E:ALL:*@*toast.pc
 E:oomon@*
 EC:SEEDRAND,TRAP:dronehunters
 EC:friends
 
-# Spoofers (don't kline spoofers with IPs matching the following)
+
+# ====================================================================
+# Spoofers - Allow certain IP addresses to spoof their hostnames.
+#
+# Syntax
+#  F:<pattern>
+#
+# pattern - A pattern matching the IP addresses of clients that are
+#           allowed to spoof.
+# ====================================================================
 F:192.168.*.*
 
-# MOTD file - default is oomon-motd.txt
+
+# ====================================================================
+# MOTD File - The location of OOMon's Message of the Day (MOTD) file.
+#             The default MOTD filename is oomon-motd.txt.
+#
+# Syntax
+#  M:<filename>
+#
+# filename - The name of the MOTD file.
+# ====================================================================
 #M:oomon-motd.txt
 
-# Log file - default is oomon.log
+
+# ====================================================================
+# Log File - The location of OOMon's log file.  The default log
+#            filename is oomon.log.
+#
+# Syntax
+#  G:<filename>
+#
+# filename - The name of the log file.
+# ====================================================================
 #G:oomon.log
 
-# Help file - default is oomon.help
+
+# ====================================================================
+# Help File - The location of OOMon's help file.  The default help
+#            filename is oomon.help.
+#
+# Syntax
+#  H:<filename>
+#
+# filename - The name of the help file.
+# ====================================================================
 #H:oomon.help
 
+
+# ====================================================================
+# Settings File - The location of OOMon's settings file.  This file
+#                 stores the values of all of the bot's traps and
+#                 and run-time configuration settings.  See the help
+#                 for the ".trap" and ".set" commands for details.
+#                 The default settings filename is oomon.settings.
+#
+# Syntax
+#  T:<filename>
+#
+# filename - The name of the settings file.
+# ====================================================================
 # OOMon settings file - default is oomon.settings
 #T:oomon.settings
 
-# User settings file - default is oomon-users.db
+
+# ====================================================================
+# User Database - The location of OOMon's user database file.  This
+#                 file stores per-user settings information, including
+#                 each user's watches.  See the help for the ".watch"
+#                 command for details.
+#                 The default user database filename is
+#                 oomon-users.db.
+#
+# Syntax
+#  U:<filename>
+#
+# filename - The name of the user database file.
+# ====================================================================
 #U:oomon-users.db
 
-# Y-line descriptions go here (see .class command)
+
+# ====================================================================
+# Class Descriptions - Associates descriptions with user classes.  See
+#                      the help for the ".class" command for details.
+#                      Multiple Y: lines are permitted for describing
+#                      more than one user class.
+#
+# Syntax
+#  Y:<class>:<description>
+#
+# class - A user class name defined in the IRC server's configuration
+#         files.
+#
+# description - A brief description of the user class.
+# ====================================================================
 Y:1:Blah users
 Y:2:Semi-blah users
 Y:3:Users without lives

@@ -73,6 +73,7 @@ proxy-send:NICK scanner
 #  proxy-target:<address>:<port>
 #
 # address - A numeric IP address.
+#
 # port - A valid TCP port number.
 # ====================================================================
 #proxy-target:192.168.1.1:6667

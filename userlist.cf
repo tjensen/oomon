@@ -20,21 +20,27 @@
 # Sample included config file
 # $Id$
 
-# I chose to put operators in a seperate file
-#:Handle:pattern:password:flags:
+
+# ====================================================================
+# OOMon Operators - Authorize clients to interact with OOMon via the
+#                   DCC CHAT interface.  Multiple O: lines are
+#                   permitted.
 #
-# Handle - Similar to a nick.  In fact, you may want to set this to be the
-#          oper's preferred nick.  More than one O: line can have the same
-#          handle.
+# Syntax:
+#  O:<handle>:<pattern>:<password>:<flags
 #
-# pattern - A user@host mask or regular expression (if supported) to match
-#           against users.
+# handle - Similar to a nick.  In fact, you may want to set this to be
+#          the person's preferred nickname.  More than one O: line may
+#          list the same handle.
 #
-# password - Plaintext or crypted password, depending on whether USE_CRYPT
-#            was defined (see oomon.h) and if configure could find a
-#            usable crypt(3) function.
+# pattern - A user@host mask or regular expression (if supported) to
+#           match against users.
 #
-# flags - This defines which commands the user may use. Possibilities are:
+# password - Plaintext or crypted password, depending on whether
+#            configure could find a usable crypt(3) function.
+#
+# flags - This defines which commands the user may use. Possibilities
+#         are:
 #          C - Channel (.join, .part, .op)
 #          D - Dline (.dline, .undline)
 #          G - Gline (.gline, .gclone, .gflood, etc.)
@@ -45,7 +51,8 @@
 #          R - Remote (.command@otherbot)
 #          W - Can see WALLOPS/OPERWALL/LOCOPS
 #          X - Can see client connects/disconnects
-#
+# ====================================================================
 O:Toast:toast@plasma.toast.pc:9oXu/uVLpyWCQ:CDGKMNORWX:
 O:Narcotic:crusher@chalupa.monkeys.smelt:8fMPqfJqkeI6M:CKOWX:
 O:LarZ:mjr@blackened.is.the.end:exVKOvn/mjRr.:CDGKNOWX:
+
