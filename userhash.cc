@@ -121,15 +121,15 @@ UserHash::add(const std::string & nick, const std::string & userhost,
 	fakeHost = this->maskFakeHost;
       }
 
-      UserEntry * newuser = new UserEntry(nick, user, host, fakeHost, userClass,
+      UserEntryPtr newuser(new UserEntry(nick, user, host, fakeHost, userClass,
 	gecos, (ip.length() > 0) ? BotSock::inet_addr(ip) : INADDR_NONE, 
-	(fromTrace ? 0 : std::time(NULL)), isOper);
+	(fromTrace ? 0 : std::time(NULL)), isOper));
 
       // Add it to the hash tables
       UserHash::addToHash(this->hosttable, newuser->getHost(), newuser);
       UserHash::addToHash(this->domaintable, newuser->getDomain(), newuser);
       UserHash::addToHash(this->usertable, newuser->getUser(), newuser);
-      UserHash::addToHash(this->iptable, newuser->getIp(), newuser);
+      UserHash::addToHash(this->iptable, newuser->getIP(), newuser);
       ++this->userCount;
 
       // Don't check for wingate or clones when doing a TRACE
@@ -140,7 +140,7 @@ UserHash::add(const std::string & nick, const std::string & userhost,
           // Check if this client matches any traps
           if (vars[VAR_TRAP_CONNECTS]->getBool())
           {
-            TrapList::match(nick, userhost, ip, gecos);
+            TrapList::match(newuser);
           }
 
           if (newuser->getScore() >= vars[VAR_SEEDRAND_REPORT_MIN]->getInt())
@@ -219,7 +219,7 @@ void
 UserHash::updateOper(const std::string & nick, const std::string & userhost,
   bool isOper)
 {
-  UserEntry * find = this->findUser(nick, userhost);
+  UserEntryPtr find(this->findUser(nick, userhost));
 
   if (NULL != find)
   {
@@ -232,11 +232,12 @@ void
 UserHash::onVersionReply(const std::string & nick, const std::string & userhost,
   const std::string & version)
 {
-  UserEntry * find = this->findUser(nick, userhost);
+  UserEntryPtr find(this->findUser(nick, userhost));
 
-  if (NULL != find)
+  if (0 != find)
   {
     find->hasVersion(version);
+    TrapList::matchCtcpVersion(find, version);
   }
 }
 
@@ -269,7 +270,7 @@ void
 UserHash::updateNick(const std::string & oldNick, const std::string & userhost,
   const std::string & newNick)
 {
-  UserEntry * find = this->findUser(oldNick, userhost);
+  UserEntryPtr find(this->findUser(oldNick, userhost));
 
   if (NULL != find)
   {
@@ -277,13 +278,12 @@ UserHash::updateNick(const std::string & oldNick, const std::string & userhost,
 
     if (vars[VAR_TRAP_NICK_CHANGES]->getBool())
     {
-      TrapList::match(find->getNick(), userhost, find->getIp(),
-	find->getGecos());
+      TrapList::match(find);
     }
 
     if ((find->getScore() >= vars[VAR_SEEDRAND_REPORT_MIN]->getInt()) &&
-      !Config::IsOper(userhost, find->getIp()) &&
-      !Config::IsOKHost(userhost, find->getIp()) && !find->getOper())
+      !Config::IsOper(userhost, find->getIP()) &&
+      !Config::IsOKHost(userhost, find->getIP()) && !find->getOper())
     {
       std::string scoreStr(
 	boost::lexical_cast<std::string>(find->getScore()));
@@ -295,10 +295,10 @@ UserHash::updateNick(const std::string & oldNick, const std::string & userhost,
       notice += " (";
       notice += userhost;
       notice += ")";
-      if (INADDR_NONE != find->getIp())
+      if (INADDR_NONE != find->getIP())
       {
 	notice += " [";
-	notice += BotSock::inet_ntoa(find->getIp());
+	notice += BotSock::inet_ntoa(find->getIP());
 	notice += "]";
       }
       ::SendAll(notice, UserFlags::OPER, WATCH_SEEDRAND);
@@ -307,10 +307,10 @@ UserHash::updateNick(const std::string & oldNick, const std::string & userhost,
       Format reason;
       reason.setStringToken('n', find->getNick());
       reason.setStringToken('u', userhost);
-      reason.setStringToken('i', BotSock::inet_ntoa(find->getIp()));
+      reason.setStringToken('i', BotSock::inet_ntoa(find->getIP()));
       reason.setStringToken('s', scoreStr);
 
-      doAction(find->getNick(), userhost, find->getIp(),
+      doAction(find->getNick(), userhost, find->getIP(),
 	vars[VAR_SEEDRAND_ACTION]->getAction(),
 	vars[VAR_SEEDRAND_ACTION]->getInt(),
 	reason.format(vars[VAR_SEEDRAND_REASON]->getString()), false);
@@ -403,7 +403,7 @@ UserHash::remove(const std::string & nick, const std::string & userhost,
 
 void
 UserHash::addToHash(HashRec *table[], const std::string & key,
-  UserEntry * item)
+  UserEntryPtr item)
 {
   int index = UserHash::hashFunc(key);
 
@@ -417,10 +417,6 @@ UserHash::addToHash(HashRec *table[], const std::string & key,
   }
 
   newhashrec->info = item;
-  if (NULL != newhashrec->info)
-  {
-    newhashrec->info->incLinkCount();
-  }
   newhashrec->collision = table[index];
   table[index] = newhashrec;
 }
@@ -428,7 +424,7 @@ UserHash::addToHash(HashRec *table[], const std::string & key,
 
 void
 UserHash::addToHash(HashRec *table[], const BotSock::Address & key,
-  UserEntry * item)
+  UserEntryPtr item)
 {
   int index = UserHash::hashFunc(key);
 
@@ -442,10 +438,6 @@ UserHash::addToHash(HashRec *table[], const BotSock::Address & key,
   }
 
   newhashrec->info = item;
-  if (NULL != newhashrec->info)
-  {
-    newhashrec->info->incLinkCount();
-  }
   newhashrec->collision = table[index];
   table[index] = newhashrec;
 }
@@ -470,13 +462,6 @@ UserHash::removeFromHashEntry(HashRec *table[], const int index,
       else
 	table[index] = find->collision;
 
-      if (find->info->getLinkCount() > 0)
-	find->info->decLinkCount();
-
-      if (find->info->getLinkCount() == 0)
-      {
-	delete find->info;
-      }
       delete find;
       return true;
     }
@@ -544,16 +529,6 @@ UserHash::clearHash(HashRec *table[])
     {
       HashRec *next_hp = hp->collision;
 
-      if (hp->info->getLinkCount() > 0)
-      {
-        hp->info->decLinkCount();
-      }
-
-      if(hp->info->getLinkCount() == 0)
-      {
-        delete hp->info;
-      }
-  
       delete hp;
       hp = next_hp;
     } 
@@ -605,7 +580,7 @@ UserHash::listUsers(BotClient * client, const PatternPtr userhost,
       {
 	bool matchesUH = userhost->match(userptr->info->getUserHost());
 	bool matchesUIP = false;
-	if (INADDR_NONE != userptr->info->getIp())
+	if (INADDR_NONE != userptr->info->getIP())
 	{
 	  matchesUIP = userhost->match(userptr->info->getUserIP());
 	}
@@ -755,31 +730,33 @@ UserHash::have(std::string nick) const
 }
 
 
-UserEntry *
+UserEntryPtr
 UserHash::findUser(const std::string & nick) const
 {
   std::string lcNick(server.downCase(nick));
+  UserEntryPtr result;
 
   for (int hashIndex = 0; hashIndex < HASHTABLESIZE; ++hashIndex)
   {
-    for (UserHash::HashRec *find = this->hosttable[hashIndex]; NULL != find;
+    for (UserHash::HashRec *find = this->hosttable[hashIndex]; 0 != find;
       find = find->collision)
     {
       if (find->info->matches(lcNick))
       {
-	return find->info;
+	result = find->info;
       }
     }
   }
 
-  return NULL;
+  return result;
 }
 
 
-UserEntry *
+UserEntryPtr
 UserHash::findUser(const std::string & nick, const std::string & userhost) const
 {
   std::string lcNick(server.downCase(nick));
+  UserEntryPtr result;
 
   std::string::size_type at = userhost.find('@');
   if (std::string::npos != at)
@@ -794,12 +771,12 @@ UserHash::findUser(const std::string & nick, const std::string & userhost) const
     {
       if (find->info->matches(lcNick, lcUser, lcHost))
       {
-	return find->info;
+	result = find->info;
       }
     }
   }
 
-  return NULL;
+  return result;
 }
 
 
@@ -873,7 +850,7 @@ UserHash::reportSeedrand(BotClient * client, const PatternPtr mask,
     for (std::list<UserHash::ScoreNode>::iterator pos = scores.begin();
       pos != scores.end(); ++pos)
     {
-      UserEntry * info = pos->getInfo();
+      UserEntryPtr info(pos->getInfo());
 
       client->send(info->output(vars[VAR_SEEDRAND_FORMAT]->getString()));
     }
@@ -1009,15 +986,15 @@ UserHash::reportNets(BotClient * client, const int num)
 
     while (NULL != userptr)
     {
-      if (userptr->info->getIp() != INADDR_NONE)
+      if (userptr->info->getIP() != INADDR_NONE)
       {
         bool found = false;
 
         for (std::list<UserHash::SortEntry>::iterator pos = sort.begin();
 	  pos != sort.end(); ++pos)
         {
-          if ((userptr->info->getIp() & BotSock::ClassCNetMask) ==
-	    (pos->rec->getIp() & BotSock::ClassCNetMask))
+          if ((userptr->info->getIP() & BotSock::ClassCNetMask) ==
+	    (pos->rec->getIP() & BotSock::ClassCNetMask))
 	  {
 	    found = true;
             if (++(pos->count) > maxCount)
@@ -1061,7 +1038,7 @@ UserHash::reportNets(BotClient * client, const int num)
 
         char outmsg[MAX_BUFF];            
         sprintf(outmsg, "  %-40s %3d user%s",
-	  classCMask(BotSock::inet_ntoa(pos->rec->getIp())).c_str(),
+	  classCMask(BotSock::inet_ntoa(pos->rec->getIP())).c_str(),
 	  pos->count, (pos->count == 1) ? "" : "s");
 
         client->send(outmsg);
@@ -1219,7 +1196,7 @@ UserHash::reportMulti(BotClient * client, const int minimum)
             server.same(temp->info->getDomain(), userptr->info->getDomain()))
 	  {
             if (vars[VAR_OPER_IN_MULTI]->getBool() || (!temp->info->getOper() &&
-	      !Config::IsOper(temp->info->getUserHost(), temp->info->getIp())))
+	      !Config::IsOper(temp->info->getUserHost(), temp->info->getIP())))
             {
               numfound++;       /* - zaph & Dianora :-) */
 	    }
@@ -1286,7 +1263,7 @@ UserHash::reportHMulti(BotClient * client, const int minimum)
           if (server.same(temp->info->getHost(), userptr->info->getHost()))
 	  {
             if (vars[VAR_OPER_IN_MULTI]->getBool() || (!temp->info->getOper() &&
-	      !Config::IsOper(temp->info->getUserHost(), temp->info->getIp())))
+	      !Config::IsOper(temp->info->getUserHost(), temp->info->getIP())))
             {
               numfound++;       /* - zaph & Dianora :-) */
 	    }
@@ -1346,7 +1323,7 @@ UserHash::reportUMulti(BotClient * client, const int minimum)
           if (server.same(temp->info->getUser(), userptr->info->getUser()))
 	  {
             if (vars[VAR_OPER_IN_MULTI]->getBool() || (!temp->info->getOper() &&
-	      !Config::IsOper(temp->info->getUserHost(), temp->info->getIp())))
+	      !Config::IsOper(temp->info->getUserHost(), temp->info->getIP())))
             {
               numfound++;       /* - zaph & Dianora :-) */
 	    }
@@ -1397,8 +1374,8 @@ UserHash::reportVMulti(BotClient * client, const int minimum)
       temp = top;
       while (temp != userptr)
         if (server.same(temp->info->getUser(), userptr->info->getUser()) &&
-          ((userptr->info->getIp() & BotSock::ClassCNetMask) ==
-	  (userptr->info->getIp() & BotSock::ClassCNetMask)))
+          ((userptr->info->getIP() & BotSock::ClassCNetMask) ==
+	  (userptr->info->getIP() & BotSock::ClassCNetMask)))
 	{
           break;
 	}
@@ -1410,11 +1387,11 @@ UserHash::reportVMulti(BotClient * client, const int minimum)
         temp = temp->collision;
         while (temp) {
           if (server.same(temp->info->getUser(), userptr->info->getUser()) &&
-            ((userptr->info->getIp() & BotSock::ClassCNetMask) ==
-	    (userptr->info->getIp() & BotSock::ClassCNetMask)))
+            ((userptr->info->getIP() & BotSock::ClassCNetMask) ==
+	    (userptr->info->getIP() & BotSock::ClassCNetMask)))
 	  {
             if (vars[VAR_OPER_IN_MULTI]->getBool() || (!temp->info->getOper() &&
-	      !Config::IsOper(temp->info->getUserHost(), temp->info->getIp())))
+	      !Config::IsOper(temp->info->getUserHost(), temp->info->getIP())))
             {
               numfound++;       /* - zaph & Dianora :-) */
 	    }
@@ -1429,7 +1406,7 @@ UserHash::reportVMulti(BotClient * client, const int minimum)
 	  }
 
           numfound++; /* - zaph and next line*/
-	  std::string IP = BotSock::inet_ntoa(userptr->info->getIp());
+	  std::string IP = BotSock::inet_ntoa(userptr->info->getIP());
 	  std::string::size_type lastDot = IP.rfind('.');
 	  if (std::string::npos != lastDot)
 	  {
@@ -1598,7 +1575,7 @@ UserHash::checkHostClones(const std::string & host)
         }
 
         klineClones(true, rate, currentUser, find->info->getHost(),
-	  find->info->getIp(), differentUser, false,
+	  find->info->getIP(), differentUser, false,
 	  lastIdentd | currentIdentd);
       }
 
@@ -1645,7 +1622,7 @@ UserHash::checkIpClones(const BotSock::Address & ip)
 
   while (NULL != find)
   {
-    if (BotSock::sameClassC(find->info->getIp(), ip) &&
+    if (BotSock::sameClassC(find->info->getIP(), ip) &&
       ((now - find->info->getConnectTime()) <=
       vars[VAR_CLONE_MAX_TIME]->getInt()))
     {
@@ -1725,7 +1702,7 @@ UserHash::checkIpClones(const BotSock::Address & ip)
 
   while (find)
   {
-    if (BotSock::sameClassC(find->info->getIp(), ip) &&
+    if (BotSock::sameClassC(find->info->getIP(), ip) &&
       ((now - find->info->getConnectTime()) <=
       vars[VAR_CLONE_MAX_TIME]->getInt()) && (find->info->getReportTime() == 0))
     {
@@ -1754,7 +1731,7 @@ UserHash::checkIpClones(const BotSock::Address & ip)
       if (1 == cloneCount)
       {
         lastUser = find->info->getUser();
-        lastIp = find->info->getIp();
+        lastIp = find->info->getIP();
       }
       else if (2 == cloneCount)
       {
@@ -1774,7 +1751,7 @@ UserHash::checkIpClones(const BotSock::Address & ip)
           currentIdentd = false;
         }
 
-	currentIp = find->info->getIp();
+	currentIp = find->info->getIP();
 
         if (!server.same(lastUser, currentUser))
         {
@@ -1787,7 +1764,7 @@ UserHash::checkIpClones(const BotSock::Address & ip)
 	}
 
         klineClones(true, rate, currentUser, find->info->getHost(),
-	  find->info->getIp(), differentUser, differentIp,
+	  find->info->getIP(), differentUser, differentIp,
 	  lastIdentd | currentIdentd);
       }
 
@@ -1895,12 +1872,12 @@ UserHash::status(BotClient * client)
 BotSock::Address
 UserHash::getIP(std::string nick, const std::string & userhost) const
 {
-  UserEntry * entry = this->findUser(nick, userhost);
+  UserEntryPtr entry(this->findUser(nick, userhost));
   BotSock::Address result = INADDR_NONE;
 
   if (NULL != entry)
   {
-    result = entry->getIp();
+    result = entry->getIP();
   }
 
   return result;
@@ -1910,7 +1887,7 @@ UserHash::getIP(std::string nick, const std::string & userhost) const
 bool
 UserHash::isOper(std::string nick, const std::string & userhost) const
 {
-  UserEntry * find = this->findUser(nick, userhost);
+  UserEntryPtr find(this->findUser(nick, userhost));
   bool result = false;
 
   if (NULL != find)

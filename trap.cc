@@ -37,6 +37,7 @@
 #include "vars.h"
 #include "pattern.h"
 #include "arglist.h"
+#include "userentry.h"
 
 
 std::list<Trap> TrapList::traps;
@@ -113,30 +114,21 @@ Trap::updateStats(void)
 
 
 bool
-Trap::matches(const std::string & nick, const std::string & userhost,
-  const std::string & ip, const std::string & gecos,
-  const std::string & version) const
+Trap::matches(const UserEntryPtr user, const std::string & version,
+  const std::string & privmsg, const std::string & notice) const
 {
-  std::string::size_type at = userhost.find('@');
-
-  std::string userip;
-  if (std::string::npos != at)
-  {
-    userip = userhost.substr(0, at + 1) + ip;
-  }
-
   if (NULL != this->_rePattern)
   {
-    return (this->_rePattern->match(nick + '!' + userhost) ||
-      this->_rePattern->match(nick + '!' + userip));
+    return (this->_rePattern->match(user->getNickUserHost()) ||
+      this->_rePattern->match(user->getNickUserIP()));
   }
   else
   {
-    if ((this->_nick && !this->_nick->match(nick)) ||
-      (this->_gecos && !this->_gecos->match(gecos)) ||
+    if ((this->_nick && !this->_nick->match(user->getNick())) ||
+      (this->_gecos && !this->_gecos->match(user->getGecos())) ||
       (this->_version && !this->_version->match(version)) ||
-      (this->_userhost && !this->_userhost->match(userhost) &&
-      !this->_userhost->match(userip)))
+      (this->_userhost && !this->_userhost->match(user->getUserHost()) &&
+      !this->_userhost->match(user->getUserIP())))
     {
       return false;
     }
@@ -422,13 +414,13 @@ Trap::split(const std::string & pattern, std::string & nick,
 
 
 void
-Trap::doAction(const std::string & nick, const std::string & userhost,
-  const std::string & ip, const std::string & gecos,
-  const std::string & version) const
+Trap::doAction(const UserEntryPtr user) const
 {
-  std::string notice("*** Trapped: " + nick + "!" + userhost + " [" + ip + "]");
-
-  BotSock::Address IP = BotSock::inet_addr(ip);
+  std::string notice("*** Trapped: ");
+  notice += user->getNickUserHost();
+  notice += " [";
+  notice += user->getTextIP();
+  notice += "]";
 
   Log::Write(notice);
   switch (this->getAction())
@@ -437,47 +429,29 @@ Trap::doAction(const std::string & nick, const std::string & userhost,
       ::SendAll(notice, UserFlags::OPER, WATCH_TRAPS);
       break;
     case TRAP_KILL:
-      server.kill("Auto-Kill", nick, this->getReason());
+      server.kill("Auto-Kill", user->getNick(), this->getReason());
       break;
     case TRAP_KLINE:
-      server.kline("Auto-Kline", this->getTimeout(), klineMask(userhost),
-        this->getReason());
+      server.kline("Auto-Kline", this->getTimeout(),
+	klineMask(user->getUserHost()), this->getReason());
       break;
     case TRAP_KLINE_HOST:
       {
-        std::string::size_type at = userhost.find('@');
-        if (at != std::string::npos)
-        {
-          std::string host = userhost.substr(at + 1, std::string::npos);
-          server.kline("Auto-Kline", this->getTimeout(), "*@" + host,
-            this->getReason());
-        }
-        else
-        {
-          std::cerr << "Userhost is missing @ symbol!" << std::endl;
-        }
+	server.kline("Auto-Kline", this->getTimeout(), "*@" + user->getHost(),
+	  this->getReason());
       }
       break;
     case TRAP_KLINE_DOMAIN:
       {
-        std::string::size_type at = userhost.find('@');
-        if (at != std::string::npos)
-        {
-          std::string domain = getDomain(userhost.substr(at + 1,
-  	    std::string::npos), true);
-          server.kline("Auto-Kline", this->getTimeout(), "*@" + domain,
-            this->getReason());
-        }
-        else
-        {
-          std::cerr << "Userhost is missing @ symbol!" << std::endl;
-        }
+	std::string domain = getDomain(user->getHost(), true);
+	server.kline("Auto-Kline", this->getTimeout(), "*@" + domain,
+	  this->getReason());
       }
       break;
     case TRAP_KLINE_IP:
-      if (INADDR_NONE != IP)
+      if (INADDR_NONE != user->getIP())
       {
-        server.kline("Auto-Kline", this->getTimeout(), "*@" + ip,
+        server.kline("Auto-Kline", this->getTimeout(), "*@" + user->getTextIP(),
           this->getReason());
       }
       else
@@ -488,36 +462,28 @@ Trap::doAction(const std::string & nick, const std::string & userhost,
       break;
     case TRAP_KLINE_USERNET:
       {
-        std::string::size_type at = userhost.find('@');
-        if (at != std::string::npos)
-        {
-          std::string user = userhost.substr(0, at);
-          if ((user.length() > 1) && (user[0] == '~'))
-          {
-  	    user = user.substr(1);
-	  }
-	  if (INADDR_NONE != IP)
-	  {
-	    server.kline("Auto-Kline", this->getTimeout(), "*" + user + "@" +
-	      classCMask(ip), this->getReason());
-	  }
-	  else
-	  {
-	    std::cerr << "Missing or invalid IP address -- unable to KLINE!" <<
-              std::endl;
-	  }
-        }
-        else
-        {
-          std::cerr << "Userhost is missing @ symbol!" << std::endl;
-        }
+	std::string username = user->getUser();
+	if ((username.length() > 1) && (username[0] == '~'))
+	{
+	  username = username.substr(1);
+	}
+	if (INADDR_NONE != user->getIP())
+	{
+	  server.kline("Auto-Kline", this->getTimeout(), "*" + username + "@" +
+	    classCMask(user->getTextIP()), this->getReason());
+	}
+	else
+	{
+	  std::cerr << "Missing or invalid IP address -- unable to KLINE!" <<
+	    std::endl;
+	}
       }
       break;
     case TRAP_KLINE_NET:
-      if (INADDR_NONE != IP)
+      if (INADDR_NONE != user->getIP())
       {
-        server.kline("Auto-Kline", this->getTimeout(), "*@" + classCMask(ip),
-	  this->getReason());
+        server.kline("Auto-Kline", this->getTimeout(), "*@" +
+	  classCMask(user->getTextIP()), this->getReason());
       }
       else
       {
@@ -526,9 +492,10 @@ Trap::doAction(const std::string & nick, const std::string & userhost,
       }
       break;
     case TRAP_DLINE_IP:
-      if (INADDR_NONE != IP)
+      if (INADDR_NONE != user->getIP())
       {
-        server.dline("Auto-Dline", this->getTimeout(), ip, this->getReason());
+        server.dline("Auto-Dline", this->getTimeout(), user->getTextIP(),
+	  this->getReason());
       }
       else
       {
@@ -537,10 +504,10 @@ Trap::doAction(const std::string & nick, const std::string & userhost,
       }
       break;
     case TRAP_DLINE_NET:
-      if (INADDR_NONE != IP)
+      if (INADDR_NONE != user->getIP())
       {
-        server.dline("Auto-Dline", this->getTimeout(), classCMask(ip),
-	  this->getReason());
+        server.dline("Auto-Dline", this->getTimeout(),
+	  classCMask(user->getTextIP()), this->getReason());
       }
       else
       {
@@ -704,21 +671,21 @@ TrapList::remove(const std::string & pattern)
 
 
 void
-TrapList::match(const std::string & nick, const std::string & userhost,
-  const std::string & ip, const std::string & gecos,
-  const std::string & version)
+TrapList::match(const UserEntryPtr user, const std::string & version,
+  const std::string & privmsg, const std::string & notice)
 {
-  if (!Config::IsOKHost(userhost, ip) && !Config::IsOper(userhost, ip))
+  if (!Config::IsOKHost(user->getUserHost(), user->getIP()) &&
+    !Config::IsOper(user->getUserHost(), user->getIP()))
   {
     for (std::list<Trap>::iterator pos = traps.begin(); pos != traps.end();
       ++pos)
     {
       try
       {
-        if (pos->matches(nick, userhost, ip, gecos, version))
+        if (pos->matches(user, version, privmsg, notice))
         {
 	  pos->updateStats();
-	  pos->doAction(nick, userhost, ip, gecos, version);
+	  pos->doAction(user);
         }
       }
       catch (OOMon::regex_error & e)
@@ -729,6 +696,30 @@ TrapList::match(const std::string & nick, const std::string & userhost,
       }
     }
   }
+}
+
+void
+TrapList::match(const UserEntryPtr user)
+{
+  TrapList::match(user, "", "", "");
+}
+
+void
+TrapList::matchCtcpVersion(const UserEntryPtr user, const std::string & version)
+{
+  TrapList::match(user, version, "", "");
+}
+
+void
+TrapList::matchPrivmsg(const UserEntryPtr user, const std::string & privmsg)
+{
+  TrapList::match(user, "", privmsg, "");
+}
+
+void
+TrapList::matchNotice(const UserEntryPtr user, const std::string & notice)
+{
+  TrapList::match(user, "", "", notice);
 }
 
 void

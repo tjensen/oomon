@@ -27,6 +27,9 @@
 #include <string>
 #include <ctime>
 
+// Boost C++ Headers
+#include <boost/shared_ptr.hpp>
+
 // OOMon Headers
 #include "botsock.h"
 
@@ -44,8 +47,6 @@ public:
   void setNick(const std::string & aNick);
   void setOper(const bool oper) { this->isOper = oper; };
   void setReportTime(const std::time_t t) { this->reportTime = t; };
-  void incLinkCount() { ++this->linkCount; };
-  void decLinkCount() { --this->linkCount; };
   void version(void);
   void hasVersion(const std::string & version);
 
@@ -62,15 +63,47 @@ public:
   std::string getDomain() const { return this->domain; };
   std::string getClass() const { return this->userClass; };
   std::string getGecos() const { return this->gecos; };
-  BotSock::Address getIp() const { return this->ip; };
+  BotSock::Address getIP() const { return this->ip; };
+  std::string getTextIP() const
+  {
+    return BotSock::inet_ntoa(this->ip);
+  }
   bool getOper() const { return this->isOper; };
   int getScore() const { return this->randScore; };
-  std::string getUserHost() const { return this->user + '@' + this->host; };
-  std::string getUserIP() const
-    { return this->user + '@' + BotSock::inet_ntoa(this->ip); };
+  std::string getUserHost(void) const
+  {
+    std::string result(this->user);
+    result += '@';
+    result += this->host;
+    return result;
+  }
+  std::string getUserIP(void) const
+  {
+    std::string result(this->user);
+    result += '@';
+    result += BotSock::inet_ntoa(this->ip);
+    return result;
+  }
+  std::string getNickUserHost(void) const
+  {
+    std::string result(this->nick);
+    result += '!';
+    result += this->user;
+    result += '@';
+    result += this->host;
+    return result;
+  }
+  std::string getNickUserIP(void) const
+  {
+    std::string result(this->nick);
+    result += '!';
+    result += this->user;
+    result += '@';
+    result += BotSock::inet_ntoa(this->ip);
+    return result;
+  }
   std::time_t getConnectTime() const { return this->connectTime; };
   std::time_t getReportTime() const { return this->reportTime; };
-  std::time_t getLinkCount() const { return this->linkCount; };
 
   std::string output(const std::string & format) const;
 
@@ -88,8 +121,10 @@ private:
   std::time_t versioned;
   bool isOper;
   int randScore;
-  int linkCount;
 };
+
+
+typedef boost::shared_ptr<UserEntry> UserEntryPtr;
 
 
 #endif /* __USERENTRY_H__ */

@@ -29,6 +29,7 @@
 #include "strtype"
 #include "botsock.h"
 #include "pattern.h"
+#include "userentry.h"
 
 
 #define HASHTABLESIZE 3001
@@ -69,8 +70,8 @@ public:
 
   bool have(std::string nick) const;
 
-  class UserEntry * findUser(const std::string & nick) const;
-  class UserEntry * findUser(const std::string & nick,
+  UserEntryPtr findUser(const std::string & nick) const;
+  UserEntryPtr findUser(const std::string & nick,
     const std::string & userhost) const;
 
   void checkHostClones(const std::string & host);
@@ -105,28 +106,28 @@ private:
   class HashRec
   {
   public:
-    class UserEntry * info;
+    UserEntryPtr info;
     HashRec * collision;
   };
 
   class ScoreNode
   {
   public:
-    ScoreNode(class UserEntry * info, int score) : _info(info),
+    ScoreNode(UserEntryPtr info, int score) : _info(info),
       _score(score) { }
-    class UserEntry * getInfo() const { return this->_info; };
+    UserEntryPtr getInfo() const { return this->_info; };
     int getScore() const { return this->_score; };
     bool operator < (const ScoreNode & compare) const
       { return (this->_score < compare._score); };
   private:
-    class UserEntry * _info;
+    UserEntryPtr _info;
     int _score;
   };
 
   class SortEntry
   {
   public:
-    class UserEntry * rec;
+    UserEntryPtr rec;
     int count;
   };
 
@@ -134,9 +135,9 @@ private:
   static int hashFunc(const std::string & key);
 
   static void addToHash(HashRec *table[], const BotSock::Address & key,
-    class UserEntry * item);
+    UserEntryPtr item);
   static void addToHash(HashRec *table[], const std::string & key,
-    class UserEntry * item);
+    UserEntryPtr item);
 
   static bool removeFromHashEntry(HashRec * table[], const int index,
     const std::string & host, const std::string & user,

@@ -49,7 +49,7 @@ UserEntry::UserEntry(const std::string & aNick,
   : user(aUser), host(aHost), fakeHost(aFakeHost),
   domain(::getDomain(aHost, false)), userClass(::server.downCase(aUserClass)),
   gecos(aGecos), ip(anIp), connectTime(aConnectTime), reportTime(0),
-  versioned(0), isOper(oper), linkCount(0)
+  versioned(0), isOper(oper)
 {
   this->setNick(aNick);
 }
@@ -66,8 +66,6 @@ UserEntry::version(void)
 void
 UserEntry::hasVersion(const std::string & version)
 {
-  TrapList::match(this->getNick(), this->getUserHost(), this->getIp(),
-    this->getGecos(), version);
   this->versioned = 0;
 }
 
@@ -121,7 +119,7 @@ UserEntry::checkVersionTimeout(const std::time_t now, const std::time_t timeout)
       ::SendAll(notice, UserFlags::OPER, WATCH_CTCPVERSIONS);
       Log::Write(notice);
 
-      doAction(this->getNick(), userhost, this->getIp(),
+      doAction(this->getNick(), userhost, this->getIP(),
 	vars[VAR_CTCPVERSION_TIMEOUT_ACTION]->getAction(),
 	vars[VAR_CTCPVERSION_TIMEOUT_ACTION]->getInt(),
 	vars[VAR_CTCPVERSION_TIMEOUT_REASON]->getString(), false);
@@ -190,9 +188,9 @@ UserEntry::output(const std::string & format) const
 	  ++next;
 	  break;
 	case 'I':
-	  if (this->getIp() != INADDR_NONE)
+	  if (this->getIP() != INADDR_NONE)
 	  {
-            result += '[' + BotSock::inet_ntoa(this->getIp()) + ']';
+            result += '[' + BotSock::inet_ntoa(this->getIP()) + ']';
           }
 	  ++next;
 	  break;

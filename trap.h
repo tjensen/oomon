@@ -34,6 +34,7 @@
 #include "strtype"
 #include "botsock.h"
 #include "pattern.h"
+#include "userentry.h"
 
 
 enum TrapAction
@@ -51,14 +52,11 @@ public:
   Trap(const Trap & copy);
   virtual ~Trap(void);
 
-  bool matches(const std::string & nick, const std::string & userhost,
-    const std::string & ip, const std::string & gecos,
-    const std::string & version) const;
+  bool matches(const UserEntryPtr user, const std::string & version,
+    const std::string & privmsg, const std::string & notice) const;
   bool operator==(const Trap & other) const;
   bool operator==(const std::string & other) const;
-  void doAction(const std::string & nick, const std::string & userhost,
-    const std::string & ip, const std::string & gecos,
-    const std::string & version) const;
+  void doAction(const UserEntryPtr user) const;
 
   void updateStats(void);
 
@@ -99,15 +97,14 @@ public:
   static bool remove(const std::string & pattern);
   static void clear(void) { TrapList::traps.clear(); };
 
-  static void match(const std::string & nick, const std::string & userhost,
-    const std::string & ip, const std::string & gecos,
-    const std::string & version = std::string());
-  static void match(const std::string & nick, const std::string & userhost,
-    const BotSock::Address & ip, const std::string & gecos,
-    const std::string & version = std::string())
-  {
-    TrapList::match(nick, userhost, BotSock::inet_ntoa(ip), gecos, version);
-  };
+  static void match(const UserEntryPtr user, const std::string & version,
+    const std::string & privmsg, const std::string & notice);
+  static void match(const UserEntryPtr user);
+  static void matchCtcpVersion(const UserEntryPtr user,
+    const std::string & version);
+  static void matchPrivmsg(const UserEntryPtr user,
+    const std::string & privmsg);
+  static void matchNotice(const UserEntryPtr user, const std::string & notice);
 
   static void list(class BotClient * client, bool showCounts, bool showTimes);
 
