@@ -43,6 +43,23 @@ if test "$libexecdir" = '${exec_prefix}/libexec' &&
         localstatedir='${prefix}'
 fi
 
+
+#
+# If we're running GNU C++, add helpful command line arguments, including
+# -ftemplate-depth-19 if it's an old version.
+#
+if test x$GXX = xyes; then
+	dnl Grab G++ version
+	gxx_version=`${CXX} -dumpversion`
+
+	CXXFLAGS="$CXXFLAGS -Wall"
+
+	case $gxx_version in
+	  2.9*)	CXXFLAGS="$CXXFLAGS -ftemplate-depth-19";;
+	esac
+fi
+
+
 dnl
 dnl check for NeXT.. and -bsd switch
 dnl
@@ -359,6 +376,7 @@ dnl	[
 dnl		LIBS="${PTHREAD_LIBS} $LIBS"
 dnl		CXXFLAGS="$CXXFLAGS ${PTHREAD_CFLAGS}"
 dnl	], AC_MSG_ERROR([No pthreads? Uh-oh!]))
+
 
 dnl
 dnl check for hpux, and hpux version
