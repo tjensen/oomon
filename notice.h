@@ -113,9 +113,10 @@ public:
 
   int size(void) const { return this->list.size(); };
 
-  void onNotice(const std::string & notice)
+  bool onNotice(const std::string & notice)
   {
     time_t now = time(NULL);
+    bool result = false;
 
     this->expire(now);
 
@@ -135,11 +136,14 @@ public:
       {
 	i->update(now, temp);
       }
+
+      result = true;
     }
     catch (OOMon::notice_parse_error)
     {
       // Ignore the notice for now
     }
+    return result;
   }
 
 private:

@@ -42,6 +42,7 @@
 #include "vars.h"
 #include "jupe.h"
 #include "userhash.h"
+#include "pattern.h"
 
 
 #ifdef DEBUG
@@ -63,6 +64,55 @@ IRC::IRC(): BotSock(false, true), supportETrace(false), supportKnock(false),
   this->gettingTrace = false;
   this->myNick = "";
   this->lastUserDeltaCheck = 0;
+
+  addServerNoticeParser("Client connecting: *", ::onClientConnect);
+  addServerNoticeParser("Client exiting: *", ::onClientExit);
+  addServerNoticeParser("Nick change: *", ::onNickChange);
+  addServerNoticeParser("* is now an operator*", ::onOperNotice);
+  addServerNoticeParser("Failed OPER attempt - *", ::onOperFailNotice);
+  addServerNoticeParser("Received KILL message for *", ::onKillNotice);
+  addServerNoticeParser("Invalid username: *", ::onInvalidUsername);
+  addServerNoticeParser("LINKS *", ::onLinksNotice);
+  addServerNoticeParser("TRACE *", ::onTraceNotice);
+  addServerNoticeParser("MOTD *", ::onMotdNotice);
+  addServerNoticeParser("INFO *", ::onInfoNotice);
+  addServerNoticeParser("STATS *", ::onStatsNotice);
+  addServerNoticeParser("Possible flooder*", ::onFlooderNotice);
+  addServerNoticeParser("*is a possible spambot*", ::onSpambotNotice);
+  addServerNoticeParser("Too many local connections for*",
+    ::onTooManyConnNotice);
+  addServerNoticeParser("* is attempting to join locally juped channel*",
+    ::onJupeJoinNotice);
+  addServerNoticeParser("* added K-Line for *",
+    std::bind1st(std::mem_fun(&KlineList::parseAndAdd), &this->klines));
+  addServerNoticeParser("* added temporary * K-Line for *",
+    std::bind1st(std::mem_fun(&KlineList::parseAndAdd), &this->klines));
+  addServerNoticeParser("* has removed the K-Line for: *",
+    std::bind1st(std::mem_fun(&KlineList::parseAndRemove), &this->klines));
+  addServerNoticeParser("* has removed the temporary K-Line for: *",
+    std::bind1st(std::mem_fun(&KlineList::parseAndRemove), &this->klines));
+  addServerNoticeParser("Temporary K-line for * expired",
+    std::bind1st(std::mem_fun(&KlineList::onExpireNotice), &this->klines));
+  addServerNoticeParser("* added D-Line for *",
+    std::bind1st(std::mem_fun(&KlineList::parseAndAdd), &this->dlines));
+  addServerNoticeParser("* added temporary * D-Line for *",
+    std::bind1st(std::mem_fun(&KlineList::parseAndAdd), &this->dlines));
+  addServerNoticeParser("* has removed the D-Line for: *",
+    std::bind1st(std::mem_fun(&KlineList::parseAndRemove), &this->dlines));
+  addServerNoticeParser("* has removed the temporary D-Line for: *",
+    std::bind1st(std::mem_fun(&KlineList::parseAndRemove), &this->dlines));
+  addServerNoticeParser("Temporary D-line for * expired",
+    std::bind1st(std::mem_fun(&KlineList::onExpireNotice), &this->dlines));
+  addServerNoticeParser("?LINE active for *", ::onLineActive);
+  addServerNoticeParser("?LINE over-ruled for *", ::onLineActive);
+  addServerNoticeParser("* is requesting gline for *", ::onGlineRequest);
+  addServerNoticeParser("* has triggered gline for *", ::onGlineRequest);
+  addServerNoticeParser("Rejecting clonebot: *", ::onCsClones);
+  addServerNoticeParser("Clonebot killed: *", ::onCsClones);
+  addServerNoticeParser("Nick flooding detected by: *", ::onCsNickFlood);
+  addServerNoticeParser("Rejecting *", ::onBotReject);
+  addServerNoticeParser("* is clearing temp klines", ::onClearTempKlines);
+  addServerNoticeParser("* is clearing temp dlines", ::onClearTempDlines);
 }
 
 
@@ -587,233 +637,17 @@ IRC::onNotice(const std::string & from, const std::string & userhost,
 {
   if (this->same(from, serverName))
   {
-    if (text.length() > 14)
-      if (text.substr(0, 14) == "*** Notice -- ")
-      {
-	// Server Notice
-        text = text.substr(14);
-
-	if (text.find("Client connecting: ") == 0)
-	{
-	  std::string msg = text.substr(19);
-	  ::SendAll("Connected: " + msg, UF_CONN, WATCH_CONNECTS);
-	  onClientConnect(msg);
-	}
-	else if (text.find("Client exiting: ") == 0)
-	{
-	  std::string msg = text.substr(16);
-	  ::SendAll("Disconnected: " + msg, UF_CONN, WATCH_DISCONNECTS);
-	  onClientExit(msg);
-	}
-	else if (std::string::npos !=
-	  text.find("is now an operator"))
-	{
-	  onOperNotice(text);
-	}
-	else if (text.find("Failed OPER attempt -") == 0)
-	{
-	  onOperFailNotice(text);
-        }
-	else if (text.find("Received KILL message for ") == 0)
-	{
-          Kill_Add_Report(text.substr(26));
-	}
-	else if (text.find("Rejecting clonebot:") == 0)
-	{
-	  CS_Clones(text.substr(20));
-	}
-	else if (text.find("Nick change:") == 0)
-	{
-	  ::SendAll(text, UF_NICK, WATCH_NICK_CHANGES);
-	  onNickChange(text.substr(13));
-	}
-	else if (text.find("Nick flooding detected by:") == 0)
-	{
-	  CS_Nick_Flood(text.substr(26));
-	}
-	else if (text.find("Rejecting ") == 0)
-	{
-	  Bot_Reject(text.substr(10));
-	}
-	else if (text.find("Invalid username: ") == 0)
-	{
-	  onInvalidUsername(text.substr(18));
-	}
-	else if (text.find("Clonebot killed:") == 0)
-	{
-	  CS_Clones(text.substr(16));
-	}
-	else if (this->upCase(text).find("LINKS ") == 0)
-	{
-	  if (vars[VAR_WATCH_LINKS_NOTICES]->getBool())
-	  {
-	    onLinksNotice(text.substr(6));
-	  }
-	}
-	else if (this->upCase(text).find("TRACE ") == 0)
-	{
-	  if (vars[VAR_WATCH_TRACE_NOTICES]->getBool())
-	  {
-	    onTraceNotice(text.substr(6));
-	  }
-	}
-	else if (this->upCase(text).find("MOTD ") == 0)
-	{
-	  if (vars[VAR_WATCH_MOTD_NOTICES]->getBool())
-	  {
-	    onMotdNotice(text.substr(5));
-	  }
-	}
-	else if (this->upCase(text).find("INFO ") == 0)
-	{
-	  if (vars[VAR_WATCH_INFO_NOTICES]->getBool())
-	  {
-	    onInfoNotice(text.substr(5));
-	  }
-	}
-	else if (this->upCase(text).find("STATS ") == 0)
-	{
-	  onStatsNotice(text.substr(6));
-	}
-	else if (std::string::npos !=
-	  text.find("is attempting to join locally juped channel"))
-	{
-	  if (vars[VAR_WATCH_JUPE_NOTICES]->getBool())
-	  {
-	    jupeJoiners.onNotice(text);
-	  }
-	}
-	else if (this->downCase(text).find("possible flooder") == 0)
-        {
-	  if (vars[VAR_WATCH_FLOODER_NOTICES]->getBool())
-	  {
-	    onFlooderNotice(text);
-	  }
-	}
-	else if (std::string::npos !=
-	  this->downCase(text).find("is a possible spambot"))
-        {
-	  if (vars[VAR_WATCH_SPAMBOT_NOTICES]->getBool())
-	  {
-	    onSpambotNotice(text);
-	  }
-	}
-	else if (0 ==
-	  this->downCase(text).find("too many local connections for"))
-	{
-	  if (vars[VAR_WATCH_TOOMANY_NOTICES]->getBool())
-	  {
-	    onTooManyConnNotice(text);
-	  }
-	}
-	else if ((std::string::npos != text.find("added K-Line for")) ||
-	  ((std::string::npos != text.find("added temporary")) &&
-	  (std::string::npos != text.find("K-Line for"))))
-        {
-	  // Monitor and report added k-lines
-	  this->klines.ParseAndAdd(text);
-	}
-	else if ((std::string::npos != text.find("added D-Line for")) ||
-	  ((std::string::npos != text.find("added temporary")) &&
-	  (std::string::npos != text.find("D-Line for"))))
-        {
-	  // Monitor and report added d-lines
-	  this->dlines.ParseAndAdd(text);
-	}
-	else if ((std::string::npos !=
-	  text.find(" has removed the K-Line for: ")) ||
-	  (std::string::npos !=
-	  text.find(" has removed the temporary K-Line for: ")))
-	{
-	  // Monitor and report removed k-lines
-	  this->klines.ParseAndRemove(text);
-	}
-	else if ((std::string::npos !=
-	  text.find(" has removed the D-Line for: ")) ||
-	  (std::string::npos !=
-	  text.find(" has removed the temporary D-Line for: ")))
-	{
-	  // Monitor and report removed d-lines
-	  this->dlines.ParseAndRemove(text);
-	}
-	else if ((std::string::npos !=
-	  text.find("Temporary K-line for")) && (std::string::npos !=
-	  text.find("expired")))
-	{
-	  // A temporary kline has expired -- remove it!
-	  this->klines.onExpireNotice(text);
-	}
-	else if ((std::string::npos !=
-	  text.find("Temporary D-line for")) && (std::string::npos !=
-	  text.find("expired")))
-	{
-	  // A temporary dline has expired -- remove it!
-	  this->dlines.onExpireNotice(text);
-	}
-	else if (std::string::npos != text.find("K-Line for"))
-	{
-	  // Not sure what this is for anymore!
-	  ::SendAll(text, UF_OPER, WATCH_KLINES);
-	}
-	else if (std::string::npos != text.find("D-Line for"))
-	{
-	  // Not sure what this is for anymore!
-	  ::SendAll(text, UF_OPER, WATCH_DLINES);
-	}
-	else if (std::string::npos != text.find("KLINE active for"))
-	{
-          // IRC >> :plasma.toast.pc NOTICE OOMon :*** Notice -- KLINE active for ToastRR[toast@cs6669210-179.austin.rr.com]
-	  // Show activated k-lines
-	  ::SendAll(text, UF_OPER, WATCH_KLINE_MATCHES);
-	  Log::Write(text);
-	}
-	else if (std::string::npos != text.find("KLINE over-ruled for"))
-	{
-	  // Show over-ruled k-lines
-	  ::SendAll(text, UF_OPER, WATCH_KLINE_MATCHES);
-	  Log::Write(text);
-	}
-	else if (std::string::npos != text.find("DLINE active for"))
-	{
-          // IRC >> :plasma.toast.pc NOTICE OOMon :*** Notice -- DLINE active for ToastRR[toast@cs6669210-179.austin.rr.com]
-	  // Show activated d-lines
-	  ::SendAll(text, UF_OPER, WATCH_DLINE_MATCHES);
-	  Log::Write(text);
-	}
-	else if (std::string::npos != text.find("DLINE over-ruled for"))
-	{
-	  // Show over-ruled d-lines
-	  ::SendAll(text, UF_OPER, WATCH_DLINE_MATCHES);
-	  Log::Write(text);
-	}
-	else if ((std::string::npos != text.find("is requesting gline for")) ||
-	  (std::string::npos != text.find("has triggered gline for")))
-	{
-	  // Show requested/triggered g-lines
-	  ::onGlineRequest(text);
-	}
-	else if (std::string::npos != text.find("GLINE active for"))
-	{
-	  // Show activated g-lines
-	  ::SendAll(text, UF_OPER, WATCH_GLINE_MATCHES);
-	  Log::Write(text);
-	}
-	else if (vars[VAR_TRACK_TEMP_KLINES]->getBool() &&
-	  (std::string::npos != text.find("is clearing temp klines")))
-	{
-	  ::onClearTempKlines(text);
-	}
-	else if (vars[VAR_TRACK_TEMP_DLINES]->getBool() &&
-	  (std::string::npos != text.find("is clearing temp dlines")))
-	{
-	  ::onClearTempDlines(text);
-	}
-      } else
-      // plasma.engr.arizona.edu *** You need oper and N flag for +n
-      if (this->upCase(text) == "*** YOU NEED OPER AND N FLAG FOR +N")
-      {
-	Log::Write("I don't have an N flag in my o: line! :(");
-      }
+    if ((text.length() > 14) &&
+      (0 == text.substr(0, 14).compare("*** Notice -- ")))
+    {
+      // Server Notice
+      this->onServerNotice(text.substr(14));
+    }
+    else if (0 ==
+      this->upCase(text).compare("*** YOU NEED OPER AND N FLAG FOR +N"))
+    {
+      Log::Write("I don't have an N flag in my o: line! :(");
+    }
   }
   else if (this->same(from, vars[VAR_XO_SERVICES_RESPONSE]->getString()))
   {
@@ -1298,7 +1132,7 @@ IRC::getCommand(const std::string & text)
 
 
 //////////////////////////////////////////////////////////////////////
-// upCase(c)
+// IRC::upCase(c)
 //
 // Description:
 //  Converts a character to upper-case.
@@ -1354,7 +1188,7 @@ IRC::upCase(const char c) const
 
 
 //////////////////////////////////////////////////////////////////////
-// upCase(text)
+// IRC::upCase(text)
 //
 // Description:
 //  Converts a string to all upper-case characters.
@@ -1421,7 +1255,7 @@ IRC::upCase(const std::string & text) const
 
 
 //////////////////////////////////////////////////////////////////////
-// downCase(c)
+// IRC::downCase(c)
 //
 // Description:
 //  Converts a character to lower-case.
@@ -1477,7 +1311,7 @@ IRC::downCase(const char c) const
 
 
 //////////////////////////////////////////////////////////////////////
-// downCase(text)
+// IRC::downCase(text)
 //
 // Description:
 //  Converts a string to all lower-case characters.
@@ -1544,7 +1378,7 @@ IRC::downCase(const std::string & text) const
 
 
 //////////////////////////////////////////////////////////////////////
-// same(text1, text2)
+// IRC::same(text1, text2)
 //
 // Description:
 //  Case-insensitively compares two strings.
@@ -1559,7 +1393,63 @@ IRC::downCase(const std::string & text) const
 bool
 IRC::same(const std::string & text1, const std::string & text2) const
 {
-  return (this->upCase(text1) == this->upCase(text2));
+  return (0 == this->upCase(text1).compare(this->upCase(text2)));
 }
 
+
+//////////////////////////////////////////////////////////////////////
+// IRC::Parser::match(text)
+//
+// Description:
+//  Compares the text against the parser's pattern.
+//
+// Parameters:
+//  text - The text to compare against the pattern.
+//
+// Return Value:
+//  The function returns true if the text matches the pattern and
+//  the caller should stop parsing the text.
+//////////////////////////////////////////////////////////////////////
+bool
+IRC::Parser::match(std::string text) const
+{
+  bool result = false;
+
+  if (this->_pattern.match(text))
+  {
+    result = this->_func(text);
+  }
+
+  return result;
+}
+
+
+//////////////////////////////////////////////////////////////////////
+// IRC::addServerNotice(pattern, func)
+//
+// Description:
+//  Registers a new server notice handler function.
+//
+// Parameters:
+//  pattern - A string containing a cluster-style pattern.
+//  func    - The function to call when text matching the pattern is
+//            detected.
+//
+// Return Value:
+//  None
+//////////////////////////////////////////////////////////////////////
+void
+IRC::addServerNoticeParser(const std::string & pattern,
+  const ParserFunction func)
+{
+  serverNotices.push_back(Parser(pattern, func));
+}
+
+
+void
+IRC::onServerNotice(const std::string & text)
+{
+  std::find_if(this->serverNotices.begin(), this->serverNotices.end(),
+    std::bind2nd(std::mem_fun_ref(&Parser::match), text));
+}
 

@@ -237,7 +237,7 @@ Remote::authenticate(std::string text)
 
   std::string command = UpCase(FirstWord(text));
 
-  if (command == "AUTH")
+  if (0 == command.compare("AUTH"))
   {
     std::string address = BotSock::inet_ntoa(this->getRemoteAddress());
     std::string hostname = this->getHostname();
@@ -283,15 +283,15 @@ Remote::parse(std::string text)
 
     std::string command = UpCase(FirstWord(text));
 
-    if ("BOTJOIN" == command)
+    if (0 == command.compare("BOTJOIN"))
     {
       result = this->onBotJoin(from, FirstWord(text));
     }
-    else if ("BOTPART" == command)
+    else if (0 == command.compare("BOTPART"))
     {
       result = this->onBotPart(from, FirstWord(text));
     }
-    else if ("CHAT" == command)
+    else if (0 == command.compare("CHAT"))
     {
       result = this->onChat(from, text);
     }
@@ -305,7 +305,7 @@ Remote::parse(std::string text)
   {
     std::string command = UpCase(FirstWord(text));
 
-    if ("ERROR" == command)
+    if (0 == command.compare("ERROR"))
     {
       clients.sendAll("*** Bot " + this->getHandle() + " reports error: " +
 	text);

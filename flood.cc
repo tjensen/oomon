@@ -103,20 +103,20 @@ FloodList::addFlood(const std::string & nick, const std::string & userhost,
 }
 
 
-void
+bool
 FloodList::onNotice(const std::string & notice, std::string text,
   time_t now)
 {
   if (server.downCase(FirstWord(text)) != "requested")
   {
     // broken.  ignore it.
-    return;
+    return false;
   }
 
   if (server.downCase(FirstWord(text)) != "by")
   {
     // broken.  ignore it.
-    return;
+    return false;
   }
 
   std::string nick = FirstWord(text);
@@ -126,7 +126,7 @@ FloodList::onNotice(const std::string & notice, std::string text,
   if ((nick == "") || (userhost == ""))
   {
     // broken.  ignore it.
-    return;
+    return false;
   }
 
   // Remove brackets/parentheses from userhost
@@ -146,15 +146,15 @@ FloodList::onNotice(const std::string & notice, std::string text,
   }
 
   /* Don't complain about opers */
-  if (Config::IsOper(userhost, users.getIP(nick, userhost)) ||
-    users.isOper(nick, userhost))
+  if (!Config::IsOper(userhost, users.getIP(nick, userhost)) &&
+    !users.isOper(nick, userhost))
   {
-    return;
+    ::SendAll(notice, UF_OPER, this->getWatch());
+
+    this->addFlood(nick, userhost, now, server.same(serverName,
+      server.getServerName()));
   }
 
-  ::SendAll(notice, UF_OPER, this->getWatch());
-
-  this->addFlood(nick, userhost, now, server.same(serverName,
-    server.getServerName()));
+  return true;
 }
 

@@ -1297,6 +1297,6 @@ void
 CommandParser::cmdTest(BotClient::ptr from, const std::string & command,
   std::string parameters)
 {
-  // Umimplemented
+  server.onServerNotice(parameters);
 }
 

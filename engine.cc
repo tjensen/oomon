@@ -325,7 +325,7 @@ addToNickChangeList(const std::string & userhost, const std::string & oldNick,
       {
         /* just decrement 10 second units of nick changes */
         ncp->nickChangeCount -= timeTicks;
-        if (ncp->userhost == userhost)
+        if (0 == ncp->userhost.compare(userhost))
         {
           ncp->lastNickChange = currentTime;
           ncp->lastNick = lastNick;
@@ -391,7 +391,7 @@ onTraceUser(const std::string & Type, const std::string & Class,
   const std::string & Nick, std::string UserHost,
   std::string IP = "")
 {
-  if ((Type == "") || (Nick == "") || (UserHost == ""))
+  if (Type.empty() || Nick.empty() || UserHost.empty())
     return;
 
   // Remove the brackets surrounding the user@host
@@ -401,7 +401,7 @@ onTraceUser(const std::string & Type, const std::string & Class,
   }
 
   // This might not be necessary, but we'll do it just in case...
-  if ((UserHost.length() >= 3) && (UserHost.substr(0, 3) == "(+)"))
+  if ((UserHost.length() >= 3) && (0 == UserHost.substr(0, 3).compare("(+)")))
   {
     UserHost = UserHost.substr(3, std::string::npos);
   }
@@ -412,7 +412,7 @@ onTraceUser(const std::string & Type, const std::string & Class,
     IP = IP.substr(1, IP.length() - 2);
   }
 
-  users.add(Nick, UserHost, IP, true, (Type == "Oper"), Class);
+  users.add(Nick, UserHost, IP, true, (0 == Type.compare("Oper")), Class);
 }
 
 
@@ -427,7 +427,7 @@ onTraceUser(const std::string & Type, const std::string & Class,
   std::string Nick;
   std::string UserHost;
 
-  if ((Type == "") || (NUH == ""))
+  if (Type.empty() || NUH.empty())
     return;
 
   // Split the nick and user@host from the nick[user@host]
@@ -435,7 +435,7 @@ onTraceUser(const std::string & Type, const std::string & Class,
   UserHost = chopUserhost(NUH);
 
   // hybrid-6 borked trace :P
-  if ((UserHost.length() >= 3) && (UserHost.substr(0, 3) == "(+)"))
+  if ((UserHost.length() >= 3) && (0 == UserHost.substr(0, 3).compare("(+)")))
   {
     UserHost = UserHost.substr(3);
   }
@@ -446,7 +446,7 @@ onTraceUser(const std::string & Type, const std::string & Class,
     IP = IP.substr(1, IP.length() - 2);
   }
 
-  users.add(Nick, UserHost, IP, true, (Type == "Oper"), Class);
+  users.add(Nick, UserHost, IP, true, (0 == Type.compare("Oper")), Class);
 }
 
 
@@ -459,405 +459,501 @@ onETraceUser(const std::string & Type, const std::string & Class,
   const std::string & Nick, std::string User, const std::string & Host,
   const std::string & IP, const std::string & Gecos)
 {
-  if ((Type == "") || (Nick == "") || (User == "") || (Host == ""))
+  if (Type.empty() || Nick.empty() || User.empty() || Host.empty())
     return;
 
-  users.add(Nick, User + '@' + Host, IP, true, (Type == "Oper"), Class, Gecos);
+  users.add(Nick, User + '@' + Host, IP, true, (0 == Type.compare("Oper")),
+    Class, Gecos);
 }
 
 
-void
-onClientConnect(std::string Text)
+bool
+onClientConnect(std::string text)
 {
-// IRC >> :plasma.toast.pc NOTICE OOMon :*** Notice -- Client connecting: Toast (toast@Plasma.Toast.PC) [192.168.1.1] {opers} [blah]
-  std::string Nick = FirstWord(Text);
-  std::string UH = FirstWord(Text);
-  std::string IP = FirstWord(Text);
-  std::string Class = FirstWord(Text);
-  std::string Gecos = Text;
-  if ((UH[0] == '(') && (UH[UH.length() - 1] == ')'))
+// Client connecting: nick (user@host) [ip] {class} [gecos]
+  text.erase(static_cast<std::string::size_type>(0), 19);
+
+  std::string copy(text);
+
+  std::string nick(FirstWord(text));
+
+  std::string userhost(FirstWord(text));
+  if (userhost.length() >= 2)
   {
-    // Remove the parentheses surrounding the user@host and copy to a char
-    // array for later disposal.
-    if (UH.length() >= 2)
-    {
-      UH = UH.substr(1, UH.length() - 2);
-    }
-
-    // Remove the brackets surrounding the IP
-    if (IP.length() >= 2)
-    {
-      IP = IP.substr(1, IP.length() - 2);
-    }
-
-    // Remove the curly brackets surrounding the class
-    if (Class.length() >= 2)
-    {
-      Class = Class.substr(1, Class.length() - 2);
-    }
-
-    if ((Gecos.length() >= 2) && (Gecos[0] == '[') &&
-      (Gecos[Gecos.length() - 1] == ']'))
-    {
-      Gecos = Gecos.substr(1, Gecos.length() - 2);
-    }
-    else
-    {
-      Gecos = "";
-    }
-
-    connects.onNotice(Nick + ' ' + UH + ' ' + IP);
-
-    users.add(Nick, UH, IP, false, false, Class, Gecos);
+    userhost.erase(userhost.begin());
+    userhost.erase(userhost.end() - 1);
   }
-}
 
-
-void
-onClientExit(std::string Text)
-{
-  // "cihuyy (ngocol@p6.nas2.is4.u-net.net) [Leaving] [195.102.196.13]"
-  std::string Nick = FirstWord(Text);
-  std::string UH = FirstWord(Text);
-  if (UH.length() >= 2)
+  std::string ipString(FirstWord(text));
+  if (ipString.length() >= 2)
   {
-    UH = UH.substr(1, UH.length() - 2);
-
-    BotSock::Address ip;
-
-    std::string::size_type ipFind = Text.rfind(' ');
-    if (std::string::npos != ipFind)
-    {
-      std::string IP = Text.substr(ipFind + 1);
-      if (IP.length() >= 2)
-      {
-        IP = IP.substr(1, IP.length() - 2);
-      }
-      ip = BotSock::inet_addr(IP);
-    }
-    else
-    {
-      ip = 0;
-    }
-
-    users.remove(Nick, UH, ip);
+    ipString.erase(ipString.begin());
+    ipString.erase(ipString.end() - 1);
   }
-}
 
-void Bot_Reject(std::string Text)
-{
-}
-
-void CS_Clones(std::string Text)
-{
-  bool identd = true;
-  char server_notice[MAX_BUFF];
-  char *user;
-  char *host;
-  char *p;
-  char *nick_reported;
-  char *user_host; 
-
-  strncpy(server_notice, Text.c_str(), sizeof(server_notice));
-  server_notice[sizeof(server_notice) - 1] = 0;
-
-  nick_reported = strtok(server_notice," ");
-  if (nick_reported == NULL) return;
-    
-  user_host = strtok(NULL, " ");
-  if (user_host == NULL) return;
-    
-/*
-  Lets try and get it right folks... [user@host] or (user@host)
-*/  
- 
-  if(*user_host == '[')
-    {
-      user_host++;
-      p = strrchr(user_host,']');
-      if(p)  
-        *p = '\0';
-    }
-  else if(*user_host == '(')
-    {
-      user_host++;
-      p = strrchr(user_host,')');
-      if(p)
-        *p = '\0'; 
-    }
-  
-  ::SendAll("CS clones: " + std::string(user_host), UF_OPER);
-  Log::Write("CS clones: " + std::string(user_host));
-  
-  p = strdup(user_host);
-  user = strtok(user_host,"@");
-  if(*user == '~')
-    {
-      user++;
-      identd = false;
-    } 
-      
-  host = strtok(NULL, "");
-    
-  klineClones(false, user, host, INADDR_NONE, false, false, identd);
-  
-  delete p;
-}     
-
-void CS_Nick_Flood(std::string Text)
-{
-  char server_notice[MAX_BUFF];
-  char *nick_reported;
-  char *user_host;
-  char *p;
-
-  strncpy(server_notice, Text.c_str(), sizeof(server_notice));
-  server_notice[sizeof(server_notice) - 1] = 0;
-
-  nick_reported = strtok(server_notice," ");
-  if (nick_reported == NULL) return;
-      
-  user_host = strtok(NULL, " ");
-  if (user_host == NULL) return;
-
-/*    
-  Lets try and get it right folks... [user@host] or (user@host)
-*/      
-      
-  if(*user_host == '[')
+  std::string classString(FirstWord(text));
+  if (classString.length() >= 2)
   {
-    user_host++;
-    p = strrchr(user_host,']');
-    if(p)
-      *p = '\0';
+    classString.erase(classString.begin());
+    classString.erase(classString.end() - 1);
   }
-  else if(*user_host == '(')
+
+  std::string gecos(text);
+  if (gecos.length() >= 2)
   {
-    user_host++;
-    p = strrchr(user_host,')');
-    if(p)
-      *p = '\0'; 
-  } 
-  
-  ::SendAll("CS nick flood: " + std::string(user_host), UF_OPER);
-  Log::Write("CS nick flood: " + std::string(user_host));
+    gecos.erase(gecos.begin());
+    gecos.erase(gecos.end() - 1);
+  }
 
-  BotSock::Address ip = users.getIP(nick_reported, user_host);
-      
-  if ((!Config::IsOKHost(user_host, ip)) && (!Config::IsOper(user_host, ip)))
-  {
-    doAction(nick_reported, user_host, ip,
-      vars[VAR_NICK_FLOOD_ACTION]->getAction(),
-      vars[VAR_NICK_FLOOD_ACTION]->getInt(),
-      vars[VAR_NICK_FLOOD_REASON]->getString(), true);
-  } 
-}     
+  connects.onNotice(nick + ' ' + userhost + ' ' + ipString);
+
+  users.add(nick, userhost, ipString, false, false, classString, gecos);
+
+  ::SendAll("Connected: " + copy, UF_OPER, WATCH_CONNECTS);
+
+  return true;
+}
 
 
-void
-onNickChange(std::string Text)
+bool
+onClientExit(std::string text)
 {
-  std::string nick1, nick2, userhost;
+  // Client exiting: cihuyy (ngocol@p6.nas2.is4.u-net.net) [Leaving] [195.102.196.13]
+  text.erase(static_cast<std::string::size_type>(0), 16);
 
-// From ToastTEST to Toast1234 [toast@Plasma.Toast.PC]
+  std::string copy(text);
 
-  if (FirstWord(Text) != "From")
-    return;
+  std::string nick(FirstWord(text));
 
-  nick1 = FirstWord(Text);
+  std::string userhost(FirstWord(text));
+  if (userhost.length() >= 2)
+  {
+    userhost.erase(userhost.begin());
+    userhost.erase(userhost.end() - 1);
+  }
 
-  if (FirstWord(Text) != "to")
-    return;
+  BotSock::Address ip(INADDR_ANY);
 
-  nick2 = FirstWord(Text);
+  std::string ipString;
+  std::string::size_type ipFind(text.rfind(' '));
+  if (std::string::npos != ipFind)
+  {
+    ipString = text.substr(ipFind + 1);
+    if (ipString.length() >= 2)
+    {
+      ipString.erase(ipString.begin());
+      ipString.erase(ipString.end() - 1);
+    }
+    ip = BotSock::inet_addr(ipString);
+  }
 
-  userhost = FirstWord(Text);
+  users.remove(nick, userhost, ip);
+  ::SendAll("Disconnected: " + copy, UF_CONN, WATCH_DISCONNECTS);
+
+  return true;
+}
+
+
+bool
+onBotReject(std::string text)
+{
+  return false;
+}
+
+
+bool
+onCsClones(std::string text)
+{
+  bool result = false;
+
+  // Rejecting clonebot: nick (user@host)
+  // Clonebot killed: nick (user@host)
+  std::string first(server.downCase(FirstWord(text)));
+  std::string second(server.downCase(FirstWord(text)));
+
+  std::string nick(FirstWord(text));
+
+  std::string userhost(FirstWord(text));
 
   // Remove the brackets surrounding the user@host
   if (userhost.length() >= 2)
   {
-    userhost = userhost.substr(1, userhost.length() - 2);
+    userhost.erase(userhost.begin());
+    userhost.erase(userhost.end() - 1);
   }
+
+  std::string::size_type at = userhost.find('@');
+  if (std::string::npos != at)
+  {
+    std::string user(userhost.substr(0, at));
+    std::string host(userhost.substr(at + 1));
+
+    bool identd = (0 != user.find('~'));
+
+    ::SendAll("CS clones: " + userhost, UF_OPER);
+    Log::Write("CS clones: " + userhost);
+
+    klineClones(false, user, host, users.getIP(nick, userhost), false, false,
+      identd);
+
+    result = true;
+  }
+
+  return result;
+}
+
+
+bool
+onCsNickFlood(std::string text)
+{
+  // Nick flooding detected by: nick (user@host)
+  text.erase(static_cast<std::string::size_type>(0), 27);
+
+  std::string notice("CS Nick Flood: ");
+  notice += text;
+
+  std::string nick(FirstWord(text));
+  std::string userhost(FirstWord(text));
+
+  // Remove the brackets surrounding the user@host
+  if (userhost.length() >= 2)
+  {
+    userhost.erase(userhost.begin());
+    userhost.erase(userhost.end() - 1);
+  }
+
+  ::SendAll(notice, UF_OPER);
+  Log::Write(notice);
+
+  BotSock::Address ip = users.getIP(nick, userhost);
+
+  if ((!Config::IsOKHost(userhost, ip)) && (!Config::IsOper(userhost, ip)))
+  {
+    doAction(nick, userhost, ip, vars[VAR_NICK_FLOOD_ACTION]->getAction(),
+      vars[VAR_NICK_FLOOD_ACTION]->getInt(),
+      vars[VAR_NICK_FLOOD_REASON]->getString(), true);
+  }
+
+  return true;
+}     
+
+
+bool
+onNickChange(std::string text)
+{
+// Nick change: From ToastTEST to Toast1234 [toast@Plasma.Toast.PC]
+  text.erase(static_cast<std::string::size_type>(0), 13);
+
+  if (FirstWord(text) != "From")
+    return false;
+
+  std::string nick1 = FirstWord(text);
+
+  if (FirstWord(text) != "to")
+    return false;
+
+  std::string nick2 = FirstWord(text);
+
+  std::string userhost = FirstWord(text);
+
+  // Remove the brackets surrounding the user@host
+  if (userhost.length() >= 2)
+  {
+    userhost.erase(userhost.begin());
+    userhost.erase(userhost.end() - 1);
+  }
+
+  ::SendAll("Nick change: " + nick1 + " -> " + nick2 + " (" + userhost + ")",
+    UF_NICK, WATCH_NICK_CHANGES);
 
   addToNickChangeList(server.downCase(userhost), nick1, nick2);
   users.updateNick(nick1, userhost, nick2);
+
+  return true;
 }
 
 
-// "OOMon. From Toast Path: plasma.engr.Arizona.EDU!Toast (test)"
-void Kill_Add_Report(std::string Text)
+bool
+onKillNotice(std::string text)
 {
-  bool Global;
+// Received KILL message for target. From killer Path: plasma.engr.Arizona.EDU!killer (reason)
+#ifdef ENGINE_DEBUG
+  std::cout << "::onKillNotice(" << text << ")" << std::endl;
+#endif /* ENGINE_DEBUG */
 
-  std::string Nick = FirstWord(Text); // Killed nick
-  if (Nick[Nick.length() - 1] == '.') // Remove the trailing .
-    Nick = Nick.substr(0, Nick.length() - 1);
-  if (users.have(Nick)) {
+  text.erase(static_cast<std::string::size_type>(0), 26);
+
+  // Killed nick
+  std::string target(FirstWord(text));
+  if (!target.empty() && (target.find('.') == (target.length() - 1)))
+  {
+    // Remove the trailing '.' character
+    target.erase(target.end() - 1);
+  }
+
+#ifdef ENGINE_DEBUG
+  std::cout << "target = " << target << std::endl;
+#endif /* ENGINE_DEBUG */
+
+  if (users.have(target))
+  {
     // We only want to report kills on local users
-    FirstWord(Text); // "From"
-    std::string Killer = FirstWord(Text); // Killer's nick
-    if ((std::string::npos != Killer.find('@')) || 
-      (std::string::npos != Killer.find('!')) || 
-      (std::string::npos == Killer.find('.')))
+    if (server.downCase(FirstWord(text)) != "from")
+      return false;
+
+    // Killer's nick
+    std::string killer(FirstWord(text));
+
+#ifdef ENGINE_DEBUG
+  std::cout << "killer = " << killer << std::endl;
+#endif /* ENGINE_DEBUG */
+
+    bool global(!users.have(killer));
+
+    if ((std::string::npos != killer.find('@')) || 
+      (std::string::npos != killer.find('!')) || 
+      (std::string::npos == killer.find('.')))
     {
       // We don't want to see server kills :P
-      FirstWord(Text); // "Path:"
-      std::string Path = FirstWord(Text); // Path
-      // Hybrid-6 changes the format of kill paths
-      Global = !users.have(Killer);
-      if (Global) {
-        ::SendAll("Global kill for " + Nick + " by " + Killer + " " + Text,
-	  UF_OPER, WATCH_KILLS);
-	Log::Write("Global kill for " + Nick + " by " + Killer + " " + Text);
-      } else {
-        ::SendAll("Local kill for " + Nick + " by " + Killer + " " + Text,
-	  UF_OPER, WATCH_KILLS);
-	Log::Write("Local kill for " + Nick + " by " + Killer + " " + Text);
+
+      if (server.downCase(FirstWord(text)) != "path:")
+	return false;
+
+      // Kill path - we don't use this
+      std::string path(FirstWord(text));
+
+      // Kill reason
+      std::string reason(text);
+
+      std::string notice(global ? "Global kill for " : "Local kill for ");
+      notice += target;
+      notice += " by ";
+      notice += killer;
+      if (!reason.empty())
+      {
+        notice += ' ';
+        notice += reason;
       }
+
+      ::SendAll(notice, UF_OPER, WATCH_KILLS);
+      Log::Write(notice);
     }
   }
 }
 
 
-void
+bool
 onLinksNotice(std::string text)
 {
-  std::string notice("[LINKS " + text + "]");
+  bool result = false;
 
-  if ((text.length() > 0) && (text[0] == '\''))
+  if (vars[VAR_WATCH_LINKS_NOTICES]->getBool())
   {
-    /* This is a +th server, skip the '...' part */
+    std::string notice("[");
+    notice += text;
+    notice += ']';
 
-    std::string::size_type end = text.find('\'', 1);
-
-    if (std::string::npos == end)
+    if (0 == server.downCase(FirstWord(text)).compare("links"))
     {
-      // broken. ignore it.
-      return;
-    }
-    else
-    {
-      std::string::size_type next = text.find_first_not_of(' ', end + 1);
-
-      if (std::string::npos == next)
+      if (!text.empty() && (text[0] == '\''))
       {
-	// broken. ignore it.
-	return;
+        // This is a +th server, skip the '...' part
+
+        std::string::size_type end = text.find('\'', 1);
+
+        if (std::string::npos != end)
+        {
+          std::string::size_type next = text.find_first_not_of(' ', end + 1);
+
+          if (std::string::npos != next)
+          {
+            result = linkLookers.onNotice(notice, text.substr(next));
+          }
+        }
       }
       else
-      {
-        text = text.substr(next);
+     {
+        result = linkLookers.onNotice(notice, text);
       }
     }
   }
 
-  linkLookers.onNotice(notice, text);
+  return result;
 }
 
 
-void
-onTraceNotice(const std::string & text)
+bool
+onTraceNotice(std::string text)
 {
-  std::string notice("[TRACE " + text + "]");
+  bool result = false;
 
-  traceLookers.onNotice(notice, text);
+  if (vars[VAR_WATCH_TRACE_NOTICES]->getBool())
+  {
+    std::string notice("[");
+    notice += text;
+    notice += ']';
+
+    if (0 == server.downCase(FirstWord(text)).compare("trace"))
+    {
+      result = traceLookers.onNotice(notice, text);
+    }
+  }
+
+  return result;
 }
 
 
-void
-onMotdNotice(const std::string & text)
+bool
+onMotdNotice(std::string text)
 {
-  std::string notice("[MOTD " + text + "]");
+  bool result = false;
 
-  motdLookers.onNotice(notice, text);
+  if (vars[VAR_WATCH_MOTD_NOTICES]->getBool())
+  {
+    std::string notice("[");
+    notice += text;
+    notice += ']';
+
+    if (0 == server.downCase(FirstWord(text)).compare("motd"))
+    {
+      result = motdLookers.onNotice(notice, text);
+    }
+  }
+
+  return result;
 }
 
 
-void
-onInfoNotice(const std::string & text)
+bool
+onInfoNotice(std::string text)
 {
-  std::string notice("[INFO " + text + "]");
+  bool result = false;
 
-  infoLookers.onNotice(notice, text);
+  if (vars[VAR_WATCH_INFO_NOTICES]->getBool())
+  {
+    std::string notice("[");
+    notice += text;
+    notice += ']';
+
+    if (0 == server.downCase(FirstWord(text)).compare("info"))
+    {
+      result = infoLookers.onNotice(notice, text);
+    }
+  }
+
+  return result;
 }
 
 
-void
+bool
 onStatsNotice(std::string text)
 {
-  std::string notice("[STATS " + text + "]");
+  bool result = false;
 
-  std::string statsType = FirstWord(text);
+  std::string notice("[");
+  notice += text;
+  notice += ']';
 
-  if (vars[VAR_STATSP_REPLY]->getBool() && ((statsType == "p") ||
-    (vars[VAR_STATSP_CASE_INSENSITIVE]->getBool() && (statsType == "P"))))
+  if (0 == server.downCase(FirstWord(text)).compare("stats"))
   {
-    std::string copy = text;
+    std::string statsType = FirstWord(text);
 
-    if (server.downCase(FirstWord(copy)) != "requested")
+    if (vars[VAR_STATSP_REPLY]->getBool() && ((0 == statsType.compare("p")) ||
+      (vars[VAR_STATSP_CASE_INSENSITIVE]->getBool() &&
+      (0 == statsType.compare("P")))))
     {
-      // broken.  ignore it.
-      return;
+      std::string copy = text;
+
+      if (server.downCase(FirstWord(copy)) != "requested")
+      {
+        // broken.  ignore it.
+        return false;
+      }
+
+      if (server.downCase(FirstWord(copy)) != "by")
+      {
+        // broken.  ignore it.
+        return false;
+      }
+
+      std::string nick = FirstWord(copy);
+
+      if (nick.empty())
+      {
+        // broken.  ignore it.
+        return false;
+      }
+
+      if (!vars[VAR_WATCH_STATS_NOTICES]->getBool())
+      {
+        ::SendAll(notice, UF_OPER);
+      }
+
+      // Assume this is a server with "/stats p" support.  Only report
+      // bot DCC connections with +O status
+      StrList output;
+      clients.statsP(output);
+
+      std::string message = vars[VAR_STATSP_MESSAGE]->getString();
+      if (message.length() > 0)
+      {
+        output.push_back(message);
+      }
+
+      server.notice(std::string(nick), output);
+
+      result = true;
     }
 
-    if (server.downCase(FirstWord(copy)) != "by")
+    if (vars[VAR_WATCH_STATS_NOTICES]->getBool())
     {
-      // broken.  ignore it.
-      return;
+      result = statsLookers.onNotice(notice, text);
     }
-
-    std::string nick = FirstWord(copy);
-
-    if (nick == "")
-    {
-      // broken.  ignore it.
-      return;
-    }
-
-    if (!vars[VAR_WATCH_STATS_NOTICES]->getBool())
-    {
-      ::SendAll(notice, UF_OPER);
-    }
-
-    // Assume this is a server with "/stats p" support.  Only report
-    // bot DCC connections with +O status
-    StrList Output;
-    clients.statsP(Output);
-
-    std::string message = vars[VAR_STATSP_MESSAGE]->getString();
-    if (message.length() > 0)
-    {
-      Output.push_back(message);
-    }
-
-    server.notice(std::string(nick), Output);
   }
 
-  if (vars[VAR_WATCH_STATS_NOTICES]->getBool())
-  {
-    statsLookers.onNotice(notice, text);
-  }
+  return result;
 }
 
 
-void
+bool
 onFlooderNotice(const std::string & text)
 {
-  possibleFlooders.onNotice(text);
+  bool result = false;
+
+  if (vars[VAR_WATCH_FLOODER_NOTICES]->getBool())
+  {
+    result = possibleFlooders.onNotice(text);
+  }
+
+  return result;
 }
 
 
-void
+bool
 onSpambotNotice(const std::string & text)
 {
-  spambots.onNotice(text);
+  bool result = false;
+
+  if (vars[VAR_WATCH_SPAMBOT_NOTICES]->getBool())
+  {
+    result = spambots.onNotice(text);
+  }
+
+  return result;
 }
 
 
-void
+bool
 onTooManyConnNotice(const std::string & text)
 {
-  tooManyConn.onNotice(text);
+  bool result = false;
+
+  if (vars[VAR_WATCH_TOOMANY_NOTICES]->getBool())
+  {
+    result = tooManyConn.onNotice(text);
+  }
+
+  return result;
 }
 
 
@@ -980,33 +1076,36 @@ status(StrList & output)
 }
 
 
-void
+bool
 onOperNotice(std::string text)
 {
-  std::string nick = FirstWord(text);
-  std::string userhost = FirstWord(text);
+  std::string nick(FirstWord(text));
+  std::string userhost(FirstWord(text));
 
   if (userhost.length() > 2)
   {
-    userhost = userhost.substr(1, userhost.length() - 2);
+    userhost.erase(userhost.begin());
+    userhost.erase(userhost.end() - 1);
   }
 
   if ("is" != server.downCase(FirstWord(text)))
-    return;
+    return false;
   if ("now" != server.downCase(FirstWord(text)))
-    return;
+    return false;
   if ("an" != server.downCase(FirstWord(text)))
-    return;
+    return false;;
   if ("operator" != server.downCase(FirstWord(text)))
-    return;
+    return false;;
 
   users.updateOper(nick, userhost, true);
+
+  return true;
 }
 
-void
+bool
 onOperFailNotice(const std::string & text)
 {
-  operfails.onNotice(text);
+  return operfails.onNotice(text);
 }
 
 
@@ -1059,20 +1158,20 @@ checkForSpoof(const std::string & nick, const std::string & user,
           else if (3 == len)
           {
             // Don't forget .ARPA !!!! :P
-            if (tld == "net") legal_top_level = true;
-            if (tld == "com") legal_top_level = true;
-            if (tld == "org") legal_top_level = true;
-            if (tld == "gov") legal_top_level = true;
-            if (tld == "edu") legal_top_level = true;
-            if (tld == "mil") legal_top_level = true;
-            if (tld == "int") legal_top_level = true;
-            if (tld == "biz") legal_top_level = true;
+            if (0 == tld.compare("net")) legal_top_level = true;
+            if (0 == tld.compare("com")) legal_top_level = true;
+            if (0 == tld.compare("org")) legal_top_level = true;
+            if (0 == tld.compare("gov")) legal_top_level = true;
+            if (0 == tld.compare("edu")) legal_top_level = true;
+            if (0 == tld.compare("mil")) legal_top_level = true;
+            if (0 == tld.compare("int")) legal_top_level = true;
+            if (0 == tld.compare("biz")) legal_top_level = true;
           }
 	  else if (4 == len)
 	  {
-            if (tld == "arpa") legal_top_level = true;
-            if (tld == "info") legal_top_level = true;
-            if (tld == "name") legal_top_level = true;
+            if (0 == tld.compare("arpa")) legal_top_level = true;
+            if (0 == tld.compare("info")) legal_top_level = true;
+            if (0 == tld.compare("name")) legal_top_level = true;
 	  }
 
           if (!legal_top_level)
@@ -1107,110 +1206,190 @@ checkForSpoof(const std::string & nick, const std::string & user,
 }
 
 
-void
+bool
 onInvalidUsername(std::string text)
 {
-  std::string nick = FirstWord(text);
+  text.erase(static_cast<std::string::size_type>(0), 18);
 
-  std::string userhost = FirstWord(text);
+  std::string nick(FirstWord(text));
+
+  std::string userhost(FirstWord(text));
   if (userhost.length() >= 2)
   {
-    userhost = userhost.substr(1, userhost.length() - 2);
+    userhost.erase(userhost.begin());
+    userhost.erase(userhost.end() - 1);
   }
 
   doAction(nick, userhost, INADDR_NONE,
     vars[VAR_INVALID_USERNAME_ACTION]->getAction(),
     vars[VAR_INVALID_USERNAME_ACTION]->getInt(),
     vars[VAR_INVALID_USERNAME_REASON]->getString(), false);
+
+  return true;
 }
 
 
-void
-onClearTempKlines(const std::string & text)
+bool
+onClearTempKlines(std::string text)
 {
-  std::string copy = text;
+  bool result = false;
 
-  std::string nick = FirstWord(copy);
+ if (vars[VAR_TRACK_TEMP_KLINES]->getBool())
+ {
+    std::string notice("*** ");
+    notice += text;
 
-  if (copy == "is clearing temp klines")
-  {
-    ::SendAll("*** " + text, UF_OPER, WATCH_KLINES);
-    Log::Write("*** " + text);
-    server.reloadKlines();
+    std::string nick(FirstWord(text));
+
+    if (0 == text.compare("is clearing temp klines"))
+    {
+      ::SendAll(notice, UF_OPER, WATCH_KLINES);
+      Log::Write(notice);
+      server.reloadKlines();
+      result = true;
+    }
   }
+
+  return result;
 }
 
 
-void
-onClearTempDlines(const std::string & text)
+bool
+onClearTempDlines(std::string text)
 {
-  std::string copy = text;
+  bool result = false;
 
-  std::string nick = FirstWord(copy);
-
-  if (copy == "is clearing temp dlines")
+  if (vars[VAR_TRACK_TEMP_DLINES]->getBool())
   {
-    ::SendAll("*** " + text, UF_OPER, WATCH_KLINES);
-    Log::Write("*** " + text);
-    server.reloadDlines();
+    std::string notice("*** ");
+    notice += text;
+
+    std::string nick(FirstWord(text));
+
+    if (0 == text.compare("is clearing temp dlines"))
+    {
+      ::SendAll(notice, UF_OPER, WATCH_KLINES);
+      Log::Write(notice);
+      server.reloadDlines();
+      result = true;
+    }
   }
+
+  return result;
 }
 
 
-void
-onGlineRequest(const std::string & text)
+bool
+onGlineRequest(std::string text)
 {
-  std::string copy = text;
+  std::string nuh(FirstWord(text));
 
-  std::string nuh = FirstWord(copy);
+  if ("on" != server.downCase(FirstWord(text)))
+    return false;
 
-  if ("on" != server.downCase(FirstWord(copy)))
-    return;
+  std::string serverName(FirstWord(text));
 
-  std::string serverName = FirstWord(copy);
-
-  std::string ishas = FirstWord(copy);
+  std::string ishas(FirstWord(text));
 
   std::string voodoo;
 
-  if (server.downCase(ishas) == "is")
+  if (0 == server.downCase(ishas).compare("is"))
   {
-    if ("requesting" != server.downCase(FirstWord(copy)))
-      return;
+    if ("requesting" != server.downCase(FirstWord(text)))
+      return false;
 
     voodoo = " requested ";
   }
-  else if ("has" == server.downCase(ishas))
+  else if (0 == server.downCase(ishas).compare("has"))
   {
-    if ("triggered" != server.downCase(FirstWord(copy)))
-      return;
+    if ("triggered" != server.downCase(FirstWord(text)))
+      return false;
     
     voodoo = " triggered ";
   }
-  else return;
+  else
+  {
+    return false;
+  }
 
-  if ("gline" != server.downCase(FirstWord(copy)))
-    return;
+  if ("gline" != server.downCase(FirstWord(text)))
+    return false;
 
-  if ("for" != server.downCase(FirstWord(copy)))
-    return;
+  if ("for" != server.downCase(FirstWord(text)))
+    return false;
 
-  std::string mask = FirstWord(copy);
+  std::string mask(FirstWord(text));
   if (mask.length() > 2)
   {
-    mask = mask.substr(1, mask.length() - 2);
+    mask.erase(mask.begin());
+    mask.erase(mask.end() - 1);
   }
 
-  std::string reason = copy;
+  std::string reason(text);
   if (reason.length() > 2)
   {
-    reason = reason.substr(1, reason.length() - 2);
+    reason.erase(reason.begin());
+    reason.erase(reason.end() - 1);
   }
 
-  std::string msg(getNick(nuh) + voodoo + "G-line: " + mask + " (" + reason +
-    ')');
+  std::string msg(getNick(nuh));
+  msg += voodoo;
+  msg += "G-line: ";
+  msg += mask;
+  msg += " (";
+  msg += reason;
+  msg += ')';
 
   ::SendAll(msg, UF_OPER, WATCH_GLINES);
   Log::Write(msg);
+
+  return true;
+}
+
+
+bool
+onLineActive(std::string text)
+{
+  std::string notice(text);
+
+  std::string lineType(server.downCase(FirstWord(text)));
+
+  Watch w;
+
+  if (0 == lineType.compare("kline"))
+  {
+    w = WATCH_KLINE_MATCHES;
+  }
+  else if (0 == lineType.compare("dline"))
+  {
+    w = WATCH_DLINE_MATCHES;
+  }
+  else if (0 == lineType.compare("gline"))
+  {
+    w = WATCH_GLINE_MATCHES;
+  }
+  else
+  {
+    return false;
+  }
+
+  ::SendAll(notice, UF_OPER, w);
+  Log::Write(notice);
+
+  return true;
+}
+
+
+bool
+onJupeJoinNotice(const std::string & text)
+{
+  bool result = false;
+
+  if (vars[VAR_WATCH_JUPE_NOTICES]->getBool())
+  {
+    result = jupeJoiners.onNotice(text);
+  }
+
+  return result;
 }
 

@@ -77,9 +77,9 @@ public:
     const bool searchPerms = true, const bool searchTemps = true,
     const bool searchReason = false);
   void Remove(const std::string &);
-  void ParseAndAdd(std::string);
-  void onExpireNotice(std::string text);
-  void ParseAndRemove(std::string);
+  bool parseAndAdd(std::string text);
+  bool onExpireNotice(std::string text);
+  bool parseAndRemove(std::string text);
   KlineList::size_type size() const { return Klines.size(); };
   KlineList::size_type permSize() const;
 };

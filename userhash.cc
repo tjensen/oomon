@@ -196,10 +196,10 @@ UserHash::updateOper(const std::string & nick, const std::string & userhost,
 
     while (NULL != find)
     {
-      if ((nick == find->info->getNick()) &&
-	(user == server.downCase(find->info->getUser())) &&
+      if ((0 == nick.compare(find->info->getNick())) &&
+	(0 == user.compare(server.downCase(find->info->getUser()))) &&
 	(vars[VAR_BROKEN_HOSTNAME_MUNGING]->getBool() ||
-	(host == server.downCase(find->info->getHost()))))
+	(0 == host.compare(server.downCase(find->info->getHost())))))
       {
         find->info->setOper(true);
 
@@ -228,7 +228,7 @@ UserHash::updateNick(const std::string & oldNick, const std::string & userhost,
 
     while (NULL != find)
     {
-      if (oldNick == find->info->getNick())
+      if (0 == oldNick.compare(find->info->getNick()))
       {
         find->info->setNick(newNick);
 
@@ -411,9 +411,9 @@ UserHash::removeFromHashEntry(HashRec *table[], const int index,
 
   while (find)
   {
-    if (((host == "") || (server.same(find->info->getHost(), host))) &&
-      ((user == "") || (server.same(find->info->getUser(), user))) &&
-      ((nick == "") || (server.same(find->info->getNick(), nick))))
+    if ((host.empty() || (server.same(find->info->getHost(), host))) &&
+      (user.empty() || (server.same(find->info->getUser(), user))) &&
+      (nick.empty() || (server.same(find->info->getNick(), nick))))
     {
       if (prev)
 	prev->collision = find->collision;
@@ -530,7 +530,8 @@ UserHash::listUsers(StrList & output, const Pattern *userhost,
 {
   int numfound = 0;
 
-  if ((userhost->get() == "*") || (userhost->get() == "*@*"))
+  if ((0 == userhost->get().compare("*")) ||
+    (0 == userhost->get().compare("*@*")))
   {
     output.push_back("Listing all users is not recommended. To do it anyway,");
     output.push_back("use 'list ?*@*'.");
@@ -559,7 +560,7 @@ UserHash::listUsers(StrList & output, const Pattern *userhost,
 	  matchesUIP = userhost->match(userptr->info->getUserIP());
 	}
 	if ((matchesUH || matchesUIP) && ((0 == className.length()) ||
-	  (className == userptr->info->getClass())))
+	  (0 == className.compare(userptr->info->getClass()))))
 	{
 	  ++numfound;
 	  std::string outmsg(userptr->info->output(vars[VAR_LIST_FORMAT]->getString()));
@@ -614,8 +615,8 @@ UserHash::listNicks(StrList & output, const Pattern *nick,
 
     while (userptr)
     {
-      if (nick->match(userptr->info->getNick()) &&
-	((0 == className.length()) || (className == userptr->info->getClass())))
+      if (nick->match(userptr->info->getNick()) && (className.empty() ||
+	(0 == className.compare(userptr->info->getClass()))))
       {
         ++numfound;
 	std::string outmsg(userptr->info->output(vars[VAR_NFIND_FORMAT]->getString()));
@@ -662,8 +663,8 @@ UserHash::listGecos(StrList & output, const Pattern *gecos,
 
     while (userptr)
     {
-      if (gecos->match(userptr->info->getGecos()) &&
-	((0 == className.length()) || (className == userptr->info->getClass())))
+      if (gecos->match(userptr->info->getGecos()) && (className.empty() ||
+	(0 == className.compare(userptr->info->getClass()))))
       {
         if (!numfound++)
         {
@@ -709,7 +710,7 @@ UserHash::have(std::string nick) const
 
     while (find)
     {
-      if (server.downCase(find->info->getNick()) == nick)
+      if (0 == server.downCase(find->info->getNick()).compare(nick))
       {
         return true;
       }
@@ -744,7 +745,8 @@ UserHash::reportClasses(StrList & output, const std::string & className)
   for (ClassType::iterator pos = Classes.begin(); pos != Classes.end();
     ++pos)
   {
-    if ((0 == className.length()) || (pos->first == server.downCase(className)))
+    if (className.empty() ||
+      (0 == pos->first.compare(server.downCase(className))))
     {
       snprintf(outmsg, sizeof(outmsg), "%-10s %-6d %s", pos->first.c_str(),
 	pos->second, Config::GetYLineDescription(pos->first).c_str());
@@ -797,16 +799,18 @@ UserHash::reportSeedrand(StrList & output, const Pattern *mask,
 
   if (0 == scores.size())
   {
-    output.push_back("No matches for " + mask->get() + " found.");
+    output.push_back("No matches (score >= " + IntToStr(threshold) + ") for " +
+      mask->get() + " found.");
   }
   else if (1 == scores.size())
   {
-    output.push_back("1 match for " + mask->get() + " found.");
+    output.push_back("1 match (score >= " + IntToStr(threshold) + ") for " +
+      mask->get() + " found.");
   }
   else
   {
-    output.push_back(IntToStr(scores.size()) + " matches for " + mask->get() +
-      " found.");
+    output.push_back(IntToStr(scores.size()) + " matches (score >= " +
+      IntToStr(threshold) + ") for " + mask->get() + " found.");
   }
 }
 
@@ -1753,9 +1757,10 @@ UserHash::getIP(std::string nick, const std::string & userhost) const
 
     while (NULL != find)
     {
-      if ((nick.empty() || (nick == server.downCase(find->info->getNick()))) &&
-	(user == server.downCase(find->info->getUser())) &&
-	(host == server.downCase(find->info->getHost())))
+      if ((nick.empty() ||
+	(0 == nick.compare(server.downCase(find->info->getNick())))) &&
+	(0 == user.compare(server.downCase(find->info->getUser()))) &&
+	(0 == host.compare(server.downCase(find->info->getHost()))))
       {
         // Found the user -- return its IP address
         return find->info->getIp();
@@ -1785,9 +1790,9 @@ UserHash::isOper(std::string nick, const std::string & userhost) const
 
     while (NULL != find)
     {
-      if ((nick == server.downCase(find->info->getNick())) &&
-	(user == server.downCase(find->info->getUser())) &&
-	(host == server.downCase(find->info->getHost())))
+      if ((0 == nick.compare(server.downCase(find->info->getNick()))) &&
+	(0 == user.compare(server.downCase(find->info->getUser()))) &&
+	(0 == host.compare(server.downCase(find->info->getHost()))))
       {
         // Found the user -- is it an oper?
         return find->info->getOper();

@@ -54,7 +54,7 @@ public:
   int getMaxTime() const { return vars[this->_maxTimeVar]->getInt(); };
   Watch getWatch() const { return this->_watch; };
 
-  void onNotice(const std::string & notice, std::string text,
+  bool onNotice(const std::string & notice, std::string text,
     time_t now = time(NULL));
 
   int size() const { return this->list.size(); };

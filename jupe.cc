@@ -131,15 +131,15 @@ JupeJoinList::add(const std::string & nick, const std::string & userhost,
 }
 
 
-void
+bool
 JupeJoinList::onNotice(const std::string & notice)
 {
   std::string text = notice;
 
   // User ToastTEst (toast@Plasma.Toast.PC) is attempting to join locally juped channel #jupedchan
 
-  if ("user" != server.downCase(FirstWord(text)))
-    return;
+  if (0 != server.downCase(FirstWord(text)).compare("user"))
+    return false;
 
   std::string nick = FirstWord(text);
   std::string userhost = FirstWord(text);
@@ -149,20 +149,20 @@ JupeJoinList::onNotice(const std::string & notice)
     userhost = userhost.substr(1, userhost.length() - 2);
   }
 
-  if ("is" != server.downCase(FirstWord(text)))
-    return;
-  if ("attempting" != server.downCase(FirstWord(text)))
-    return;
-  if ("to" != server.downCase(FirstWord(text)))
-    return;
-  if ("join" != server.downCase(FirstWord(text)))
-    return;
-  if ("locally" != server.downCase(FirstWord(text)))
-    return;
-  if ("juped" != server.downCase(FirstWord(text)))
-    return;
-  if ("channel" != server.downCase(FirstWord(text)))
-    return;
+  if (0 != server.downCase(FirstWord(text)).compare("is"))
+    return false;
+  if (0 != server.downCase(FirstWord(text)).compare("attempting"))
+    return false;
+  if (0 != server.downCase(FirstWord(text)).compare("to"))
+    return false;
+  if (0 != server.downCase(FirstWord(text)).compare("join"))
+    return false;
+  if (0 != server.downCase(FirstWord(text)).compare("locally"))
+    return false;
+  if (0 != server.downCase(FirstWord(text)).compare("juped"))
+    return false;
+  if (0 != server.downCase(FirstWord(text)).compare("channel"))
+    return false;
 
   std::string channel = FirstWord(text);
 
@@ -170,6 +170,8 @@ JupeJoinList::onNotice(const std::string & notice)
   Log::Write(notice);
 
   this->add(nick, userhost, channel, time(NULL));
+
+  return true;
 }
 
 

@@ -19,15 +19,17 @@
 
 // $Id$
 
+// C++ headers
+#include <string>
+#include <cctype>
+#include <algorithm>
+#include <functional>
+
 // C headers
 #include <stdio.h>
 #include <sys/time.h>
 #include <unistd.h>
 #include <time.h>
-
-// C++ headers
-#include <string>
-#include <cctype>
 
 #include "strtype"
 #include "oomon.h"
@@ -263,8 +265,8 @@ FirstWord(std::string & text)
     temp = text;
     text = "";
   }
-  while ((text.length() > 0) && (text[0] == ' '))
-    text.erase((std::string::size_type) 0, 1);
+  while (!text.empty() && (text[0] == ' '))
+    text.erase(text.begin());
   return temp;
 }
 
@@ -304,13 +306,10 @@ UpCase(const char c)
 std::string
 UpCase(const std::string & text)
 {
-  std::string result = text;
-  std::string::size_type len = result.length();
+  std::string result(text);
 
-  for (std::string::size_type index = 0; index < len; index++)
-  {
-	result[index] = UpCase(result[index]);
-  }
+  std::transform(result.begin(), result.end(), result.begin(),
+    std::ptr_fun<char,char>(::UpCase));
 
   return result;
 }
@@ -351,13 +350,10 @@ DownCase(const char c)
 std::string
 DownCase(const std::string & text)
 {
-  std::string result = text;
-  std::string::size_type len = result.length();
+  std::string result(text);
 
-  for (std::string::size_type index = 0; index < len; index++)
-  {
-	result[index] = DownCase(result[index]);
-  }
+  std::transform(result.begin(), result.end(), result.begin(),
+    std::ptr_fun<char,char>(::DownCase));
 
   return result;
 }
@@ -379,7 +375,7 @@ DownCase(const std::string & text)
 bool
 Same(const std::string & text1, const std::string & text2)
 {
-  return (UpCase(text1) == UpCase(text2));
+  return (0 == UpCase(text1).compare(UpCase(text2)));
 }
 
 
@@ -402,12 +398,7 @@ bool
 Same(const std::string & text1, const std::string & text2,
   const std::string::size_type length)
 {
-  if ((length > text1.length()) || (length > text2.length()))
-  {
-    return false;
-  }
-
-  return (UpCase(text1.substr(0, length)) == UpCase(text2.substr(0, length)));
+  return (0 == UpCase(text1).compare(0, length, UpCase(text2), 0, length));
 }
 
 
@@ -428,15 +419,15 @@ Same(const std::string & text1, const std::string & text2,
 bool
 ChkPass(std::string CORRECT, std::string TEST)
 {
-  if (CORRECT == "*")
+  if (0 == CORRECT.compare("*"))
     return false;
-  if ((CORRECT == "") && (TEST == ""))
+  if (CORRECT.empty() && TEST.empty())
     return true;
 #ifdef USE_CRYPT
-  if (CORRECT == crypt(TEST.c_str(), CORRECT.c_str()))
+  if (0 == CORRECT.compare(crypt(TEST.c_str(), CORRECT.c_str())))
     return true;
 #else
-  return (CORRECT == TEST);
+  return (0 == CORRECT.compare(TEST));
 #endif
   return false;
 }
@@ -610,7 +601,7 @@ ULongToStr(unsigned long i, std::string::size_type len)
 std::string
 GetBotHB(std::string text)
 {
-  if (text == "*")
+  if (0 == text.compare("*"))
     return text;
 
   std::string::size_type i = text.find('@');
@@ -636,7 +627,7 @@ GetBotHB(std::string text)
 std::string
 GetHandleHB(std::string text)
 {
-  if (text == "*")
+  if (0 == text.compare("*"))
     return text;
 
   std::string::size_type i = text.find('@');

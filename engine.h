@@ -40,29 +40,31 @@ void onETraceUser(const std::string & Type, const std::string & Class,
   const std::string & Nick, std::string User, const std::string & Host,
   const std::string & IP, const std::string & Gecos);
 void onTraceClass();
-void onClientConnect(std::string);
-void onClientExit(std::string);
-void onNickChange(std::string);
-void onLinksNotice(std::string text);
-void onTraceNotice(const std::string & text);
-void onMotdNotice(const std::string & text);
-void onInfoNotice(const std::string & text);
-void onStatsNotice(std::string text);
-void onFlooderNotice(const std::string & text);
-void onSpambotNotice(const std::string & text);
-void onTooManyConnNotice(const std::string & text);
-void onOperNotice(std::string text);
-void onOperFailNotice(const std::string & text);
-void onInvalidUsername(std::string text);
-void onClearTempKlines(const std::string & text);
-void onClearTempDlines(const std::string & text);
-void onGlineRequest(const std::string & text);
+bool onClientConnect(std::string text);
+bool onClientExit(std::string text);
+bool onNickChange(std::string text);
+bool onLinksNotice(std::string text);
+bool onTraceNotice(std::string text);
+bool onMotdNotice(std::string text);
+bool onInfoNotice(std::string text);
+bool onStatsNotice(std::string text);
+bool onFlooderNotice(const std::string & text);
+bool onSpambotNotice(const std::string & text);
+bool onTooManyConnNotice(const std::string & text);
+bool onOperNotice(std::string text);
+bool onOperFailNotice(const std::string & text);
+bool onInvalidUsername(std::string text);
+bool onClearTempKlines(std::string text);
+bool onClearTempDlines(std::string text);
+bool onGlineRequest(std::string text);
+bool onLineActive(std::string text);
+bool onJupeJoinNotice(const std::string & text);
 
-void Bot_Reject(std::string);
-void CS_Clones(std::string);
-void CS_Nick_Flood(std::string);
+bool onBotReject(std::string text);
+bool onCsClones(std::string text);
+bool onCsNickFlood(std::string text);
 
-void Kill_Add_Report(std::string);
+bool onKillNotice(std::string text);
 
 void klineClones(const bool kline, const std::string & User,
   const std::string & Host, const BotSock::Address & ip,

@@ -247,7 +247,7 @@ Services::onSpamtrapMessage(const std::string & text)
 {
   std::string copy = text;
 
-  if ("SPAM" == server.upCase(FirstWord(copy)))
+  if (0 == server.upCase(FirstWord(copy)).compare("SPAM"))
   {
     if (server.same(server.getServerName(), FirstWord(copy)))
     {
@@ -316,7 +316,7 @@ Services::onSpamtrapNotice(const std::string & text)
     {
       userhost = userhost.substr(1, userhost.length() - 2);
 
-      if ("(score" == server.downCase(FirstWord(copy)))
+      if (0 == server.downCase(FirstWord(copy)).compare("(score"))
       {
 	std::string scoreText = FirstWord(copy);
 
@@ -325,7 +325,7 @@ Services::onSpamtrapNotice(const std::string & text)
 	{
 	  int score = atoi(scoreText.substr(0, scoreText.length() - 1).c_str());
 
-	  if ("on" == server.downCase(FirstWord(copy)))
+	  if (0 == server.downCase(FirstWord(copy)).compare("on"))
 	  {
 	    std::string serverName = FirstWord(copy);
 

@@ -24,6 +24,9 @@
 // Std C++ Headers
 #include <string>
 
+// Boost C++ Headers
+#include <boost/function.hpp>
+
 // Std C Headers
 #include <time.h>
 
@@ -52,6 +55,8 @@ class IRC : public BotSock
 {
 public:
   IRC();
+
+  typedef boost::function<bool(std::string)> ParserFunction;
 
   bool process(const fd_set & readset, const fd_set & writeset);
   int write(const std::string & text);
@@ -115,11 +120,29 @@ public:
   std::string downCase(const std::string & text) const;
   bool same(const std::string & text1, const std::string & text2) const;
 
+  void onServerNotice(const std::string & text);
+
 protected:
   virtual bool onRead(std::string text);
 
+  void addServerNoticeParser(const std::string & pattern,
+    const ParserFunction func);
+
 private:
-  bool amIAnOper; // duh
+  class Parser
+  {
+  public:
+    Parser(const std::string & pattern, const ParserFunction func)
+      : _pattern(pattern), _func(func) { }
+    bool match(std::string text) const;
+  private:
+    ClusterPattern _pattern;
+    ParserFunction _func;
+  };
+  typedef std::vector<Parser> ParserVector;
+
+  ParserVector serverNotices;
+  bool amIAnOper;
   bool gettingTrace;
   bool gettingKlines;
   bool gettingTempKlines;

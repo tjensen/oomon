@@ -478,7 +478,7 @@ Vars::set(const std::string & name, const std::string & value,
   else
   {
     std::string error = this->vec[idx]->set(value);
-    if ((error.length() == 0) && (handle.length() != 0))
+    if (error.empty() && !handle.empty())
     {
       std::string newValue = this->vec[idx]->get();
       std::string notice;

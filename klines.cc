@@ -48,7 +48,7 @@ void KlineList::Clear()
 void KlineList::Add(const std::string & userhost, const std::string & reason,
   const bool temporary)
 {
-  if (userhost != "")
+  if (!userhost.empty())
   {
     if (Klines.end() != std::find(Klines.begin(), Klines.end(),
       KlineItem(userhost)))
@@ -142,41 +142,42 @@ void KlineList::Remove(const std::string & userhost)
 }
 
 // LarzMON added K-Line for [*khknkfg@*.sprint.ca] [Clones are prohibited [Toast@LarzMON]]
-void
-KlineList::ParseAndAdd(std::string Text)
+bool
+KlineList::parseAndAdd(std::string text)
 {
-  std::string who = FirstWord(Text); // kline adder
+  std::string who = FirstWord(text); // kline adder
 
-  if ("added" != server.downCase(FirstWord(Text)))
-    return;
+  if (0 != server.downCase(FirstWord(text)).compare("added"))
+    return false;
 
   bool temporary = false;
   std::string time;
 
-  if ("temporary" == server.downCase(FirstWord(Text)))
+  if (0 == server.downCase(FirstWord(text)).compare("temporary"))
   {
     temporary = true;
 
-    time = FirstWord(Text);
+    time = FirstWord(text);
 
-    if ("min." != server.downCase(FirstWord(Text)))
-      return;
+    if (0 != server.downCase(FirstWord(text)).compare("min."))
+      return false;
 
-    std::string type = FirstWord(Text);
+    std::string type = FirstWord(text);
 
-    if ((lineType == 'K') && ("k-line" != server.downCase(type)))
-      return;
-    else if ((lineType == 'D') && ("d-line" != server.downCase(type)))
-      return;
+    if ((lineType == 'K') && (0 != server.downCase(type).compare("k-line")))
+      return false;
+    else if ((lineType == 'D') &&
+      (0 != server.downCase(type).compare("d-line")))
+      return false;
   }
 
-  if ("for" != server.downCase(FirstWord(Text)))
-    return;
+  if (0 != server.downCase(FirstWord(text)).compare("for"))
+    return false;
 
   // This won't work all the time, since a badly entered kline might
   // contain spaces. *shrug*
-  std::string UserHost = FirstWord(Text);
-  std::string Reason = Text;
+  std::string UserHost = FirstWord(text);
+  std::string Reason = text;
 
   // Remove brackets
   UserHost.erase((std::string::size_type) 0, 1);
@@ -226,21 +227,25 @@ KlineList::ParseAndAdd(std::string Text)
   {
     Add(UserHost, Reason, temporary);
   }
+
+  return true;
 }
 
 
 // Temporary K-line for [*chalupa@*.palupa] expired
-void
+bool
 KlineList::onExpireNotice(std::string text)
 {
-  if ("temporary" != server.downCase(FirstWord(text)))
-    return;
-  if ((lineType == 'K') && ("k-line" != server.downCase(FirstWord(text))))
-    return;
-  if ((lineType == 'D') && ("d-line" != server.downCase(FirstWord(text))))
-    return;
-  if ("for" != server.downCase(FirstWord(text)))
-    return;
+  if (0 != server.downCase(FirstWord(text)).compare("temporary"))
+    return false;
+  if ((lineType == 'K') &&
+    (0 != server.downCase(FirstWord(text)).compare("k-line")))
+    return false;
+  if ((lineType == 'D') &&
+    (0 != server.downCase(FirstWord(text)).compare("d-line")))
+    return false;
+  if (0 != server.downCase(FirstWord(text)).compare("for"))
+    return false;
 
   std::string mask = FirstWord(text);
   if (mask.length() > 2)
@@ -248,54 +253,56 @@ KlineList::onExpireNotice(std::string text)
     mask = mask.substr(1, mask.length() - 2);
   }
 
-  if ("expired" != server.downCase(FirstWord(text)))
-    return;
+  if (0 != server.downCase(FirstWord(text)).compare("expired"))
+    return false;
 
   Remove(mask);
+
+  return true;
 }
 
 
 // Toast has removed the K-Line for: [*@*.monkeys.org] (1 matches)
-void
-KlineList::ParseAndRemove(std::string Text)
+bool
+KlineList::parseAndRemove(std::string text)
 {
-  std::string who = FirstWord(Text); // kline adder
+  std::string who = FirstWord(text); // kline adder
 
-  if ("has" != server.downCase(FirstWord(Text)))
-    return;
-  if ("removed" != server.downCase(FirstWord(Text)))
-    return;
-  if ("the" != server.downCase(FirstWord(Text)))
-    return;
+  if (0 != server.downCase(FirstWord(text)).compare("has"))
+    return false;
+  if (0 != server.downCase(FirstWord(text)).compare("removed"))
+    return false;
+  if (0 != server.downCase(FirstWord(text)).compare("the"))
+    return false;
 
-  std::string temp = FirstWord(Text);
+  std::string temp = FirstWord(text);
   bool temporary = false;
 
-  if ("temporary" == server.downCase(temp))
+  if (0 == server.downCase(temp).compare("temporary"))
   {
     temporary = true;
 
     if (lineType == 'K')
     {
-      if ("k-line" != server.downCase(FirstWord(Text)))
-        return;
+      if (0 != server.downCase(FirstWord(text)).compare("k-line"))
+        return false;
     }
     else if (lineType == 'D')
     {
-      if ("d-line" != server.downCase(FirstWord(Text)))
-        return;
+      if (0 != server.downCase(FirstWord(text)).compare("d-line"))
+        return false;
     }
   }
-  else if ((lineType == 'K') && ("k-line" != server.downCase(temp)))
-    return;
-  else if ((lineType == 'D') && ("d-line" != server.downCase(temp)))
-    return;
+  else if ((lineType == 'K') && (0 != server.downCase(temp).compare("k-line")))
+    return false;
+  else if ((lineType == 'D') && (0 != server.downCase(temp).compare("d-line")))
+    return false;
 
-  if ("for:" != server.downCase(FirstWord(Text)))
-    return;
+  if (0 != server.downCase(FirstWord(text)).compare("for:"))
+    return false;
 
   // Again, spaces in the kline mask will screw this up.
-  std::string UserHost = FirstWord(Text);
+  std::string UserHost = FirstWord(text);
 
   // Remove brackets
   UserHost.erase((std::string::size_type) 0, 1);
@@ -332,6 +339,8 @@ KlineList::ParseAndRemove(std::string Text)
   {
     Remove(UserHost);
   }
+
+  return true;
 }
 
 

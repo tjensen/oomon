@@ -229,7 +229,7 @@ matchesSpecialChar(char test, char mask)
 static bool
 FixedMatch(std::string TEST, std::string MASK, bool special)
 {
-  if (TEST == MASK)
+  if (0 == TEST.compare(MASK))
   {
     return true;
   }
@@ -270,9 +270,9 @@ FixedMatch(std::string TEST, std::string MASK, bool special)
 static bool
 SMatch(std::string TEST, std::string MASK, bool special)
 {
-  if ((MASK == "*") || (TEST == MASK))
+  if ((0 == MASK.compare("*")) || (0 == TEST.compare(MASK)))
     return true;
-  if ((MASK == "") || (TEST == ""))
+  if (MASK.empty() || TEST.empty())
     return false;
   if ((MASK[0] == '*') && (std::string::npos != MASK.substr(1).find('*')))
   {

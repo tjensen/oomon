@@ -40,7 +40,7 @@ public:
 
   void clear() { this->list.clear(); };
 
-  void onNotice(const std::string & notice);
+  bool onNotice(const std::string & notice);
 
   void status(StrList & output) const;
 
