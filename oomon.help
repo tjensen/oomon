@@ -190,14 +190,14 @@ findk
 .l.unkline
 findu
 .s.findu <filter>
-.d.Searches for users matching the provided
-.d.filter.  Filters should be of the following
-.d.syntax:
+.s.findu <pattern>
+.d.The first syntax searches for users matching
+.d.the provided filter.  Filters should be of
+.d.the following syntax:
 .d.  <field>=<pattern>[,<field>=<pattern>[,...]]
 .d.
-.d.If "<field>=" is not provided, it is assumed
-.d.that the pattern is to match against the
-.d."nick!user@host#gecos" field.
+.d.The second syntax matches the pattern against
+.d.the "nick!user@host#gecos" field.
 .e.> .findu /^([a-z]+)[0-9]+!.*@.*#\1$/
 .e.  fnerd67 (~root@adsl-10-0-2-27.lsan03.pacdell.net) [10.0.2.27]
 .e.  bort989 (~owned@D7894510.ipt.bol.com) [10.0.37.16]
@@ -289,6 +289,25 @@ info actions
 .e.> .set nick_flood_action smart_kline 10080
 .e.*** Toast@OOMon set NICK_FLOOD_ACTION to SMART_KLINE 10080
 .l.set
+info filters
+.d.Filters are sets of one or more pattern matching
+.d.rules in the following syntax:
+.d.  <field>=<pattern>[,<field>=<pattern>[,...]]
+.d.
+.d.Each "field" may be "n" or "nick", "u" or "user",
+.d."h" or "host", "uh" or "userhost", "nuh" or
+.d."nickuserhost", "g" or "gecos", "nuhg" or
+.d."nickuserhostgecos", "c" or "class", "version",
+.d."privmsg", or "notice".
+.d.
+.d.Each "pattern" may be either a regular expression or
+.d.a legacy-style cluster pattern.
+.d.
+.d.All patterns in a filter must match a client in
+.d.order for the filter to match a client.
+.l.info patterns
+.l.info regex
+.l.info traps
 info patterns
 .d.Patterns use wildcard characters to match text.
 .d.OOMon supports two different types of patterns.  The
@@ -348,28 +367,17 @@ info regex
 .l.trap
 info traps
 .d.OOMon's .trap command provides a flexible way to
-.d.match clients against filters when they connect
-.d.to the server and when they change nicknames.
-.d.Filters can match against nicknames, userhosts,
-.d.IP addresses, GECOS fields, CTCP VERSION replies,
-.d.or any combination thereof.
+.d.match clients against pattern matching rules
+.d.when they connect to the server and when they
+.d.change nicknames.  Each trap can match against
+.d.nicknames, userhosts, IP addresses, GECOS fields,
+.d.CTCP VERSION replies, PRIVMSG messages, NOTICE
+.d.messages, or any combination thereof.
 .d.
-.d.Filters in the .trap command line have the
-.d.syntax, "<field>=<pattern>", where "<field>" can
-.d.be one of: n or nick, u or user, h or host, uh
-.d.or userhost, nuh or nickuserhost, g or gecos,
-.d.nuhg or nickuserhostgecos, c or class, version,
-.d.privmsg, or notice and "<pattern>" can be a
-.d.regular expression or a glob-style wildcard
-.d.pattern.
-.d.
-.d.If "<field>=" is left out, the .trap command
-.d.assumes you want the pattern to match against
-.d.the "nick!user@host" field.
-.d.
-.d.Multiple filters can be specified by separating
-.d.them with commas.  In order for a trap to match
-.d.a client, all filters in the trap must match.
+.d.Multiple pattern matching rules can be specified
+.d.by separating them with commas.  In order for a
+.d.trap to match a client, all rules in the trap
+.d.must match.
 .d.
 .d.Note: To trap against CTCP VERSION replies, the
 .d.CTCPVERSION_ENABLE and TRAP_CTCP_VERSIONS
@@ -378,7 +386,8 @@ info traps
 .d.against NOTICEs, the TRAP_NOTICES setting must
 .d.be ON!
 .e.> .trap kline_host userhost=*.aol.com,version=/iroffer/ No iroffer bots allowed from AOL!
-.e.Toast@OOMon added trap KLINE_HOST: uh=*.aol.com,version=/iroffer/ (No iroffer bots allowed from AOL!)
+.e.*** Toast@OOMon added trap KLINE_HOST: uh=*.aol.com,version=/iroffer/ (No iroffer bots allowed from AOL!)
+.l.info filters
 .l.info patterns
 .l.info regex
 .l.set ctcpversion_enable
@@ -2432,19 +2441,20 @@ trace
 .f.o
 .l.reload
 trap
-.s.trap [-a] [-t] [list]
-.s.trap remove <index>|<rules>
 .s.trap <action> [<timeout>] <filter> [<reason>]
-.d.Watches client connects and nick changes and
-.d.performs the desired action when they match the
-.d.filter specified in the format:
+.s.trap <action> [<timeout>] <pattern> [<reason>]
+.s.trap remove <index>|<filter>
+.s.trap [-a] [-t] [list]
+.d.The first syntax adds a trap causing OOMon to
+.d.watch client connects and nick changes and
+.d.perform the desired action when a client matches
+.d.the filter specified in the format:
 .d.   <field>=<pattern>[,<field>=<pattern>[,...]]
-.d.The "field" may be "n" or "nick", "u" or "user",
-.d."h" or "host", "uh" or "userhost", "nuh" or
-.d."nickuserhost", "g" or "gecos", "nuhg" or
-.d."nickuserhostgecos", "c" or "class", "version",
-.d."privmsg", or "notice".  The pattern may be a
-.d.regular expression or old-style cluster pattern.
+.d.
+.d.The second syntax also adds a trap, but matches
+.d.the pattern against clients' "nick!user@host"
+.d.fields.
+.d.
 .d.Action may be one of the following:
 .d. echo - notify opers of matching clients
 .d. kill - forcefully disconnect matching clients
@@ -2456,10 +2466,15 @@ trap
 .d. kline_net - k-line the client's /24 network
 .d. dline - d-line the client's IP
 .d. dline_net - d-line the client's /24 network
-.d.When listing traps, the "-a" argument will display
-.d.the number of times the trap has made a match.
-.d.The "-t" argument will display a timestamp of the
-.d.most recent match for each trap.
+.d.
+.d.The third syntax removes a trap from the list
+.d.by trap number or by filter text.
+.d.
+.d.The last syntax lists all traps and supports two
+.d.optional arguments.  The "-a" argument will
+.d.display the number of times the trap has made a
+.d.match.  The "-t" argument will display a timestamp
+.d.of the most recent match for each trap.
 .e.> .trap kline_host nick=pK-????? pK drone
 .e.*** Toast@OOMon added trap KLINE_HOST: n=pK-????? (pK drone)
 .e.> .trap dline_net userhost=*rolex*@* packet monkey
@@ -2472,6 +2487,7 @@ trap
 .e.*** Toast@OOMon removed trap: 100
 .f.mo
 .l.dline
+.l.info filters
 .l.info patterns
 .l.info regex
 .l.kill
