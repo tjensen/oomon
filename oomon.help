@@ -748,6 +748,8 @@ set
 .t.trace_flood_max_count
 .t.trace_flood_max_time
 .t.trace_flood_reason
+.t.track_perm_dlines
+.t.track_perm_klines
 .t.track_temp_dlines
 .t.track_temp_klines
 .t.trap_connects
@@ -1662,27 +1664,55 @@ set trace_flood_reason
 .l.set trace_flood_action
 .l.set trace_flood_max_count
 .l.set trace_flood_max_time
+set track_perm_dlines
+.s.set track_perm_dlines [ON|OFF]
+.d.When ON, the monitor bot will keep track
+.d.of permanent d-lines.
+.f.mo
+.l.dline
+.l.findd
+.l.set track_perm_klines
+.l.set track_temp_dlines
+.l.set track_temp_klines
+.l.undline
+set track_perm_klines
+.s.set track_perm_klines [ON|OFF]
+.d.When ON, the monitor bot will keep track
+.d.of permanent k-lines.
+.f.mo
+.l.findk
+.l.kline
+.l.set track_perm_dlines
+.l.set track_temp_dlines
+.l.set track_temp_klines
+.l.unkline
 set track_temp_dlines
 .s.set track_temp_dlines [ON|OFF]
 .d.When ON, the monitor bot will keep track
-.d.off temporary d-lines in addition to
+.d.of temporary d-lines in addition to
 .d.permanent d-lines.  This setting should not
 .d.be enabled unless your ircd reports when
 .d.temporary d-lines expire.
 .f.mo
 .l.dline
 .l.findd
+.l.set track_perm_dlines
+.l.set track_perm_klines
+.l.set track_temp_klines
 .l.undline
 set track_temp_klines
 .s.set track_temp_klines [ON|OFF]
 .d.When ON, the monitor bot will keep track
-.d.off temporary k-lines in addition to
+.d.of temporary k-lines in addition to
 .d.permanent k-lines.  This setting should not
 .d.be enabled unless your ircd reports when
 .d.temporary k-lines expire.
 .f.mo
 .l.findk
 .l.kline
+.l.set track_perm_dlines
+.l.set track_perm_klines
+.l.set track_temp_dlines
 .l.unkline
 set trap_connects
 .s.set trap_connects [ON|OFF]
