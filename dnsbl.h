@@ -61,24 +61,24 @@ private:
   {
   public:
     Query(const BotSock::Address & addr, const std::string & nick,
-      const std::string & userhost, const std::string & zone) : _addr(addr),
-      _nick(nick), _userhost(userhost), _zone(zone) { }
+      const std::string & userhost, const std::string & zone) : addr_(addr),
+      nick_(nick), userhost_(userhost), zone_(zone) { }
 
     bool process(void);
 
     Adns::Query query;
 
   private:
-    const BotSock::Address _addr;
-    const std::string _nick;
-    const std::string _userhost;
-    const std::string _zone;
+    const BotSock::Address addr_;
+    const std::string nick_;
+    const std::string userhost_;
+    const std::string zone_;
   };
 
   typedef boost::shared_ptr<Query> QueryPtr;
   typedef std::list<QueryPtr> QueryList;
 
-  QueryList _queries;
+  QueryList queries_;
 #endif /* HAVE_LIBADNS */
 };
 

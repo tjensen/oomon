@@ -93,8 +93,8 @@ struct YLine
 
 struct RemoteClient
 {
-  RemoteClient(const PatternPtr _pattern, const UserFlags _flags)
-    : pattern(_pattern), flags(_flags) { }
+  RemoteClient(const PatternPtr pattern_, const UserFlags flags_)
+    : pattern(pattern_), flags(flags_) { }
 
   const PatternPtr pattern;
   const UserFlags flags;

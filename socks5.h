@@ -34,7 +34,7 @@ public:
     const std::string & userhost);
   virtual ~Socks5(void)
   {
-    if (!this->_detectedProxy)
+    if (!this->detectedProxy_)
     {
       proxies.addToCache(this->address(), this->port(), Proxy::SOCKS5);
     }

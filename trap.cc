@@ -45,36 +45,36 @@ std::list<Trap> TrapList::traps;
 
 Trap::Trap(const TrapAction action, const long timeout,
   const std::string & line)
-  : _action(action), _timeout(timeout), _matchCount(0)
+  : action_(action), timeout_(timeout), matchCount_(0)
 {
   if ((line.length() > 0) && (line[0] == '/'))
   {
     // Broken format! :(
-    this->_reason = line;
-    std::string pattern = grabPattern(this->_reason);
-    this->_reason = trimLeft(this->_reason);
+    this->reason_ = line;
+    std::string pattern = grabPattern(this->reason_);
+    this->reason_ = trimLeft(this->reason_);
 
-    this->_rePattern.reset(new RegExPattern(pattern));
+    this->rePattern_.reset(new RegExPattern(pattern));
   }
   else
   {
     std::string copy = line;
 
-    if (Trap::parsePattern(copy, this->_nick, this->_userhost,
-      this->_gecos, this->_version, this->_privmsg, this->_notice))
+    if (Trap::parsePattern(copy, this->nick_, this->userhost_, this->gecos_,
+      this->version_, this->privmsg_, this->notice_))
     {
-      this->_reason = trimLeft(copy);
+      this->reason_ = trimLeft(copy);
     }
     else
     {
       copy = line;
 
-      this->_nick.reset();
-      this->_userhost.reset();
-      this->_gecos.reset();
-      this->_version.reset();
-      this->_privmsg.reset();
-      this->_notice.reset();
+      this->nick_.reset();
+      this->userhost_.reset();
+      this->gecos_.reset();
+      this->version_.reset();
+      this->privmsg_.reset();
+      this->notice_.reset();
 
       std::string pattern = FirstWord(copy);
       std::string nick, userhost;
@@ -82,24 +82,24 @@ Trap::Trap(const TrapAction action, const long timeout,
 
       if (nick != "*")
       {
-        this->_nick.reset(new NickClusterPattern(nick));
+        this->nick_.reset(new NickClusterPattern(nick));
       }
       if (userhost != "*@*")
       {
-        this->_userhost.reset(new ClusterPattern(userhost));
+        this->userhost_.reset(new ClusterPattern(userhost));
       }
-      this->_reason = copy;
+      this->reason_ = copy;
     }
   }
 }
 
 
 Trap::Trap(const Trap & copy)
-  : _action(copy._action), _timeout(copy._timeout), _nick(copy._nick),
-  _userhost(copy._userhost), _gecos(copy._gecos), _version(copy._version),
-  _privmsg(copy._privmsg), _notice(copy._notice), _rePattern(copy._rePattern),
-  _reason(copy._reason), _lastMatch(copy._lastMatch),
-  _matchCount(copy._matchCount)
+  : action_(copy.action_), timeout_(copy.timeout_), nick_(copy.nick_),
+  userhost_(copy.userhost_), gecos_(copy.gecos_), version_(copy.version_),
+  privmsg_(copy.privmsg_), notice_(copy.notice_), rePattern_(copy.rePattern_),
+  reason_(copy.reason_), lastMatch_(copy.lastMatch_),
+  matchCount_(copy.matchCount_)
 {
 }
 
@@ -111,8 +111,8 @@ Trap::~Trap(void)
 void
 Trap::updateStats(void)
 {
-  ++this->_matchCount;
-  this->_lastMatch = std::time(NULL);
+  ++this->matchCount_;
+  this->lastMatch_ = std::time(NULL);
 }
 
 
@@ -120,20 +120,20 @@ bool
 Trap::matches(const UserEntryPtr user, const std::string & version,
   const std::string & privmsg, const std::string & notice) const
 {
-  if (NULL != this->_rePattern)
+  if (NULL != this->rePattern_)
   {
-    return (this->_rePattern->match(user->getNickUserHost()) ||
-      this->_rePattern->match(user->getNickUserIP()));
+    return (this->rePattern_->match(user->getNickUserHost()) ||
+      this->rePattern_->match(user->getNickUserIP()));
   }
   else
   {
-    if ((this->_nick && !this->_nick->match(user->getNick())) ||
-      (this->_gecos && !this->_gecos->match(user->getGecos())) ||
-      (this->_version && !this->_version->match(version)) ||
-      (this->_privmsg && !this->_privmsg->match(privmsg)) ||
-      (this->_notice && !this->_notice->match(notice)) ||
-      (this->_userhost && !this->_userhost->match(user->getUserHost()) &&
-      !this->_userhost->match(user->getUserIP())))
+    if ((this->nick_ && !this->nick_->match(user->getNick())) ||
+      (this->gecos_ && !this->gecos_->match(user->getGecos())) ||
+      (this->version_ && !this->version_->match(version)) ||
+      (this->privmsg_ && !this->privmsg_->match(privmsg)) ||
+      (this->notice_ && !this->notice_->match(notice)) ||
+      (this->userhost_ && !this->userhost_->match(user->getUserHost()) &&
+      !this->userhost_->match(user->getUserIP())))
     {
       return false;
     }
@@ -146,11 +146,11 @@ Trap::matches(const UserEntryPtr user, const std::string & version,
 bool
 Trap::operator==(const Trap & other) const
 {
-  if (this->_rePattern)
+  if (this->rePattern_)
   {
-    if (other._rePattern)
+    if (other.rePattern_)
     {
-      return (other._rePattern->get() == this->_rePattern->get());
+      return (other.rePattern_->get() == this->rePattern_->get());
     }
     else
     {
@@ -159,87 +159,87 @@ Trap::operator==(const Trap & other) const
   }
   else
   {
-    if (this->_nick)
+    if (this->nick_)
     {
-      if (!other._nick || (this->_nick->get() != other._nick->get()))
+      if (!other.nick_ || (this->nick_->get() != other.nick_->get()))
       {
 	return false;
       }
     }
     else
     {
-      if (other._nick)
+      if (other.nick_)
       {
 	return false;
       }
     }
-    if (this->_userhost)
+    if (this->userhost_)
     {
-      if (!other._userhost ||
-	(this->_userhost->get() != other._userhost->get()))
-      {
-	return false;
-      }
-    }
-    else
-    {
-      if (other._userhost)
-      {
-	return false;
-      }
-    }
-    if (this->_gecos)
-    {
-      if (!other._gecos || (this->_gecos->get() != other._gecos->get()))
+      if (!other.userhost_ ||
+	(this->userhost_->get() != other.userhost_->get()))
       {
 	return false;
       }
     }
     else
     {
-      if (other._gecos)
+      if (other.userhost_)
       {
 	return false;
       }
     }
-    if (this->_version)
+    if (this->gecos_)
     {
-      if (!other._version || (this->_version->get() != other._version->get()))
-      {
-	return false;
-      }
-    }
-    else
-    {
-      if (other._version)
-      {
-	return false;
-      }
-    }
-    if (this->_privmsg)
-    {
-      if (!other._privmsg || (this->_privmsg->get() != other._privmsg->get()))
+      if (!other.gecos_ || (this->gecos_->get() != other.gecos_->get()))
       {
 	return false;
       }
     }
     else
     {
-      if (other._privmsg)
+      if (other.gecos_)
       {
 	return false;
       }
     }
-    if (this->_notice)
+    if (this->version_)
     {
-      if (!other._notice || (this->_notice->get() != other._notice->get()))
+      if (!other.version_ || (this->version_->get() != other.version_->get()))
       {
 	return false;
       }
     }
     else
     {
-      if (other._notice)
+      if (other.version_)
+      {
+	return false;
+      }
+    }
+    if (this->privmsg_)
+    {
+      if (!other.privmsg_ || (this->privmsg_->get() != other.privmsg_->get()))
+      {
+	return false;
+      }
+    }
+    else
+    {
+      if (other.privmsg_)
+      {
+	return false;
+      }
+    }
+    if (this->notice_)
+    {
+      if (!other.notice_ || (this->notice_->get() != other.notice_->get()))
+      {
+	return false;
+      }
+    }
+    else
+    {
+      if (other.notice_)
       {
 	return false;
       }
@@ -380,58 +380,58 @@ Trap::getPattern(void) const
 {
   std::string result;
 
-  if (NULL != this->_rePattern)
+  if (NULL != this->rePattern_)
   {
-    result = this->_rePattern->get();
+    result = this->rePattern_->get();
   }
   else
   {
-    if (this->_nick)
+    if (this->nick_)
     {
-      result = "nick=" + this->_nick->get();
+      result = "nick=" + this->nick_->get();
     }
-    if (this->_userhost)
-    {
-      if (!result.empty())
-      {
-	result += ',';
-      }
-      result += "userhost=" + this->_userhost->get();
-    }
-    if (this->_gecos)
+    if (this->userhost_)
     {
       if (!result.empty())
       {
 	result += ',';
       }
-      result += "gecos=" + this->_gecos->get();
+      result += "userhost=" + this->userhost_->get();
     }
-    if (this->_version)
+    if (this->gecos_)
+    {
+      if (!result.empty())
+      {
+	result += ',';
+      }
+      result += "gecos=" + this->gecos_->get();
+    }
+    if (this->version_)
     {
       if (!result.empty())
       {
 	result += ',';
       }
       result += "version=";
-      result += this->_version->get();
+      result += this->version_->get();
     }
-    if (this->_privmsg)
+    if (this->privmsg_)
     {
       if (!result.empty())
       {
 	result += ',';
       }
       result += "privmsg=";
-      result += this->_privmsg->get();
+      result += this->privmsg_->get();
     }
-    if (this->_notice)
+    if (this->notice_)
     {
       if (!result.empty())
       {
 	result += ',';
       }
       result += "notice=";
-      result += this->_notice->get();
+      result += this->notice_->get();
     }
   }
   return result;

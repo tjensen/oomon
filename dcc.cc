@@ -53,36 +53,36 @@
 
 DCC::DCC(const std::string & nick, const std::string & userhost,
   const BotSock::Address ircIp)
-  : _sock(false, true), _flags(UserFlags::NONE())
+  : sock_(false, true), flags_(UserFlags::NONE())
 {
-  this->_sock.registerOnConnectHandler(boost::bind(&DCC::onConnect, this));
-  this->_sock.registerOnReadHandler(boost::bind(&DCC::onRead, this, _1));
-  this->_sock.setBuffering(true);
+  this->sock_.registerOnConnectHandler(boost::bind(&DCC::onConnect, this));
+  this->sock_.registerOnReadHandler(boost::bind(&DCC::onRead, this, _1));
+  this->sock_.setBuffering(true);
 
-  this->_echoMyChatter = false;
-  this->_userhost = userhost;
-  this->_ircIp = ircIp;
-  this->_nick = nick;
-  this->_watches = WatchSet::defaults();
-  this->_id = boost::lexical_cast<std::string>(this);
+  this->echoMyChatter_ = false;
+  this->userhost_ = userhost;
+  this->ircIp_ = ircIp;
+  this->nick_ = nick;
+  this->watches_ = WatchSet::defaults();
+  this->id_ = boost::lexical_cast<std::string>(this);
 
   this->addCommands();
 }
 
 
 DCC::DCC(DCC *listener)
-  : _sock(&listener->_sock, false, true), _flags(UserFlags::NONE())
+  : sock_(&listener->sock_, false, true), flags_(UserFlags::NONE())
 {
-  this->_sock.registerOnConnectHandler(boost::bind(&DCC::onConnect, this));
-  this->_sock.registerOnReadHandler(boost::bind(&DCC::onRead, this, _1));
-  this->_sock.setBuffering(true);
+  this->sock_.registerOnConnectHandler(boost::bind(&DCC::onConnect, this));
+  this->sock_.registerOnReadHandler(boost::bind(&DCC::onRead, this, _1));
+  this->sock_.setBuffering(true);
 
-  this->_echoMyChatter = listener->_echoMyChatter;
-  this->_userhost = listener->_userhost;
-  this->_ircIp = listener->_ircIp;
-  this->_nick = listener->_nick;
-  this->_watches = listener->_watches;
-  this->_id = boost::lexical_cast<std::string>(this);
+  this->echoMyChatter_ = listener->echoMyChatter_;
+  this->userhost_ = listener->userhost_;
+  this->ircIp_ = listener->ircIp_;
+  this->nick_ = listener->nick_;
+  this->watches_ = listener->watches_;
+  this->id_ = boost::lexical_cast<std::string>(this);
 
   this->addCommands();
 }
@@ -113,7 +113,7 @@ DCC::addCommand(const std::string & command,
   void (DCC::*func)(BotClient *from, const std::string & command,
   std::string parameters), const UserFlags flags, const int options)
 {
-  this->_parser.addCommand(command, boost::bind(func, this, _1, _2, _3), flags,
+  this->parser_.addCommand(command, boost::bind(func, this, _1, _2, _3), flags,
     options);
 }
 
@@ -123,11 +123,11 @@ DCC::connect(const BotSock::Address address, const BotSock::Port port,
   const std::string & nick, const std::string & userhost,
   const BotSock::Address ircIp)
 {
-  this->_nick = nick;
-  this->_userhost = userhost;
-  this->_ircIp = ircIp;
+  this->nick_ = nick;
+  this->userhost_ = userhost;
+  this->ircIp_ = ircIp;
 
-  return this->_sock.connect(address, port);
+  return this->sock_.connect(address, port);
 }
 
 
@@ -135,12 +135,12 @@ bool
 DCC::listen(const std::string & nick, const std::string & userhost,
   const BotSock::Address ircIp, const BotSock::Port port, const int backlog)
 {
-  this->_nick = nick;
-  this->_userhost = userhost;
-  this->_ircIp = ircIp;
+  this->nick_ = nick;
+  this->userhost_ = userhost;
+  this->ircIp_ = ircIp;
 
-  this->_sock.setTimeout(60);
-  return this->_sock.listen(port, backlog);
+  this->sock_.setTimeout(60);
+  return this->sock_.listen(port, backlog);
 }
 
 
@@ -160,7 +160,7 @@ DCC::onConnect(void)
   clients.sendAll(this->userhost() + " has connected", UserFlags::AUTHED,
     WatchSet(), this);
   this->motd();
-  this->_sock.setTimeout(DCC_IDLE_MAX);
+  this->sock_.setTimeout(DCC_IDLE_MAX);
 
   return true;
 }
@@ -225,7 +225,7 @@ DCC::parse(std::string text)
 	// ISSUE LOCAL COMMAND
         try
         {
-          this->_parser.parse(this, command, text);
+          this->parser_.parse(this, command, text);
         }
         catch (CommandParser::exception & e)
         {
@@ -264,21 +264,21 @@ DCC::cmdAuth(BotClient *from, const std::string & command,
   std::string userip;
   UserFlags flags;
 
-  std::string::size_type at = this->_userhost.find('@');
-  if ((std::string::npos != at) && (INADDR_NONE != this->_ircIp))
+  std::string::size_type at = this->userhost_.find('@');
+  if ((std::string::npos != at) && (INADDR_NONE != this->ircIp_))
   {
-    userip = this->_userhost.substr(0, at);
+    userip = this->userhost_.substr(0, at);
     userip += '@';
-    userip += BotSock::inet_ntoa(this->_ircIp);
+    userip += BotSock::inet_ntoa(this->ircIp_);
   }
 
-  if (Config::Auth(authHandle, this->_userhost, parameters, flags, handle) ||
+  if (Config::Auth(authHandle, this->userhost_, parameters, flags, handle) ||
     (!userip.empty() && Config::Auth(authHandle, userip, parameters, flags,
     handle)))
   {
     this->handle(handle);
     this->flags(flags);
-    this->_sock.setTimeout(0);
+    this->sock_.setTimeout(0);
     from->send("*** Authorization granted!");
 
     std::string notice(this->handle() + " (" + this->userhost() +
@@ -317,7 +317,7 @@ DCC::cmdChat(BotClient *from, const std::string & command,
   if (from->flags().has(UserFlags::AUTHED) ||
     vars[VAR_UNAUTHED_MAY_CHAT]->getBool())
   {
-    if (this->_echoMyChatter)
+    if (this->echoMyChatter_)
     {
       clients.sendChat(from->handleAndBot(), parameters);
     }
@@ -381,7 +381,7 @@ DCC::send(const std::string & message)
 {
   if (this->isConnected())
   {
-    this->_sock.write(message + '\n');
+    this->sock_.write(message + '\n');
   }
 }
 
@@ -392,7 +392,7 @@ DCC::send(const std::string & message, const UserFlags flags,
 {
   if ((flags == UserFlags::NONE()) || (flags == (this->flags() & flags)))
   {
-    if (!this->_watches.has(watches))
+    if (!this->watches_.has(watches))
     {
 #ifdef DCC_DEBUG
       std::cout << "DCC client not watching this type of message" << std::endl;
@@ -474,14 +474,14 @@ DCC::cmdWatch(BotClient *from, const std::string & command,
 {
   if (parameters == "")
   {
-    from->send("Watching: " + WatchSet::getWatchNames(this->_watches, false));
+    from->send("Watching: " + WatchSet::getWatchNames(this->watches_, false));
   }
   else
   {
-    this->_watches.set(from, parameters);
+    this->watches_.set(from, parameters);
 
     userConfig->setWatches(this->handle(),
-      WatchSet::getWatchNames(this->_watches, true));
+      WatchSet::getWatchNames(this->watches_, true));
   }
 }
 
@@ -497,11 +497,11 @@ DCC::cmdEcho(BotClient *from, const std::string & command,
     if (parm == "")
     {
       from->send(std::string("*** ECHO is ") +
-        (this->_echoMyChatter ? "ON" : "OFF"));
+        (this->echoMyChatter_ ? "ON" : "OFF"));
     }
     else if (parm == "ON")
     {
-      this->_echoMyChatter = true;
+      this->echoMyChatter_ = true;
       from->send("*** ECHO is now ON.");
       if (this->isAuthed())
       {
@@ -510,7 +510,7 @@ DCC::cmdEcho(BotClient *from, const std::string & command,
     }
     else if (parm == "OFF")
     {
-      this->_echoMyChatter = false;
+      this->echoMyChatter_ = false;
       from->send("*** ECHO is now OFF.");
       if (this->isAuthed())
       {
@@ -534,7 +534,7 @@ DCC::loadConfig(void)
 {
   try
   {
-    this->_echoMyChatter = userConfig->getEcho(this->handle());
+    this->echoMyChatter_ = userConfig->getEcho(this->handle());
   }
   catch (OOMon::norecord_error & e)
   {
@@ -547,7 +547,7 @@ DCC::loadConfig(void)
 
   try
   {
-    this->_watches.set(this, userConfig->getWatches(this->handle()), false);
+    this->watches_.set(this, userConfig->getWatches(this->handle()), false);
   }
   catch (OOMon::norecord_error & e)
   {

@@ -93,43 +93,43 @@ private:
   {
   public:
     ListenProcess(const fd_set & readset, const fd_set & writeset,
-      ConnectionList & connections) : _readset(readset), _writeset(writeset),
-      _connections(connections) { }
+      ConnectionList & connections) : readset_(readset), writeset_(writeset),
+      connections_(connections) { }
     bool operator()(BotSock::ptr s);
   private:
-    const fd_set & _readset;
-    const fd_set & _writeset;
-    ConnectionList & _connections;
+    const fd_set & readset_;
+    const fd_set & writeset_;
+    ConnectionList & connections_;
   };
 
   class RemoteProcess
   {
   public:
     RemoteProcess(const fd_set & readset, const fd_set & writeset)
-      : _readset(readset), _writeset(writeset) { }
+      : readset_(readset), writeset_(writeset) { }
     bool operator()(RemotePtr r);
   private:
-    const fd_set & _readset;
-    const fd_set & _writeset;
+    const fd_set & readset_;
+    const fd_set & writeset_;
   };
 
   class SendChat
   {
   public:
     SendChat(const std::string & from, const std::string & text,
-      const Remote *skip = 0) : _from(from), _text(text),
-      _skip(skip) { }
+      const Remote *skip = 0) : from_(from), text_(text),
+      skip_(skip) { }
     void operator()(RemotePtr r)
     {
-      if (r.get() != this->_skip)
+      if (r.get() != this->skip_)
       {
-        r->sendChat(this->_from, this->_text);
+        r->sendChat(this->from_, this->text_);
       }
     }
   private:
-    const std::string & _from;
-    const std::string & _text;
-    const Remote *_skip;
+    const std::string & from_;
+    const std::string & text_;
+    const Remote * skip_;
   };
 
   class SendBotJoinPart
@@ -137,30 +137,30 @@ private:
   public:
     SendBotJoinPart(const bool join, const std::string node1,
       const std::string node2, const Remote *skip = 0)
-      : _join(join), _node1(node1), _node2(node2), _skip(skip) { }
+      : join_(join), node1_(node1), node2_(node2), skip_(skip) { }
     void operator()(RemotePtr r)
     {
-      if (r.get() != this->_skip)
+      if (r.get() != this->skip_)
       {
-	if (this->_join)
+	if (this->join_)
 	{
-          r->sendBotJoin(this->_node1, this->_node2);
+          r->sendBotJoin(this->node1_, this->node2_);
 	}
 	else
 	{
-          r->sendBotPart(this->_node1, this->_node2);
+          r->sendBotPart(this->node1_, this->node2_);
 	}
       }
     }
   private:
-    const bool _join;
-    const std::string & _node1;
-    const std::string & _node2;
-    const Remote *_skip;
+    const bool join_;
+    const std::string & node1_;
+    const std::string & node2_;
+    const Remote * skip_;
   };
 
-  ListenerList _listeners;
-  ConnectionList _connections;
+  ListenerList listeners_;
+  ConnectionList connections_;
 };
 
 extern RemoteList remotes;

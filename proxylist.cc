@@ -218,7 +218,7 @@ ProxyList::ProxyProcessor::operator()(ProxyPtr proxy)
 
   try
   {
-    remove = !proxy->process(this->_readset, this->_writeset);
+    remove = !proxy->process(this->readset_, this->writeset_);
   }
   catch (OOMon::timeout_error)
   {
@@ -255,8 +255,8 @@ ProxyList::processAll(const fd_set & readset, const fd_set & writeset)
 bool
 ProxyList::ProxyIsChecking::operator()(ProxyPtr proxy)
 {
-  return ((proxy->address() == this->_address) &&
-    (proxy->port() == this->_port) && (proxy->type() == this->_type));
+  return ((proxy->address() == this->address_) &&
+    (proxy->port() == this->port_) && (proxy->type() == this->type_));
 }
 
 

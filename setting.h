@@ -41,15 +41,15 @@ class Setting
 public:
   explicit Setting(const std::string & name)
   {
-    this->_changed = false;
-    this->_name = name;
+    this->changed_ = false;
+    this->name_ = name;
   }
   virtual ~Setting() { };
 
-  std::string getName() const { return this->_name; };
-  void setName(const std::string & name) { this->_name = name; };
+  std::string getName() const { return this->name_; };
+  void setName(const std::string & name) { this->name_ = name; };
 
-  bool hasChanged() const { return this->_changed; };
+  bool hasChanged() const { return this->changed_; };
 
   virtual std::string get() const = 0;
   virtual std::string setString(std::string value) = 0;
@@ -59,7 +59,7 @@ public:
     std::string error = this->setString(value);
     if (error.length() == 0)
     {
-      this->_changed = true;
+      this->changed_ = true;
     }
     return error;
   };
@@ -70,8 +70,8 @@ public:
   virtual AutoAction getAction() const { return ACTION_NOTHING; };
 
 private:
-  std::string _name;
-  bool _changed;
+  std::string name_;
+  bool changed_;
 };
 
 
@@ -81,20 +81,20 @@ public:
   StrSetting(const std::string & name, const std::string & value)
     : Setting(name)
   {
-    this->_value = value;
+    this->value_ = value;
   }
 
-  virtual std::string get() const { return this->_value; };
+  virtual std::string get() const { return this->value_; };
   virtual std::string setString(std::string value)
   {
-      this->_value = value;
+      this->value_ = value;
       return "";
   }
 
   virtual std::string getString() const { return this->get(); };
 
 private:
-  std::string _value;
+  std::string value_;
 };
 
 
@@ -105,46 +105,46 @@ public:
     const std::string & trueString = "ON",
     const std::string & falseString = "OFF") : Setting(name)
   {
-    this->_value = value;
-    this->_trueString = trueString;
-    this->_falseString = falseString;
+    this->value_ = value;
+    this->trueString_ = trueString;
+    this->falseString_ = falseString;
   }
 
   virtual std::string get() const
   {
-    if (this->_value)
+    if (this->value_)
     {
-      return _trueString;
+      return trueString_;
     }
     else
     {
-      return _falseString;
+      return falseString_;
     }
   };
   virtual std::string setString(std::string value)
   {
-    if (Same(value, _trueString))
+    if (Same(value, trueString_))
     {
-      this->_value = true;
+      this->value_ = true;
       return "";
     }
-    else if (Same(value, _falseString))
+    else if (Same(value, falseString_))
     {
-      this->_value = false;
+      this->value_ = false;
       return "";
     }
     else
     {
-      return "*** " + this->_trueString + " or " + this->_falseString +
+      return "*** " + this->trueString_ + " or " + this->falseString_ +
 	" expected!";
     }
   }
 
-  virtual bool getBool() const { return this->_value; };
+  virtual bool getBool() const { return this->value_; };
 
 private:
-  std::string _trueString, _falseString;
-  bool _value;
+  std::string trueString_, falseString_;
+  bool value_;
 };
 
 
@@ -154,30 +154,30 @@ public:
   IntSetting(const std::string & name, int value, int min = INT_MIN,
     int max = INT_MAX) : Setting(name)
   {
-    this->_value = value;
-    this->_min = min;
-    this->_max = max;
+    this->value_ = value;
+    this->min_ = min;
+    this->max_ = max;
   }
 
   virtual std::string get() const
   {
-    return boost::lexical_cast<std::string>(this->_value);
+    return boost::lexical_cast<std::string>(this->value_);
   }
   virtual std::string setString(std::string value)
   {
     try
     {
       int num = boost::lexical_cast<int>(value);
-      if ((num >= this->_min) && (num <= this->_max))
+      if ((num >= this->min_) && (num <= this->max_))
       {
-        this->_value = num;
+        this->value_ = num;
         return "";
       }
       else
       {
         return "*** Numeric value between " +
-	  boost::lexical_cast<std::string>(this->_min) + " and " +
-	  boost::lexical_cast<std::string>(this->_max) + " expected!";
+	  boost::lexical_cast<std::string>(this->min_) + " and " +
+	  boost::lexical_cast<std::string>(this->max_) + " expected!";
       }
     }
     catch (boost::bad_lexical_cast)
@@ -186,10 +186,10 @@ public:
     }
   }
 
-  virtual int getInt() const { return this->_value; };
+  virtual int getInt() const { return this->value_; };
 
 private:
-  int _value, _min, _max;
+  int value_, min_, max_;
 };
 
 
@@ -199,8 +199,8 @@ public:
   ActionSetting(const std::string & name, const AutoAction & value,
     int duration = 0) : Setting(name)
   {
-    this->_value = value;
-    this->_duration = duration;
+    this->value_ = value;
+    this->duration_ = duration;
   }
 
   virtual std::string get() const
@@ -212,7 +212,7 @@ public:
       duration += boost::lexical_cast<std::string>(this->getInt());
     }
 
-    switch (this->_value)
+    switch (this->value_)
     {
       case ACTION_KILL:
 	return "KILL";
@@ -247,53 +247,53 @@ public:
     std::string action = UpCase(FirstWord(value));
 
     if (action == "NOTHING")
-      this->_value = ACTION_NOTHING;
+      this->value_ = ACTION_NOTHING;
     else if (action == "KILL")
-      this->_value = ACTION_KILL;
+      this->value_ = ACTION_KILL;
     else if ((action == "KLINE") || (action == "KLINE_USERDOMAIN"))
-      this->_value = ACTION_KLINE;
+      this->value_ = ACTION_KLINE;
     else if (action == "KLINE_HOST")
-      this->_value = ACTION_KLINE_HOST;
+      this->value_ = ACTION_KLINE_HOST;
     else if (action == "KLINE_DOMAIN")
-      this->_value = ACTION_KLINE_DOMAIN;
+      this->value_ = ACTION_KLINE_DOMAIN;
     else if (action == "KLINE_IP")
-      this->_value = ACTION_KLINE_IP;
+      this->value_ = ACTION_KLINE_IP;
     else if (action == "KLINE_USERNET")
-      this->_value = ACTION_KLINE_USERNET;
+      this->value_ = ACTION_KLINE_USERNET;
     else if (action == "KLINE_NET")
-      this->_value = ACTION_KLINE_NET;
+      this->value_ = ACTION_KLINE_NET;
     else if (action == "SMART_KLINE")
-      this->_value = ACTION_SMART_KLINE;
+      this->value_ = ACTION_SMART_KLINE;
     else if (action == "SMART_KLINE_HOST")
-      this->_value = ACTION_SMART_KLINE_HOST;
+      this->value_ = ACTION_SMART_KLINE_HOST;
     else if (action == "SMART_KLINE_IP")
-      this->_value = ACTION_SMART_KLINE_IP;
+      this->value_ = ACTION_SMART_KLINE_IP;
     else if (action == "DLINE_IP")
-      this->_value = ACTION_DLINE_IP;
+      this->value_ = ACTION_DLINE_IP;
     else if (action == "DLINE_NET")
-      this->_value = ACTION_DLINE_NET;
+      this->value_ = ACTION_DLINE_NET;
     else
       return "*** NOTHING, KILL, KLINE, KLINE_HOST, KLINE_DOMAIN, KLINE_IP, KLINE_USERNET, KLINE_NET, SMART_KLINE, SMART_KLINE_HOST, SMART_KLINE_IP, DLINE_IP, or DLINE_NET expected!";
 
     std::string duration = FirstWord(value);
     try
     {
-      this->_duration = boost::lexical_cast<int>(duration);
+      this->duration_ = boost::lexical_cast<int>(duration);
     }
     catch (boost::bad_lexical_cast)
     {
-      this->_duration = 0;
+      this->duration_ = 0;
     }
 
     return "";
   }
 
-  virtual AutoAction getAction() const { return this->_value; };
-  virtual int getInt() const { return this->_duration; };
+  virtual AutoAction getAction() const { return this->value_; };
+  virtual int getInt() const { return this->duration_; };
 
 private:
-  AutoAction _value;
-  int _duration;
+  AutoAction value_;
+  int duration_;
 };
 
 class UmodeSetting : public StrSetting

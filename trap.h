@@ -60,29 +60,29 @@ public:
 
   void updateStats(void);
 
-  TrapAction getAction(void) const { return this->_action; }
-  long getTimeout(void) const { return this->_timeout; }
+  TrapAction getAction(void) const { return this->action_; }
+  long getTimeout(void) const { return this->timeout_; }
   std::string getPattern(void) const;
-  std::string getReason(void) const { return this->_reason; }
+  std::string getReason(void) const { return this->reason_; }
   std::string getString(bool showCount = false, bool showTime = false) const;
-  std::time_t getLastMatch(void) const { return this->_lastMatch; };
-  unsigned long getMatchCount(void) const { return this->_matchCount; };
+  std::time_t getLastMatch(void) const { return this->lastMatch_; };
+  unsigned long getMatchCount(void) const { return this->matchCount_; };
 
 private:
   typedef boost::shared_ptr<Pattern> PatternPtr;
   typedef boost::shared_ptr<RegExPattern> RegExPatternPtr;
-  TrapAction	_action;
-  long		_timeout;	// For K-Lines only
-  PatternPtr	_nick;
-  PatternPtr	_userhost;
-  PatternPtr	_gecos;
-  PatternPtr	_version;
-  PatternPtr	_privmsg;
-  PatternPtr	_notice;
-  RegExPatternPtr	_rePattern;
-  std::string	_reason;	// For Kills, K-Lines, and D-Lines only
-  std::time_t	_lastMatch;
-  unsigned long	_matchCount;
+  TrapAction	action_;
+  long		timeout_;	// For K-Lines only
+  PatternPtr	nick_;
+  PatternPtr	userhost_;
+  PatternPtr	gecos_;
+  PatternPtr	version_;
+  PatternPtr	privmsg_;
+  PatternPtr	notice_;
+  RegExPatternPtr	rePattern_;
+  std::string	reason_;	// For Kills, K-Lines, and D-Lines only
+  std::time_t	lastMatch_;
+  unsigned long	matchCount_;
 
   static void split(const std::string & pattern, std::string & nick,
     std::string & userhost);

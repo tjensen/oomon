@@ -69,38 +69,41 @@ private:
   {
   public:
     NoticeEntry(const T & special, const int & count, const std::time_t & last)
-    : _special(special), _count(count), _last(last) { }
+    : special_(special), count_(count), last_(last) { }
 
-    bool operator==(const NoticeEntry & rhs) const { return (this->_special == rhs._special); }
+    bool operator==(const NoticeEntry & rhs) const
+    {
+      return (this->special_ == rhs.special_);
+    }
 
     void update(const std::time_t & now, const T & data)
     {
-      this->_special.update(data);
+      this->special_.update(data);
 
-      ++(this->_count);
+      ++(this->count_);
 
-      if (this->_special.triggered(this->_count, now - this->_last))
+      if (this->special_.triggered(this->count_, now - this->last_))
       {
-	this->_special.execute();
-	this->_count = 0;
+	this->special_.execute();
+	this->count_ = 0;
       }
 
-      this->_last = now;
+      this->last_ = now;
     }
 
     bool expired(const std::time_t now) const
     {
-      return this->_special.expired(now - this->_last);
+      return this->special_.expired(now - this->last_);
     }
 
-    T getSpecial(void) const { return this->_special; }
-    int getCount(void) const { return this->_count; }
-    std::time_t getLast(void) const { return this->_last; }
+    T getSpecial(void) const { return this->special_; }
+    int getCount(void) const { return this->count_; }
+    std::time_t getLast(void) const { return this->last_; }
 
   private:
-    T		_special;
-    int		_count;
-    std::time_t	_last;
+    T		special_;
+    int		count_;
+    std::time_t	last_;
   };
 
   std::list<NoticeEntry> list;

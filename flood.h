@@ -37,20 +37,20 @@ class FloodList
 public:
   FloodList(const std::string & type, VarNum actionVar, VarNum reasonVar,
     VarNum maxCountVar, VarNum maxTimeVar, Watch watch)
-    : _type(type), _actionVar(actionVar), _reasonVar(reasonVar),
-    _maxCountVar(maxCountVar), _maxTimeVar(maxTimeVar), _watch(watch)
+    : type_(type), actionVar_(actionVar), reasonVar_(reasonVar),
+    maxCountVar_(maxCountVar), maxTimeVar_(maxTimeVar), watch_(watch)
   {
   }
 
   void clear() { this->list.clear(); };
 
 
-  std::string getType() const { return this->_type; };
-  VarNum getActionVar() const { return this->_actionVar; };
-  VarNum getReasonVar() const { return this->_reasonVar; };
-  int getMaxCount() const { return vars[this->_maxCountVar]->getInt(); };
-  int getMaxTime() const { return vars[this->_maxTimeVar]->getInt(); };
-  Watch getWatch() const { return this->_watch; };
+  std::string getType() const { return this->type_; };
+  VarNum getActionVar() const { return this->actionVar_; };
+  VarNum getReasonVar() const { return this->reasonVar_; };
+  int getMaxCount() const { return vars[this->maxCountVar_]->getInt(); };
+  int getMaxTime() const { return vars[this->maxTimeVar_]->getInt(); };
+  Watch getWatch() const { return this->watch_; };
 
   bool onNotice(const std::string & notice, std::string text,
     std::time_t now = std::time(NULL));
@@ -68,12 +68,12 @@ private:
 
   std::list<FloodEntry> list;
 
-  std::string _type;
-  VarNum _actionVar;
-  VarNum _reasonVar;
-  VarNum _maxCountVar;
-  VarNum _maxTimeVar;
-  Watch _watch;
+  std::string type_;
+  VarNum actionVar_;
+  VarNum reasonVar_;
+  VarNum maxCountVar_;
+  VarNum maxTimeVar_;
+  Watch watch_;
 
   void addFlood(const std::string & nick, const std::string & userhost,
     std::time_t now, bool local);

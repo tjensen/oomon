@@ -1506,9 +1506,9 @@ IRC::Parser::match(std::string text) const
 {
   bool result = false;
 
-  if (this->_pattern.match(text))
+  if (this->pattern_.match(text))
   {
-    result = this->_func(text);
+    result = this->func_(text);
   }
 
   return result;

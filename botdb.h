@@ -62,7 +62,7 @@ private:
   GDBM_FILE db;
 #elif defined(HAVE_BSDDB)
   DB *db;
-  static int _errno;
+  static int errno_;
 #else
   typedef std::map<std::string, std::string> DBMap;
   DBMap db;

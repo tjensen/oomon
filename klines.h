@@ -35,25 +35,25 @@ class KlineItem
 public:
   KlineItem(const std::string & userhost = "",
     const std::string & reason = "", const bool temporary = false)
-    : _userhost(userhost), _reason(reason), _temporary(temporary) { };
+    : userhost_(userhost), reason_(reason), temporary_(temporary) { };
 
   bool operator==(const std::string & other) const
   {
-    return Same(this->_userhost, other);
+    return Same(this->userhost_, other);
   }
   bool operator==(const KlineItem & other) const
   {
-    return Same(this->_userhost, other._userhost);
+    return Same(this->userhost_, other.userhost_);
   }
 
-  std::string getUserhost(void) const { return this->_userhost; };
-  std::string getReason(void) const { return this->_reason; };
-  bool isTemporary(void) const { return this->_temporary; };
+  std::string getUserhost(void) const { return this->userhost_; };
+  std::string getReason(void) const { return this->reason_; };
+  bool isTemporary(void) const { return this->temporary_; };
 
 private:
-  const std::string _userhost;
-  const std::string _reason;
-  const bool _temporary;
+  const std::string userhost_;
+  const std::string reason_;
+  const bool temporary_;
 };
 
 

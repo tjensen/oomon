@@ -28,8 +28,8 @@
 
 struct BotLink
 {
-  BotLink(const std::string & _nodeA, const std::string & _nodeB)
-    : nodeA(_nodeA), nodeB(_nodeB) { };
+  BotLink(const std::string & nodeA_, const std::string & nodeB_)
+    : nodeA(nodeA_), nodeB(nodeB_) { };
 
   std::string nodeA;
   std::string nodeB;

@@ -31,7 +31,7 @@
 class UserDB : private BotDB
 {
 public:
-  UserDB(const std::string & file) : BotDB(file) { this->_file = file; };
+  UserDB(const std::string & file) : BotDB(file), file_(file) { }
 
   bool getEcho(const std::string & handle);
   void setEcho(const std::string & handle, const bool value);
@@ -39,10 +39,10 @@ public:
   std::string getWatches(const std::string & handle);
   void setWatches(const std::string & handle, const std::string & watches);
 
-  std::string getFile() const { return this->_file; };
+  std::string getFile() const { return this->file_; };
 
 private:
-  std::string _file;
+  std::string file_;
 };
 
 

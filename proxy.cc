@@ -67,8 +67,8 @@
 
 Proxy::Proxy(const std::string & hostname, const std::string & nick,
   const std::string & userhost)
-  : BotSock(), _detectedProxy(false), _hostname(hostname), _nick(nick),
-  _userhost(userhost)
+  : BotSock(), detectedProxy_(false), hostname_(hostname), nick_(nick),
+  userhost_(userhost)
 {
 }
 
@@ -85,7 +85,7 @@ void
 Proxy::detectedProxy(void)
 {
   // We DEFINITELY do not want to cache this one!
-  _detectedProxy = true;
+  detectedProxy_ = true;
 
   std::string portString = boost::lexical_cast<std::string>(this->port());
 
@@ -121,9 +121,9 @@ Proxy::detectedProxy(void)
 bool
 Proxy::connect(const std::string & address, const BotSock::Port port)
 {
-  this->_address = address;
-  this->_port = port;
+  this->address_ = address;
+  this->port_ = port;
 
-  return this->BotSock::connect(_address, _port);
+  return this->BotSock::connect(this->address_, this->port_);
 }
 

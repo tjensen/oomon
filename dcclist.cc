@@ -143,7 +143,7 @@ DCCList::ListenProcessor::operator()(DCCPtr listener)
 
   try
   {
-    remove = !listener->process(this->_readset, this->_writeset);
+    remove = !listener->process(this->readset_, this->writeset_);
   }
   catch (OOMon::ready_for_accept)
   {
@@ -169,7 +169,7 @@ DCCList::ListenProcessor::operator()(DCCPtr listener)
 
     if (addClient && newConnection->onConnect())
     {
-      this->_connections.push_back(newConnection);
+      this->connections_.push_back(newConnection);
     }
   }
   catch (OOMon::timeout_error)
@@ -189,7 +189,7 @@ DCCList::ClientProcessor::operator()(DCCPtr client)
 
   try
   {
-    remove = !client->process(this->_readset, this->_writeset);
+    remove = !client->process(this->readset_, this->writeset_);
   }
   catch (OOMon::timeout_error)
   {

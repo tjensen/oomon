@@ -45,24 +45,24 @@ public:
 
   bool connect(const std::string & address, const BotSock::Port port);
 
-  std::string address(void) const { return this->_address; };
-  BotSock::Port port(void) const { return this->_port; };
+  std::string address(void) const { return this->address_; };
+  BotSock::Port port(void) const { return this->port_; };
   virtual Proxy::Protocol type(void) const = 0;
 
 protected:
   void detectedProxy(void);
 
-  std::string hostname(void) const { return this->_hostname; };
-  std::string nick(void) const { return this->_nick; };
-  std::string userhost(void) const { return this->_userhost; };
+  std::string hostname(void) const { return this->hostname_; };
+  std::string nick(void) const { return this->nick_; };
+  std::string userhost(void) const { return this->userhost_; };
 
   virtual std::string typeName(void) const = 0;
 
-  bool _detectedProxy;
+  bool detectedProxy_;
 
 private:
-  std::string _address, _hostname, _nick, _userhost;
-  BotSock::Port _port;
+  std::string address_, hostname_, nick_, userhost_;
+  BotSock::Port port_;
 };
 
 #endif /* __PROXY_H__ */

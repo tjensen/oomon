@@ -37,12 +37,12 @@ namespace OOMon
   class oomon_error
   {
   public:
-    oomon_error(const std::string & arg) { _what = arg; };
+    oomon_error(const std::string & arg) { what_ = arg; };
     virtual ~oomon_error(void) { };
-    virtual std::string what() const { return _what; };
+    virtual std::string what() const { return what_; };
 
   private:
-    std::string _what;
+    std::string what_;
   };
 
   class regex_error : public oomon_error
@@ -55,16 +55,16 @@ namespace OOMon
   {
   public:
     errno_error(const std::string & arg) : oomon_error(arg)
-      { this->_errno = errno; };
+      { this->errno_ = errno; };
 #if defined(HAVE_STRERROR)
-    std::string why() const { return ::strerror(this->_errno); };
+    std::string why() const { return ::strerror(this->errno_); };
 #else
     std::string why() const { return std::string("error"); };
 #endif
-    int getErrno() const { return this->_errno; };
+    int getErrno() const { return this->errno_; };
 
   private:
-    int _errno;
+    int errno_;
   };
 
   class botsock_error : public oomon_error {
@@ -105,11 +105,11 @@ namespace OOMon
   class botdb_error : public oomon_error {
   public:
     botdb_error(const std::string & arg): oomon_error(arg)
-      { this->_errno = BotDB::db_errno(); };
-    std::string why() const { return BotDB::strerror(this->_errno); };
+      { this->errno_ = BotDB::db_errno(); };
+    std::string why() const { return BotDB::strerror(this->errno_); };
 
   private:
-    int _errno;
+    int errno_;
   };
 
   class norecord_error : public oomon_error {

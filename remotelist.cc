@@ -49,17 +49,17 @@ RemoteList remotes;
 void
 RemoteList::shutdown(void)
 {
-  this->_listeners.clear();
-  this->_connections.clear();
+  this->listeners_.clear();
+  this->connections_.clear();
 }
 
 
 void
 RemoteList::setFD(fd_set & readset, fd_set & writeset) const
 {
-  std::for_each(this->_listeners.begin(), this->_listeners.end(),
+  std::for_each(this->listeners_.begin(), this->listeners_.end(),
     FDSetter<BotSock::ptr>(readset, writeset));
-  std::for_each(this->_connections.begin(), this->_connections.end(),
+  std::for_each(this->connections_.begin(), this->connections_.end(),
     FDSetter<RemotePtr>(readset, writeset));
 }
 
@@ -71,7 +71,7 @@ RemoteList::ListenProcess::operator()(BotSock::ptr s)
 
   try
   {
-    remove = !s->process(this->_readset, this->_writeset);
+    remove = !s->process(this->readset_, this->writeset_);
   }
   catch (OOMon::ready_for_accept)
   {
@@ -106,7 +106,7 @@ RemoteList::ListenProcess::operator()(BotSock::ptr s)
 
     if (addRemote && temp->onConnect())
     {
-      this->_connections.push_back(temp);
+      this->connections_.push_back(temp);
     }
   }
 
@@ -121,7 +121,7 @@ RemoteList::RemoteProcess::operator()(RemotePtr r)
 
   try
   {
-    remove = !r->process(this->_readset, this->_writeset);
+    remove = !r->process(this->readset_, this->writeset_);
 
     if (remove)
     {
@@ -180,11 +180,11 @@ RemoteList::RemoteProcess::operator()(RemotePtr r)
 void
 RemoteList::processAll(const fd_set & readset, const fd_set & writeset)
 {
-  ListenProcess lp(readset, writeset, this->_connections);
-  this->_listeners.remove_if(lp);
+  ListenProcess lp(readset, writeset, this->connections_);
+  this->listeners_.remove_if(lp);
 
   RemoteProcess rp(readset, writeset);
-  this->_connections.remove_if(rp);
+  this->connections_.remove_if(rp);
 }
 
 
@@ -192,7 +192,7 @@ void
 RemoteList::sendBroadcast(const std::string & from, const std::string & text,
   const std::string & flags, const std::string & watches)
 {
-  std::for_each(this->_connections.begin(), this->_connections.end(),
+  std::for_each(this->connections_.begin(), this->connections_.end(),
     boost::bind(&Remote::sendBroadcast, _1, from, text, flags, watches));
 }
 
@@ -202,7 +202,7 @@ RemoteList::sendBroadcastPtr(const std::string & from, const Remote *skip,
   const std::string & text, const std::string & flags,
   const std::string & watches)
 {
-  std::for_each(this->_connections.begin(), this->_connections.end(),
+  std::for_each(this->connections_.begin(), this->connections_.end(),
     boost::bind(&Remote::sendBroadcastPtr, _1, from, skip, text, flags,
     watches));
 }
@@ -214,7 +214,7 @@ RemoteList::sendBroadcastId(const std::string & from,
   const std::string & text, const std::string & flags,
   const std::string & watches)
 {
-  std::for_each(this->_connections.begin(), this->_connections.end(),
+  std::for_each(this->connections_.begin(), this->connections_.end(),
     boost::bind(&Remote::sendBroadcastId, _1, from, skipId, skipBot, text,
     flags, watches));
 }
@@ -244,7 +244,7 @@ void
 RemoteList::sendChat(const std::string & from, const std::string & text,
   const Remote *skip)
 {
-  std::for_each(this->_connections.begin(), this->_connections.end(),
+  std::for_each(this->connections_.begin(), this->connections_.end(),
     RemoteList::SendChat(from, text, skip));
 }
 
@@ -253,7 +253,7 @@ void
 RemoteList::sendBotJoin(const std::string & oldnode,
   const std::string & newnode, const Remote *skip)
 {
-  std::for_each(this->_connections.begin(), this->_connections.end(),
+  std::for_each(this->connections_.begin(), this->connections_.end(),
     SendBotJoinPart(true, oldnode, newnode, skip));
 }
 
@@ -262,7 +262,7 @@ void
 RemoteList::sendBotPart(const std::string & from, const std::string & node,
   const Remote *skip)
 {
-  std::for_each(this->_connections.begin(), this->_connections.end(),
+  std::for_each(this->connections_.begin(), this->connections_.end(),
     SendBotJoinPart(false, from, node, skip));
 }
 
@@ -301,7 +301,7 @@ void
 RemoteList::sendAllRemoteCommand(BotClient * from, const std::string & command,
   const std::string & parameters)
 {
-  std::for_each(this->_connections.begin(), this->_connections.end(),
+  std::for_each(this->connections_.begin(), this->connections_.end(),
     boost::bind(&Remote::sendAllRemoteCommandPtr, _1, from, command,
       parameters));
 }
@@ -372,7 +372,7 @@ RemoteList::cmdDisconn(BotClient * from, const std::string & command,
       ::SendAll(notice, UserFlags::OPER, WatchSet(), from);
       Log::Write(notice);
 
-      this->_connections.remove(remote);
+      this->connections_.remove(remote);
     }
   }
 }
@@ -383,12 +383,12 @@ RemoteList::getLinks(BotClient * client)
 {
   client->send(Config::GetNick());
 
-  for (ConnectionList::iterator pos = this->_connections.begin();
-    pos != this->_connections.end(); ++pos)
+  for (ConnectionList::iterator pos = this->connections_.begin();
+    pos != this->connections_.end(); ++pos)
   {
     RemotePtr copy(*pos);
 
-    if (copy != this->_connections.back())
+    if (copy != this->connections_.back())
     {
       client->send("|\\");
       copy->getLinks(client, "| ");
@@ -407,8 +407,8 @@ RemoteList::getBotNet(BotLinkList & list, const Remote *skip)
 {
   list.clear();
 
-  for (ConnectionList::iterator pos = this->_connections.begin();
-    pos != this->_connections.end(); ++pos)
+  for (ConnectionList::iterator pos = this->connections_.begin();
+    pos != this->connections_.end(); ++pos)
   {
     RemotePtr copy(*pos);
 
@@ -435,7 +435,7 @@ RemoteList::listen(const std::string & address, const BotSock::Port & port)
 
   if (temp->listen(port, 5))
   {
-    this->_listeners.push_back(temp);
+    this->listeners_.push_back(temp);
 
     result = true;
   }
@@ -447,7 +447,7 @@ RemoteList::listen(const std::string & address, const BotSock::Port & port)
 void
 RemoteList::listen(void)
 {
-  this->_listeners.clear();
+  this->listeners_.clear();
 
   this->listen("", htons(Config::getRemotePort()));
 }
@@ -456,26 +456,26 @@ RemoteList::listen(void)
 bool
 RemoteList::connect(BotClient * from, const std::string & handle)
 {
-  std::string _handle(handle);
+  std::string handle_(handle);
   std::string host;
   BotSock::Port port;
   std::string password;
   bool result = false;
 
-  if (Config::GetConn(_handle, host, port, password))
+  if (Config::GetConn(handle_, host, port, password))
   {
-    RemotePtr temp(new Remote(_handle));
+    RemotePtr temp(new Remote(handle_));
 
     std::string notice("*** ");
     notice += from->handleAndBot();
     notice += " initiating connection with ";
-    notice += _handle;
+    notice += handle_;
     ::SendAll(notice, UserFlags::OPER, WatchSet(), from);
     Log::Write(notice);
 
     temp->connect(host, port);
 
-    this->_connections.push_back(temp);
+    this->connections_.push_back(temp);
 
     result = true;
   }
@@ -487,8 +487,8 @@ RemoteList::connect(BotClient * from, const std::string & handle)
 bool
 RemoteList::isLinkedDirectlyToMe(const std::string & Name) const
 {
-  for (ConnectionList::const_iterator pos = this->_connections.begin();
-    pos != this->_connections.end(); ++pos)
+  for (ConnectionList::const_iterator pos = this->connections_.begin();
+    pos != this->connections_.end(); ++pos)
   {
     RemotePtr copy(*pos);
 
@@ -506,8 +506,8 @@ RemoteList::findBot(const std::string & to) const
 {
   RemotePtr result;
 
-  for (ConnectionList::const_iterator pos = this->_connections.begin();
-    pos != this->_connections.end(); ++pos)
+  for (ConnectionList::const_iterator pos = this->connections_.begin();
+    pos != this->connections_.end(); ++pos)
   {
     RemotePtr copy(*pos);
 

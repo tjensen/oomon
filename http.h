@@ -35,7 +35,7 @@ public:
     const std::string & userhost);
   virtual ~Http(void)
   {
-    if (!this->_detectedProxy)
+    if (!this->detectedProxy_)
     {
       proxies.addToCache(this->address(), this->port(), Proxy::HTTP);
     }

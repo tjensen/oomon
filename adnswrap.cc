@@ -35,7 +35,7 @@ Adns adns;
 Adns::Adns(void)
 {
 #ifdef HAVE_LIBADNS
-  int ret = adns_init(&this->_state, adns_if_nosigpipe, 0);
+  int ret = adns_init(&this->state_, adns_if_nosigpipe, 0);
 
   if (0 != ret)
   {
@@ -48,22 +48,22 @@ Adns::Adns(void)
 Adns::~Adns(void)
 {
 #ifdef HAVE_LIBADNS
-  adns_finish(this->_state);
+  adns_finish(this->state_);
 #endif /* HAVE_LIBADNS */
 }
 
 
 #ifdef HAVE_LIBADNS
-Adns::Query::Query(void) : _query(0)
+Adns::Query::Query(void) : query_(0)
 {
 }
 
 
 Adns::Query::~Query(void)
 {
-  if (this->_query)
+  if (this->query_)
   {
-    adns_cancel(this->_query);
+    adns_cancel(this->query_);
   }
 }
 
@@ -71,23 +71,23 @@ Adns::Query::~Query(void)
 bool
 Adns::Answer::valid(void) const
 {
-  return (0 != this->_answer.get());
+  return (0 != this->answer_.get());
 }
 
 
 adns_status
 Adns::Answer::status(void) const
 {
-  return this->_answer->status;
+  return this->answer_->status;
 }
 
 
 int
 Adns::submit(const std::string & name, Adns::Query & query)
 {
-  return adns_submit(this->_state, name.c_str(), adns_r_addr,
+  return adns_submit(this->state_, name.c_str(), adns_r_addr,
     static_cast<adns_queryflags>(adns_qf_owner | adns_qf_search), 0,
-    &query._query);
+    &query.query_);
 }
 
 
@@ -100,9 +100,9 @@ Adns::submit_reverse(const BotSock::Address & addr, Adns::Query & query)
   memcpy(&saddr.sin_addr, &addr, sizeof(addr));
   saddr.sin_family = AF_INET;
 
-  return adns_submit_reverse(this->_state,
+  return adns_submit_reverse(this->state_,
     reinterpret_cast<struct sockaddr *>(&saddr), adns_r_ptr,
-    static_cast<adns_queryflags>(adns_qf_owner), 0, &query._query);
+    static_cast<adns_queryflags>(adns_qf_owner), 0, &query.query_);
 }
 
 
@@ -116,9 +116,9 @@ Adns::submit_rbl(const BotSock::Address & addr, const std::string & zone,
   memcpy(&saddr.sin_addr, &addr, sizeof(addr));
   saddr.sin_family = AF_INET;
 
-  return adns_submit_reverse_any(this->_state,
+  return adns_submit_reverse_any(this->state_,
     reinterpret_cast<struct sockaddr *>(&saddr), zone.c_str(), adns_r_addr,
-    static_cast<adns_queryflags>(adns_qf_owner), 0, &query._query);
+    static_cast<adns_queryflags>(adns_qf_owner), 0, &query.query_);
 }
 
 
@@ -129,14 +129,14 @@ Adns::check(Adns::Query & query)
 
   adns_answer * reply;
 
-  int ret = adns_check(this->_state, &query._query, &reply, &context);
+  int ret = adns_check(this->state_, &query.query_, &reply, &context);
 
   Adns::Answer result;
   if (0 == ret)
   {
-    query._query = 0;
+    query.query_ = 0;
 
-    result._answer.reset(reply, free);
+    result.answer_.reset(reply, free);
   }
   else
   {
@@ -157,7 +157,7 @@ Adns::beforeselect(int & maxfd, fd_set & readfds, fd_set & writefds,
 
   gettimeofday(&now, 0);
 
-  adns_beforeselect(this->_state, &maxfd, &readfds, &writefds, &exceptfds,
+  adns_beforeselect(this->state_, &maxfd, &readfds, &writefds, &exceptfds,
     &tv_mod, 0, &now);
 #endif /* HAVE_LIBADNS */
 }
@@ -172,7 +172,7 @@ Adns::afterselect(int maxfd, const fd_set & readfds, const fd_set & writefds,
 
   gettimeofday(&now, 0);
 
-  adns_afterselect(this->_state, maxfd, &readfds, &writefds, &exceptfds, &now);
+  adns_afterselect(this->state_, maxfd, &readfds, &writefds, &exceptfds, &now);
 #endif /* HAVE_LIBADNS */
 }
 

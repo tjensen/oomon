@@ -56,19 +56,19 @@ public:
     const WatchSet & watches = WatchSet());
 
   virtual void send(const std::string & message);
-  virtual UserFlags flags(void) const { return this->_flags; }
-  virtual std::string handle(void) const { return this->_handle; }
+  virtual UserFlags flags(void) const { return this->flags_; }
+  virtual std::string handle(void) const { return this->handle_; }
   virtual std::string bot(void) const { return Config::GetNick(); }
-  virtual std::string id(void) const { return this->_id; }
+  virtual std::string id(void) const { return this->id_; }
 
-  void flags(const UserFlags f) { this->_flags = f; }
-  void handle(const std::string & h) { this->_handle = h; }
+  void flags(const UserFlags f) { this->flags_ = f; }
+  void handle(const std::string & h) { this->handle_ = h; }
   std::string humanReadableFlags(void) const;
   void who(class BotClient * client) const;
   bool statsP(StrList & output) const;
 
-  std::string userhost(void) const { return this->_userhost; }
-  std::string nick(void) const { return this->_nick; }
+  std::string userhost(void) const { return this->userhost_; }
+  std::string nick(void) const { return this->nick_; }
 
   bool isOper(void) const
     { return (this->flags().has(UserFlags::OPER)); }
@@ -77,28 +77,28 @@ public:
 
   bool onConnect(void);
 
-  BotSock::Port getLocalPort(void) const { return this->_sock.getLocalPort(); }
-  bool isConnected(void) const { return this->_sock.isConnected(); }
+  BotSock::Port getLocalPort(void) const { return this->sock_.getLocalPort(); }
+  bool isConnected(void) const { return this->sock_.isConnected(); }
   bool process(const fd_set & readset, const fd_set & writeset)
-    { return this->_sock.process(readset, writeset); }
+    { return this->sock_.process(readset, writeset); }
   void setFD(fd_set & readset, fd_set & writeset)
-    { this->_sock.setFD(readset, writeset); }
-  std::time_t idleTime(void) const { return this->_sock.getIdle(); }
+    { this->sock_.setFD(readset, writeset); }
+  std::time_t idleTime(void) const { return this->sock_.getIdle(); }
 
 protected:
   bool onRead(std::string text);
 
 private:
-  BotSock _sock;
-  bool _echoMyChatter;
-  std::string _userhost;
-  BotSock::Address _ircIp;
-  std::string _nick;
-  WatchSet _watches;
-  CommandParser _parser;
-  std::string _handle;
-  std::string _id;
-  UserFlags _flags;
+  BotSock sock_;
+  bool echoMyChatter_;
+  std::string userhost_;
+  BotSock::Address ircIp_;
+  std::string nick_;
+  WatchSet watches_;
+  CommandParser parser_;
+  std::string handle_;
+  std::string id_;
+  UserFlags flags_;
 
   bool parse(std::string text);
 

@@ -50,10 +50,10 @@ public:
   {
   public:
     adns_error(const std::string & arg, const int error) : oomon_error(arg),
-      _errno(error) { };
-    int error(void) const { return this->_errno; }
+      errno_(error) { };
+    int error(void) const { return this->errno_; }
   private:
-    int _errno;
+    int errno_;
   };
 
 #ifdef HAVE_LIBADNS
@@ -64,7 +64,7 @@ public:
     ~Query(void);
     friend class Adns;
   private:
-    adns_query _query;
+    adns_query query_;
   };
 
   int submit(const std::string & name, Adns::Query & query);
@@ -81,7 +81,7 @@ public:
     bool valid(void) const;
     adns_status status(void) const;
   private:
-    boost::shared_ptr<adns_answer> _answer;
+    boost::shared_ptr<adns_answer> answer_;
   };
 
   Adns::Answer check(Adns::Query & query);
@@ -94,7 +94,7 @@ public:
 
 private:
 #ifdef HAVE_LIBADNS
-  adns_state _state;
+  adns_state state_;
 #endif /* HAVE_LIBADNS */
 };
 

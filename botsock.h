@@ -59,7 +59,7 @@ public:
   typedef in_addr_t Address;
   typedef in_port_t Port;
 
-  BotSock(const bool _blocking = false, const bool lineBuffered = false);
+  BotSock(const bool blocking_ = false, const bool lineBuffered = false);
   BotSock(const BotSock *listener, const bool blocking = false,
     const bool lineBuffered = false);
   virtual ~BotSock(void);
@@ -125,15 +125,15 @@ public:
   class FDSetter
   {
   public:
-    FDSetter(fd_set & readset, fd_set & writeset) : _readset(readset),
-      _writeset(writeset) { }
+    FDSetter(fd_set & readset, fd_set & writeset) : readset_(readset),
+      writeset_(writeset) { }
     void operator()(BotSock::ptr s)
     {
-      s->setFD(this->_readset, this->_writeset);
+      s->setFD(this->readset_, this->writeset_);
     }
   private:
-    fd_set & _readset;
-    fd_set & _writeset;
+    fd_set & readset_;
+    fd_set & writeset_;
   };
 
 private:
@@ -160,15 +160,15 @@ template <typename t>
 class FDSetter
 {
 public:
-  FDSetter(fd_set & readset, fd_set & writeset) : _readset(readset),
-    _writeset(writeset) { }
+  FDSetter(fd_set & readset, fd_set & writeset) : readset_(readset),
+    writeset_(writeset) { }
   void operator()(t node)
   {
-    node->setFD(this->_readset, this->_writeset);
+    node->setFD(this->readset_, this->writeset_);
   }
 private:
-  fd_set & _readset;
-  fd_set & _writeset;
+  fd_set & readset_;
+  fd_set & writeset_;
 };
 
 

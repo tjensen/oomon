@@ -49,15 +49,15 @@ bool MatchesMask(std::string TEST, std::string MASK, bool special = false);
 class Pattern
 {
 public:
-  explicit Pattern(const std::string & text) : _pattern(text) { };
+  explicit Pattern(const std::string & text) : pattern_(text) { };
   virtual ~Pattern() { };
 
-  std::string get() const { return this->_pattern; };
+  std::string get() const { return this->pattern_; };
 
   virtual bool match(const std::string & text) const = 0;
 
 protected:
-  std::string _pattern;
+  std::string pattern_;
 };
 
 

@@ -47,7 +47,7 @@
 
 #if defined(HAVE_LIBGDBM)
 #elif defined(HAVE_BSDDB)
-int BotDB::_errno = 0;
+int BotDB::errno_ = 0;
 #else
 #endif
 
@@ -60,7 +60,7 @@ BotDB::BotDB(const std::string & file, int mode)
   db = dbopen(file.c_str(), O_CREAT | O_RDWR, mode, DB_HASH, NULL);
   if (NULL == this->db)
   {
-    BotDB::_errno = errno;
+    BotDB::errno_ = errno;
   }
 #endif
 
@@ -97,7 +97,7 @@ BotDB::del(const std::string & key)
 
   if (result < 0)
   {
-    BotDB::_errno = errno;
+    BotDB::errno_ = errno;
   }
 
   return result;
@@ -125,7 +125,7 @@ BotDB::fd()
 
   if (result < 0)
   {
-    BotDB::_errno = errno;
+    BotDB::errno_ = errno;
   }
 
   return result;
@@ -163,7 +163,7 @@ BotDB::get(const std::string & key, std::string & data)
   }
   else if (result < 0)
   {
-    BotDB::_errno = errno;
+    BotDB::errno_ = errno;
   }
 
   return result;
@@ -203,7 +203,7 @@ BotDB::put(const std::string & key, const std::string & data)
 
   if (result < 0)
   {
-    BotDB::_errno = errno;
+    BotDB::errno_ = errno;
   }
 
   return result;
@@ -225,7 +225,7 @@ BotDB::sync()
 
   if (result < 0)
   {
-    BotDB::_errno = errno;
+    BotDB::errno_ = errno;
   }
 
   return result;
@@ -241,7 +241,7 @@ BotDB::db_errno()
 #if defined(HAVE_LIBGDBM)
   return gdbm_errno;
 #elif defined(HAVE_BSDDB)
-  return BotDB::_errno;
+  return BotDB::errno_;
 #else
   return 0;
 #endif

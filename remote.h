@@ -48,20 +48,20 @@ public:
   bool isConnectedTo(const std::string &) const;
   void getLinks(class BotClient * client, const std::string &) const;
 
-  std::string getHandle(void) const { return this->_handle; };
-  std::string getHostname(void) const { return this->_hostname; };
+  std::string getHandle(void) const { return this->handle_; };
+  std::string getHostname(void) const { return this->hostname_; };
   void getBotNetBranch(BotLinkList & list) const;
 
-  bool isClient(void) const { return this->_client; };
-  bool isServer(void) const { return !this->_client; };
+  bool isClient(void) const { return this->client_; };
+  bool isServer(void) const { return !this->client_; };
 
   bool authenticated(void) const
   {
-    return Remote::STAGE_AUTHED == this->_stage;
+    return Remote::STAGE_AUTHED == this->stage_;
   }
   bool ready(void) const
   {
-    return Remote::STAGE_READY == this->_stage;
+    return Remote::STAGE_READY == this->stage_;
   }
 
   int sendBroadcast(const std::string & from, const std::string & text,
@@ -96,12 +96,12 @@ public:
   virtual void send(const std::string & text);
 
   void setFD(fd_set & readset, fd_set & writeset) const
-    { this->_sock.setFD(readset, writeset); }
+    { this->sock_.setFD(readset, writeset); }
   bool process(const fd_set & readset, const fd_set & writeset)
-    { return this->_sock.process(readset, writeset); }
-  bool isConnected(void) const { return this->_sock.isConnected(); }
+    { return this->sock_.process(readset, writeset); }
+  bool isConnected(void) const { return this->sock_.isConnected(); }
   bool connect(const std::string & hostname, BotSock::Port port)
-    { return this->_sock.connect(hostname, port); }
+    { return this->sock_.connect(hostname, port); }
 
 protected:
   bool onRead(std::string text);
@@ -162,19 +162,19 @@ private:
     const StrVector &)> CommandCallback;
   typedef std::map<std::string, CommandCallback> CommandMap;
 
-  Links _children;
-  std::string _handle;
-  std::string _hostname;
-  Stage _stage;
-  bool _client;
-  std::string _sendQ;
-  CommandParser _parser;
-  BotSock _sock;
-  bool _targetEstablished;
-  std::string _clientHandle;
-  std::string _clientBot;
-  std::string _clientId;
-  UserFlags _clientFlags;
+  Links children_;
+  std::string handle_;
+  std::string hostname_;
+  Stage stage_;
+  bool client_;
+  std::string sendQ_;
+  CommandParser parser_;
+  BotSock sock_;
+  bool targetEstablished_;
+  std::string clientHandle_;
+  std::string clientBot_;
+  std::string clientId_;
+  UserFlags clientFlags_;
   CommandMap commands;
 
   static const std::string PROTOCOL_NAME;

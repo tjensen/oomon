@@ -117,15 +117,15 @@ private:
   class ScoreNode
   {
   public:
-    ScoreNode(UserEntryPtr info, int score) : _info(info),
-      _score(score) { }
-    UserEntryPtr getInfo() const { return this->_info; };
-    int getScore() const { return this->_score; };
+    ScoreNode(UserEntryPtr info, int score) : info_(info),
+      score_(score) { }
+    UserEntryPtr getInfo() const { return this->info_; };
+    int getScore() const { return this->score_; };
     bool operator < (const ScoreNode & compare) const
-      { return (this->_score < compare._score); };
+      { return (this->score_ < compare.score_); };
   private:
-    UserEntryPtr _info;
-    int _score;
+    UserEntryPtr info_;
+    int score_;
   };
 
   class SortEntry

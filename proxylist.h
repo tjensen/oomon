@@ -82,35 +82,35 @@ private:
   {
   public:
     explicit ProxyProcessor(const fd_set & readset, const fd_set & writeset)
-      : _readset(readset), _writeset(writeset) { }
+      : readset_(readset), writeset_(writeset) { }
     bool operator()(ProxyPtr proxy);
   private:
-    const fd_set & _readset;
-    const fd_set & _writeset;
+    const fd_set & readset_;
+    const fd_set & writeset_;
   };
 
   class ProxyIsChecking : public std::unary_function<ProxyPtr, bool>
   {
   public:
     explicit ProxyIsChecking(const std::string & address,
-      const BotSock::Port port, const Proxy::Protocol type) : _address(address),
-      _port(port), _type(type) { }
+      const BotSock::Port port, const Proxy::Protocol type) : address_(address),
+      port_(port), type_(type) { }
     bool operator()(ProxyPtr proxy);
   private:
-    const std::string & _address;
-    const BotSock::Port & _port;
-    const Proxy::Protocol _type;
+    const std::string & address_;
+    const BotSock::Port & port_;
+    const Proxy::Protocol type_;
   };
 
   class CacheEntry
   {
   public:
-    CacheEntry(void) : _ip(INADDR_NONE) { };
+    CacheEntry(void) : ip_(INADDR_NONE) { };
     CacheEntry(const BotSock::Address & ip, const BotSock::Port & port,
       const Proxy::Protocol & type)
-      : _ip(ip), _port(port), _type(type), _checked(std::time(NULL)) { };
+      : ip_(ip), port_(port), type_(type), checked_(std::time(NULL)) { };
 
-    bool isEmpty(void) const { return (INADDR_NONE == _ip); };
+    bool isEmpty(void) const { return (INADDR_NONE == ip_); };
     bool operator==(const CacheEntry & rhs) const
     {
       if (rhs.isEmpty())
@@ -119,8 +119,8 @@ private:
       }
       else
       {
-        return ((_ip == rhs._ip) && (_port == rhs._port) &&
-	  (_type == rhs._type));
+        return ((ip_ == rhs.ip_) && (port_ == rhs.port_) &&
+	  (type_ == rhs.type_));
       }
     }
     bool operator<(const CacheEntry & rhs) const
@@ -131,12 +131,12 @@ private:
       }
       else
       {
-	return (_checked < rhs._checked);
+	return (checked_ < rhs.checked_);
       }
     }
     bool isExpired(const std::time_t now) const
     {
-      if (!this->isEmpty() && ((now - _checked) > ProxyList::CACHE_EXPIRE))
+      if (!this->isEmpty() && ((now - checked_) > ProxyList::CACHE_EXPIRE))
       {
 	return true;
       }
@@ -145,16 +145,16 @@ private:
 
     void update(void)
     {
-      this->_checked = std::time(NULL);
+      this->checked_ = std::time(NULL);
     }
 
-    void clear(void) { _ip = INADDR_NONE; };
+    void clear(void) { ip_ = INADDR_NONE; };
 
   private:
-    BotSock::Address _ip;
-    BotSock::Port _port;
-    Proxy::Protocol _type;
-    std::time_t _checked;
+    BotSock::Address ip_;
+    BotSock::Port port_;
+    Proxy::Protocol type_;
+    std::time_t checked_;
   };
 
   typedef std::vector<CacheEntry> Cache;

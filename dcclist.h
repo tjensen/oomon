@@ -81,24 +81,24 @@ private:
   {
   public:
     ListenProcessor(const fd_set & readset, const fd_set & writeset,
-      SockList & connections) : _readset(readset), _writeset(writeset),
-      _connections(connections) { }
+      SockList & connections) : readset_(readset), writeset_(writeset),
+      connections_(connections) { }
     bool operator()(DCCPtr listener);
   private:
-    const fd_set & _readset;
-    const fd_set & _writeset;
-    SockList & _connections;
+    const fd_set & readset_;
+    const fd_set & writeset_;
+    SockList & connections_;
   };
 
   class ClientProcessor
   {
   public:
     ClientProcessor(const fd_set & readset, const fd_set & writeset)
-      : _readset(readset), _writeset(writeset) { }
+      : readset_(readset), writeset_(writeset) { }
     bool operator()(DCCPtr listener);
   private:
-    const fd_set & _readset;
-    const fd_set & _writeset;
+    const fd_set & readset_;
+    const fd_set & writeset_;
   };
 
   class SendFilter
@@ -106,46 +106,46 @@ private:
   public:
     SendFilter(const std::string & message, const UserFlags flags, 
       const WatchSet & watches, const class BotClient *skip = 0)
-      : _message(message), _flags(flags), _watches(watches), _skip(skip) { }
+      : message_(message), flags_(flags), watches_(watches), skip_(skip) { }
 
     void operator()(DCCPtr client)
     {
-      if (this->_skip != client.get())
+      if (this->skip_ != client.get())
       {
-        client->send(this->_message, this->_flags, this->_watches);
+        client->send(this->message_, this->flags_, this->watches_);
       }
     }
 
   private:
-    const std::string _message;
-    const UserFlags _flags;
-    const WatchSet _watches;
-    const BotClient * _skip;
+    const std::string message_;
+    const UserFlags flags_;
+    const WatchSet watches_;
+    const BotClient * skip_;
   };
 
   class SendToFilter
   {
   public:
     SendToFilter(const std::string & handle, const std::string & message,
-      const UserFlags flags, const WatchSet & watches) : _handle(handle),
-      _message(message), _flags(flags), _watches(watches) { }
+      const UserFlags flags, const WatchSet & watches) : handle_(handle),
+      message_(message), flags_(flags), watches_(watches) { }
 
     bool operator()(DCCPtr client)
     {
       bool count = false;
-      if (this->_handle == client->handle())
+      if (this->handle_ == client->handle())
       {
-        client->send(this->_message, this->_flags, this->_watches);
+        client->send(this->message_, this->flags_, this->watches_);
         count = true;
       }
       return count;
     }
 
   private:
-    const std::string _handle;
-    const std::string _message;
-    const UserFlags _flags;
-    const WatchSet _watches;
+    const std::string handle_;
+    const std::string message_;
+    const UserFlags flags_;
+    const WatchSet watches_;
   };
 };
 

@@ -63,7 +63,7 @@ Dnsbl::checkZone(const BotSock::Address & addr, const std::string & nick,
 
     if (0 == ret)
     {
-      this->_queries.push_back(temp);
+      this->queries_.push_back(temp);
     }
     else
     {
@@ -139,8 +139,8 @@ Dnsbl::Query::process(void)
 #ifdef DNSBL_DEBUG
       std::cout << "DNSBL query succeeded!" << std::endl;
 #endif /* DNSBL_DEBUG */
-      Dnsbl::openProxyDetected(this->_addr, this->_nick, this->_userhost,
-	this->_zone);
+      Dnsbl::openProxyDetected(this->addr_, this->nick_, this->userhost_,
+	this->zone_);
     }
     else
     {
@@ -167,7 +167,7 @@ Dnsbl::Query::process(void)
 void
 Dnsbl::process(void)
 {
-  this->_queries.remove_if(boost::bind(&Dnsbl::Query::process, _1));
+  this->queries_.remove_if(boost::bind(&Dnsbl::Query::process, _1));
 }
 #endif /* HAVE_LIBADNS */
 
@@ -177,7 +177,7 @@ Dnsbl::status(BotClient * client) const
 {
 #ifdef HAVE_LIBADNS
   client->send("DNSBL queries: " +
-    boost::lexical_cast<std::string>(this->_queries.size()));
+    boost::lexical_cast<std::string>(this->queries_.size()));
 #endif /* HAVE_LIBADNS */
 }
 

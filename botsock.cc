@@ -50,9 +50,9 @@ const BotSock::Address BotSock::ClassCNetMask =
   BotSock::inet_addr("255.255.255.0");
 
 
-BotSock::BotSock(const bool _blocking, const bool lineBuffered)
+BotSock::BotSock(const bool blocking_, const bool lineBuffered)
   : buffer(""), bindAddress(INADDR_ANY), timeout(0), connected(false),
-  connecting(false), listening(false), blocking(_blocking), binary(false),
+  connecting(false), listening(false), blocking(blocking_), binary(false),
   backlog(1)
 {
   if ((this->plug = ::socket(AF_INET, SOCK_STREAM, 0)) < 0)

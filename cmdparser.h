@@ -69,11 +69,11 @@ public:
 private:
   struct Command
   {
-    Command(const std::string & _name, const class UserFlags _flags,
-      const int _options, CommandParser::CommandFunction _func)
-      : name(DownCase(_name)), flags(_flags), func(_func)
+    Command(const std::string & name_, const class UserFlags flags_,
+      const int options_, CommandParser::CommandFunction func_)
+      : name(DownCase(name_)), flags(flags_), func(func_)
     {
-      this->exactOnly = (_options & EXACT_ONLY);
+      this->exactOnly = (options_ & EXACT_ONLY);
     }
     std::string name;
     UserFlags flags;
@@ -84,31 +84,31 @@ private:
   class partial_match
   {
   public:
-    partial_match(const std::string & name) : _name(DownCase(name)),
-      _namelen(name.length()) { }
+    partial_match(const std::string & name) : name_(DownCase(name)),
+      namelen_(name.length()) { }
     bool operator()(const Command & cmd)
     {
       bool result = false;
-      if (!cmd.exactOnly && (this->_namelen <= cmd.name.length()))
+      if (!cmd.exactOnly && (this->namelen_ <= cmd.name.length()))
       {
-        result = (this->_name == cmd.name.substr(0, this->_namelen));
+        result = (this->name_ == cmd.name.substr(0, this->namelen_));
       }
       return result;
     }
   private:
-    const std::string _name;
-    const std::string::size_type _namelen;
+    const std::string name_;
+    const std::string::size_type namelen_;
   };
   class exact_match
   {
   public:
-    exact_match(const std::string & name) : _name(DownCase(name)) { }
+    exact_match(const std::string & name) : name_(DownCase(name)) { }
     bool operator()(const Command & cmd)
     {
-      return (this->_name == cmd.name);
+      return (this->name_ == cmd.name);
     }
   private:
-    const std::string _name;
+    const std::string name_;
   };
   typedef std::vector<Command> CommandVector;
   CommandVector commands;
