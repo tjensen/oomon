@@ -304,5 +304,28 @@ public:
   }
 };
 
+class ServerTimeoutSetting : public IntSetting
+{
+public:
+  ServerTimeoutSetting(const std::string & name, int value)
+    : IntSetting(name, value, 30, INT_MAX) { }
+
+  virtual std::string setString(std::string value)
+  {
+    int oldValue = this->getInt();
+
+    std::string result = IntSetting::setString(value);
+
+    int newValue = this->getInt();
+
+    if (server.isConnected() && (newValue != oldValue))
+    {
+      server.setTimeout(newValue);
+    }
+
+    return result;
+  }
+};
+
 #endif /* __SETTING_H_ */
 

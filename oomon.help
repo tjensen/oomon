@@ -713,6 +713,7 @@ set
 .t.seedrand_command_min
 .t.seedrand_reason
 .t.seedrand_report_min
+.t.server_timeout
 .t.services_check_interval
 .t.services_clone_limit
 .t.spambot_action
@@ -1337,6 +1338,18 @@ set seedrand_report_min
 .l.set seedrand_action
 .l.set seedrand_command_min
 .l.set seedrand_reason
+set server_timeout
+.s.set server_timeout [<integer>]
+.d.This setting determines the number of seconds
+.d.that must pass with no activity coming from
+.d.the IRC server for the monitor bot to assume
+.d.the connection is broken.  When this value
+.d.is reached, the bot will disconnect and try
+.d.to reconnect to the server.  When half the
+.d.value is reached, the bot will send a PING to
+.d.the server to try to determine if it is still
+.d.there.
+.f.mo
 set services_check_interval
 .s.set services_check_interval [<integer>]
 .d.This setting determines the number of minutes

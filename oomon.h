@@ -116,9 +116,6 @@
 // Maximum hostname length
 #define MAX_HOST		256
 
-// Number of seconds to wait until timeout
-#define SERVER_TIME_OUT		300
-
 // Number of seconds to wait before disconnecting an idle, unauthorized DCC
 // connection
 #define DCC_IDLE_MAX		60

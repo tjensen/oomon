@@ -63,8 +63,21 @@ IRC::IRC(): BotSock(false, true), supportETrace(false), klines('K'),
   this->gettingTrace = false;
   this->myNick = "";
   this->lastUserDeltaCheck = 0;
+}
 
-  this->setTimeout(SERVER_TIME_OUT);
+
+bool
+IRC::process(const fd_set & readset, const fd_set & writeset)
+{
+  // If we've been idle for half the timeout period, send a PING to make
+  // sure the connection is still good!
+  if (this->isConnected() && (this->getIdle() > (this->getTimeout() / 2)) &&
+    (this->getWriteIdle() > (this->getTimeout() / 2)))
+  {
+    this->write("PING :" + this->myNick + '\n');
+  }
+
+  return BotSock::process(readset, writeset);
 }
 
 
@@ -89,6 +102,8 @@ IRC::onConnect()
 
   this->amIAnOper = false;
 
+  this->setTimeout(vars[VAR_SERVER_TIMEOUT]->getInt());
+
   return true;
 }
 
@@ -100,7 +115,9 @@ IRC::write(const std::string & text)
   std::cout << "IRC << " << text;
 #endif
 
-  return this->BotSock::write(text);
+  this->lastWrite = time(NULL);
+
+  return BotSock::write(text);
 }
 
 

@@ -41,6 +41,7 @@ class IRC : public BotSock
 public:
   IRC();
 
+  bool process(const fd_set & readset, const fd_set & writeset);
   int write(const std::string & text);
 
   void quit(const std::string & Message = "Normal termination");
@@ -85,7 +86,8 @@ public:
     const bool searchReason = false);
   void subSpamTrap(const bool sub);
 
-  std::string getServerName() const { return serverName; };
+  std::string getServerName(void) const { return serverName; };
+  time_t getWriteIdle(void) const { return time(NULL) - this->lastWrite; };
 
   void checkUserDelta(void);
 
@@ -108,6 +110,7 @@ private:
   KlineList klines;
   KlineList dlines;
   time_t lastUserDeltaCheck;
+  time_t lastWrite;
 
   void onCTCP(const std::string & From, const std::string & UserHost,
     const std::string & To, std::string Text);
