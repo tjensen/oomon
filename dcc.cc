@@ -607,6 +607,20 @@ DCC::cmdLocops(BotClient *from, const std::string & command,
 
 
 void
+DCC::preSelect(fd_set & readset, fd_set & writeset)
+{
+  this->sock_.preSelect(readset, writeset);
+}
+
+
+bool
+DCC::postSelect(const fd_set & readset, const fd_set & writeset)
+{
+  return this->sock_.postSelect(readset, writeset);
+}
+
+
+void
 DCC::init(void)
 {
   vars.insert("IGNORE_UNKNOWN_COMMAND",

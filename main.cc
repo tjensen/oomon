@@ -247,22 +247,22 @@ process()
     time_out.tv_usec = 0;
 
     struct timeval * tv_mod = &time_out;
-    adns.beforeselect(maxfd, readfds, writefds, exceptfds, tv_mod);
-    server.setFD(readfds, writefds);
-    clients.setAllFD(readfds, writefds);
-    remotes.setFD(readfds, writefds);
-    proxies.setAllFD(readfds, writefds);
+    adns.preSelect(maxfd, readfds, writefds, exceptfds, tv_mod);
+    server.preSelect(readfds, writefds);
+    clients.preSelect(readfds, writefds);
+    remotes.preSelect(readfds, writefds);
+    proxies.preSelect(readfds, writefds);
 
     int fds = select(FD_SETSIZE, &readfds, &writefds, NULL, tv_mod);
 
     if (fds >= 0)
     {
-      adns.afterselect(maxfd, readfds, writefds, exceptfds);
+      adns.postSelect(maxfd, readfds, writefds, exceptfds);
 
       try
       {
         if ((server.isConnected() || server.isConnecting()) &&
-          !server.process(readfds, writefds))
+          !server.postSelect(readfds, writefds))
         {
           std::string notice("Disconnected from IRC server.");
 #ifdef MAIN_DEBUG
@@ -281,15 +281,15 @@ process()
 
       server.checkUserDelta();
 
-      clients.processAll(readfds, writefds);
+      clients.postSelect(readfds, writefds);
 
-      remotes.processAll(readfds, writefds);
+      remotes.postSelect(readfds, writefds);
 
 #ifdef HAVE_LIBADNS
       dnsbl.process();
 #endif /* HAVE_LIBADNS */
 
-      proxies.processAll(readfds, writefds);
+      proxies.postSelect(readfds, writefds);
 
       if (server.isConnected())
       {

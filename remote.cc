@@ -140,8 +140,15 @@ Remote::isAuthorized(void) const
 }
 
 
+void
+Remote::preSelect(fd_set & readset, fd_set & writeset) const
+{
+  this->sock_.preSelect(readset, writeset);
+}
+
+
 bool
-Remote::process(const fd_set & readset, const fd_set & writeset)
+Remote::postSelect(const fd_set & readset, const fd_set & writeset)
 {
   // If we've been idle for half the timeout period, send a PING to make
   // sure the connection is still good!
@@ -152,7 +159,7 @@ Remote::process(const fd_set & readset, const fd_set & writeset)
     this->sendPing();
   }
 
-  return this->sock_.process(readset, writeset);
+  return this->sock_.postSelect(readset, writeset);
 }
 
 

@@ -210,12 +210,12 @@ ProxyList::check(const UserEntryPtr user)
 }
 
 
-// SetAllFD(readset, writeset)
+// preSelect(readset, writeset)
 //
 // Do this if you want to be able to receive data :P
 //
 void
-ProxyList::setAllFD(fd_set & readset, fd_set & writeset)
+ProxyList::preSelect(fd_set & readset, fd_set & writeset)
 {
   std::for_each(this->scanners.begin(), this->scanners.end(),
     BotSock::FDSetter(readset, writeset));
@@ -229,7 +229,7 @@ ProxyList::ProxyProcessor::operator()(ProxyPtr proxy)
 
   try
   {
-    remove = !proxy->process(this->readset_, this->writeset_);
+    remove = !proxy->postSelect(this->readset_, this->writeset_);
   }
   catch (OOMon::timeout_error)
   {
@@ -244,12 +244,12 @@ ProxyList::ProxyProcessor::operator()(ProxyPtr proxy)
 }
 
 
-// ProcessAll(readset, writeset)
+// postSelect(readset, writeset)
 //
 // Processes any received data at each proxy connection.
 //
 void
-ProxyList::processAll(const fd_set & readset, const fd_set & writeset)
+ProxyList::postSelect(const fd_set & readset, const fd_set & writeset)
 {
   // Expire any old proxy cache entries
   std::time_t now = std::time(NULL);

@@ -87,9 +87,9 @@ public:
   Adns::Answer check(Adns::Query & query);
 #endif /* HAVE_LIBADNS */
 
-  void beforeselect(int & maxfd, fd_set & readfds, fd_set & writefds,
+  void preSelect(int & maxfd, fd_set & readfds, fd_set & writefds,
     fd_set & exceptfds, struct timeval * & tv_mod);
-  void afterselect(int maxfd, const fd_set & readfds, const fd_set & writefds,
+  void postSelect(int maxfd, const fd_set & readfds, const fd_set & writefds,
     const fd_set & exceptfds);
 
 private:

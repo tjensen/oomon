@@ -96,9 +96,9 @@ public:
   virtual std::string id(void) const;
   virtual void send(const std::string & text);
 
-  void setFD(fd_set & readset, fd_set & writeset) const
-    { this->sock_.setFD(readset, writeset); }
-  bool process(const fd_set & readset, const fd_set & writeset);
+  void preSelect(fd_set & readset, fd_set & writeset) const;
+  bool postSelect(const fd_set & readset, const fd_set & writeset);
+
   bool isConnected(void) const { return this->sock_.isConnected(); }
   time_t getIdle(void) const { return this->sock_.getIdle(); }
   bool connect(const std::string & hostname, BotSock::Port port)

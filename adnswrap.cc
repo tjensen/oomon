@@ -149,7 +149,7 @@ Adns::check(Adns::Query & query)
 
 
 void
-Adns::beforeselect(int & maxfd, fd_set & readfds, fd_set & writefds,
+Adns::preSelect(int & maxfd, fd_set & readfds, fd_set & writefds,
   fd_set & exceptfds, struct timeval * & tv_mod)
 {
 #ifdef HAVE_LIBADNS
@@ -164,7 +164,7 @@ Adns::beforeselect(int & maxfd, fd_set & readfds, fd_set & writefds,
 
 
 void
-Adns::afterselect(int maxfd, const fd_set & readfds, const fd_set & writefds,
+Adns::postSelect(int maxfd, const fd_set & readfds, const fd_set & writefds,
   const fd_set & exceptfds)
 {
 #ifdef HAVE_LIBADNS

@@ -56,7 +56,9 @@ public:
 
   typedef boost::function<bool(std::string)> ParserFunction;
 
-  bool process(const fd_set & readset, const fd_set & writeset);
+  void preSelect(fd_set & r, fd_set & w) const;
+  bool postSelect(const fd_set & readset, const fd_set & writeset);
+
   int write(const std::string & text);
 
   void quit(const std::string & Message = "Normal termination");
@@ -131,20 +133,10 @@ public:
   std::time_t getTimeout(void) const { return this->sock_.getTimeout(); }
   void setTimeout(const std::time_t value) { this->sock_.setTimeout(value); }
   std::string getUptime(void) const { return this->sock_.getUptime(); }
-  BotSock::Address getLocalAddress(void) const
-  {
-    return this->sock_.getLocalAddress();
-  }
-  BotSock::Address getRemoteAddress(void) const
-  {
-    return this->sock_.getRemoteAddress();
-  }
+  BotSock::Address getLocalAddress(void) const;
+  BotSock::Address getRemoteAddress(void) const;
   void bindTo(const std::string & name) { this->sock_.bindTo(name); }
-  bool connect(const std::string & address, const BotSock::Port port)
-  {
-    return this->sock_.connect(address, port);
-  }
-  void setFD(fd_set & r, fd_set & w) const { this->sock_.setFD(r, w); }
+  bool connect(const std::string & address, const BotSock::Port port);
   void reset(void) { this->sock_.reset(); }
 
   static bool validNick(const std::string & nick);

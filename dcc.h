@@ -81,10 +81,10 @@ public:
 
   BotSock::Port getLocalPort(void) const { return this->sock_.getLocalPort(); }
   bool isConnected(void) const { return this->sock_.isConnected(); }
-  bool process(const fd_set & readset, const fd_set & writeset)
-    { return this->sock_.process(readset, writeset); }
-  void setFD(fd_set & readset, fd_set & writeset)
-    { this->sock_.setFD(readset, writeset); }
+
+  void preSelect(fd_set & readset, fd_set & writeset);
+  bool postSelect(const fd_set & readset, const fd_set & writeset);
+
   std::time_t idleTime(void) const { return this->sock_.getIdle(); }
 
 protected:

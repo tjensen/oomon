@@ -75,8 +75,8 @@ public:
   int write(void *buffer, int size);
   int write(const std::string & text);
 
-  bool process(const fd_set &, const fd_set &);
-  void setFD(fd_set &, fd_set &) const;
+  void preSelect(fd_set &, fd_set &) const;
+  bool postSelect(const fd_set &, const fd_set &);
 
   void bindTo(const std::string & address);
 
@@ -131,7 +131,7 @@ public:
       writeset_(writeset) { }
     void operator()(BotSock::ptr s)
     {
-      s->setFD(this->readset_, this->writeset_);
+      s->preSelect(this->readset_, this->writeset_);
     }
   private:
     fd_set & readset_;
@@ -171,7 +171,7 @@ public:
     writeset_(writeset) { }
   void operator()(t node)
   {
-    node->setFD(this->readset_, this->writeset_);
+    node->preSelect(this->readset_, this->writeset_);
   }
 private:
   fd_set & readset_;

@@ -57,7 +57,7 @@ RemoteList::shutdown(void)
 
 
 void
-RemoteList::setFD(fd_set & readset, fd_set & writeset) const
+RemoteList::preSelect(fd_set & readset, fd_set & writeset) const
 {
   std::for_each(this->listeners_.begin(), this->listeners_.end(),
     FDSetter<BotSock::ptr>(readset, writeset));
@@ -73,7 +73,7 @@ RemoteList::ListenProcess::operator()(BotSock::ptr s)
 
   try
   {
-    remove = !s->process(this->readset_, this->writeset_);
+    remove = !s->postSelect(this->readset_, this->writeset_);
   }
   catch (OOMon::ready_for_accept)
   {
@@ -124,7 +124,7 @@ RemoteList::RemoteProcess::operator()(RemotePtr r)
 
   try
   {
-    remove = !r->process(this->readset_, this->writeset_);
+    remove = !r->postSelect(this->readset_, this->writeset_);
 
     if (remove)
     {
@@ -142,7 +142,7 @@ RemoteList::RemoteProcess::operator()(RemotePtr r)
   catch (OOMon::timeout_error)
   {
 #ifdef REMOTELIST_DEBUG
-    std::cout << "Remote::process() threw exception: timeout_error" <<
+    std::cout << "Remote::postSelect() threw exception: timeout_error" <<
       std::endl;
 #endif
     remove = true;
@@ -165,7 +165,7 @@ RemoteList::RemoteProcess::operator()(RemotePtr r)
   {
     remove = true;
 #ifdef REMOTELIST_DEBUG
-    std::cout << "Remote::process() threw exception: errno_error: " <<
+    std::cout << "Remote::postSelect() threw exception: errno_error: " <<
       e.why() << std::endl;
 #endif
     r->sendError(e.why());
@@ -184,7 +184,7 @@ RemoteList::RemoteProcess::operator()(RemotePtr r)
 
 
 void
-RemoteList::processAll(const fd_set & readset, const fd_set & writeset)
+RemoteList::postSelect(const fd_set & readset, const fd_set & writeset)
 {
   ListenProcess lp(readset, writeset, this->connections_);
   this->listeners_.remove_if(lp);

@@ -55,8 +55,10 @@ public:
 
   void check(const UserEntryPtr user);
   bool connect(ProxyPtr newProxy, const BotSock::Port port);
-  void processAll(const fd_set & readset, const fd_set & writeset);
-  void setAllFD(fd_set & readset, fd_set & writeset);
+
+  void preSelect(fd_set & readset, fd_set & writeset);
+  void postSelect(const fd_set & readset, const fd_set & writeset);
+
   bool isChecking(const BotSock::Address &, const BotSock::Port,
       Proxy::Protocol) const;
   bool isVerifiedClean(const BotSock::Address & address,

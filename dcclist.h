@@ -45,8 +45,9 @@ public:
     const BotSock::Address ircIp);
   bool listen(const std::string & nick, const std::string & userhost,
     const BotSock::Address ircIp);
-  void setAllFD(fd_set & readset, fd_set & writeset);
-  void processAll(const fd_set & readset, const fd_set & writeset);
+
+  void preSelect(fd_set & readset, fd_set & writeset);
+  void postSelect(const fd_set & readset, const fd_set & writeset);
 
   void sendAll(const std::string & message,
     const UserFlags flags = UserFlags::NONE(),

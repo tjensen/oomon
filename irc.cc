@@ -140,7 +140,7 @@ IRC::IRC(): sock_(false, true), supportETrace(false), supportKnock(false),
 
 
 bool
-IRC::process(const fd_set & readset, const fd_set & writeset)
+IRC::postSelect(const fd_set & readset, const fd_set & writeset)
 {
   std::time_t now = std::time(0);
 
@@ -158,7 +158,7 @@ IRC::process(const fd_set & readset, const fd_set & writeset)
     this->lastCtcpVersionTimeoutCheck = now;
   }
 
-  return this->sock_.process(readset, writeset);
+  return this->sock_.postSelect(readset, writeset);
 }
 
 
@@ -1703,6 +1703,34 @@ IRC::setServerTimeout(const std::string & newValue)
   }
 
   return result;
+}
+
+
+void
+IRC::preSelect(fd_set & r, fd_set & w) const
+{
+  this->sock_.preSelect(r, w);
+}
+
+
+bool
+IRC::connect(const std::string & address, const BotSock::Port port)
+{
+  return this->sock_.connect(address, port);
+}
+
+
+BotSock::Address
+IRC::getLocalAddress(void) const
+{
+  return this->sock_.getLocalAddress();
+}
+
+
+BotSock::Address
+IRC::getRemoteAddress(void) const
+{
+  return this->sock_.getRemoteAddress();
 }
 
 

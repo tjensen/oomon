@@ -42,8 +42,8 @@ public:
 
   void shutdown(void);
 
-  void setFD(fd_set & readset, fd_set & writeset) const;
-  void processAll(const fd_set & readset, const fd_set & writeset);
+  void preSelect(fd_set & readset, fd_set & writeset) const;
+  void postSelect(const fd_set & readset, const fd_set & writeset);
 
   bool connect(class BotClient * from, const std::string & handle);
   void listen(void);

@@ -269,14 +269,14 @@ BotSock::write(const std::string & text)
 
 
 bool
-BotSock::process(const fd_set & readset, const fd_set & writeset)
+BotSock::postSelect(const fd_set & readset, const fd_set & writeset)
 {
   if (listening)
   {
     if (FD_ISSET(this->plug, &readset))
     {
 #ifdef BOTSOCK_DEBUG
-      std::cout << "BotSock::process(): listener is ready for accept()" <<
+      std::cout << "BotSock::postSelect(): listener is ready for accept()" <<
 	std::endl;
 #endif
 
@@ -294,7 +294,7 @@ BotSock::process(const fd_set & readset, const fd_set & writeset)
 #endif
 
 #ifdef BOTSOCK_TRACE
-      std::cout << "BotSock::process(): this->read()" << std::endl;
+      std::cout << "BotSock::postSelect(): this->read()" << std::endl;
 #endif
 
 #ifdef OLD_BOTSOCK_LINEBUFFER
@@ -435,7 +435,7 @@ BotSock::process(const fd_set & readset, const fd_set & writeset)
       }
       else if (n == 0)
       {
-        std::cerr << "BotSock::process(): EOF of socket" << std::endl;
+        std::cerr << "BotSock::postSelect(): EOF of socket" << std::endl;
 
         return false;
       }
@@ -474,7 +474,7 @@ BotSock::process(const fd_set & readset, const fd_set & writeset)
 
 
 void
-BotSock::setFD(fd_set & readset, fd_set & writeset) const
+BotSock::preSelect(fd_set & readset, fd_set & writeset) const
 {
   FD_SET(this->plug, &readset);
   if (this->isConnecting())
