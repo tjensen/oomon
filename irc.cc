@@ -1526,6 +1526,13 @@ IRC::same(const std::string & text1, const std::string & text2) const
 }
 
 
+IRC::Parser::Parser(const std::string & pattern, const ParserFunction func)
+  : func_(func)
+{
+  this->pattern_.reset(new ClusterPattern(pattern));
+}
+
+
 //////////////////////////////////////////////////////////////////////
 // IRC::Parser::match(text)
 //
@@ -1544,7 +1551,7 @@ IRC::Parser::match(std::string text) const
 {
   bool result = false;
 
-  if (this->pattern_.match(text))
+  if (this->pattern_->match(text))
   {
     result = this->func_(text);
   }

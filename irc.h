@@ -133,11 +133,10 @@ private:
   class Parser
   {
   public:
-    Parser(const std::string & pattern, const ParserFunction func)
-      : pattern_(pattern), func_(func) { }
+    Parser(const std::string & pattern, const ParserFunction func);
     bool match(std::string text) const;
   private:
-    ClusterPattern pattern_;
+    PatternPtr pattern_;
     ParserFunction func_;
   };
   typedef std::vector<Parser> ParserVector;

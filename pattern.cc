@@ -42,6 +42,27 @@
 #endif
 
 
+#ifdef PATTERN_DEBUG
+unsigned long patternCount = 0;
+#endif
+
+
+Pattern::Pattern(const std::string & text) : pattern_(text)
+{
+#ifdef PATTERN_DEBUG
+  ++patternCount;
+#endif
+}
+
+
+Pattern::~Pattern(void)
+{
+#ifdef PATTERN_DEBUG
+  --patternCount;
+#endif
+}
+
+
 RegExPattern::RegExPattern(const std::string & text) : Pattern(text)
 {
   std::string realPattern;

@@ -26,6 +26,7 @@
 
 // Boost C++ Headers
 #include <boost/shared_ptr.hpp>
+#include <boost/utility.hpp>
 
 // Std C Headers
 #include <sys/types.h>
@@ -46,26 +47,26 @@ typedef boost::shared_ptr<class Pattern> PatternPtr;
 bool MatchesMask(std::string TEST, std::string MASK, bool special = false);
 
 
-class Pattern
+class Pattern : boost::noncopyable
 {
 public:
-  explicit Pattern(const std::string & text) : pattern_(text) { };
-  virtual ~Pattern() { };
+  explicit Pattern(const std::string & text = "");
+  virtual ~Pattern(void);
 
-  std::string get() const { return this->pattern_; };
+  std::string get(void) const { return this->pattern_; };
 
   virtual bool match(const std::string & text) const = 0;
 
 protected:
-  std::string pattern_;
+  const std::string pattern_;
 };
 
 
 class ClusterPattern : public Pattern
 {
 public:
-  explicit ClusterPattern(const std::string & text) : Pattern(text) { };
-  virtual ~ClusterPattern() {};
+  explicit ClusterPattern(const std::string & text) : Pattern(text) { }
+  virtual ~ClusterPattern(void) { }
 
   virtual bool match(const std::string & text) const
   {
@@ -77,8 +78,8 @@ public:
 class NickClusterPattern : public Pattern
 {
 public:
-  explicit NickClusterPattern(const std::string & text) : Pattern(text) { };
-  virtual ~NickClusterPattern() {};
+  explicit NickClusterPattern(const std::string & text) : Pattern(text) { }
+  virtual ~NickClusterPattern(void) { }
 
   virtual bool match(const std::string & text) const
   {
@@ -91,7 +92,7 @@ class RegExPattern : public Pattern
 {
 public:
   explicit RegExPattern(const std::string & text);
-  virtual ~RegExPattern();
+  virtual ~RegExPattern(void);
 
   virtual bool match(const std::string & text) const;
 
