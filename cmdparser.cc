@@ -100,8 +100,10 @@ CommandParser::CommandParser(void)
   this->addCommand("SET", &CommandParser::cmdSet, UserFlags::OPER);
   this->addCommand("NFIND", &CommandParser::cmdNfind, UserFlags::OPER);
   this->addCommand("LIST", &CommandParser::cmdList, UserFlags::OPER);
-  this->addCommand("IPLIST", &CommandParser::cmdList, UserFlags::OPER);
   this->addCommand("GLIST", &CommandParser::cmdGlist, UserFlags::OPER);
+  this->addCommand("ULIST", &CommandParser::cmdFindu, UserFlags::OPER);
+  this->addCommand("HLIST", &CommandParser::cmdFindu, UserFlags::OPER);
+  this->addCommand("IPLIST", &CommandParser::cmdFindu, UserFlags::OPER);
   this->addCommand("FINDU", &CommandParser::cmdFindu, UserFlags::OPER);
   this->addCommand("FINDK", &CommandParser::cmdFindk, UserFlags::OPER);
   this->addCommand("FINDD", &CommandParser::cmdFindd, UserFlags::OPER);
@@ -850,26 +852,54 @@ void
 CommandParser::cmdFindu(BotClient * from, const std::string & command,
   std::string parameters)
 {
-  if (parameters.empty())
+  try
   {
-    CommandParser::syntax(command, "<filter>");
-  }
-  else
-  {
-    try
+    if (0 == command.compare("findu"))
     {
-      Filter filter(parameters, Filter::FIELD_NUHG);
+      if (parameters.empty())
+      {
+        CommandParser::syntax(command, "<filter>");
+      }
+      else
+      {
+        Filter filter(parameters, Filter::FIELD_NUHG);
 
-      users.findUsers(from, filter);
+        users.findUsers(from, filter);
+      }
     }
-    catch (OOMon::regex_error & e)
+    else
     {
-      throw CommandParser::exception("*** RegEx error: " + e.what());
+      if (parameters.empty())
+      {
+        CommandParser::syntax(command, "<pattern>");
+      }
+      else
+      {
+        std::string pattern(grabPattern(parameters));
+
+        Filter::Field field(Filter::FIELD_USER);
+        if (0 == command.compare("hlist"))
+        {
+          field = Filter::FIELD_HOST;
+        }
+        else if (0 == command.compare("iplist"))
+        {
+          field = Filter::FIELD_IP;
+        }
+
+        Filter filter(field, smartPattern(pattern, false));
+
+        users.findUsers(from, filter);
+      }
     }
-    catch (Filter::bad_field & e)
-    {
-      throw CommandParser::exception(e.what());
-    }
+  }
+  catch (OOMon::regex_error & e)
+  {
+    throw CommandParser::exception("*** RegEx error: " + e.what());
+  }
+  catch (Filter::bad_field & e)
+  {
+    throw CommandParser::exception(e.what());
   }
 }
 

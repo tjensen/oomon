@@ -226,6 +226,19 @@ glist
 .e.2 matches for *chalupa* found
 .f.o
 .l.list
+hlist
+.s.hlist <pattern>
+.d.Searches clients' hostnames for a particular
+.d.pattern and displays matching clients.
+.e.> .hlist /goat/
+.e.  foo (bar@chesgoat.felafel.net) [4.5.6.7]
+.e.  baz (quux@bingo.goats.fi) [9.8.7.6]
+.e.2 matches for h=/goat/ found
+.f.o
+.l.findu
+.l.iplist
+.l.list
+.l.ulist
 hmulti
 .s.hmulti [<number>]
 .d.Shows any *@host masks with multiple
@@ -297,7 +310,7 @@ info filters
 .d.
 .d.Each "field" may be "n" or "nick", "u" or "user",
 .d."h" or "host", "uh" or "userhost", "nuh" or
-.d."nickuserhost", "g" or "gecos", "nuhg" or
+.d."nickuserhost", "ip", "g" or "gecos", "nuhg" or
 .d."nickuserhostgecos", "c" or "class", "version",
 .d."privmsg", or "notice".
 .d.
@@ -398,6 +411,19 @@ info traps
 .l.set trap_notices
 .l.set trap_privmsgs
 .l.trap
+iplist
+.s.iplist <pattern>
+.d.Searches clients' IPs for a particular
+.d.pattern and displays matching clients.
+.e.> .iplist /^192\./
+.e.  foo (bar@argle.bargle) [192.168.1.2]
+.e.  baz (quux@razzle.dazzle) [192.168.52.69]
+.e.2 matches for ip=/^192\./ found
+.f.o
+.l.findu
+.l.hlist
+.l.list
+.l.ulist
 join
 .s.join <#channel> [<key>]
 .d.Causes the bot to join the channel.  The
@@ -567,7 +593,7 @@ links
 .e.    dorky
 .l.conn
 .l.disconn
-list.iplist
+list
 .s.list [-count] [-class <name>] <mask>
 .s.iplist [-count] [-class <name>] <mask>
 .d.Lists all users whose user@host match the mask
@@ -2498,6 +2524,19 @@ trap
 .l.set trap_nick_changes
 .l.set trap_notices
 .l.set trap_privmsgs
+ulist
+.s.ulist <pattern>
+.d.Searches clients' usernames for a particular
+.d.pattern and displays matching clients.
+.e.> .ulist /haz/
+.e.  foo (shazbot@argle.bargle) [192.168.1.2]
+.e.  baz (hazmat@razzle.dazzle) [192.168.52.69]
+.e.2 matches for u=/haz/ found
+.f.o
+.l.findu
+.l.hlist
+.l.iplist
+.l.list
 umulti
 .s.umulti [<number>]
 .d.Shows any user@* masks with multiple
