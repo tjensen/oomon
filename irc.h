@@ -104,7 +104,6 @@ public:
   void subSpamTrap(const bool sub);
 
   std::string getServerName(void) const { return serverName; };
-  std::time_t getWriteIdle(void) const { return time(NULL) - this->lastWrite; };
 
   void checkUserDelta(void);
 
@@ -153,7 +152,6 @@ private:
   KlineList klines;
   KlineList dlines;
   std::time_t lastUserDeltaCheck;
-  std::time_t lastWrite;
   std::time_t lastCtcpVersionTimeoutCheck;
 
   void onCtcp(const std::string & from, const std::string & userhost,

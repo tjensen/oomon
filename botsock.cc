@@ -211,6 +211,8 @@ BotSock::read(void *buffer, int size)
 int
 BotSock::write(void *buffer, int size)
 {
+  this->lastWrite = time(0);
+
   return (::write(this->plug, buffer, size));
 }
 
@@ -218,6 +220,8 @@ BotSock::write(void *buffer, int size)
 int
 BotSock::write(const std::string & text)
 {
+  this->lastWrite = time(0);
+
   return (::write(this->plug, text.c_str(), text.length()));
 }
 

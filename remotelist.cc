@@ -25,6 +25,8 @@
 #include <list>
 #include <algorithm>
 
+#include <boost/lexical_cast.hpp>
+
 #include "strtype"
 #include "remotelist.h"
 #include "remote.h"
@@ -146,7 +148,10 @@ RemoteList::RemoteProcess::operator()(RemotePtr r)
 
     if (r->isConnected())
     {
-      r->sendError("Timeout");
+      std::string msg("Activity timeout after ");
+      msg += boost::lexical_cast<std::string>(r->getIdle());
+      msg += " seconds";
+      r->sendError(msg);
       std::string handle = r->getHandle();
       if (handle.empty())
       {

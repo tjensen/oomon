@@ -46,7 +46,7 @@
 
 const std::string Remote::PROTOCOL_NAME("OOMon");
 const int Remote::PROTOCOL_VERSION_MAJOR(2);
-const int Remote::PROTOCOL_VERSION_MINOR(1);
+const int Remote::PROTOCOL_VERSION_MINOR(3);
 
 
 Remote::Remote(const std::string & handle)
@@ -76,6 +76,8 @@ Remote::configureCallbacks(void)
 
   // Remote callbacks
   this->registerCommand("ERROR", &Remote::onError);
+  this->registerCommand("PING", &Remote::onPing);
+  this->registerCommand("PONG", &Remote::onPong);
   this->registerCommand("AUTH", &Remote::onAuth);
   this->registerCommand("BOTJOIN", &Remote::onBotJoin);
   this->registerCommand("BOTPART", &Remote::onBotPart);
@@ -135,6 +137,22 @@ Remote::isAuthorized(void) const
   }
 
   return result;
+}
+
+
+bool
+Remote::process(const fd_set & readset, const fd_set & writeset)
+{
+  // If we've been idle for half the timeout period, send a PING to make
+  // sure the connection is still good!
+  if (this->isConnected() &&
+      (this->getIdle() > (this->sock_.getTimeout() / 2)) &&
+      (this->sock_.getWriteIdle() > (this->sock_.getTimeout() / 2)))
+  {
+    this->sendPing();
+  }
+
+  return this->sock_.process(readset, writeset);
 }
 
 
@@ -479,6 +497,27 @@ Remote::onError(const std::string & from, const std::string & command,
 
 
 bool
+Remote::onPing(const std::string & from, const std::string & command,
+  const StrVector & parameters)
+{
+  if (from.empty())
+  {
+    this->sendCommand("", "PONG", "");
+  }
+
+  return true;
+}
+
+
+bool
+Remote::onPong(const std::string & from, const std::string & command,
+  const StrVector & parameters)
+{
+  return true;
+}
+
+
+bool
 Remote::onBotJoin(const std::string & from, const std::string & command,
   const StrVector & parameters)
 {
@@ -490,7 +529,7 @@ Remote::onBotJoin(const std::string & from, const std::string & command,
     result = true;
 
     this->stage_ = Remote::STAGE_READY;
-    this->sock_.setTimeout(0);
+    this->sock_.setTimeout(300);
 
     remotes.sendBotJoin(Config::GetNick(), this->getHandle(), this);
 
@@ -968,6 +1007,13 @@ Remote::sendVersion(void)
 
 
 int
+Remote::sendPing(void)
+{
+  return this->sendCommand("", "PING", "");
+}
+
+
+int
 Remote::sendAuth(void)
 {
   std::string handle = this->getHandle();
@@ -988,6 +1034,7 @@ Remote::write(const std::string & text)
 #ifdef REMOTE_DEBUG
   std::cout << "Remote << " << text;
 #endif
+
   return this->sock_.write(text);
 }
 

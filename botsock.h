@@ -103,6 +103,8 @@ public:
   std::time_t getTimeout(void) const { return this->timeout; };
   std::time_t getIdle(void) const
     { return (std::time(NULL) - this->lastActivity); };
+  std::time_t getWriteIdle(void) const
+    { return (std::time(NULL) - this->lastWrite); };
   void gotActivity(void) { this->lastActivity = std::time(NULL); };
 
   std::string getUptime(void) const;
@@ -155,7 +157,7 @@ private:
   int bufferPos;
 #endif
   Address bindAddress;
-  std::time_t timeout, lastActivity, connectTime;
+  std::time_t timeout, lastActivity, lastWrite, connectTime;
   bool connected, connecting, listening, blocking, lineBuffered, binary;
   int plug, backlog;
 };

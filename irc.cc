@@ -181,8 +181,6 @@ IRC::write(const std::string & text)
   std::cout << "IRC << " << text;
 #endif
 
-  this->lastWrite = std::time(NULL);
-
   return BotSock::write(text);
 }
 

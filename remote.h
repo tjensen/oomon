@@ -26,6 +26,7 @@
 // Std C++ Headers
 #include <string>
 #include <map>
+#include <ctime>
 
 // Boost C++ Headers
 #include <boost/function.hpp>
@@ -97,9 +98,9 @@ public:
 
   void setFD(fd_set & readset, fd_set & writeset) const
     { this->sock_.setFD(readset, writeset); }
-  bool process(const fd_set & readset, const fd_set & writeset)
-    { return this->sock_.process(readset, writeset); }
+  bool process(const fd_set & readset, const fd_set & writeset);
   bool isConnected(void) const { return this->sock_.isConnected(); }
+  time_t getIdle(void) const { return this->sock_.getIdle(); }
   bool connect(const std::string & hostname, BotSock::Port port)
     { return this->sock_.connect(hostname, port); }
 
@@ -119,6 +120,7 @@ private:
   void unregisterCommand(const std::string & command);
 
   int sendVersion(void);
+  int sendPing(void);
   int sendAuth(void);
   int sendUnknownCommand(const std::string & command);
   int sendSyntaxError(const std::string & command);
@@ -130,6 +132,10 @@ private:
 
   // Callbacks
   bool onError(const std::string & from, const std::string & command,
+    const StrVector & parameters);
+  bool onPing(const std::string & from, const std::string & command,
+    const StrVector & parameters);
+  bool onPong(const std::string & from, const std::string & command,
     const StrVector & parameters);
   bool onAuth(const std::string & from, const std::string & command,
     const StrVector & parameters);
