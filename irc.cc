@@ -68,6 +68,7 @@ IRC::IRC(): BotSock(false, true), supportETrace(false), supportKnock(false),
   this->gettingTrace = false;
   this->myNick = "";
   this->lastUserDeltaCheck = 0;
+  this->lastCtcpVersionTimeoutCheck = 0;
 
   registerOnConnectHandler(boost::bind(&IRC::onConnect, this));
   registerOnReadHandler(boost::bind(&IRC::onRead, this, _1));
@@ -126,12 +127,20 @@ IRC::IRC(): BotSock(false, true), supportETrace(false), supportKnock(false),
 bool
 IRC::process(const fd_set & readset, const fd_set & writeset)
 {
+  time_t now = time(0);
+
   // If we've been idle for half the timeout period, send a PING to make
   // sure the connection is still good!
   if (this->isConnected() && (this->getIdle() > (this->getTimeout() / 2)) &&
     (this->getWriteIdle() > (this->getTimeout() / 2)))
   {
     this->write("PING :" + this->myNick + '\n');
+  }
+
+  if ((now - this->lastCtcpVersionTimeoutCheck) > 10)
+  {
+    users.checkVersionTimeout();
+    this->lastCtcpVersionTimeoutCheck = now;
   }
 
   return BotSock::process(readset, writeset);
@@ -601,6 +610,22 @@ IRC::onCtcp(const std::string & from, const std::string & userhost,
 
 
 void
+IRC::onCtcpReply(const std::string & from, const std::string & userhost,
+  const std::string & to, std::string text)
+{
+  if (this->same(to, this->myNick))
+  {
+    std::string command(FirstWord(text));
+
+    if (this->same(command, "VERSION"))
+    {
+      users.onVersionReply(from, userhost, text);
+    }
+  }
+}
+
+
+void
 IRC::onPrivmsg(const std::string & from, const std::string & userhost,
   const std::string & to, std::string text)
 {
@@ -642,7 +667,20 @@ void
 IRC::onNotice(const std::string & from, const std::string & userhost,
 	const std::string & to, std::string text)
 {
-  if (this->same(from, serverName))
+  if (!text.empty() && (text[0] == '\001'))
+  {
+    text.erase(text.begin());
+
+    std::string::size_type end = text.find('\001');
+
+    if (std::string::npos != end)
+    {
+      text.erase(end, std::string::npos);
+    }
+
+    this->onCtcpReply(from, userhost, to, text);
+  }
+  else if (this->same(from, serverName))
   {
     if ((text.length() > 14) &&
       (0 == text.substr(0, 14).compare("*** Notice -- ")))

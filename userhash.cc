@@ -34,6 +34,7 @@
 // OOMon Headers
 #include "strtype"
 #include "userhash.h"
+#include "userentry.h"
 #include "botsock.h"
 #include "util.h"
 #include "config.h"
@@ -109,16 +110,9 @@ UserHash::add(const std::string & nick, const std::string & userhost,
       // If we made it this far, we'll just assume it isn't a spoofed
       // hostname.  Oh, happy day!
 
-      UserEntry *newuser = new UserEntry(nick, user, host, userClass, gecos,
+      UserEntry * newuser = new UserEntry(nick, user, host, userClass, gecos,
 	(ip.length() > 0) ? BotSock::inet_addr(ip) : INADDR_NONE, 
 	(fromTrace ? 0 : time(NULL)), isOper);
-
-      if (newuser == NULL)
-      {
-        ::SendAll("Ran out of memory in UserHash::add()", UserFlags::OPER);
-        Log::Write("Ran out of memory in UserHash::add()");
-        gracefuldie(SIGABRT);
-      }
 
       // Add it to the hash tables
       UserHash::addToHash(this->hosttable, newuser->getHost(), newuser);
@@ -161,6 +155,11 @@ UserHash::add(const std::string & nick, const std::string & userhost,
           {
             CheckProxy(ip, host, nick, userhost);
           }
+
+	  if (vars[VAR_CTCPVERSION_ENABLE]->getBool())
+	  {
+	    newuser->version();
+	  }
 
 	  BotSock::Address ipAddr = BotSock::inet_addr(ip);
 
@@ -208,6 +207,63 @@ UserHash::updateOper(const std::string & nick, const std::string & userhost,
         return;
       }
       find = find->collision;
+    }
+  }
+}
+
+
+void
+UserHash::onVersionReply(const std::string & nick, const std::string & userhost,
+  const std::string & version)
+{
+  std::string::size_type at = userhost.find('@');
+
+  if (std::string::npos != at)
+  {
+    std::string user = server.downCase(userhost.substr(0, at));
+    std::string host = server.downCase(userhost.substr(at + 1));
+
+    int index = UserHash::hashFunc(user);
+
+    UserHash::HashRec *find = this->usertable[index];
+
+    while (NULL != find)
+    {
+      if ((0 == nick.compare(find->info->getNick())) &&
+	(0 == user.compare(server.downCase(find->info->getUser()))) &&
+	(vars[VAR_BROKEN_HOSTNAME_MUNGING]->getBool() ||
+	(0 == host.compare(server.downCase(find->info->getHost())))))
+      {
+        find->info->hasVersion(version);
+
+        // There shouldn't be any more, so just return
+        return;
+      }
+      find = find->collision;
+    }
+  }
+}
+
+
+void
+UserHash::checkVersionTimeout(void)
+{
+  time_t timeout = vars[VAR_CTCPVERSION_TIMEOUT]->getInt();
+
+  if (timeout > 0)
+  {
+    time_t now = time(0);
+
+    for (int i = 0; i < HASHTABLESIZE; ++i)
+    {
+      HashRec *hp = usertable[i];
+
+      while (hp)
+      {
+        hp->info->checkVersionTimeout(now, timeout);
+
+	hp = hp->collision;
+      }
     }
   }
 }
@@ -354,7 +410,8 @@ UserHash::remove(const std::string & nick, const std::string & userhost,
 
 
 void
-UserHash::addToHash(HashRec *table[], const std::string & key, UserEntry *item)
+UserHash::addToHash(HashRec *table[], const std::string & key,
+  UserEntry * item)
 {
   int index = UserHash::hashFunc(key);
 
@@ -379,7 +436,7 @@ UserHash::addToHash(HashRec *table[], const std::string & key, UserEntry *item)
 
 void
 UserHash::addToHash(HashRec *table[], const BotSock::Address & key,
-  UserEntry *item)
+  UserEntry * item)
 {
   int index = UserHash::hashFunc(key);
 
@@ -525,7 +582,7 @@ UserHash::clear()
 
 
 int
-UserHash::listUsers(BotClient * client, const Pattern *userhost,
+UserHash::listUsers(BotClient * client, const PatternPtr userhost,
   std::string className, const ListAction action, const std::string & from,
   const std::string & reason) const
 {
@@ -596,7 +653,7 @@ UserHash::listUsers(BotClient * client, const Pattern *userhost,
 
 
 int
-UserHash::listNicks(BotClient * client, const Pattern *nick,
+UserHash::listNicks(BotClient * client, const PatternPtr nick,
   std::string className, const ListAction action, const std::string & from,
   const std::string & reason) const
 {
@@ -649,7 +706,7 @@ UserHash::listNicks(BotClient * client, const Pattern *nick,
 
 
 int
-UserHash::listGecos(BotClient * client, const Pattern *gecos,
+UserHash::listGecos(BotClient * client, const PatternPtr gecos,
   std::string className, const bool count) const
 {
   int numfound = 0;
@@ -755,7 +812,7 @@ UserHash::reportClasses(BotClient * client, const std::string & className)
 
 
 void
-UserHash::reportSeedrand(BotClient * client, const Pattern *mask,
+UserHash::reportSeedrand(BotClient * client, const PatternPtr mask,
   const int threshold, const bool count) const
 {
   if (!count)
@@ -789,7 +846,7 @@ UserHash::reportSeedrand(BotClient * client, const Pattern *mask,
     for (std::list<UserHash::ScoreNode>::iterator pos = scores.begin();
       pos != scores.end(); ++pos)
     {
-      UserEntry *info = pos->getInfo();
+      UserEntry * info = pos->getInfo();
 
       client->send(info->output(vars[VAR_SEEDRAND_FORMAT]->getString()));
     }
@@ -1841,116 +1898,5 @@ void
 UserHash::resetUserCountDelta(void)
 {
   this->previousCount = this->userCount;
-}
-
-
-UserHash::UserEntry::UserEntry(const std::string & aNick,
-  const std::string & aUser, const std::string & aHost,
-  const std::string & aUserClass, const std::string & aGecos,
-  const BotSock::Address anIp, const time_t aConnectTime, const bool oper)
-  : user(aUser), host(aHost), domain(::getDomain(aHost, false)),
-  userClass(::server.downCase(aUserClass)), gecos(aGecos), ip(anIp),
-  connectTime(aConnectTime), reportTime(0), isOper(oper), linkCount(0)
-{
-  this->setNick(aNick);
-}
-
-
-void
-UserHash::UserEntry::setNick(const std::string & aNick)
-{
-  this->nick = aNick;
-  this->randScore = ::seedrandScore(aNick);
-}
-
-
-std::string
-UserHash::UserEntry::output(const std::string & format) const
-{
-  std::string::size_type len(format.length());
-  std::string::size_type idx(0), next; 
-  std::string result;
-
-  while (idx < len)
-  {
-    next = idx + 1;
-
-    if ((format[idx] == '%') && (next < len))
-    {
-      switch (UpCase(format[next]))
-      {
-        case '%':
-	  result += '%';
-	  ++next;
-	  break;
-        case '_':
-	  result += ' ';
-	  ++next;
-	  break;
-        case '-':
-	  if ((result.length() > 0) && (result[result.length() - 1] != ' '))
-	  {
-	    result += ' ';
-	  }
-	  ++next;
-	  break;
-	case '@':
-	  result += this->getUserHost();
-	  ++next;
-	  break;
-	case 'C':
-	  result += '{' + this->getClass() + '}';
-	  ++next;
-	  break;
-	case 'G':
-	  if (this->getGecos().length() > 0)
-	  {
-	    result += '<' + this->getGecos() + '>';
-	  }
-	  ++next;
-	  break;
-	case 'H':
-	  result += this->getHost();
-	  ++next;
-	  break;
-	case 'I':
-	  if (this->getIp() != INADDR_NONE)
-	  {
-            result += '[' + BotSock::inet_ntoa(this->getIp()) + ']';
-          }
-	  ++next;
-	  break;
-	case 'N':
-	  result += this->getNick();
-	  ++next;
-	  break;
-	case 'S':
-	  result += ::IntToStr(this->getScore(), 4);
-	  ++next;
-	  break;
-	case 'T':
-	  if (this->getConnectTime() != 0)
-	  {
-	    result += '(' + timeStamp(TIMESTAMP_CLIENT,
-	      this->getConnectTime()) + ')';
-	  }
-	  ++next;
-	  break;
-	case 'U':
-	  result += this->getUser();
-	  ++next;
-	  break;
-        default:
-	  result += '%';
-	  break;
-      }
-    }
-    else
-    {
-      result += format[idx];
-    }
-    idx = next;
-  }
-  return result;
 }
 

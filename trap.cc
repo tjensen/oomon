@@ -62,7 +62,7 @@ Trap::Trap(const TrapAction action, const long timeout,
     std::string copy = line;
 
     if (Trap::parsePattern(copy, this->_nick, this->_userhost,
-      this->_gecos))
+      this->_gecos, this->_version))
     {
       this->_reason = trimLeft(copy);
     }
@@ -73,6 +73,7 @@ Trap::Trap(const TrapAction action, const long timeout,
       this->_nick.reset();
       this->_userhost.reset();
       this->_gecos.reset();
+      this->_version.reset();
 
       std::string pattern = FirstWord(copy);
       std::string nick, userhost;
@@ -94,9 +95,9 @@ Trap::Trap(const TrapAction action, const long timeout,
 
 Trap::Trap(const Trap & copy)
   : _action(copy._action), _timeout(copy._timeout), _nick(copy._nick),
-  _userhost(copy._userhost), _gecos(copy._gecos), _rePattern(copy._rePattern),
-  _reason(copy._reason), _lastMatch(copy._lastMatch),
-  _matchCount(copy._matchCount)
+  _userhost(copy._userhost), _gecos(copy._gecos), _version(copy._version),
+  _rePattern(copy._rePattern), _reason(copy._reason),
+  _lastMatch(copy._lastMatch), _matchCount(copy._matchCount)
 {
 }
 
@@ -115,7 +116,8 @@ Trap::updateStats(void)
 
 bool
 Trap::matches(const std::string & nick, const std::string & userhost,
-  const std::string & ip, const std::string & gecos) const
+  const std::string & ip, const std::string & gecos,
+  const std::string & version) const
 {
   std::string::size_type at = userhost.find('@');
 
@@ -134,6 +136,7 @@ Trap::matches(const std::string & nick, const std::string & userhost,
   {
     if ((this->_nick && !this->_nick->match(nick)) ||
       (this->_gecos && !this->_gecos->match(gecos)) ||
+      (this->_version && !this->_version->match(version)) ||
       (this->_userhost && !this->_userhost->match(userhost) &&
       !this->_userhost->match(userip)))
     {
@@ -200,6 +203,20 @@ Trap::operator==(const Trap & other) const
     else
     {
       if (other._gecos)
+      {
+	return false;
+      }
+    }
+    if (this->_version)
+    {
+      if (!other._version || (this->_version->get() != other._version->get()))
+      {
+	return false;
+      }
+    }
+    else
+    {
+      if (other._version)
       {
 	return false;
       }
@@ -345,7 +362,7 @@ Trap::getPattern(void) const
     {
       if (!result.empty())
       {
-	result += ",";
+	result += ',';
       }
       result += "userhost=" + this->_userhost->get();
     }
@@ -353,9 +370,18 @@ Trap::getPattern(void) const
     {
       if (!result.empty())
       {
-	result += ",";
+	result += ',';
       }
       result += "gecos=" + this->_gecos->get();
+    }
+    if (this->_version)
+    {
+      if (!result.empty())
+      {
+	result += ',';
+      }
+      result += "version=";
+      result += this->_version->get();
     }
   }
   return result;
@@ -390,7 +416,8 @@ Trap::split(const std::string & pattern, std::string & nick,
 
 void
 Trap::doAction(const std::string & nick, const std::string & userhost,
-  const std::string & ip, const std::string & gecos) const
+  const std::string & ip, const std::string & gecos,
+  const std::string & version) const
 {
   std::string notice("*** Trapped: " + nick + "!" + userhost + " [" + ip + "]");
 
@@ -671,7 +698,8 @@ TrapList::remove(const std::string & pattern)
 
 void
 TrapList::match(const std::string & nick, const std::string & userhost,
-  const std::string & ip, const std::string & gecos)
+  const std::string & ip, const std::string & gecos,
+  const std::string & version)
 {
   if (!Config::IsOKHost(userhost, ip) && !Config::IsOper(userhost, ip))
   {
@@ -680,10 +708,10 @@ TrapList::match(const std::string & nick, const std::string & userhost,
     {
       try
       {
-        if (pos->matches(nick, userhost, ip, gecos))
+        if (pos->matches(nick, userhost, ip, gecos, version))
         {
 	  pos->updateStats();
-	  pos->doAction(nick, userhost, ip, gecos);
+	  pos->doAction(nick, userhost, ip, gecos, version);
         }
       }
       catch (OOMon::regex_error & e)
@@ -732,7 +760,7 @@ TrapList::save(std::ofstream & file)
 
 bool
 Trap::parsePattern(std::string & pattern, PatternPtr & nick,
-  PatternPtr & userhost, PatternPtr & gecos)
+  PatternPtr & userhost, PatternPtr & gecos, PatternPtr & version)
 {
   while (!pattern.empty())
   {
@@ -753,6 +781,12 @@ Trap::parsePattern(std::string & pattern, PatternPtr & nick,
       pattern.erase(0, 6);
       std::string temp = grabPattern(pattern, " ,");
       gecos = smartPattern(temp, false);
+    }
+    else if ((pattern.length() >= 8) && Same("version=", pattern.substr(0, 8)))
+    {
+      pattern.erase(0, 8);
+      std::string temp = grabPattern(pattern, " ,");
+      version = smartPattern(temp, false);
     }
     else
     {

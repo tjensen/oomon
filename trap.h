@@ -54,11 +54,13 @@ public:
   virtual ~Trap(void);
 
   bool matches(const std::string & nick, const std::string & userhost,
-    const std::string & ip, const std::string & gecos) const;
+    const std::string & ip, const std::string & gecos,
+    const std::string & version) const;
   bool operator==(const Trap & other) const;
   bool operator==(const std::string & other) const;
   void doAction(const std::string & nick, const std::string & userhost,
-    const std::string & ip, const std::string & gecos) const;
+    const std::string & ip, const std::string & gecos,
+    const std::string & version) const;
 
   void updateStats(void);
 
@@ -78,6 +80,7 @@ private:
   PatternPtr	_nick;
   PatternPtr	_userhost;
   PatternPtr	_gecos;
+  PatternPtr	_version;
   RegExPatternPtr	_rePattern;
   std::string	_reason;	// For Kills, K-Lines, and D-Lines only
   time_t	_lastMatch;
@@ -86,7 +89,7 @@ private:
   static void split(const std::string & pattern, std::string & nick,
     std::string & userhost);
   static bool parsePattern(std::string & pattern, PatternPtr & nick,
-    PatternPtr & userhost, PatternPtr & gecos);
+    PatternPtr & userhost, PatternPtr & gecos, PatternPtr & version);
 };
 
 
@@ -99,11 +102,13 @@ public:
   static void clear(void) { TrapList::traps.clear(); };
 
   static void match(const std::string & nick, const std::string & userhost,
-    const std::string & ip, const std::string & gecos);
+    const std::string & ip, const std::string & gecos,
+    const std::string & version = std::string());
   static void match(const std::string & nick, const std::string & userhost,
-    const BotSock::Address & ip, const std::string & gecos)
+    const BotSock::Address & ip, const std::string & gecos,
+    const std::string & version = std::string())
   {
-    TrapList::match(nick, userhost, BotSock::inet_ntoa(ip), gecos);
+    TrapList::match(nick, userhost, BotSock::inet_ntoa(ip), gecos, version);
   };
 
   static void list(class BotClient * client, bool showCounts, bool showTimes);

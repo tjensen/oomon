@@ -46,6 +46,8 @@ WatchSet::getWatchValue(const std::string & watch)
     return WATCH_CONNECTS;
   else if (watch == "CONNFLOOD")
     return WATCH_CONNFLOOD;
+  else if (watch == "CTCPVERSIONS")
+    return WATCH_CTCPVERSIONS;
   else if (watch == "DISCONNECTS")
     return WATCH_DISCONNECTS;
   else if (watch == "DLINES")
@@ -201,6 +203,7 @@ WatchSet::defaults(void)
   result.add(WATCH_CHAT);
   //result.add(WATCH_CONNECTS);
   result.add(WATCH_CONNFLOOD);
+  result.add(WATCH_CTCPVERSIONS);
   //result.add(WATCH_DISCONNECTS);
   result.add(WATCH_DLINES);
   //result.add(WATCH_DLINE_MATCHES);
@@ -239,6 +242,8 @@ WatchSet::getWatchName(const Watch watch)
     return "CONNECTS";
   else if (watch == WATCH_CONNFLOOD)
     return "CONNFLOOD";
+  else if (watch == WATCH_CTCPVERSIONS)
+    return "CTCPVERSIONS";
   else if (watch == WATCH_DISCONNECTS)
     return "DISCONNECTS";
   else if (watch == WATCH_DLINES)

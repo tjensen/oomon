@@ -527,14 +527,14 @@ CommandParser::cmdKilllist(BotClient * from, const std::string & command,
       {
         ::SendAll("KILLLIST " + mask + " [" + from->handleAndBot() + "]",
           UserFlags::OPER, WATCH_KILLS, from);
-        users.listUsers(from, pattern.get(), className, UserHash::LIST_KILL,
+        users.listUsers(from, pattern, className, UserHash::LIST_KILL,
           from->handleAndBot(), vars[VAR_KILLLIST_REASON]->getString());
       }
       else
       {
         ::SendAll("KILLLIST " + mask + " (" + parameters + ") [" +
           from->handleAndBot() + "]", UserFlags::OPER, WATCH_KILLS, from);
-        users.listUsers(from, pattern.get(), className, UserHash::LIST_KILL,
+        users.listUsers(from, pattern, className, UserHash::LIST_KILL,
 	  from->handleAndBot(), parameters);
       }
     }
@@ -593,14 +593,14 @@ CommandParser::cmdKillnfind(BotClient * from, const std::string & command,
       {
         ::SendAll("KILLNFIND " + mask + " [" + from->handleAndBot() + "]",
           UserFlags::OPER, WATCH_KILLS, from);
-        users.listNicks(from, pattern.get(), className, UserHash::LIST_KILL,
+        users.listNicks(from, pattern, className, UserHash::LIST_KILL,
           from->handleAndBot(), vars[VAR_KILLNFIND_REASON]->getString());
       }
       else
       {
         ::SendAll("KILLNFIND " + mask + " (" + parameters + ") [" +
           from->handleAndBot() + "]", UserFlags::OPER, WATCH_KILLS, from);
-        users.listNicks(from, pattern.get(), className, UserHash::LIST_KILL,
+        users.listNicks(from, pattern, className, UserHash::LIST_KILL,
 	  from->handleAndBot(), parameters);
       }
     }
@@ -732,7 +732,7 @@ CommandParser::cmdNfind(BotClient * from, const std::string & command,
         pattern = smartPattern(parameters, true);
       }
 
-      users.listNicks(from, pattern.get(), className,
+      users.listNicks(from, pattern, className,
         args.haveUnary("-count") ? UserHash::LIST_COUNT : UserHash::LIST_VIEW);
     }
     catch (OOMon::regex_error & e)
@@ -777,7 +777,7 @@ CommandParser::cmdList(BotClient * from, const std::string & command,
         pattern = smartPattern(parameters, false);
       }
 
-      users.listUsers(from, pattern.get(), className,
+      users.listUsers(from, pattern, className,
         args.haveUnary("-count") ? UserHash::LIST_COUNT : UserHash::LIST_VIEW);
     }
     catch (OOMon::regex_error & e)
@@ -822,7 +822,7 @@ CommandParser::cmdGlist(BotClient * from, const std::string & command,
         pattern = smartPattern(parameters, false);
       }
 
-      users.listGecos(from, pattern.get(), className,
+      users.listGecos(from, pattern, className,
 	args.haveUnary("-count"));
     }
     catch (OOMon::regex_error & e)
@@ -1085,7 +1085,7 @@ CommandParser::cmdSeedrand(BotClient * from, const std::string & command,
       pattern = smartPattern(parameters, true);
     }
 
-    users.reportSeedrand(from, pattern.get(), threshhold,
+    users.reportSeedrand(from, pattern, threshhold,
       args.haveUnary("-count"));
   }
   catch (OOMon::regex_error & e)

@@ -156,13 +156,16 @@ private:
   KlineList dlines;
   time_t lastUserDeltaCheck;
   time_t lastWrite;
+  time_t lastCtcpVersionTimeoutCheck;
 
-  void onCtcp(const std::string & From, const std::string & UserHost,
-    const std::string & To, std::string Text);
-  void onPrivmsg(const std::string &, const std::string &,
-    const std::string &, std::string);
-  void onNotice(const std::string &, const std::string &,
-    const std::string &, std::string);
+  void onCtcp(const std::string & from, const std::string & userhost,
+    const std::string & to, std::string text);
+  void onCtcpReply(const std::string & from, const std::string & userhost,
+    const std::string & to, std::string text);
+  void onPrivmsg(const std::string & from, const std::string & userhost,
+    const std::string & to, std::string text);
+  void onNotice(const std::string & from, const std::string & userhost,
+    const std::string & to, std::string text);
 
   static IRCCommand getCommand(const std::string & text);
 };
