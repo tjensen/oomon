@@ -56,6 +56,8 @@ SRCS =	action.cc adnswrap.cc arglist.cc autoaction.cc botdb.cc botsock.cc \
         proxylist.cc remote.cc remotelist.cc seedrand.cc services.cc socks4.cc \
         socks5.cc trap.cc userdb.cc userentry.cc userflags.cc userhash.cc \
         util.cc vars.cc watch.cc wingate.cc
+MKPW_OBJ = mkpasswd.o
+MKPW_SRC = mkpasswd.cc
 LIBS = @LIBS@
 LDFLAGS = @LDFLAGS@
 BOOST_DEFS = -DBOOST_DISABLE_THREADS
@@ -71,8 +73,8 @@ all: $(EXE) $(MKPASSWD)
 $(EXE): $(OBJS)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)
 
-$(MKPASSWD): mkpasswd.o
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ mkpasswd.o $(LIBS)
+$(MKPASSWD): $(MKPW_OBJ)
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $(MKPW_OBJ) $(LIBS)
 
 .cc.o:
 	$(CXX) $(CXXFLAGS) $(OOMON_DEFS) -c $<
@@ -130,13 +132,13 @@ install-mkdirs:
 	fi
 
 clean:
-	$(RM) $(EXE) $(MKPASSWD) $(OBJS) oomon.core oomon.pid oomon.out make.out oomon.log
+	$(RM) $(EXE) $(MKPASSWD) $(OBJS) $(MKPW_OBJ) oomon.core oomon.pid oomon.out make.out oomon.log
 
 distclean: clean
 	$(RM) makefile sig.inc config.status config.cache config.log defs.h
 
 depend:
-	mkdep $(CXXFLAGS) $(OOMON_DEFS) $(SRCS)
+	mkdep $(CXXFLAGS) $(OOMON_DEFS) $(SRCS) $(MKPW_SRC)
 
 love:
 	@echo not war?
