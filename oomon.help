@@ -2052,8 +2052,8 @@ set watch_info_notices
 set watch_jupe_notices
 .s.set watch_jupe_notices [ON|OFF]
 .d.When ON, the monitor bot will watch for
-.d.flooding through the use of the /JUPE
-.d.command.
+.d.clients that attempt to join juped
+.d.channels.
 .f.mo
 .l.set watch_flooder_notices
 .l.set watch_info_notices
