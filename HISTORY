@@ -1,3 +1,109 @@
+OOMon-2.3                                                (?? Oct 2004)
+---------
+        * Added an open HTTP POST proxy scanner.
+
+        * Added config file "proxy-send:" and "proxy-match:" lines to
+          support the new HTTP POST proxy scanner.
+
+        * Added support for a config file "proxy-target:" line to
+          direct the IP and port number to try to connect to when
+          scanning for open proxies.
+
+        * Renamed the "W:" line to "proxy-vhost:" and moved the
+          sample line to a new sample scanners.cf file.
+
+        * Log all DCC CHAT and CTCP CHAT failures.
+
+        * Deprecated "O:" lines with empty handle fields.
+
+        * Added support for "EC:" lines for exluding entire user
+          classes.
+
+        * Added an optional field to "E:" and "EC:" lines for
+          specifying what types of abuse to exempt.
+
+        * Log when reloading the config.
+
+        * After authenticating, notify bot masters if the OOMon is
+          not opered up.
+
+        * Refactored the config file reading code.
+
+        * Added a PING/PONG protocol to OOMon linking code to help
+          detect links that stop functioning.
+
+        * Added DNSBL and PROXYSCANS watch types.
+
+        * Added ".hlist", ".iplist", and ".ulist" commands.
+
+        * Added a ".vclones" command.
+
+        * Improved the performance of reading the server's K-line
+          and D-line lists.  On servers with very large numbers of
+          K-lines and D-lines, this should substantially decrease
+          the amount of time it takes for OOMon to sync up.
+
+        * Log when sending a KNOCK to a channel.
+
+        * Improved the performance of the ".domains" and ".nets"
+          commands.
+
+        * Added a ".findu" command for elaborate user searching.
+
+        * Refactored much of the trap code, allowing for more robust
+          filters.
+
+        * Added trap indexes for easier trap ordering and removal.
+
+        * Added a NOTICES .watch type to allow users to monitor
+          NOTICEs sent to the bot.
+
+        * Added TRAP_CTCP_VERSIONS, TRAP_NOTICES, and TRAP_PRIVMSGS
+          settings for the enabling/disabling of traps matching CTCP
+          VERSION replies, NOTICEs, and PRIVMSGs directed at the bot.
+
+        * Added SCAN_HTTP_CONNECT_PORTS, SCAN_HTTP_POST_PORTS,
+          SCAN_SOCKS4_PORTS, SCAN_SOCKS5_PORTS, and SCAN_WINGATE_PORTS
+          settings for configuring what port numbers to scan for open
+          proxies.
+
+        * Added the ability to monitor CTCP VERSION replies using the
+          .watch command.
+
+        * Added support for broadcasting commands to all linked
+          OOMons:
+             .kline@* 60 foo@bar mass temp kline reason
+
+        * Don't kline users for services-detected clones if they are
+          "E:" lined in the OOMon config.
+
+        * Added support for a "D:" line in the config file to define
+          a fixed TCP port number to listen to when initiating a DCC
+          CHAT session.
+
+        * Moved autoconf-related files to autoconf/ subdirectory.
+
+        * Added DNSBL_PROXY_ENABLE setting for enabling/disabling
+          DNSBL lookups.
+
+        * Log the bot's quit reason to help diagnose problems.
+
+        * Added support for special formatting tokens in kill/kline/dline
+          reasons for clones, flooding, etc.  For example, to show the
+          flood rate in the nick flood kill/kline/dline reason:
+            .set nick_flood_reason nick flooding (%r)
+
+        * Fixed help for "set watch_jupe_notices".
+
+        * Moved sample "P:", "C:", and "L:" lines to sample remotes.cf
+          config file.
+
+        * Enhanced proxy cache hit code.
+
+        * Standardized on O_NONBLOCK method for using non-blocking
+          socket code.
+
+
 OOMon-2.2                                                (01 Apr 2004)
 ---------
 	* Fixed the remote bot linking code.  Bot linking now works!!!
