@@ -169,7 +169,10 @@ reload(void)
 void
 ReloadConfig(const std::string & from)
 {
-  ::SendAll("*** Reload CONFIG requested by " + from, UserFlags::OPER);
+  std::string notice("Reload CONFIG requested by ");
+  notice += from;
+  Log::Write(notice);
+  ::SendAll("*** " + notice, UserFlags::OPER);
   reload();
 }
 
@@ -179,8 +182,9 @@ hangup(int sig)
 {
   if (sig == SIGHUP)
   {
-    Log::Write("Caught SIGHUP -- Reloading config");
-    ::SendAll("*** Caught SIGHUP.", UserFlags::OPER);
+    std::string notice("Caught SIGHUP -- Reloading config");
+    Log::Write(notice)
+    ::SendAll("*** " + notice, UserFlags::OPER);
     reload();
     std::signal(SIGHUP, hangup);
   }
