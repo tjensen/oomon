@@ -25,6 +25,8 @@
 
 #include "oomon.h"
 #include "proxy.h"
+#include "proxylist.h"
+
 
 class Http : public Proxy
 {
@@ -38,7 +40,7 @@ public:
   {
     if (!this->_detectedProxy)
     {
-      Proxy::addToCache(this->address(), this->port(), Proxy::HTTP);
+      proxies.addToCache(this->address(), this->port(), Proxy::HTTP);
     }
   }
 
@@ -47,7 +49,7 @@ public:
 protected:
   virtual bool onRead(std::string);
   virtual std::string typeName(void) const { return "HTTP CONNECT"; };
-  virtual Proxy::ProxyType type(void) const { Proxy::HTTP; };
+  virtual Proxy::Protocol type(void) const { Proxy::HTTP; };
 };
 
 #endif

@@ -42,7 +42,7 @@
 #include "help.h"
 #include "trap.h"
 #include "userdb.h"
-#include "proxy.h"
+#include "proxylist.h"
 #include "seedrand.h"
 #include "vars.h"
 #include "userhash.h"
@@ -1019,7 +1019,7 @@ DCC::parse(std::string text)
 #ifdef DCC_DEBUG
       if (Flags & UF_MASTER)
       {
-	Proxy::check(text, text, "fake", "fake@" + text);
+	proxies.check(text, text, "fake", "fake@" + text);
       }
       else
       {
@@ -1809,7 +1809,7 @@ DCC::status(const std::string & to, std::string text)
       ::status(output);
       server.status(output);
       clients.status(output);
-      Proxy::status(output);
+      proxies.status(output);
       this->send(output);
     }
     else

@@ -25,6 +25,7 @@
 
 #include "oomon.h"
 #include "proxy.h"
+#include "proxylist.h"
 
 class Socks4 : public Proxy
 {
@@ -38,7 +39,7 @@ public:
   {
     if (!this->_detectedProxy)
     {
-      Proxy::addToCache(this->address(), this->port(), Proxy::SOCKS4);
+      proxies.addToCache(this->address(), this->port(), Proxy::SOCKS4);
     }
   }
 
@@ -46,7 +47,7 @@ public:
 
 protected:
   virtual bool onRead(const char *text, const int size);
-  virtual Proxy::ProxyType type(void) const { Proxy::SOCKS4; };
+  virtual Proxy::Protocol type(void) const { Proxy::SOCKS4; };
   virtual std::string typeName(void) const { return "SOCKS4"; };
 };
 

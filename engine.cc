@@ -39,7 +39,7 @@
 #include "irc.h"
 #include "util.h"
 #include "config.h"
-#include "proxy.h"
+#include "proxylist.h"
 #include "trap.h"
 #include "dcclist.h"
 #include "seedrand.h"
@@ -924,7 +924,7 @@ CheckProxy(const std::string & ip, const std::string & host,
 
   if (vars[VAR_SCAN_FOR_PROXIES]->getBool())
   {
-    Proxy::check(ip, host, nick, userhost);
+    proxies.check(ip, host, nick, userhost);
   }
 }
 

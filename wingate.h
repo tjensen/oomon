@@ -31,6 +31,7 @@
 
 #include "oomon.h"
 #include "proxy.h"
+#include "proxylist.h"
 
 
 class WinGate : public Proxy
@@ -42,7 +43,7 @@ public:
   {
     if (!this->_detectedProxy)
     {
-      Proxy::addToCache(this->address(), this->port(), Proxy::WINGATE);
+      proxies.addToCache(this->address(), this->port(), Proxy::WINGATE);
     }
   }
 
@@ -51,7 +52,7 @@ public:
 protected:
   virtual bool onRead(std::string);
   virtual std::string typeName(void) const { return "WinGate"; };
-  virtual Proxy::ProxyType type(void) const { Proxy::WINGATE; };
+  virtual Proxy::Protocol type(void) const { Proxy::WINGATE; };
 };
 
 #endif /* __WINGATE_H__ */

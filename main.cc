@@ -43,7 +43,7 @@
 #include "irc.h"
 #include "services.h"
 #include "log.h"
-#include "proxy.h"
+#include "proxylist.h"
 #include "util.h"
 #include "dcclist.h"
 #include "dcc.h"
@@ -185,7 +185,7 @@ process()
     server.setFD(readfds, writefds);
     clients.setAllFD(readfds, writefds);
     remotes.setFD(readfds, writefds);
-    Proxy::setAllFD(readfds, writefds);
+    proxies.setAllFD(readfds, writefds);
 
     struct timeval time_out;
     time_out.tv_sec = 5;
@@ -219,7 +219,7 @@ process()
 
       remotes.processAll(readfds, writefds);
 
-      Proxy::processAll(readfds, writefds);
+      proxies.processAll(readfds, writefds);
 
       if (server.isConnected())
       {
