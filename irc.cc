@@ -1096,6 +1096,10 @@ void
 IRC::knock(const std::string & channel)
 {
   this->write("KNOCK " + channel + "\n");
+
+  std::string msg("*** Sent knock to channel ");
+  msg += channel;
+  Log::Write(msg);
 }
 
 
