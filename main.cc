@@ -183,7 +183,7 @@ hangup(int sig)
   if (sig == SIGHUP)
   {
     std::string notice("Caught SIGHUP -- Reloading config");
-    Log::Write(notice)
+    Log::Write(notice);
     ::SendAll("*** " + notice, UserFlags::OPER);
     reload();
     std::signal(SIGHUP, hangup);
