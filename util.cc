@@ -757,6 +757,20 @@ getDomain(std::string host, bool withDot)
       return host;
     }
   }
+  else if (isNumericIPv6(host))
+  {
+    // 1:2:3:4:5:6:7:8
+    std::string::size_type lastColon = host.rfind(':');
+    if (std::string::npos != lastColon)
+    {
+      return (host.substr(0, lastColon + (withDot ? 1 : 0)));
+    }
+    else
+    {
+      // This should never happen
+      return host;
+    }
+  }
   else
   {
     std::string::size_type lastDot = host.rfind('.');

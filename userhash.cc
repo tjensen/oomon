@@ -1210,12 +1210,16 @@ UserHash::reportMulti(BotClient * client, const unsigned int minimum) const
           (!(*userptr)->getOper() && !config.isOper(*userptr)))
       {
         std::string user((*userptr)->getUser());
+        std::string host((*userptr)->getHost());
         std::string domain((*userptr)->getDomain());
-        bool isIP(isNumericIP(domain));
 
-        if (isIP)
+        if (isNumericIPv4(host))
         {
           ++unsorted[server.downCase(user + '@' + domain + ".*")];
+        }
+        else if (isNumericIPv6(host))
+        {
+          ++unsorted[server.downCase(user + '@' + domain + ":*")];
         }
         else
         {
