@@ -838,6 +838,7 @@ set
 .t.invalid_username_action
 .t.invalid_username_reason
 .t.jupe_join_action
+.t.jupe_join_ignore_channel
 .t.jupe_join_max_count
 .t.jupe_join_max_time
 .t.jupe_join_reason
@@ -1459,6 +1460,19 @@ set jupe_join_action
 .d.attempts to join a juped channel.
 .f.mo
 .l.info actions
+.l.set jupe_join_ignore_channel
+.l.set jupe_join_max_count
+.l.set jupe_join_max_time
+.l.set jupe_join_reason
+set jupe_join_ignore_channel
+.s.set jupe_join_ignore_channel [ON|OFF]
+.d.This setting determines whether the monitor
+.d.bot should ignore channel names when users
+.d.attempt to join juped channels.  When OFF,
+.d.a user must attempt to join the same channel
+.d.in order to trigger the JUPE_JOIN_ACTION.
+.f.mo
+.l.set jupe_join_action
 .l.set jupe_join_max_count
 .l.set jupe_join_max_time
 .l.set jupe_join_reason
@@ -1469,6 +1483,7 @@ set jupe_join_max_count
 .d.before it is considered to be abusive.
 .f.mo
 .l.set jupe_join_action
+.l.set jupe_join_ignore_channel
 .l.set jupe_join_max_time
 .l.set jupe_join_reason
 set jupe_join_max_time
@@ -1479,6 +1494,7 @@ set jupe_join_max_time
 .d.it is considered to be abusive.
 .f.mo
 .l.set jupe_join_action
+.l.set jupe_join_ignore_channel
 .l.set jupe_join_max_count
 .l.set jupe_join_reason
 set jupe_join_reason
@@ -1494,6 +1510,7 @@ set jupe_join_reason
 .d.replaced by the server's jupe reason.
 .f.mo
 .l.set jupe_join_action
+.l.set jupe_join_ignore_channel
 .l.set jupe_join_max_count
 .l.set jupe_join_max_time
 set killlist_reason
