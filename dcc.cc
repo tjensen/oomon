@@ -2391,35 +2391,29 @@ DCC::loadConfig()
 {
   try
   {
-    try
-    {
-      this->echoMyChatter = userConfig->getEcho(this->Handle);
-    }
-    catch (OOMon::norecord_error)
-    {
-#ifdef DCC_DEBUG
-      std::cout << "No ECHO setting for " << this->Handle << " in " <<
-	userConfig->getFile() << std::endl;
-#endif
-    }
-
-    try
-    {
-      StrList output;
-      this->watches.set(output, userConfig->getWatches(this->Handle));
-    }
-    catch (OOMon::norecord_error)
-    {
-#ifdef DCC_DEBUG
-      std::cout << "No WATCH setting for " << this->Handle << " in " <<
-	userConfig->getFile() << std::endl;
-#endif
-    }
+    this->echoMyChatter = userConfig->getEcho(this->Handle);
+  }
+  catch (OOMon::norecord_error & e)
+  {
+    std::cerr << e.what() << std::endl;
   }
   catch (OOMon::botdb_error & e)
   {
-    Log::Write("Error while loading settings for " + this->Handle + ": " +
-      e.why());
+    std::cerr << e.what() << std::endl;
+  }
+
+  try
+  {
+    StrList output;
+    this->watches.set(output, userConfig->getWatches(this->Handle));
+  }
+  catch (OOMon::norecord_error & e)
+  {
+    std::cerr << e.what() << std::endl;
+  }
+  catch (OOMon::botdb_error & e)
+  {
+    std::cerr << e.what() << std::endl;
   }
 }
 
