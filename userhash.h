@@ -64,6 +64,7 @@ public:
   bool have(std::string nick) const;
 
   void checkHostClones(const std::string & host);
+  void checkIpClones(const BotSock::Address & ip);
 
   int listUsers(StrList & output, const Pattern *userhost,
     std::string className, const ListAction action = LIST_VIEW,

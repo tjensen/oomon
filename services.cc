@@ -151,7 +151,9 @@ Services::onXoNotice(std::string Text)
             return;  
           
           
-          suggestKline(true, user, host, false, identd, MK_CLONES);
+          klineClones(true, user, host,
+	    users.getIP("", std::string(user) + "@" + host), false, false,
+	    identd);
             
           this->klineSuggested = true;
         }     

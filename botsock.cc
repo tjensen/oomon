@@ -48,6 +48,8 @@
 
 const BotSock::Address BotSock::vhost_netmask =
   BotSock::inet_addr(VHOST_NETMASK);
+const BotSock::Address BotSock::ClassCNetMask =
+  BotSock::inet_addr("255.255.255.0");
 
 
 BotSock::BotSock(const bool _blocking, const bool lineBuffered)
@@ -584,4 +586,26 @@ BotSock::getUptime(void) const
 {
   return timeDiff(::time(NULL) - this->connectTime);
 }
+
+
+//////////////////////////////////////////////////////////////////////
+// sameClassC(ip1, ip2)
+//
+// Description:
+//  Compares two IP addresses to be in the same class-C (/24) subnet.
+//
+// Parameters:
+//  ip1 - The first IP address.
+//  ip2 - The second IP address.
+//
+// Return Value:
+//  The function returns true if both IP addresses are within the same
+//  class-C (/24) subnet.
+//////////////////////////////////////////////////////////////////////
+bool
+BotSock::sameClassC(const BotSock::Address & ip1, const BotSock::Address & ip2)
+{
+  return ((ip1 & BotSock::ClassCNetMask) == (ip2 & BotSock::ClassCNetMask));
+}
+
 

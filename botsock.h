@@ -102,7 +102,11 @@ public:
   static Address inet_addr(const std::string & address)
     { return ::inet_addr(address.c_str()); };
 
+  static bool sameClassC(const BotSock::Address & ip1,
+    const BotSock::Address & ip2);
+
   static const BotSock::Address vhost_netmask;
+  static const BotSock::Address ClassCNetMask;
 
   virtual bool onConnect() { return true; };
 

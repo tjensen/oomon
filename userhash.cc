@@ -168,7 +168,14 @@ UserHash::add(const std::string & nick, const std::string & userhost,
           }
 
           // Clonebot check
-          this->checkHostClones(host);
+	  if (ip.empty())
+	  {
+            this->checkHostClones(host);
+	  }
+	  else
+	  {
+            this->checkIpClones(BotSock::inet_addr(ip));
+	  }
         }
       }
     }
@@ -1338,21 +1345,16 @@ UserHash::reportVMulti(StrList & output, const int minimum)
 void
 UserHash::checkHostClones(const std::string & host)
 {
-  UserHash::HashRec *find;
-  int clonecount = 0; 
-  int reportedclones = 0;
-  std::string lastUser;
-  bool last_identd,current_identd;
-  bool different;
-  time_t now, lastreport, oldest;
-  struct tm *tmrec;
-  int index;
+  const int index = UserHash::hashFunc(host);
+  UserHash::HashRec *find = this->hosttable[index];
   
-  oldest = now = time(NULL);
-  lastreport = 0;
-  index = UserHash::hashFunc(host);
-  find = this->hosttable[index];
+  time_t now = time(NULL);
+  time_t oldest = now;
+  time_t lastReport = 0;
   
+  int cloneCount = 0; 
+  int reportedClones = 0;
+
   while (NULL != find)
   {
     if (server.same(find->info->getHost(), host) &&
@@ -1360,13 +1362,17 @@ UserHash::checkHostClones(const std::string & host)
     {
       if (find->info->getReportTime() > 0)
       {
-        ++reportedclones;
-        if (lastreport < find->info->getReportTime())
-          lastreport = find->info->getReportTime();
+        ++reportedClones;
+
+        if (lastReport < find->info->getReportTime())
+	{
+          lastReport = find->info->getReportTime();
+	}
       }
       else
       {
-        ++clonecount;
+        ++cloneCount;
+
         if (find->info->getConnectTime() < oldest)
         {
           oldest = find->info->getConnectTime();
@@ -1376,109 +1382,294 @@ UserHash::checkHostClones(const std::string & host)
     find = find->collision;
   }
   
-  if (((reportedclones == 0) && (clonecount < CLONE_CONNECT_COUNT)) ||
-    ((now - lastreport) < 10))
+  if (((reportedClones == 0) && (cloneCount < CLONE_CONNECT_COUNT)) ||
+    ((now - lastReport) < 10))
   {
     return;
   }
 
   std::string notice;
-  if (reportedclones)
+  if (reportedClones)
   {
-    notice = IntToStr(clonecount) + " more possible clones (" +
-      IntToStr(clonecount + reportedclones) + " total) from " + host + ":";
+    notice = IntToStr(cloneCount) + " more possible clones (" +
+      IntToStr(cloneCount + reportedClones) + " total) from " + host + ":";
   }
   else
   {
     notice = "Possible clones from " + host + " detected: " +
-      IntToStr(clonecount) + " connects in " + IntToStr(now - oldest) +
+      IntToStr(cloneCount) + " connects in " + IntToStr(now - oldest) +
       " seconds";
   }
   ::SendAll(notice, UF_OPER);
   Log::Write(notice);
             
-  clonecount = 0;
+  cloneCount = 0;
   find = this->hosttable[index];
     
+  std::string lastUser;
+  bool lastIdentd, currentIdentd;
+  bool differentUser;
+
   while (find)
   {
     if (server.same(find->info->getHost(), host) &&
       (now - find->info->getConnectTime() < CLONE_CONNECT_FREQ + 1) &&
-      find->info->getReportTime() == 0)
+      (find->info->getReportTime() == 0))
     {
-      ++clonecount;
+      ++cloneCount;
+
+#ifdef USERHASH_DEBUG
+      std::cout << "clone(" << cloneCount << "): " <<
+	find->info->output("%n %u %i") << std::endl;
+#endif
 
       time_t conntime = find->info->getConnectTime();
-      tmrec = localtime(&conntime);
+      struct tm *tmrec = localtime(&conntime);
           
       char notice[MAX_BUFF];
       char notice1[MAX_BUFF];
-      if(clonecount == 1)  
+      if (cloneCount == 1)  
       { 
-        sprintf(notice1,"  %s is %s@%s (%2.2d:%2.2d:%2.2d)",
+        sprintf(notice1, "  %s is %s@%s (%2.2d:%2.2d:%2.2d)",
           find->info->getNick().c_str(), find->info->getUser().c_str(),
           find->info->getHost().c_str(), tmrec->tm_hour, tmrec->tm_min,
 	  tmrec->tm_sec);
       }
       else
       {
-        sprintf(notice,"  %s is %s@%s (%2.2d:%2.2d:%2.2d)",
+        sprintf(notice, "  %s is %s@%s (%2.2d:%2.2d:%2.2d)",
 	  find->info->getNick().c_str(), find->info->getUser().c_str(),
 	  find->info->getHost().c_str(), tmrec->tm_hour, tmrec->tm_min,
 	  tmrec->tm_sec);
       }
   
-      last_identd = current_identd = true;
-      different = false;
+      lastIdentd = currentIdentd = true;
+      differentUser = false;
         
-      if (1 == clonecount)
+      if (1 == cloneCount)
       {
         lastUser = find->info->getUser();
       }
-      else if (2 == clonecount)
+      else if (2 == cloneCount)
       {
         std::string currentUser;
 
         if (lastUser[0] == '~')
         {
           lastUser = lastUser.substr(1);
-          last_identd = false;
+          lastIdentd = false;
         }
 
         currentUser = find->info->getUser();
         if (currentUser[0] == '~')
         {
           currentUser = currentUser.substr(1);
-          current_identd = false;
+          currentIdentd = false;
         }
 
         if (!server.same(lastUser, currentUser))
         {
-          different = true;
+          differentUser = true;
         }
 
-        suggestKline(true, find->info->getUser(), find->info->getHost(),
-	  different, last_identd | current_identd, MK_CLONES);
+        klineClones(true, find->info->getUser(), find->info->getHost(),
+	  find->info->getIp(), differentUser, false,
+	  lastIdentd | currentIdentd);
       }
 
       find->info->setReportTime(now);
-      if(clonecount == 1)
+      if (cloneCount == 1)
       {
 	// do nothing
       }
-      else if(clonecount == 2) 
+      else if (cloneCount == 2) 
       {   
         ::SendAll(notice1, UF_OPER);
         ::SendAll(notice, UF_OPER);
         Log::Write(notice1);
         Log::Write(notice);
       }
-      else if (clonecount < 5)
+      else if (cloneCount < 5)
       {
         ::SendAll(notice, UF_OPER);
         Log::Write(notice);
       }
-      else if (clonecount == 5)
+      else if (cloneCount == 5)
+      {
+        ::SendAll(notice, UF_OPER);
+        Log::Write(notice);
+      }
+    }
+    find = find->collision;
+  }
+}
+
+
+void
+UserHash::checkIpClones(const BotSock::Address & ip)
+{
+  const int index = UserHash::hashFunc(ip);
+  UserHash::HashRec *find = this->iptable[index];
+  
+  time_t now = time(NULL);
+  time_t oldest = now;
+  time_t lastReport = 0;
+  
+  int cloneCount = 0; 
+  int reportedClones = 0;
+
+  while (NULL != find)
+  {
+    if (BotSock::sameClassC(find->info->getIp(), ip) &&
+      ((now - find->info->getConnectTime()) < (CLONE_CONNECT_FREQ + 1)))
+    {
+      if (find->info->getReportTime() > 0)
+      {
+        ++reportedClones;
+
+        if (lastReport < find->info->getReportTime())
+	{
+          lastReport = find->info->getReportTime();
+	}
+      }
+      else
+      {
+        ++cloneCount;
+
+        if (find->info->getConnectTime() < oldest)
+        {
+          oldest = find->info->getConnectTime();
+        }
+      }
+    }
+    find = find->collision;
+  }
+  
+  if (((reportedClones == 0) && (cloneCount < CLONE_CONNECT_COUNT)) ||
+    ((now - lastReport) < 10))
+  {
+    return;
+  }
+
+  std::string notice;
+  if (reportedClones)
+  {
+    notice = IntToStr(cloneCount) + " more possible clones (" +
+      IntToStr(cloneCount + reportedClones) + " total) from " +
+      BotSock::inet_ntoa(ip) + ":";
+  }
+  else
+  {
+    notice = "Possible clones from " + BotSock::inet_ntoa(ip) + " detected: " +
+      IntToStr(cloneCount) + " connects in " + IntToStr(now - oldest) +
+      " seconds";
+  }
+  ::SendAll(notice, UF_OPER);
+  Log::Write(notice);
+            
+  cloneCount = 0;
+  find = this->iptable[index];
+
+  BotSock::Address lastIp;
+  std::string lastUser;
+  bool lastIdentd, currentIdentd;
+  bool differentIp, differentUser;
+
+  while (find)
+  {
+    if (BotSock::sameClassC(find->info->getIp(), ip) &&
+      (now - find->info->getConnectTime() < CLONE_CONNECT_FREQ + 1) &&
+      find->info->getReportTime() == 0)
+    {
+      ++cloneCount;
+
+#ifdef USERHASH_DEBUG
+      std::cout << "clone(" << cloneCount << "): " <<
+	find->info->output("%n %u %i") << std::endl;
+#endif
+
+      time_t conntime = find->info->getConnectTime();
+      struct tm *tmrec = localtime(&conntime);
+          
+      char notice[MAX_BUFF];
+      char notice1[MAX_BUFF];
+      if (cloneCount == 1)  
+      { 
+        sprintf(notice1, "  %s is %s@%s (%2.2d:%2.2d:%2.2d)",
+          find->info->getNick().c_str(), find->info->getUser().c_str(),
+          find->info->getHost().c_str(), tmrec->tm_hour, tmrec->tm_min,
+	  tmrec->tm_sec);
+      }
+      else
+      {
+        sprintf(notice, "  %s is %s@%s (%2.2d:%2.2d:%2.2d)",
+	  find->info->getNick().c_str(), find->info->getUser().c_str(),
+	  find->info->getHost().c_str(), tmrec->tm_hour, tmrec->tm_min,
+	  tmrec->tm_sec);
+      }
+  
+      lastIdentd = currentIdentd = true;
+      differentIp = false;
+      differentUser = false;
+        
+      if (1 == cloneCount)
+      {
+        lastUser = find->info->getUser();
+        lastIp = find->info->getIp();
+      }
+      else if (2 == cloneCount)
+      {
+        std::string currentUser;
+        BotSock::Address currentIp;
+
+        if (lastUser[0] == '~')
+        {
+          lastUser = lastUser.substr(1);
+          lastIdentd = false;
+        }
+
+        currentUser = find->info->getUser();
+        if (currentUser[0] == '~')
+        {
+          currentUser = currentUser.substr(1);
+          currentIdentd = false;
+        }
+
+	currentIp = find->info->getIp();
+
+        if (!server.same(lastUser, currentUser))
+        {
+          differentUser = true;
+        }
+
+	if (lastIp != currentIp)
+	{
+	  differentIp = true;
+	}
+
+        klineClones(true, find->info->getUser(), find->info->getHost(),
+	  find->info->getIp(), differentUser, differentIp,
+	  lastIdentd | currentIdentd);
+      }
+
+      find->info->setReportTime(now);
+      if (cloneCount == 1)
+      {
+	// do nothing
+      }
+      else if (cloneCount == 2) 
+      {   
+        ::SendAll(notice1, UF_OPER);
+        ::SendAll(notice, UF_OPER);
+        Log::Write(notice1);
+        Log::Write(notice);
+      }
+      else if (cloneCount < 5)
+      {
+        ::SendAll(notice, UF_OPER);
+        Log::Write(notice);
+      }
+      else if (cloneCount == 5)
       {
         ::SendAll(notice, UF_OPER);
         Log::Write(notice);

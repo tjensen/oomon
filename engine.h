@@ -29,13 +29,6 @@
 #include "autoaction.h"
 
 
-enum KlineType
-{
-  MK_CLONES, MK_FLOODING, MK_BOTS, MK_SPAM, MK_LINKS, MK_TRACE, MK_MOTD,
-  MK_INFO, MK_STATS, MK_PROXY
-};
-
-
 void Init_Link_Look_Table();
 void Init_Nick_Change_Table();
 
@@ -70,10 +63,9 @@ void CS_Nick_Flood(std::string);
 
 void Kill_Add_Report(std::string);
 
-std::string Make_Kline(const std::string &, const KlineType, const int);
-void suggestKline(const bool kline, const std::string & User,
-  const std::string & Host, const bool different, const bool identd,
-  const KlineType Reason);
+void klineClones(const bool kline, const std::string & User,
+  const std::string & Host, const BotSock::Address & ip,
+  const bool differentUser, const bool differentIp, const bool identd);
 
 void onDetectDNSBLOpenProxy(const std::string & ip, const std::string & nick,
   const std::string & userhost);

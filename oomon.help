@@ -659,11 +659,20 @@ set
 .e.*** AUTO_PILOT = ON
 .f.mo
 .t.auto_kline_host
+.t.auto_kline_host_reason
 .t.auto_kline_host_time
+.t.auto_kline_net
+.t.auto_kline_net_reason
+.t.auto_kline_net_time
 .t.auto_kline_noident
+.t.auto_kline_noident_reason
 .t.auto_kline_noident_time
 .t.auto_kline_userhost
+.t.auto_kline_userhost_reason
 .t.auto_kline_userhost_time
+.t.auto_kline_usernet
+.t.auto_kline_usernet_reason
+.t.auto_kline_usernet_time
 .t.auto_pilot
 .t.auto_save
 .t.broken_hostname_munging
@@ -778,6 +787,14 @@ set auto_kline_host
 .d.hostname but different usernames will be
 .d.k-lined.
 .f.mo
+.l.set auto_kline_host_reason
+.l.set auto_kline_host_time
+set auto_kline_host_reason
+.s.set auto_kline_host_reason [<text>]
+.d.This setting determines the k-line reason to
+.d.use when same-hostname clones are detected.
+.f.mo
+.l.set auto_kline_host
 .l.set auto_kline_host_time
 set auto_kline_host_time
 .s.set auto_kline_host_time [<integer>]
@@ -786,11 +803,43 @@ set auto_kline_host_time
 .d.zero, the clones will be temporarily k-lined.
 .f.mo
 .l.set auto_kline_host
+.l.set auto_kline_host_reason
+set auto_kline_net
+.s.set auto_kline_net [ON|OFF]
+.d.When ON, detected clones that have the same
+.d.subnet but different usernames will be
+.d.k-lined.
+.f.mo
+.l.set auto_kline_net_reason
+.l.set auto_kline_net_time
+set auto_kline_net_reason
+.s.set auto_kline_net_reason [<text>]
+.d.This setting determines the k-line reason to
+.d.use when same-subnet clones are detected.
+.f.mo
+.l.set auto_kline_net
+.l.set auto_kline_net_time
+set auto_kline_net_time
+.s.set auto_kline_net_time [<integer>]
+.d.If set to zero, detected same-subnet clones
+.d.will be k-lined permanently.  If greater than
+.d.zero, the clones will be temporarily k-lined.
+.f.mo
+.l.set auto_kline_net
+.l.set auto_kline_net_reason
 set auto_kline_noident
 .s.set auto_kline_noident [ON|OFF]
 .d.When ON, detected clones that do not have
 .d.identd enabled will be k-lined.
 .f.mo
+.l.set auto_kline_noident_reason
+.l.set auto_kline_noident_time
+set auto_kline_noident_reason
+.s.set auto_kline_noident_reason [<text>]
+.d.This setting determines the k-line reason to
+.d.use when clones without identd are detected.
+.f.mo
+.l.set auto_kline_noident
 .l.set auto_kline_noident_time
 set auto_kline_noident_time
 .s.set auto_kline_noident_time [<integer>]
@@ -799,11 +848,21 @@ set auto_kline_noident_time
 .d.zero, the clones will be temporarily k-lined.
 .f.mo
 .l.set auto_kline_noident
+.l.set auto_kline_noident_reason
 set auto_kline_userhost
 .s.set auto_kline_userhost [ON|OFF]
 .d.When ON, detected clones that have the same
 .d.username and domain will be k-lined.
 .f.mo
+.l.set auto_kline_userhost_reason
+.l.set auto_kline_userhost_time
+set auto_kline_userhost_reason
+.s.set auto_kline_userhost_reason [<text>]
+.d.This setting determines the k-line reason to
+.d.use when clones with the same username and
+.d.domain are detected.
+.f.mo
+.l.set auto_kline_userhost
 .l.set auto_kline_userhost_time
 set auto_kline_userhost_time
 .s.set auto_kline_userhost_time [<integer>]
@@ -813,6 +872,31 @@ set auto_kline_userhost_time
 .d.clones will be temporarily k-lined.
 .f.mo
 .l.set auto_kline_userhost
+.l.set auto_kline_userhost_reason
+set auto_kline_usernet
+.s.set auto_kline_usernet [ON|OFF]
+.d.When ON, detected clones that have the same
+.d.username and subnet will be k-lined.
+.f.mo
+.l.set auto_kline_usernet_reason
+.l.set auto_kline_usernet_time
+set auto_kline_usernet_reason
+.s.set auto_kline_usernet_reason [<text>]
+.d.This setting determines the k-line reason to
+.d.use when clones with the same username and
+.d.subnet are detected.
+.f.mo
+.l.set auto_kline_usernet
+.l.set auto_kline_usernet_time
+set auto_kline_usernet_time
+.s.set auto_kline_usernet_time [<integer>]
+.d.If set to zero, detected clones that have the
+.d.same username and subnet will be k-lined
+.d.permanently.  If greater than zero, the
+.d.clones will be temporarily k-lined.
+.f.mo
+.l.set auto_kline_usernet
+.l.set auto_kline_usernet_reason
 set auto_pilot
 .s.set auto_pilot [ON|OFF]
 .d.When ON, the monitor bot will automatically

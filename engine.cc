@@ -111,100 +111,31 @@ IP_ENTRY ips[IP_TABLE_SIZE];
 
 
 static std::string
-GetReason(const int ReasonType)
+makeKline(const std::string & mask, const std::string & reason,
+  const int minutes = 0)
 {
-  switch (ReasonType) {
-  case MK_CLONES:
-    return REASON_CLONES;
-  case MK_FLOODING:
-    return REASON_FLOODING;
-  case MK_BOTS:
-    return REASON_BOTS;
-  case MK_SPAM:
-    return REASON_SPAM;
-  case MK_LINKS:
-    return REASON_LINKS;
-  case MK_TRACE:
-    return REASON_TRACE;
-  case MK_MOTD:
-    return REASON_MOTD;
-  case MK_INFO:
-    return REASON_INFO;
-  case MK_STATS:
-    return REASON_STATS;
-  case MK_PROXY:
-    return REASON_PROXY;
-  default:
-    return "Undefined Reason";
-  }
-}
+  std::string temp;
 
-std::string
-Make_Kline(const std::string & Mask, const KlineType ReasonType,
-  const int dur = 0)
-{
-  std::string cmd;
-
-  std::string Dur;
-  if (dur)
+  if (minutes > 0)
   {
-    Dur = IntToStr(dur) + " ";
+    temp = IntToStr(minutes) + " ";
   }
 
-  switch (ReasonType)
-  {
-    case MK_CLONES:
-      cmd = ".kclone ";
-      break;
-    case MK_FLOODING:
-      cmd = ".kflood ";
-      break;
-    case MK_BOTS:
-      cmd = ".kbot ";
-      break;
-    case MK_SPAM:
-      cmd = ".kspam ";
-      break;
-    case MK_LINKS:
-      cmd = ".klink ";
-      break;
-    case MK_TRACE:
-      cmd = ".ktrace ";
-      break;
-    case MK_MOTD:
-      cmd = ".kmotd ";
-      break;
-    case MK_INFO:
-      cmd = ".kinfo ";
-      break;
-    case MK_STATS:
-      cmd = ".kflood ";
-      break;
-    case MK_PROXY:
-      cmd = ".kproxy ";
-      break;
-    default:
-      cmd = ".kline ";
-      break;
-  }
-
-  return cmd + Dur + Mask;
+  return ".kline " + temp + mask + " " + reason;
 }
 
 
 void
-suggestKline(const bool kline, const std::string & User,
-  const std::string & Host, const bool different, const bool identd,
-  const KlineType Reason)
+klineClones(const bool kline, const std::string & User,
+  const std::string & Host, const BotSock::Address & ip,
+  const bool differentUser, const bool differentIp, const bool identd)
 {
   std::string Notice;
-  std::string UserAtHost;
-  
-  UserAtHost = User + "@" + Host;
+  std::string UserAtHost = User + "@" + Host;
+  std::string UserAtIp = User + "@" + BotSock::inet_ntoa(ip);
+  std::string Net = classCMask(BotSock::inet_ntoa(ip));
 
-  BotSock::Address ip = users.getIP("", UserAtHost);
-
-  if (std::string::npos != Host.find_first_of("*?"))
+  if (std::string::npos != UserAtHost.find_first_of("*?"))
   {
     ::SendAll("Bogus DNS spoofed host " + UserAtHost, UF_OPER);
     return;
@@ -216,48 +147,101 @@ suggestKline(const bool kline, const std::string & User,
     return;
   }
 
+  if (differentIp && (ip != INADDR_NONE))
+  {
+    if (differentUser)
+    {
+      if (vars[VAR_AUTO_KLINE_NET]->getBool() &&
+	vars[VAR_AUTO_PILOT]->getBool() && kline)
+      {
+        Notice = "Adding auto-kline for *@" + Net + " :" +
+	  vars[VAR_AUTO_KLINE_NET_REASON]->getString();
+        server.kline("Auto-Kline", vars[VAR_AUTO_KLINE_NET_TIME]->getInt(),
+          "*@" + Net, vars[VAR_AUTO_KLINE_NET_REASON]->getString());
+      }
+      else
+      {
+        Notice = makeKline("*@" + Net,
+	  vars[VAR_AUTO_KLINE_NET_REASON]->getString(),
+          vars[VAR_AUTO_KLINE_NET_TIME]->getInt());
+      }
+    }
+    else
+    {
+      if (vars[VAR_AUTO_KLINE_USERNET]->getBool() &&
+	vars[VAR_AUTO_PILOT]->getBool() && kline)
+      {
+        Notice = "Adding auto-kline for *" + User + "@" + Net + " :" +
+	  vars[VAR_AUTO_KLINE_USERNET_REASON]->getString();
+        server.kline("Auto-Kline", vars[VAR_AUTO_KLINE_USERNET_TIME]->getInt(),
+          "*" + User + "@" + Net,
+	  vars[VAR_AUTO_KLINE_USERNET_REASON]->getString());
+      }
+      else
+      {
+        Notice = makeKline("*" + User + "@" + Net,
+	  vars[VAR_AUTO_KLINE_USERNET_REASON]->getString(),
+          vars[VAR_AUTO_KLINE_USERNET_TIME]->getInt());
+      }
+    }
+  }
+  else
+  {
   if (isDynamic("", Host))
   {
     if (vars[VAR_AUTO_KLINE_HOST]->getBool() &&
       vars[VAR_AUTO_PILOT]->getBool() && kline)
     {
-      Notice = "Adding auto-kline for *@" + Host + " :" + GetReason(Reason);
+      Notice = "Adding auto-kline for *@" + Host + " :" +
+	vars[VAR_AUTO_KLINE_HOST_REASON]->getString();
       server.kline("Auto-Kline", vars[VAR_AUTO_KLINE_HOST_TIME]->getInt(),
-        "*@" + Host, GetReason(Reason));
+        "*@" + Host, vars[VAR_AUTO_KLINE_HOST_REASON]->getString());
     }
     else
     {
-      Notice = Make_Kline("*@" + Host, Reason,
+      Notice = makeKline("*@" + Host,
+	vars[VAR_AUTO_KLINE_HOST_REASON]->getString(),
         vars[VAR_AUTO_KLINE_HOST_TIME]->getInt());
     }
   }
   else
   {
     std::string suggestedHost;
-    if (isIP(Host))
+    if (INADDR_NONE == ip)
     {
-      suggestedHost = getDomain(Host, true) + "*";
+      if (isIP(Host))
+      {
+	// Get subnet from hostname
+        suggestedHost = classCMask(Host);
+      }
+      else
+      {
+	// Get domain from hostname
+        suggestedHost = "*" + getDomain(Host, true);
+      }
     }
     else
     {
-      suggestedHost = "*" + getDomain(Host, true);
+      // Get subnet from IP
+      suggestedHost = classCMask(BotSock::inet_ntoa(ip));
     }
 
     if (identd)
     {
-      if (different)
+      if (differentUser)
       {
         if (vars[VAR_AUTO_KLINE_HOST]->getBool() &&
           vars[VAR_AUTO_PILOT]->getBool() && kline)
         {
           Notice = "Adding auto-kline for *@" + Host + " :" +
-            GetReason(Reason);
+            vars[VAR_AUTO_KLINE_HOST_REASON]->getString();
           server.kline("Auto-Kline", vars[VAR_AUTO_KLINE_HOST_TIME]->getInt(),
-            "*@" + Host, GetReason(Reason));
+            "*@" + Host, vars[VAR_AUTO_KLINE_HOST_REASON]->getString());
         }
         else
         {
-          Notice = Make_Kline("*@" + Host, Reason,
+          Notice = makeKline("*@" + Host,
+	    vars[VAR_AUTO_KLINE_HOST_REASON]->getString(),
             vars[VAR_AUTO_KLINE_HOST_TIME]->getInt());
         }
       }
@@ -267,14 +251,16 @@ suggestKline(const bool kline, const std::string & User,
           vars[VAR_AUTO_PILOT]->getBool() && kline)
         {
           Notice = "Adding auto-kline for *" + User + "@" + suggestedHost +
-            " :" + GetReason(Reason);
+            " :" + vars[VAR_AUTO_KLINE_USERHOST_REASON]->getString();
           server.kline("Auto-Kline",
 	    vars[VAR_AUTO_KLINE_USERHOST_TIME]->getInt(),
-            "*" + User + "@" + suggestedHost, GetReason(Reason));
+            "*" + User + "@" + suggestedHost,
+	    vars[VAR_AUTO_KLINE_USERHOST_REASON]->getString());
         }
         else
         {
-          Notice = Make_Kline("*" + User + "@" + suggestedHost, Reason,
+          Notice = makeKline("*" + User + "@" + suggestedHost,
+	    vars[VAR_AUTO_KLINE_USERHOST_REASON]->getString(),
             vars[VAR_AUTO_KLINE_USERHOST_TIME]->getInt());
         }
       }
@@ -285,16 +271,19 @@ suggestKline(const bool kline, const std::string & User,
         vars[VAR_AUTO_PILOT]->getBool() && kline)
       {
         Notice = "Adding auto-kline for ~*@" + suggestedHost + " :" +
-          GetReason(Reason);
+          vars[VAR_AUTO_KLINE_NOIDENT_REASON]->getString();
         server.kline("Auto-Kline", vars[VAR_AUTO_KLINE_NOIDENT_TIME]->getInt(),
-          "~*@" + suggestedHost, GetReason(Reason));
+          "~*@" + suggestedHost,
+	  vars[VAR_AUTO_KLINE_NOIDENT_REASON]->getString());
       }
       else
       {
-        Notice = Make_Kline("~*@" + suggestedHost, Reason,
+        Notice = makeKline("~*@" + suggestedHost,
+	  vars[VAR_AUTO_KLINE_NOIDENT_REASON]->getString(),
           vars[VAR_AUTO_KLINE_NOIDENT_TIME]->getInt());
       }
     }
+  }
   }
 
   if (Notice.length() > 0)
@@ -619,7 +608,7 @@ void CS_Clones(std::string Text)
       
   host = strtok(NULL, "");
     
-  suggestKline(false,user,host,false,identd,MK_CLONES);
+  klineClones(false, user, host, INADDR_NONE, false, false, identd);
   
   delete p;
 }     
