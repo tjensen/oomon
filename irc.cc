@@ -250,8 +250,7 @@ IRC::onRead(std::string text)
         {
           this->write("JOIN " + Config::GetChannels() + "\n");
         }
-        Init_Nick_Change_Table();
-        Init_Link_Look_Table();
+	initFloodTables();
         break;
       case 005:
         for (StrVector::size_type idx = 3; idx < params.size(); ++idx)

@@ -29,8 +29,7 @@
 #include "autoaction.h"
 
 
-void Init_Link_Look_Table();
-void Init_Nick_Change_Table();
+void initFloodTables(void);
 
 void onTraceUser(const std::string &, const std::string &, const std::string &,
   std::string, std::string);

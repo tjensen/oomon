@@ -69,7 +69,7 @@ public:
   int		nickChangeCount;
   std::time_t	firstNickChange;
   std::time_t	lastNickChange;
-  bool		noticed;
+  std::time_t	nextNotice;
 };
 
 static std::list<NickChangeEntry> nickChanges;
@@ -322,9 +322,39 @@ klineClones(const bool kline, const std::string & rate,
 
 
 void
-Init_Nick_Change_Table()
+initFloodTables()
 {
   nickChanges.clear();
+  linkLookers.clear();
+  traceLookers.clear();
+  motdLookers.clear();
+  infoLookers.clear();
+  statsLookers.clear();
+}
+
+
+static bool
+t1expired(const NickChangeEntry & entry, std::time_t now, std::time_t max)
+{
+  std::time_t ticks = (now - entry.lastNickChange) / max;
+
+  return (ticks >= entry.nickChangeCount);
+}
+
+
+static bool
+t2expired(const NickChangeEntry & entry, std::time_t now, std::time_t max)
+{
+  std::time_t diff = now - entry.lastNickChange;
+
+  return (diff >= max);
+}
+
+
+static bool
+userhostMatch(const NickChangeEntry & entry, const std::string & userhost)
+{
+  return (0 == entry.userhost.compare(userhost));
 }
 
 
@@ -334,107 +364,88 @@ addToNickChangeList(const std::string & userhost, const std::string & oldNick,
 {
   std::time_t currentTime = std::time(NULL);
    
-  bool foundEntry = false;
-   
-  for (std::list<NickChangeEntry>::iterator ncp = nickChanges.begin();
-    ncp != nickChanges.end(); ++ncp)
-  {         
+  // expire stale entries
+  nickChanges.remove_if(boost::bind(&::t2expired, _1, currentTime,
+    vars[VAR_NICK_CHANGE_T2_TIME]->getInt()));
+  nickChanges.remove_if(boost::bind(&::t1expired, _1, currentTime,
+    vars[VAR_NICK_CHANGE_T1_TIME]->getInt()));
+
+  std::list<NickChangeEntry>::iterator ncp = std::find_if(nickChanges.begin(),
+    nickChanges.end(), boost::bind(&::userhostMatch, _1, userhost));
+
+  if (nickChanges.end() == ncp)
+  {
+    NickChangeEntry tmp;
+
+    tmp.userhost = userhost;
+    tmp.firstNickChange = currentTime;
+    tmp.lastNickChange = currentTime;
+    tmp.nickChangeCount = 1;
+    tmp.nextNotice = 0;
+
+    nickChanges.push_back(tmp);
+  }
+  else
+  {
+    // get time difference
     std::time_t timeDifference = currentTime - ncp->lastNickChange;
 
-    /* is it stale ? */
-    if (timeDifference >= vars[VAR_NICK_CHANGE_T2_TIME]->getInt())
+    // how many T1 intervals do we have?
+    int timeTicks = timeDifference / vars[VAR_NICK_CHANGE_T1_TIME]->getInt();
+
+    std::cout << "lastNick=" << ncp->lastNick << ", userhost=" <<
+      ncp->userhost << ", count=" << ncp->nickChangeCount << ", diff=" <<
+      timeDifference << ", ticks=" << timeTicks << "next=" << ncp->nextNotice <<
+      std::endl;
+
+    // just decrement T1 units of nick changes
+    ncp->nickChangeCount = (ncp->nickChangeCount - timeTicks) + 1;
+    ncp->lastNickChange = currentTime;
+    ncp->lastNick = lastNick;
+
+    // now, check for a nick flooder
+    if ((ncp->nickChangeCount >= vars[VAR_NICK_CHANGE_MAX_COUNT]->getInt())
+      && (currentTime >= ncp->nextNotice))
     {
-      nickChanges.erase(ncp);
-      --ncp;
-    }
-    else
-    {
-      /* how many 10 second intervals do we have? */
-      int timeTicks = timeDifference / vars[VAR_NICK_CHANGE_T1_TIME]->getInt();
-
-      /* is it stale? */
-      if (timeTicks >= ncp->nickChangeCount)
+      std::string rate(boost::lexical_cast<std::string>(ncp->nickChangeCount));
+      rate += " in ";
+      rate += boost::lexical_cast<std::string>(ncp->lastNickChange -
+	ncp->firstNickChange);
+      rate += " second";
+      if (1 != (ncp->lastNickChange - ncp->firstNickChange))
       {
-	nickChanges.erase(ncp);
-	--ncp;
+	rate += 's';
       }
-      else
+
+      std::string notice("Nick flood ");
+      notice += ncp->userhost;
+      notice += " (";
+      notice += ncp->lastNick;
+      notice += ") ";
+      notice += rate;
+
+      ::SendAll(notice, UserFlags::OPER);
+      Log::Write(notice);
+
+      BotSock::Address ip = users.getIP(oldNick, userhost);
+
+      Format reason;
+      reason.setStringToken('n', lastNick);
+      reason.setStringToken('u', userhost);
+      reason.setStringToken('i', BotSock::inet_ntoa(ip));
+      reason.setStringToken('r', rate);
+
+      if (!Config::IsOKHost(userhost, ip) && !Config::IsOper(userhost, ip))
       {
-        /* just decrement 10 second units of nick changes */
-        ncp->nickChangeCount -= timeTicks;
-        if (0 == ncp->userhost.compare(userhost))
-        {
-          ncp->lastNickChange = currentTime;
-          ncp->lastNick = lastNick;
-          ncp->nickChangeCount++;
-          foundEntry = true;
-        }
-
-        /* now, check for a nick flooder */
-
-        if ((ncp->nickChangeCount >= vars[VAR_NICK_CHANGE_MAX_COUNT]->getInt())
-	  && !ncp->noticed)
-        {
-	  std::string rate(boost::lexical_cast<std::string>(ncp->nickChangeCount));
-	  rate += " in ";
-	  rate += boost::lexical_cast<std::string>(ncp->lastNickChange -
-	    ncp->firstNickChange);
-	  rate += " second";
-	  if (1 != (ncp->lastNickChange - ncp->firstNickChange))
-	  {
-	    rate += 's';
-	  }
-
-	  std::string notice("Nick flood ");
-	  notice += ncp->userhost;
-	  notice += " (";
-	  notice += ncp->lastNick;
-	  notice += ") ";
-	  notice += rate;
-
-          ::SendAll(notice, UserFlags::OPER);
-	  Log::Write(notice);
-
-	  BotSock::Address ip = users.getIP(oldNick, userhost);
-
-	  Format reason;
-	  reason.setStringToken('n', lastNick);
-	  reason.setStringToken('u', userhost);
-	  reason.setStringToken('i', BotSock::inet_ntoa(ip));
-	  reason.setStringToken('r', rate);
-
-          if (!Config::IsOKHost(userhost, ip) && !Config::IsOper(userhost, ip))
-	  {
-            doAction(lastNick, userhost, ip,
-              vars[VAR_NICK_FLOOD_ACTION]->getAction(),
-              vars[VAR_NICK_FLOOD_ACTION]->getInt(),
-	      reason.format(vars[VAR_NICK_FLOOD_REASON]->getString()), true);
-          }
-
-          ncp->noticed = true;
-        }
+	doAction(lastNick, userhost, ip,
+	  vars[VAR_NICK_FLOOD_ACTION]->getAction(),
+	  vars[VAR_NICK_FLOOD_ACTION]->getInt(),
+	  reason.format(vars[VAR_NICK_FLOOD_REASON]->getString()), true);
       }
+
+      ncp->nextNotice = currentTime + 5;
     }
   }
-
-  if (!foundEntry)
-  {
-    NickChangeEntry ncp;
-
-    ncp.userhost = userhost;
-    ncp.firstNickChange = currentTime;
-    ncp.lastNickChange = currentTime;
-    ncp.nickChangeCount = 1;
-    ncp.noticed = false;
-
-    nickChanges.push_back(ncp);
-  }
-}
-
-
-void Init_Link_Look_Table()
-{
-  linkLookers.clear();
 }
 
 
