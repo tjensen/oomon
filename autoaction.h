@@ -45,6 +45,7 @@ class AutoAction
 
     AutoAction::Type type(void) const { return this->type_; }
     unsigned int duration(void) const { return this->duration_; }
+    StrVector server(void) const { return this->server_; }
 
     static std::string get(const AutoAction * value);
     static std::string set(AutoAction * value, const std::string & value);
@@ -54,6 +55,7 @@ class AutoAction
   private:
     AutoAction::Type type_;
     unsigned int duration_;
+    StrVector server_;
 };
 
 

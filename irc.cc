@@ -855,16 +855,57 @@ void
 IRC::kline(const std::string & from, const unsigned int minutes,
   const std::string & target, const std::string & reason)
 {
-  std::string line;
+  std::string line("KLINE ");
 
   if (minutes > 0)
   {
-    line = "KLINE " + boost::lexical_cast<std::string>(minutes) + " " +
-      target + " :" + reason;
+    line += boost::lexical_cast<std::string>(minutes);
+    line += ' ';
+    line += target;
+    line += " :";
+    line += reason;
   }
   else
   {
-    line = "KLINE " + target + " :" + reason;
+    line += target;
+    line += " :";
+    line += reason;
+  }
+
+  if (IRC::operNickInReason_)
+  {
+    this->write(line + " [" + from + "]\n");
+  }
+  else
+  {
+    this->write(line + "\n");
+  }
+  Log::Write(line + " [" + from + "]");
+}
+
+
+void
+IRC::remoteKline(const std::string & from, const std::string & to,
+    const unsigned int minutes, const std::string & target,
+    const std::string & reason)
+{
+  std::string line("KLINE ");
+
+  if (minutes > 0)
+  {
+    line += boost::lexical_cast<std::string>(minutes);
+    line += ' ';
+    line += target;
+    line += " ON ";
+    line += to;
+    line += " :";
+    line += reason;
+  }
+  else
+  {
+    line += target;
+    line += " :";
+    line += reason;
   }
 
   if (IRC::operNickInReason_)

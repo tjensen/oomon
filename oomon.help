@@ -286,27 +286,40 @@ info actions
 .d.of the following values:
 .d. - NOTHING:  Just report the abuse
 .d. - KILL:  Kill the abusive client
-.d. - KLINE [<time>]:  K-line *user@*domain
-.d. - KLINE_HOST [<time>]:  K-line *@hostname
-.d. - KLINE_DOMAIN [<time>]:  K-line *@*domain
-.d. - KLINE_IP [<time>]:  K-line *@ipaddress
-.d. - KLINE_NET [<time>]:  K-line *@net*
-.d. - KLINE_USERNET [<time>]:  K-line *user@net*
-.d. - SMART_KLINE [<time>]:  If hostname appears
-.d.   dynamic, K-line *@hostname.  Otherwise, K-line
-.d.   *user@net* or *user@*domain.
-.d. - SMART_KLINE_HOST [<time>]:  If hostname appears
-.d.   dynamic, K-line *@hostname.  Otherwise, K-line
-.d.   *user@*domain.
-.d. - SMART_KLINE_IP [<time>]:  If hostname appears
-.d.   dynamic, K-line *@ipaddress.  Otherwise, K-line
-.d.   *user@net*.
+.d. - KLINE[@<servers>] [<time>]:  K-line
+.d.   *user@*domain
+.d. - KLINE_HOST[@<servers>] [<time>]:  K-line
+.d.   *@hostname
+.d. - KLINE_DOMAIN[@<servers>] [<time>]:  K-line
+.d.   *@*domain
+.d. - KLINE_IP[@<servers>] [<time>]:  K-line
+.d.   *@ipaddress
+.d. - KLINE_NET[@<servers>] [<time>]:  K-line *@net*
+.d. - KLINE_USERNET[@<servers>] [<time>]:  K-line
+.d.   *user@net*
+.d. - SMART_KLINE[@<servers>] [<time>]:  If hostname
+.d.   appears dynamic, K-line *@hostname.  Otherwise,
+.d.   K-line *user@net* or *user@*domain.
+.d. - SMART_KLINE_HOST[@<servers>] [<time>]:  If
+.d.   hostname appears dynamic, K-line *@hostname.
+.d.   Otherwise, K-line *user@*domain.
+.d. - SMART_KLINE_IP[@<servers>] [<time>]:  If
+.d.   hostname appears dynamic, K-line *@ipaddress.
+.d.   Otherwise, K-line *user@net*.
 .d. - DLINE_IP [<time>]:  D-line the abuser's IP.
 .d. - DLINE_NET [<time>]:  D-line the abuser's /24.
+.d.
 .d.If a "time" is provided, the bot will issue a
 .d.temporary K-line or D-line to last for the desired
 .d.number of minutes.  Be aware that some IRC servers
 .d.do not support temporary K-lines and/or D-lines.
+.d.
+.d.If "servers" are provided, the bot will issue a
+.d.remote K-line for each server that is listed.  It
+.d.is possible to list multiple servers by separating
+.d.them with commas.  Some IRC servers do not support
+.d.remote K-lines, so check with your documentation.
+.d.
 .d.Note:  In some instances, only a subset of the
 .d.       above actions will make sense.  For example,
 .d.       if the bot does not know an abuser's IP
@@ -314,6 +327,8 @@ info actions
 .d.       effect.
 .e.> .set nick_flood_action smart_kline 10080
 .e.*** Toast@OOMon set NICK_FLOOD_ACTION to SMART_KLINE 10080
+.e.> .set scan_proxy_action kline_host@* 10080
+.e.*** Toast@OOMon set SCAN_PROXY_ACTION to KLINE_HOST@* 10080
 .l.set
 info filters
 .d.Filters are sets of one or more pattern matching

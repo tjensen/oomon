@@ -42,11 +42,17 @@ std::string
 AutoAction::get(const AutoAction * value)
 {
   std::string dur;
-
   if (value->duration() > 0)
   {
     dur += ' ';
     dur += boost::lexical_cast<std::string>(value->duration());
+  }
+
+  std::string server;
+  if (!value->server_.empty())
+  {
+    server += '@';
+    server += StrJoin(',', value->server_);
   }
 
   switch (value->type())
@@ -54,23 +60,23 @@ AutoAction::get(const AutoAction * value)
     case AutoAction::KILL:
       return "KILL";
     case AutoAction::KLINE:
-      return "KLINE" + dur;
+      return "KLINE" + server + dur;
     case AutoAction::KLINE_HOST:
-      return "KLINE_HOST" + dur;
+      return "KLINE_HOST" + server + dur;
     case AutoAction::KLINE_DOMAIN:
-      return "KLINE_DOMAIN" + dur;
+      return "KLINE_DOMAIN" + server + dur;
     case AutoAction::KLINE_IP:
-      return "KLINE_IP" + dur;
+      return "KLINE_IP" + server + dur;
     case AutoAction::KLINE_USERNET:
-      return "KLINE_USERNET" + dur;
+      return "KLINE_USERNET" + server + dur;
     case AutoAction::KLINE_NET:
-      return "KLINE_NET" + dur;
+      return "KLINE_NET" + server + dur;
     case AutoAction::SMART_KLINE:
-      return "SMART_KLINE" + dur;
+      return "SMART_KLINE" + server + dur;
     case AutoAction::SMART_KLINE_HOST:
-      return "SMART_KLINE_HOST" + dur;
+      return "SMART_KLINE_HOST" + server + dur;
     case AutoAction::SMART_KLINE_IP:
-      return "SMART_KLINE_IP" + dur;
+      return "SMART_KLINE_IP" + server + dur;
     case AutoAction::DLINE_IP:
       return "DLINE_IP" + dur;
     case AutoAction::DLINE_NET:
@@ -85,7 +91,20 @@ std::string
 AutoAction::set(AutoAction * value, const std::string & newValue)
 {
   std::string copy(newValue);
-  std::string text(UpCase(FirstWord(copy)));
+  std::string action(FirstWord(copy));
+
+  std::string::size_type at = action.find('@');
+  std::string text;
+  if (at == std::string::npos)
+  {
+    text = UpCase(action);
+  }
+  else
+  {
+    text = UpCase(action.substr(0, at));
+
+    StrSplit(value->server_, action.substr(at + 1), ",", true);
+  }
 
   if (0 == text.compare("NOTHING"))
   {
@@ -182,12 +201,23 @@ doKill(const std::string & nick, const std::string & reason)
 
 
 static void
-doKline(const std::string & mask, unsigned int duration,
-    const std::string & reason)
+doKline(const StrVector & remote, const std::string & mask,
+    unsigned int duration, const std::string & reason)
 {
   if (autoPilot())
   {
-    server.kline("Auto-Kline", duration, mask, reason);
+    if (remote.empty())
+    {
+      server.kline("Auto-Kline", duration, mask, reason);
+    }
+    else
+    {
+      for (StrVector::const_iterator pos = remote.begin(); pos != remote.end();
+          ++pos)
+      {
+        server.remoteKline("Auto-Kline", *pos, duration, mask, reason);
+      }
+    }
   }
   else
   {
@@ -293,64 +323,71 @@ doAction(const std::string & nick, const std::string & userhost,
     break;
 
   case AutoAction::KLINE:
-    doKline("*" + ident + "@" + domain, action.duration(), reason);
+    doKline(action.server(), "*" + ident + "@" + domain, action.duration(),
+        reason);
     break;
 
   case AutoAction::KLINE_HOST:
-    doKline("*@" + host, action.duration(), reason);
+    doKline(action.server(), "*@" + host, action.duration(), reason);
     break;
 
   case AutoAction::KLINE_DOMAIN:
-    doKline("*@" + domain, action.duration(), reason);
+    doKline(action.server(), "*@" + domain, action.duration(), reason);
     break;
 
   case AutoAction::KLINE_IP:
     if (ip != INADDR_NONE)
     {
-      doKline("*@" + BotSock::inet_ntoa(ip), action.duration(), reason);
+      doKline(action.server(), "*@" + BotSock::inet_ntoa(ip), action.duration(),
+          reason);
     }
     else
     {
-      doKline("*@" + host, action.duration(), reason);
+      doKline(action.server(), "*@" + host, action.duration(), reason);
     }
     break;
 
   case AutoAction::KLINE_USERNET:
     if (ip != INADDR_NONE)
     {
-      doKline("*" + ident + "@" + classCMask(BotSock::inet_ntoa(ip)),
+      doKline(action.server(),
+          "*" + ident + "@" + classCMask(BotSock::inet_ntoa(ip)),
           action.duration(), reason);
     }
     else
     {
-      doKline("*" + ident + "@" + domain, action.duration(), reason);
+      doKline(action.server(), "*" + ident + "@" + domain, action.duration(),
+          reason);
     }
     break;
 
   case AutoAction::KLINE_NET:
     if (ip != INADDR_NONE)
     {
-      doKline("*@" + classCMask(BotSock::inet_ntoa(ip)), action.duration(),
+      doKline(action.server(), "*@" + classCMask(BotSock::inet_ntoa(ip)),
+          action.duration(),
           reason);
     }
     else
     {
-      doKline("*@" + domain, action.duration(), reason);
+      doKline(action.server(), "*@" + domain, action.duration(), reason);
     }
     break;
 
   case AutoAction::SMART_KLINE:
     if (isDynamic(user, host))
     {
-      doKline("*@" + host, action.duration(), reason);
+      doKline(action.server(), "*@" + host, action.duration(), reason);
     }
     else if (INADDR_NONE == ip)
     {
-      doKline("*" + ident + "@" + domain, action.duration(), reason);
+      doKline(action.server(), "*" + ident + "@" + domain, action.duration(),
+          reason);
     }
     else
     {
-      doKline("*" + ident + "@" + classCMask(BotSock::inet_ntoa(ip)),
+      doKline(action.server(),
+          "*" + ident + "@" + classCMask(BotSock::inet_ntoa(ip)),
           action.duration(), reason);
     }
     break;
@@ -358,11 +395,12 @@ doAction(const std::string & nick, const std::string & userhost,
   case AutoAction::SMART_KLINE_HOST:
     if (isDynamic(user, host))
     {
-      doKline("*@" + host, action.duration(), reason);
+      doKline(action.server(), "*@" + host, action.duration(), reason);
     }
     else
     {
-      doKline("*" + ident + "@" + domain, action.duration(), reason);
+      doKline(action.server(), "*" + ident + "@" + domain, action.duration(),
+          reason);
     }
     break;
 
@@ -371,11 +409,13 @@ doAction(const std::string & nick, const std::string & userhost,
     {
       if (isDynamic(user, host))
       {
-        doKline("*@" + BotSock::inet_ntoa(ip), action.duration(), reason);
+        doKline(action.server(), "*@" + BotSock::inet_ntoa(ip),
+            action.duration(), reason);
       }
       else
       {
-        doKline("*" + ident + "@" + classCMask(BotSock::inet_ntoa(ip)),
+        doKline(action.server(),
+            "*" + ident + "@" + classCMask(BotSock::inet_ntoa(ip)),
             action.duration(), reason);
       }
     }
@@ -383,11 +423,12 @@ doAction(const std::string & nick, const std::string & userhost,
     {
       if (isDynamic(user, host))
       {
-        doKline("*@" + host, action.duration(), reason);
+        doKline(action.server(), "*@" + host, action.duration(), reason);
       }
       else
       {
-        doKline("*" + ident + "@" + domain, action.duration(), reason);
+        doKline(action.server(), "*" + ident + "@" + domain, action.duration(),
+            reason);
       }
     }
     break;

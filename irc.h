@@ -66,8 +66,11 @@ public:
   void ctcp(const std::string &, const std::string &);
   void ctcpReply(const std::string &, const std::string &);
   void isOn(const std::string &);
-  void kline(const std::string &, const unsigned int, const std::string &,
-    const std::string &);
+  void kline(const std::string & from, const unsigned int minutes,
+      const std::string & target, const std::string & reason);
+  void remoteKline(const std::string & from, const std::string & to,
+      const unsigned int minutes, const std::string & target,
+      const std::string & reason);
   void unkline(const std::string &, const std::string &);
   void dline(const std::string &, const unsigned int, const std::string &,
     const std::string &);
