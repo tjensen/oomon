@@ -1,3 +1,8 @@
+OOMon-2.3.1                                              (05 Jan 2005)
+-----------
+        * Fixed compile error in dcclist.cc.
+
+
 OOMon-2.3                                                (18 Oct 2004)
 ---------
         * Added an open HTTP POST proxy scanner.
