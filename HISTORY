@@ -1,3 +1,143 @@
+OOMon-2.1                                                (20 Nov 2003)
+---------
+	* Added regular expressions support!  Use ".info regex"
+	  command for more information.
+
+	* Bot now logs more information when it is unexpectedly
+	  disconnected from the server.
+
+	* Code now compiles successfully with GNU C++ 3.2.
+
+	* "^Bnickname^B is still being processed." notices from
+	  SpamTrap are now ignored.
+
+	* Changed /stats p reply to leave out the bot's nick.
+
+	* Added BROKEN_HOSTNAME_MUNGING setting to support hostname
+	  spoofing schemes like the one used by LinkNet.
+
+	* Build and install process now supports the "--prefix=..."
+	  configure script option.
+
+	* Modified the .seedrand command's syntax to be more flexible.
+
+	* Added .nets command that works like .domains but groups
+	  clients by IP instead of hostname.
+
+
+	* Fixed broken virtual host support.
+
+	* Fixed the clone detection and k-lining routines.
+
+	* Fixed the SOCKS4 open proxy detector.
+
+	* Added a SOCKS5 open proxy detector.
+
+	* Fixed how the configuration file parser handles filenames.
+	  A filename with a leading '/' character is parsed as an absolute
+	  pathname, while a filename without the leading '/' is parsed
+	  as a relative pathname.
+
+	* E: lines in configuration file are now matched against
+	  client IP addresses (when available) as well as hostnames.
+
+	* Fixed .clones command's output.
+
+	* Bot should no longer kill opers for links looking, etc.
+
+	* Added UMODE setting.
+
+	* The .status command's output now combines the user counts
+	  into one line.
+
+	* Added STATSP_MESSAGE setting for sending a custom message
+	  to clients who issue "/stats p".
+
+	* Added up-time and connect-time values to .status output.
+
+	* Added support for temporary d-lines.
+
+	* Added ability to search only temporary or permanent k-lines
+	  and d-lines.  Use ".help findk" and ".help findd" for more
+	  information.
+
+	* Added a .glist command for searching clients by their GECOS
+	  field.
+
+	* Added support for "-count" parameter to .list, .nfind,
+	  .seedrand, and .glist commands.
+
+	* The .status command's output now displays the number of
+	  permanent k-lines and d-lines, in addition to the total
+	  number of k-lines and d-lines.
+
+	* Added the ability to search k-lines and d-lines by their
+	  reason fields.  Example: .findk -reason /WAS+UP/
+
+	* The bot now relays "KLINE over-ruled for ..." and "DLINE
+	  over-ruled for ..." server notices.
+
+	* Added a signoff message parameter to the .die command.
+
+	* Added RELAY_MSGS_TO_LOCOPS setting so that messages to the
+	  bot are relayed to all local opers via the LOCOPS command.
+
+	* The bot will now automatically reload its k-line list when
+	  it sees a "<oper> is clearing temp klines" server notice.
+	  Same for the d-line list.
+
+	* Added SMART_KLINE and SMART_KLINE_IP action types.  Use the
+	  ".info actions" command for more information.
+
+	* The .list, .nfind, .seedrand, and .glist commands now have
+	  configurable output formats.  See the LIST_FORMAT,
+	  NFIND_FORMAT, SEEDRAND_FORMAT, and GLIST_FORMAT settings.
+
+	* Added support for the ETRACE server command.
+
+	* The bot can now relay g-line requests, triggers, and
+	  activates.  See the .watch command for more information.
+
+	* Added an "info" help topic for miscellaneous information.
+	  See ".help info" or just ".info" for more information.
+
+	* Added DEFAULT_KLINE_TIMEOUT and DEFAULT_DLINE_TIMEOUT
+	  settings.
+
+	* The bot will now keep track of the number of client connects
+	  that occur in 10 seconds and report when it exceeds a
+	  configurable threshhold.  See the USER_COUNT_DELTA_MAX
+	  setting.
+
+	* The bot now caches proxy scanner results so that clean hosts
+	  aren't scanned excessively.
+
+	* Added more .watch types: STATS, JUPES, LINKS, MOTDS, INFOS,
+	  TRACES, etc.
+
+	* Rewrote much of the .trap command.  The command syntax has changed
+	  but it is also much more flexible now.
+
+	* The bot will now read the PID file when it starts and exit
+	  if an instance of OOMon is already running.  This should
+	  make it much easier to run OOMon from a crontab.
+
+	* Added a .killnfind command that works much like the
+	  .killlist command but by nick instead of user@host.
+
+	* Added support for "Possible Flooder ..." server notices.
+
+	* Added support for "... is a possible spambot" server
+	  notices.
+
+	* Added support for "Too many local connections for ..."
+	  server notices.
+
+	* OOMon users with "O" flags are now able to view settings and
+	  traps.  Modifying settings and traps is still limited to
+	  users with "M" flags.
+
+
 OOMon-2.0                                                (31 May 2003)
 ---------
 	* added ".set" command!  OOMon is almost entirely configurable
