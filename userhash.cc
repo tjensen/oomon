@@ -1774,6 +1774,7 @@ UserHash::debugStatus(BotClient * client, const UserEntryTable & table,
   {
     double average = userCount / tableSize;
     int max = 0;
+    int empty = 0;
     double square = 0.0;
     for (UserEntryTable::const_iterator i = table.begin(); i != table.end();
         ++i)
@@ -1785,13 +1786,19 @@ UserHash::debugStatus(BotClient * client, const UserEntryTable & table,
       {
         max = size;
       }
+      if (0 == size)
+      {
+        ++empty;
+      }
     }
 
     std::string notice(label);
     notice += " stddev: ";
     notice += boost::lexical_cast<std::string>(sqrt(square));
-    notice += " (max = ";
+    notice += " (+";
     notice += boost::lexical_cast<std::string>(max);
+    notice += ", -";
+    notice += boost::lexical_cast<std::string>(empty);
     notice += ")";
     client->send(notice);
   }
