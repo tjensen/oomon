@@ -71,6 +71,12 @@ const std::time_t ProxyList::CACHE_EXPIRE = (60 * 60); /* 1 hour */
 const ProxyList::SockList::size_type ProxyList::CACHE_SIZE = 5000;
 
 
+ProxyList::ProxyList(void) : safeHosts(ProxyList::CACHE_SIZE), cacheHits(0),
+  cacheMisses(0)
+{
+}
+
+
 // connect(address, port)
 //
 // Attempts to connect to a proxy
@@ -81,7 +87,7 @@ bool
 ProxyList::connect(ProxyPtr newProxy, const std::string & address,
   const BotSock::Port port)
 {
-#ifdef PROXY_DEBUG
+#ifdef PROXYLIST_DEBUG
   std::cout << "Creating proxy connection to address " << address << ":" <<
     port << std::endl;
 #endif
@@ -97,7 +103,7 @@ ProxyList::connect(ProxyPtr newProxy, const std::string & address,
 
   this->scanners.push_back(newProxy);
 
-#ifdef PROXY_DEBUG
+#ifdef PROXYLIST_DEBUG
   std::cout << this->scanners.size() << " proxies queued up for processing." <<
     std::endl;
 #endif
@@ -189,7 +195,7 @@ ProxyList::ProxyProcessor::operator()(ProxyPtr proxy)
   }
   catch (OOMon::timeout_error)
   {
-#ifdef PROXY_DEBUG
+#ifdef PROXYLIST_DEBUG
     std::cout << "Proxy connection to " << proxy->address() <<
       " timed out." << std::endl;
 #endif
@@ -271,13 +277,22 @@ ProxyList::isVerifiedClean(const std::string & address,
 
   bool result = (pos != this->safeHosts.end());
 
-#ifdef PROXY_DEBUG
+#ifdef PROXYLIST_DEBUG
   if (result)
   {
     std::cout << "Verified clean: " << address << ":" << port << " (" <<
       type << ")" << std::endl;
   }
 #endif
+
+  if (result)
+  {
+    ++this->cacheHits;
+  }
+  else
+  {
+    ++this->cacheMisses;
+  }
 
   return result;
 }
@@ -286,7 +301,9 @@ ProxyList::isVerifiedClean(const std::string & address,
 void
 ProxyList::status(BotClient * client) const
 {
-  client->send("Proxy scanners: " + IntToStr(this->scanners.size()));
+  std::string scanners("Proxy scanners: ");
+  scanners += IntToStr(this->scanners.size());
+  client->send(scanners);
 
   int cacheCount = 0;
   for (ProxyList::Cache::const_iterator pos = this->safeHosts.begin();
@@ -297,7 +314,15 @@ ProxyList::status(BotClient * client) const
       ++cacheCount;
     }
   }
-  client->send("Proxy cache: " + IntToStr(cacheCount) + "/" +
-    IntToStr(this->safeHosts.size()));
+  std::string cache("Proxy cache: ");
+  cache += IntToStr(cacheCount);
+  cache += '/';
+  cache += IntToStr(this->safeHosts.size());
+  cache += " (";
+  cache += ULongToStr(this->cacheHits);
+  cache += " hits, ";
+  cache += ULongToStr(this->cacheMisses);
+  cache += " misses)";
+  client->send(cache);
 }
 

@@ -44,7 +44,7 @@ private:
   typedef boost::shared_ptr<Proxy> ProxyPtr;
 
 public:
-  ProxyList(void) : safeHosts(ProxyList::CACHE_SIZE) { }
+  ProxyList(void);
   virtual ~ProxyList(void) { }
 
   void check(const std::string &, const std::string &,
@@ -150,6 +150,7 @@ private:
 
   typedef std::vector<CacheEntry> Cache;
   Cache safeHosts;
+  mutable unsigned long cacheHits, cacheMisses;
   static const SockList::size_type CACHE_SIZE;
 };
 
