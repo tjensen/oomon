@@ -753,7 +753,7 @@ IRC::onNotice(const std::string & from, const std::string & userhost,
     else if (0 ==
       this->upCase(text).compare("*** YOU NEED OPER AND N FLAG FOR +N"))
     {
-      Log::Write("I don't have an N flag in my o: line! :(");
+      Log::Write("Unable to set user mode +n!  I can't see nick changes!");
     }
   }
   else if (this->same(from, vars[VAR_XO_SERVICES_RESPONSE]->getString()))
