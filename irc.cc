@@ -305,7 +305,7 @@ IRC::onRead(std::string text)
         {
           this->gettingTrace = false;
 	  users.resetUserCountDelta();
-          ::SendAll("TRACE complete.", UserFlags::OPER);
+          ::SendAll("*** TRACE complete.", UserFlags::OPER);
         }
         break;
       case 216:
