@@ -1590,7 +1590,7 @@ UserHash::checkIpClones(const BotSock::Address & ip)
   cloneCount = 0;
   find = this->iptable[index];
 
-  BotSock::Address lastIp;
+  BotSock::Address lastIp = 0;
   std::string lastUser;
   bool lastIdentd, currentIdentd;
   bool differentIp, differentUser;
