@@ -287,6 +287,11 @@ DCC::cmdAuth(BotClient *from, const std::string & command,
     Log::Write(notice);
 
     this->loadConfig();
+
+    if (this->flags().has(UserFlags::MASTER) && !server.opered())
+    {
+      from->send("*** I am not opered up!");
+    }
   }
   else
   {

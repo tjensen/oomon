@@ -429,7 +429,7 @@ IRC::onRead(std::string text)
 	}
 	break;
       case 491:        /* ERR_NOOPERHOST */
-        Log::Write("Unable to OPER up due to ircd configuration!");
+        Log::Write("Unable to OPER up due to incorrect oper name or insufficient privileges from IRC server!");
         break;
       case 709:
         if (this->gettingTrace && (params.size() > 9))

@@ -119,6 +119,8 @@ public:
 
   void onServerNotice(const std::string & text);
 
+  bool opered(void) const { return this->amIAnOper; }
+
 protected:
   bool onRead(std::string text);
 
