@@ -474,6 +474,17 @@ ProxyList::init(void)
 {
   Proxy::init();
 
+  ProxyList::setPorts(&ProxyList::httpConnectPorts,
+      DEFAULT_SCAN_HTTP_CONNECT_PORTS);
+  ProxyList::setPorts(&ProxyList::httpPostPorts,
+      DEFAULT_SCAN_HTTP_POST_PORTS);
+  ProxyList::setPorts(&ProxyList::socks4Ports,
+      DEFAULT_SCAN_SOCKS4_PORTS);
+  ProxyList::setPorts(&ProxyList::socks5Ports,
+      DEFAULT_SCAN_SOCKS5_PORTS);
+  ProxyList::setPorts(&ProxyList::wingatePorts,
+      DEFAULT_SCAN_WINGATE_PORTS);
+
   vars.insert("SCAN_FOR_PROXIES", Setting::BooleanSetting(ProxyList::enable));
   vars.insert("SCAN_HTTP_CONNECT_PORTS",
       Setting(boost::bind(ProxyList::getPorts, &ProxyList::httpConnectPorts),
