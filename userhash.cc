@@ -650,7 +650,7 @@ UserHash::listNicks(BotClient * client, const PatternPtr nick,
     index != this->domaintable.end(); ++index)
   {
     for (UserEntryList::const_iterator userptr = index->begin();
-      userptr != index->end(); ++index)
+      userptr != index->end(); ++userptr)
     {
       if (nick->match((*userptr)->getNick()) && (className.empty() ||
 	(0 == className.compare((*userptr)->getClass()))))
@@ -697,7 +697,7 @@ UserHash::listGecos(BotClient * client, const PatternPtr gecos,
     index != this->domaintable.end(); ++index)
   {
     for (UserEntryList::const_iterator userptr = index->begin();
-      userptr != index->end(); ++index)
+      userptr != index->end(); ++userptr)
     {
       if (gecos->match((*userptr)->getGecos()) && (className.empty() ||
 	(0 == className.compare((*userptr)->getClass()))))
