@@ -783,12 +783,14 @@ UserHash::findUser(const std::string & nick) const
   for (UserEntryTable::const_iterator i = this->hosttable.begin();
     i != this->hosttable.end(); ++i)
   {
-    for (UserEntryList::const_iterator find = i->begin(); find != i->end(); ++i)
+    UserEntryList::const_iterator find =
+      std::find_if(i->begin(), i->end(),
+          boost::bind(&UserEntry::matches, _1, lcNick));
+
+    if (find != i->end())
     {
-      if ((*find)->matches(lcNick))
-      {
-	result = *find;
-      }
+      result = *find;
+      break;
     }
   }
 
@@ -810,13 +812,13 @@ UserHash::findUser(const std::string & nick, const std::string & userhost) const
 
     const int hashIndex = UserHash::hashFunc(lcUser);
 
-    const UserEntryList & fnerd = this->usertable[hashIndex];
+    const UserEntryList & bucket = this->usertable[hashIndex];
 
     UserEntryList::const_iterator find =
-      std::find_if(fnerd.begin(), fnerd.end(),
+      std::find_if(bucket.begin(), bucket.end(),
           boost::bind(&UserEntry::matches, _1, lcNick, lcUser, lcHost));
 
-    if (find != fnerd.end())
+    if (find != bucket.end())
     {
       result = *find;
     }
