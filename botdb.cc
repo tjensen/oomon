@@ -23,6 +23,9 @@
 #include <iostream>
 #include <string>
 
+// Std C Headers
+# include <sys/file.h>
+
 // OOMon Headers
 #include "oomon.h"
 #include "botdb.h"
@@ -52,12 +55,35 @@ int BotDB::errno_ = 0;
 #endif
 
 
+class BotDB::Lock
+{
+  public:
+    Lock(const int fd, const int operation) : fd_(fd)
+    {
+      if (this->fd_ != -1)
+      {
+        flock(this->fd_, operation);
+      }
+    }
+    ~Lock(void)
+    {
+      if (this->fd_ != -1)
+      {
+        flock(this->fd_, LOCK_UN);
+      }
+    }
+  private:
+    const int fd_;
+};
+
+
 BotDB::BotDB(const std::string & file, int mode)
 {
 #if defined(HAVE_LIBGDBM)
-  db = gdbm_open(const_cast<char *>(file.c_str()), 0, GDBM_WRCREAT, mode, NULL);
+  db = gdbm_open(const_cast<char *>(file.c_str()), 0,
+      GDBM_WRCREAT | GDBM_NOLOCK | GDBM_SYNC, mode, NULL);
 #elif defined(HAVE_BSDDB)
-  db = dbopen(file.c_str(), O_CREAT | O_RDWR, mode, DB_HASH, NULL);
+  db = dbopen(file.c_str(), O_CREAT | O_RDWR | O_SYNC, mode, DB_HASH, NULL);
   if (NULL == this->db)
   {
     BotDB::errno_ = errno;
@@ -86,6 +112,8 @@ BotDB::~BotDB()
 int
 BotDB::del(const std::string & key)
 {
+  BotDB::Lock lock(this->fd(), LOCK_EX);
+
 #if defined(HAVE_LIBGDBM)
   datum k = { dptr: const_cast<char *>(key.c_str()), dsize: key.length() + 1 };
 
@@ -138,6 +166,8 @@ BotDB::fd()
 int
 BotDB::get(const std::string & key, std::string & data)
 {
+  BotDB::Lock lock(this->fd(), LOCK_SH);
+
 #if defined(HAVE_LIBGDBM)
   datum k = { dptr: const_cast<char *>(key.c_str()), dsize: key.length() + 1 };
 
@@ -184,6 +214,8 @@ BotDB::get(const std::string & key, std::string & data)
 int
 BotDB::put(const std::string & key, const std::string & data)
 {
+  BotDB::Lock lock(this->fd(), LOCK_EX);
+
 #if defined(HAVE_LIBGDBM)
   datum k, d;
 

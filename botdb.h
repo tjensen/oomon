@@ -58,6 +58,8 @@ public:
   static std::string strerror(const int db_errno);
 
 private:
+  class Lock;
+
 #if defined(HAVE_LIBGDBM)
   GDBM_FILE db;
 #elif defined(HAVE_BSDDB)
