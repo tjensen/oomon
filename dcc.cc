@@ -231,7 +231,7 @@ DCC::parse(std::string text)
       else
       {
 	// ISSUE REMOTE COMMAND
-	remotes.sendCommand(this, to, command, text);
+	remotes.sendRemoteCommand(this, to, command, text);
       }
     }
     else if (text != "Unknown command" ||

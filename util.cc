@@ -108,7 +108,6 @@ SplitIRC(StrVector & temp, std::string text)
 {
   int count = 0;
 
-  temp.clear();
   while (text.length() > 0)
   {
     if (text.at(0) == ':')

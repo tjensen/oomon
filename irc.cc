@@ -212,14 +212,15 @@ IRC::onRead(std::string text)
 
   StrVector params;
 
-  if (text[0] != ':')
+  if (text[0] == ':')
   {
-    SplitIRC(params, text);
-    params.insert(params.begin(), serverName);
+    SplitIRC(params, text.substr(1));
   }
   else
   {
-    SplitIRC(params, text.substr(1));
+    params.push_back(serverName);
+
+    SplitIRC(params, text);
   }
 
   std::string from, userhost;

@@ -80,7 +80,7 @@ public:
   int sendChat(const std::string & from, const std::string & text);
   int sendBotJoin(const std::string & oldnode, const std::string & newnode);
   int sendBotPart(const std::string & from, const std::string & node);
-  int sendCommand(const std::string & from, const std::string & to,
+  int sendRemoteCommand(const std::string & from, const std::string & to,
     const std::string & clientId, const std::string & command,
     const std::string & parameters);
 
@@ -113,16 +113,23 @@ private:
   void registerCommand(const std::string & command,
     bool (Remote::*callback)(const std::string & from,
     const std::string & command, const StrVector & parameters));
+  void unregisterCommand(const std::string & command);
 
   int sendVersion(void);
   int sendAuth(void);
   int sendUnknownCommand(const std::string & command);
   int sendSyntaxError(const std::string & command);
   int sendCommand(const std::string & from, const std::string & command,
-    const std::string & parameters = "");
+    const std::string & parameters, const bool queue = true);
   int sendMyBotNet(void);
 
+  int write(const std::string & text);
+
   // Callbacks
+  bool onError(const std::string & from, const std::string & command,
+    const StrVector & parameters);
+  bool onAuth(const std::string & from, const std::string & command,
+    const StrVector & parameters);
   bool onBotJoin(const std::string & from, const std::string & command,
     const StrVector & parameters);
   bool onBotPart(const std::string & from, const std::string & command,

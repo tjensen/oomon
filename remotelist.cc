@@ -268,7 +268,7 @@ RemoteList::sendBotPart(const std::string & from, const std::string & node,
 
 
 void
-RemoteList::sendCommand(BotClient * from, const std::string & bot,
+RemoteList::sendRemoteCommand(BotClient * from, const std::string & bot,
   const std::string & command, const std::string & parameters)
 {
   RemotePtr remoteBot(this->findBot(bot));
@@ -285,7 +285,7 @@ RemoteList::sendCommand(BotClient * from, const std::string & bot,
 
     std::string id(from->id());
 
-    remoteBot->sendCommand(source, bot, id, command, parameters);
+    remoteBot->sendRemoteCommand(source, bot, id, command, parameters);
   }
 }
 
