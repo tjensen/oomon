@@ -518,12 +518,7 @@ IntToStr(int i, std::string::size_type len)
       }
     }
 
-    std::string::size_type l = result.length();
-    if (l < len)
-    {
-      result.insert(result.begin(), len - l, ' ');
-    }
-    return result;
+    return padLeft(result, len);
   }
 }
 
@@ -1058,6 +1053,60 @@ trimLeft(const std::string & text)
   }
 
   return text.substr(pos);
+}
+
+
+//////////////////////////////////////////////////////////////////////
+// padLeft(text, width, padding)
+//
+// Description:
+//  Pads the beginning of a string until it has the desired length.
+//
+// Parameters:
+//  text    - Any string.
+//  width   - The desired length of the string.
+//  padding - The character with which to pad the string.
+//
+// Return Value:
+//  The function returns the padded string.
+//////////////////////////////////////////////////////////////////////
+std::string
+padLeft(const std::string & text, const std::string::size_type width,
+  const char padding)
+{
+  std::string::size_type length(text.length());
+
+  std::string result((width > length) ? width - length : 0, padding);
+  result += text;
+
+  return result;
+}
+
+
+//////////////////////////////////////////////////////////////////////
+// padRight(text, width, padding)
+//
+// Description:
+//  Pads the right side of a string until it has the desired length.
+//
+// Parameters:
+//  text    - Any string.
+//  width   - The desired length of the string.
+//  padding - The character with which to pad the string.
+//
+// Return Value:
+//  The function returns the padded string.
+//////////////////////////////////////////////////////////////////////
+std::string
+padRight(const std::string & text, const std::string::size_type width,
+  const char padding)
+{
+  std::string::size_type length(text.length());
+
+  std::string result(text);
+  result += std::string((width > length) ? width - length : 0, padding);
+
+  return result;
 }
 
 

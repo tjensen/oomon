@@ -94,6 +94,12 @@ bool isDynamic(const std::string & user, const std::string & host);
 std::string timeDiff(std::time_t diff);
 
 std::string trimLeft(const std::string & text);
+std::string padLeft(const std::string & text,
+  const std::string::size_type width,
+  const std::string::value_type padding = ' ');
+std::string padRight(const std::string & text,
+  const std::string::size_type width,
+  const std::string::value_type padding = ' ');
 
 std::string hexDump(const void *buffer, const int size);
 
