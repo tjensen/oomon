@@ -65,23 +65,24 @@ FloodList::addFlood(const std::string & nick, const std::string & userhost,
         ::SendAll(msg, UserFlags::OPER);
 	Log::Write(msg);
 
-        bool excluded(false);
+        bool exempt(false);
         BotSock::Address ip(INADDR_NONE);
         UserEntryPtr find(users.findUser(nick, userhost));
         if (find)
         {
           ip = find->getIP();
-          excluded = find->getOper() || config.isExcluded(find) ||
-            config.isOper(find);
+          exempt = find->getOper() ||
+            config.isExempt(find, Config::EXEMPT_FLOOD) || config.isOper(find);
         }
         else
         {
           // If we can't find the user in our userlist, we won't be able to find
           // its IP address either
-          excluded = config.isExcluded(userhost) || config.isOper(userhost);
+          exempt = config.isExempt(userhost, Config::EXEMPT_FLOOD) ||
+            config.isOper(userhost);
         }
 
-        if (local && !excluded)
+        if (local && !exempt)
         {
 	  doAction(nick, userhost, ip, vars[this->getActionVar()]->getAction(),
 	    vars[this->getActionVar()]->getInt(),

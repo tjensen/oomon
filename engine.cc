@@ -138,9 +138,9 @@ klineClones(const bool kline, const std::string & rate,
     return;
   }
 
-  if (config.isExcluded(UserAtHost, ip) ||
-      (!userClass.empty() && config.isExcludedClass(userClass)) ||
-      config.isOper(UserAtHost, ip))
+  if (config.isExempt(UserAtHost, ip, Config::EXEMPT_SPOOF) ||
+      config.isOper(UserAtHost, ip) || (!userClass.empty() &&
+        config.isExemptClass(userClass, Config::EXEMPT_SPOOF)))
   {
     // Don't k-line our friendlies!
     return;
@@ -431,20 +431,21 @@ addToNickChangeList(const std::string & userhost, const std::string & oldNick,
       ::SendAll(notice, UserFlags::OPER);
       Log::Write(notice);
 
-      bool excluded(false);
+      bool exempt(false);
       BotSock::Address ip(INADDR_NONE);
       UserEntryPtr user(users.findUser(oldNick, userhost));
       if (user)
       {
         ip = user->getIP();
-        excluded = user->getOper() || config.isExcluded(user) ||
-          config.isOper(user);
+        exempt = user->getOper() ||
+          config.isExempt(user, Config::EXEMPT_FLOOD) || config.isOper(user);
       }
       else
       {
         // If we can't find the user in our userlist, we won't be able to find
         // its IP address either
-        excluded = config.isExcluded(userhost) || config.isOper(userhost);
+        exempt = config.isExempt(userhost, Config::EXEMPT_FLOOD) ||
+          config.isOper(userhost);
       }
 
       Format reason;
@@ -453,7 +454,7 @@ addToNickChangeList(const std::string & userhost, const std::string & oldNick,
       reason.setStringToken('i', BotSock::inet_ntoa(ip));
       reason.setStringToken('r', rate);
 
-      if (!excluded)
+      if (!exempt)
       {
 	doAction(lastNick, userhost, ip,
 	  vars[VAR_NICK_FLOOD_ACTION]->getAction(),
@@ -724,24 +725,25 @@ onCsNickFlood(std::string text)
   ::SendAll(notice, UserFlags::OPER);
   Log::Write(notice);
 
-  bool excluded = false;
+  bool exempt = false;
 
   BotSock::Address ip(INADDR_NONE);
   UserEntryPtr user(users.findUser(nick, userhost));
   if (user)
   {
     ip = user->getIP();
-    excluded = user->getOper() || config.isExcluded(user) ||
+    exempt = user->getOper() || config.isExempt(user, Config::EXEMPT_FLOOD) ||
       config.isOper(user);
   }
   else
   {
     // If we can't find the user in our userlist, we won't be able to find
     // its IP address either
-    excluded = config.isExcluded(userhost) || config.isOper(userhost);
+    exempt = config.isExempt(userhost, Config::EXEMPT_FLOOD) ||
+      config.isOper(userhost);
   }
 
-  if (!excluded)
+  if (!exempt)
   {
     doAction(nick, userhost, ip, vars[VAR_NICK_FLOOD_ACTION]->getAction(),
       vars[VAR_NICK_FLOOD_ACTION]->getInt(),
@@ -1194,8 +1196,10 @@ checkForSpoof(const std::string & nick, const std::string & user,
   {
     std::string userhost = user + '@' + host;
 
-    if (!config.isOper(userhost, ip) && !config.isExcluded(userhost, ip) &&
-        !config.isExcludedClass(userClass) && !config.spoofer(ip))
+    if (!config.isOper(userhost, ip) &&
+        !config.spoofer(ip) &&
+        !config.isExempt(userhost, ip, Config::EXEMPT_SPOOF) &&
+        !config.isExemptClass(userClass, Config::EXEMPT_SPOOF))
     {
       if (isNumericIPv4(host))
       {

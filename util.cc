@@ -67,14 +67,14 @@ StrSplit(StrVector & temp, std::string input, const std::string & tokens,
 
   temp.clear();
 
-  while (input != "")
+  while (!input.empty())
   {
     std::string::size_type pos = input.find_first_of(tokens);
 
     if (std::string::npos == pos)
     {
       temp.push_back(input);
-      input = "";
+      input.erase();
       count++;
     }
     else
@@ -82,14 +82,15 @@ StrSplit(StrVector & temp, std::string input, const std::string & tokens,
       std::string unit = input.substr(0, pos);
       std::string rest = input.substr(pos + 1);
 
-      if (!ignoreEmpties || (unit != ""))
+      if (!ignoreEmpties || (!unit.empty()))
       {
         temp.push_back(unit);
-        count++;
+        ++count;
       }
       input = rest;
     }
   }
+
   return count;
 }
 

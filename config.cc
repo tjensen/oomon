@@ -97,6 +97,15 @@ struct Config::Remote
 };
 
 
+struct Config::Exempt
+{
+  Exempt(const PatternPtr pattern_, const Config::ExemptFlags flags_)
+    : pattern(pattern_), flags(flags_) { }
+  const PatternPtr pattern;
+  const Config::ExemptFlags flags;
+};
+
+
 struct Config::Parser
 {
   Parser(const StrVector::size_type args_,
@@ -341,16 +350,44 @@ Config::parseDLine(const StrVector & fields)
 void
 Config::parseELine(const StrVector & fields)
 {
-  PatternPtr pattern(smartPattern(fields[0], false));
-  this->exceptions_.push_back(pattern);
+  PatternPtr pattern;
+  ExemptFlags flags;
+
+  if (fields.size() == 1)
+  {
+    flags.set();
+    pattern = smartPattern(fields[0], false);
+  }
+  else
+  {
+    flags = Config::exemptFlags(fields[0]);
+    pattern = smartPattern(fields[1], false);
+  }
+
+  boost::shared_ptr<Config::Exempt> exempt(new Config::Exempt(pattern, flags));
+  this->exempts_.push_back(exempt);
 }
 
 
 void
 Config::parseEcLine(const StrVector & fields)
 {
-  PatternPtr pattern(smartPattern(fields[0], false));
-  this->classExceptions_.push_back(pattern);
+  PatternPtr pattern;
+  ExemptFlags flags;
+
+  if (fields.size() == 1)
+  {
+    flags.set();
+    pattern = smartPattern(fields[0], false);
+  }
+  else
+  {
+    flags = Config::exemptFlags(fields[0]);
+    pattern = smartPattern(fields[1], false);
+  }
+
+  boost::shared_ptr<Config::Exempt> exempt(new Config::Exempt(pattern, flags));
+  this->classExempts_.push_back(exempt);
 }
 
 
@@ -615,14 +652,17 @@ Config::username(void) const
 
 
 bool
-Config::isExcluded(const std::string & userhost) const
+Config::isExempt(const std::string & userhost, const Config::ExemptFlag flag)
+  const
 {
   try
   {
-    for (Config::PatternList::const_iterator pos = this->exceptions_.begin();
-      pos != this->exceptions_.end(); ++pos)
+    for (Config::ExemptList::const_iterator pos = this->exempts_.begin();
+        pos != this->exempts_.end(); ++pos)
     {
-      if ((*pos)->match(userhost))
+      Config::ExemptList::value_type exempt(*pos);
+
+      if (exempt->flags.test(flag) && exempt->pattern->match(userhost))
       {
         return true;
       }
@@ -630,8 +670,8 @@ Config::isExcluded(const std::string & userhost) const
   }
   catch (OOMon::regex_error & e)
   {
-    Log::Write("RegEx error in Config::isExcluded(): " + e.what());
-    std::cerr << "RegEx error in Config::isExcluded(): " << e.what() <<
+    Log::Write("RegEx error in Config::isExempt(): " + e.what());
+    std::cerr << "RegEx error in Config::isExempt(): " << e.what() <<
                                                             std::endl;
   }
   return false;
@@ -639,48 +679,51 @@ Config::isExcluded(const std::string & userhost) const
 
 
 bool
-Config::isExcluded(const std::string & userhost, const std::string & ip) const
+Config::isExempt(const std::string & userhost, const std::string & ip,
+    const Config::ExemptFlag flag) const
 {
-  if (ip == "")
+  if (ip.empty())
   {
-    return Config::isExcluded(userhost);
+    return this->isExempt(userhost, flag);
   }
   else
   {
     std::string user = userhost.substr(0, userhost.find('@'));
     std::string userip = user + "@" + ip;
 
-    return this->isExcluded(userhost) || this->isExcluded(userip);
+    return this->isExempt(userhost, flag) || this->isExempt(userip, flag);
   }
 }
 
 
 bool
-Config::isExcluded(const std::string & userhost, const BotSock::Address & ip)
+Config::isExempt(const std::string & userhost, const BotSock::Address & ip,
+    const Config::ExemptFlag flag) const
+{
+  return this->isExempt(userhost, BotSock::inet_ntoa(ip), flag);
+}
+
+
+bool
+Config::isExempt(const UserEntryPtr & user, const Config::ExemptFlag flag) const
+{
+  return (this->isExempt(user->getUserHost(), user->getIP(), flag) ||
+      this->isExemptClass(user->getClass(), flag));
+}
+
+
+bool
+Config::isExemptClass(const std::string & name, const Config::ExemptFlag flag)
   const
-{
-  return this->isExcluded(userhost, BotSock::inet_ntoa(ip));
-}
-
-
-bool
-Config::isExcluded(const UserEntryPtr & user) const
-{
-  return (this->isExcluded(user->getUserHost(), user->getIP()) ||
-    this->isExcludedClass(user->getClass()));
-}
-
-
-bool
-Config::isExcludedClass(const std::string & name) const
 {
   try
   {
-    for (Config::PatternList::const_iterator pos =
-        this->classExceptions_.begin(); pos != this->classExceptions_.end();
-        ++pos)
+    for (Config::ExemptList::const_iterator pos = this->classExempts_.begin();
+        pos != this->classExempts_.end(); ++pos)
     {
-      if ((*pos)->match(name))
+      Config::ExemptList::value_type exempt(*pos);
+
+      if (exempt->flags.test(flag) && exempt->pattern->match(name))
       {
         return true;
       }
@@ -688,8 +731,8 @@ Config::isExcludedClass(const std::string & name) const
   }
   catch (OOMon::regex_error & e)
   {
-    Log::Write("RegEx error in Config::isExcludedClass(): " + e.what());
-    std::cerr << "RegEx error in Config::isExcludedClass(): " << e.what() <<
+    Log::Write("RegEx error in Config::isExemptClass(): " + e.what());
+    std::cerr << "RegEx error in Config::isExemptClass(): " << e.what() <<
                                                                  std::endl;
   }
   return false;
@@ -869,73 +912,6 @@ Config::remoteFlags(const std::string & client) const
 }
 
 
-UserFlags
-Config::userFlags(const std::string & text, const bool remote)
-{
-  UserFlags result(UserFlags::NONE());
-
-  for (std::string::const_iterator pos = text.begin(); pos != text.end(); ++pos)
-  {
-    switch (UpCase(*pos))
-    {
-      case '\t':
-      case ' ':
-        // Ignore whitespace
-        break;
-
-      case 'C':
-        result |= UserFlags::CHANOP;
-        break;
-
-      case 'D':
-        result |= UserFlags::DLINE;
-        break;
-
-      case 'G':
-        result |= UserFlags::GLINE;
-        break;
-
-      case 'K':
-        result |= UserFlags::KLINE;
-        break;
-
-      case 'M':
-        result |= UserFlags::MASTER;
-        break;
-
-      case 'N':
-        result |= UserFlags::NICK;
-        break;
-
-      case 'O':
-        result |= UserFlags::OPER;
-        break;
-
-      case 'W':
-        result |= UserFlags::WALLOPS;
-        break;
-
-      case 'X':
-        result |= UserFlags::CONN;
-        break;
-
-      case 'R':
-        if (!remote)
-        {
-          result |= UserFlags::REMOTE;
-          break;
-        }
-
-      default:
-        throw Config::syntax_error("bad user flag '" + std::string(1, *pos) +
-            "'");
-    }
-  }
-
-  return result;
-}
-
-
 std::string
 Config::proxyVhost(void) const
 {
@@ -1107,5 +1083,135 @@ Config::haveChannel(const std::string & channel) const
 
   return (channels.end() != std::find(channels.begin(), channels.end(),
     server.downCase(channel)));
+}
+
+
+UserFlags
+Config::userFlags(const std::string & text, const bool remote)
+{
+  UserFlags result(UserFlags::NONE());
+
+  for (std::string::const_iterator pos = text.begin(); pos != text.end(); ++pos)
+  {
+    switch (UpCase(*pos))
+    {
+      case '\t':
+      case ' ':
+        // Ignore whitespace
+        break;
+
+      case 'C':
+        result |= UserFlags::CHANOP;
+        break;
+
+      case 'D':
+        result |= UserFlags::DLINE;
+        break;
+
+      case 'G':
+        result |= UserFlags::GLINE;
+        break;
+
+      case 'K':
+        result |= UserFlags::KLINE;
+        break;
+
+      case 'M':
+        result |= UserFlags::MASTER;
+        break;
+
+      case 'N':
+        result |= UserFlags::NICK;
+        break;
+
+      case 'O':
+        result |= UserFlags::OPER;
+        break;
+
+      case 'W':
+        result |= UserFlags::WALLOPS;
+        break;
+
+      case 'X':
+        result |= UserFlags::CONN;
+        break;
+
+      case 'R':
+        if (!remote)
+        {
+          result |= UserFlags::REMOTE;
+          break;
+        }
+
+      default:
+        throw Config::syntax_error("bad user flag '" + std::string(1, *pos) +
+            "'");
+    }
+  }
+
+  return result;
+}
+
+
+Config::ExemptFlags
+Config::exemptFlags(const std::string & text)
+{
+  if (text.empty())
+  {
+    throw Config::syntax_error("no exempt flags");
+  }
+
+  ExemptFlags result;
+
+  StrVector flags;
+  StrSplit(flags, text, " ,", true);
+
+  for (StrVector::iterator pos = flags.begin(); pos != flags.end(); ++pos)
+  {
+    std::string flag(UpCase(*pos));
+
+    if (0 == flag.compare("ALL"))
+    {
+      result.set();
+    }
+    else if (0 == flag.compare("CLONE"))
+    {
+      result.set(Config::EXEMPT_CLONE);
+    }
+    else if (0 == flag.compare("FLOOD"))
+    {
+      result.set(Config::EXEMPT_FLOOD);
+    }
+    else if (0 == flag.compare("SPOOF"))
+    {
+      result.set(Config::EXEMPT_SPOOF);
+    }
+    else if (0 == flag.compare("TRAP"))
+    {
+      result.set(Config::EXEMPT_TRAP);
+    }
+    else if (0 == flag.compare("PROXY"))
+    {
+      result.set(Config::EXEMPT_PROXY);
+    }
+    else if (0 == flag.compare("JUPE"))
+    {
+      result.set(Config::EXEMPT_JUPE);
+    }
+    else if (0 == flag.compare("SEEDRAND"))
+    {
+      result.set(Config::EXEMPT_SEEDRAND);
+    }
+    else if (0 == flag.compare("VERSION"))
+    {
+      result.set(Config::EXEMPT_VERSION);
+    }
+    else
+    {
+      throw Config::syntax_error("bad exempt flag '" + *pos + "'");
+    }
+  }
+
+  return result;
 }
 

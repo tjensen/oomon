@@ -167,11 +167,11 @@ public:
   // Derived classes should implement triggered to determine if the
   // parameters, count and interval, indicate an action should be
   // taken.  They may also want to call this function to determine
-  // if the user should be excluded from actions.
+  // if the user should be exempt from actions.
   bool triggered(const int & count, const std::time_t & interval) const
   {
     // Return true if the user is not an Oper and is not E: lined.
-    return (!config.isExcluded(this->userhost) &&
+    return (!config.isExempt(this->userhost, Config::EXEMPT_FLOOD) &&
         !config.isOper(this->userhost));
   }
 

@@ -41,22 +41,42 @@ I:remotes.cf
 #D:0:
 
 # ====================================================================
-# Exception - This defines userhost and class patterns that may be
-#             excluded from being killed, klined, etc.  Note that in
-#             some instances a user's class name can't be checked!
+# Exempt - This defines userhost and class patterns that may be
+#          excluded from being killed, klined, etc.  Note that in
+#          some instances a user's class name can't be checked!
+#
+#          It is possible to exempt users from certain types of abuse
+#          using the optional <flags> field (see Syntax).  If the
+#          <flags> field is omitted, matching users will be exempt
+#          from ALL types of abuse.
 #
 # Syntax
 #  E:<userhost pattern>
+#  E:<flags>:<userhost pattern>
 #  EC:<class pattern>
+#  EC:<flags>:<class pattern>
 #
+# flags            - One or more of the following, separated by spaces
+#                    and/or commas:
+#                      CLONE    - Don't kill/kline/etc. for clones.
+#                      FLOOD    - Don't kill/kline/etc. for flooding.
+#                      SPOOF    - Don't kill/kline/etc. for spoofs.
+#                      JUPE     - Don't kill/kline/etc. for joining
+#                                 juped channels.
+#                      SEEDRAND - Don't kill/kline/etc. for having a
+#                                 a randomly generated nickname.
+#                      TRAP     - Don't match against traps.
+#                      PROXY    - Don't scan for open proxies.
+#                      VERSION  - Don't check its CTCP VERSION reply.
+#                      ALL      - All of the above.
 # userhost pattern - A regex or cluster-style pattern to match against
 #                    users' user@host fields.
 # class pattern    - A regex or cluster-style pattern to match against
 #                    users' class name fields.
 # ====================================================================
-E:*@*toast.pc
+E:ALL:*@*toast.pc
 E:oomon@*
-EC:opers
+EC:SEEDRAND,TRAP:dronehunters
 EC:friends
 
 # Spoofers (don't kline spoofers with IPs matching the following)

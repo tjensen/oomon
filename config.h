@@ -25,6 +25,7 @@
 #include <string>
 #include <list>
 #include <map>
+#include <bitset>
 
 // Boost C++ Headers
 #include <boost/shared_ptr.hpp>
@@ -75,12 +76,24 @@ class Config
     std::string userDBFilename(void) const { return this->userDBFilename_; }
     std::string settingsFilename(void) const { return this->settingsFilename_; }
 
-    bool isExcluded(const std::string & userhost) const;
-    bool isExcluded(const std::string & userhost, const std::string & ip) const;
-    bool isExcluded(const std::string & userhost, const BotSock::Address & ip)
+    enum ExemptFlag
+    {
+      EXEMPT_CLONE, EXEMPT_FLOOD, EXEMPT_SPOOF, EXEMPT_TRAP, EXEMPT_PROXY,
+      EXEMPT_JUPE, EXEMPT_SEEDRAND, EXEMPT_VERSION,
+
+      MAX_EXEMPT
+    };
+
+    bool isExempt(const std::string & userhost, const Config::ExemptFlag flag)
       const;
-    bool isExcluded(const UserEntryPtr & user) const;
-    bool isExcludedClass(const std::string & name) const;
+    bool isExempt(const std::string & userhost, const std::string & ip,
+        const Config::ExemptFlag flag) const;
+    bool isExempt(const std::string & userhost, const BotSock::Address & ip,
+        const Config::ExemptFlag flag) const;
+    bool isExempt(const UserEntryPtr & user, const Config::ExemptFlag flag)
+      const;
+    bool isExemptClass(const std::string & name, const Config::ExemptFlag flag)
+      const;
     bool isOper(const std::string & userhost) const;
     bool isOper(const std::string & userhost, const std::string & ip) const;
     bool isOper(const std::string & userhost, const BotSock::Address & ip)
@@ -105,8 +118,11 @@ class Config
     };
 
   private:
+    typedef std::bitset<Config::MAX_EXEMPT> ExemptFlags;
+
     static UserFlags userFlags(const std::string & text,
         const bool remote = false);
+    static Config::ExemptFlags exemptFlags(const std::string & text);
 
     typedef boost::function<void(const StrVector &)>
       ParserFunction;
@@ -138,9 +154,10 @@ class Config
     void parseYLine(const StrVector & fields);
 
     struct Oper;
-    struct Remote;
     struct Link;
     struct Connect;
+    struct Remote;
+    struct Exempt;
     struct Parser;
 
     typedef std::multimap<std::string, boost::shared_ptr<Config::Oper> >
@@ -150,7 +167,8 @@ class Config
     typedef std::map<std::string, boost::shared_ptr<Config::Connect> >
       ConnectMap;
     typedef std::map<std::string, std::string> YLineMap;
-    typedef std::list<boost::shared_ptr<Config::Remote> >RemoteList;
+    typedef std::list<boost::shared_ptr<Config::Remote> > RemoteList;
+    typedef std::list<boost::shared_ptr<Config::Exempt> > ExemptList;
     typedef std::list<PatternPtr> PatternList;
     typedef std::map<std::string, boost::shared_ptr<Config::Parser> > ParserMap;
 
@@ -163,8 +181,8 @@ class Config
     Config::ConnectMap connects_;
     Config::LinkMap links_;
     Config::YLineMap ylines_;
-    Config::PatternList exceptions_;
-    Config::PatternList classExceptions_;
+    Config::ExemptList exempts_;
+    Config::ExemptList classExempts_;
     Config::PatternList spoofers_;
     std::string nick_;
     std::string username_;

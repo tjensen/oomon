@@ -154,71 +154,74 @@ UserHash::add(const std::string & nick, const std::string & userhost,
       ++this->userCount;
 
       // Don't check for wingate or clones when doing a TRACE
-      if (!fromTrace)
+      if (!fromTrace && !config.isOper(newuser))
       {
-        if (!config.isExcluded(newuser) && !config.isOper(newuser))
+        // Check if this client matches any traps
+        if (vars[VAR_TRAP_CONNECTS]->getBool())
         {
-          // Check if this client matches any traps
-          if (vars[VAR_TRAP_CONNECTS]->getBool())
+          TrapList::match(newuser);
+        }
+
+        if ((newuser->getScore() >=
+              vars[VAR_SEEDRAND_REPORT_MIN]->getInt()) &&
+            !config.isExempt(newuser, Config::EXEMPT_SEEDRAND))
+        {
+          std::string scoreStr(
+            boost::lexical_cast<std::string>(newuser->getScore()));
+
+          std::string notice("Random (score: ");
+          notice += scoreStr;
+          notice += ") nick connect: ";
+          notice += nick;
+          notice += " (";
+          notice += userhost;
+          notice += ")";
+          if ("" != ip)
           {
-            TrapList::match(newuser);
+            notice += " [";
+            notice += ip;
+            notice += "]";
           }
 
-          if (newuser->getScore() >= vars[VAR_SEEDRAND_REPORT_MIN]->getInt())
-          {
-	    std::string scoreStr(
-	      boost::lexical_cast<std::string>(newuser->getScore()));
+          ::SendAll(notice, UserFlags::OPER, WATCH_SEEDRAND);
+          Log::Write(notice);
 
-	    std::string notice("Random (score: ");
-	    notice += scoreStr;
-	    notice += ") nick connect: ";
-	    notice += nick;
-	    notice += " (";
-	    notice += userhost;
-	    notice += ")";
-	    if ("" != ip)
-	    {
-	      notice += " [";
-	      notice += ip;
-	      notice += "]";
-	    }
+          Format reason;
+          reason.setStringToken('n', nick);
+          reason.setStringToken('u', userhost);
+          reason.setStringToken('i', ip);
+          reason.setStringToken('s', scoreStr);
 
-	    ::SendAll(notice, UserFlags::OPER, WATCH_SEEDRAND);
-	    Log::Write(notice);
+          doAction(nick, userhost, BotSock::inet_addr(ip),
+            vars[VAR_SEEDRAND_ACTION]->getAction(),
+            vars[VAR_SEEDRAND_ACTION]->getInt(),
+            reason.format(vars[VAR_SEEDRAND_REASON]->getString()), false);
+        }
 
-	    Format reason;
-	    reason.setStringToken('n', nick);
-	    reason.setStringToken('u', userhost);
-	    reason.setStringToken('i', ip);
-	    reason.setStringToken('s', scoreStr);
+        if (!ip.empty() && !config.isExempt(newuser, Config::EXEMPT_PROXY))
+        {
+          CheckProxy(ip, host, nick, userhost);
+        }
 
-	    doAction(nick, userhost, BotSock::inet_addr(ip),
-	      vars[VAR_SEEDRAND_ACTION]->getAction(),
-	      vars[VAR_SEEDRAND_ACTION]->getInt(),
-	      reason.format(vars[VAR_SEEDRAND_REASON]->getString()), false);
-          }
+        if (vars[VAR_CTCPVERSION_ENABLE]->getBool() &&
+            !config.isExempt(newuser, Config::EXEMPT_VERSION))
+        {
+          newuser->version();
+        }
 
-          if (ip != "")
-          {
-            CheckProxy(ip, host, nick, userhost);
-          }
-
-	  if (vars[VAR_CTCPVERSION_ENABLE]->getBool())
-	  {
-	    newuser->version();
-	  }
-
-	  BotSock::Address ipAddr = BotSock::inet_addr(ip);
+        if (!config.isExempt(newuser, Config::EXEMPT_CLONE))
+        {
+          BotSock::Address ipAddr = BotSock::inet_addr(ip);
 
           // Clonebot check
-	  if (INADDR_NONE == ipAddr)
-	  {
+          if (INADDR_NONE == ipAddr)
+          {
             this->checkHostClones(host);
-	  }
-	  else
-	  {
+          }
+          else
+          {
             this->checkIpClones(ipAddr);
-	  }
+          }
         }
       }
     }
@@ -258,7 +261,8 @@ UserHash::onVersionReply(const std::string & nick, const std::string & userhost,
   if (find)
   {
     find->hasVersion(version);
-    if (vars[VAR_TRAP_CTCP_VERSIONS]->getBool())
+    if (vars[VAR_TRAP_CTCP_VERSIONS]->getBool() &&
+        !config.isExempt(find, Config::EXEMPT_VERSION))
     {
       TrapList::matchCtcpVersion(find, version);
     }
@@ -358,7 +362,8 @@ UserHash::updateNick(const std::string & oldNick, const std::string & userhost,
     }
 
     if ((find->getScore() >= vars[VAR_SEEDRAND_REPORT_MIN]->getInt()) &&
-        !find->getOper() && !config.isOper(find) && !config.isExcluded(find))
+        !find->getOper() && !config.isOper(find) &&
+        !config.isExempt(find, Config::EXEMPT_SEEDRAND))
     {
       std::string scoreStr(
 	boost::lexical_cast<std::string>(find->getScore()));

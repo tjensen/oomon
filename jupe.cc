@@ -63,24 +63,24 @@ JupeJoinList::checkJupe(const std::string & nick,
     ::SendAll(msg, UserFlags::OPER, WATCH_JUPES);
     Log::Write(msg);
 
-    bool excluded(false);
+    bool exempt(false);
     BotSock::Address ip(INADDR_NONE);
     UserEntryPtr find(users.findUser(nick, entry.userhost));
     if (find)
     {
       ip = find->getIP();
-      excluded = find->getOper() || config.isExcluded(find) ||
+      exempt = find->getOper() || config.isExempt(find, Config::EXEMPT_JUPE) ||
         config.isOper(find);
     }
     else
     {
       // If we can't find the user in our userlist, we won't be able to find
       // its IP address either
-      excluded = config.isExcluded(entry.userhost) ||
+      exempt = config.isExempt(entry.userhost, Config::EXEMPT_JUPE) ||
         config.isOper(entry.userhost);
     }
 
-    if (!excluded)
+    if (!exempt)
     {
       Format reason;
       reason.setStringToken('n', nick);
