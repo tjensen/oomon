@@ -642,24 +642,34 @@ isNumericIPv4(const std::string & host)
 // isNumericIPv6(host)
 //
 // Description:
-//  Determines if a hostname is a numeric IPv6 address.  The checking
-//  is fairly ignorant about correctness of an IP address.  It merely
-//  checks if the string contains hexadecimal digits and colons.  This
-//  probably ought to be changed so that only valid IPv6 addresses are
-//  identified.
+//  Determines if a hostname is a numeric IPv6 address.
 //
 // Parameters:
-//  host - A string containing a hostname or IP address.
+//  host - A string possible containing an IPv6 address.
 //
 // Return Value:
-//  The function returns true if host contains an IPv4 address or
-//  false if it contains a hostname.
+//  The function returns true if host contains an IPv6 address or
+//  false otherwise.
 //////////////////////////////////////////////////////////////////////
 bool
 isNumericIPv6(const std::string & host)
 {
-  return (std::string::npos ==
-    host.find_first_not_of(":0123456789ABCDEFabcdef"));
+  bool result = false;
+#ifdef HAVE_GETADDRINFO
+  struct addrinfo * info = 0;
+  struct addrinfo hints;
+
+  memset(&hints, 0, sizeof(hints));
+  hints.flags = AI_NUMERICHOST;
+
+  if (0 == getaddrinfo(host, 0, &hints, &info))
+  {
+    freeaddrinfo(info);
+
+    result = true;
+  }
+#endif
+  return result;
 }
 
 
