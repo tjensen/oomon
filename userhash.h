@@ -40,8 +40,8 @@ class UserHash
 public:
   enum ListAction { LIST_VIEW, LIST_COUNT, LIST_KILL };
 
-  UserHash() { this->userCount = this->previousCount = 0; };
-  virtual ~UserHash() { this->clear(); };
+  UserHash(void);
+  virtual ~UserHash(void);
 
   void clear();
 
@@ -135,9 +135,9 @@ private:
   static int hashFunc(const std::string & key);
 
   static void addToHash(UserEntryTable & table, const BotSock::Address & key,
-    UserEntryPtr item);
+    const UserEntryPtr & item);
   static void addToHash(UserEntryTable & table, const std::string & key,
-    UserEntryPtr item);
+    const UserEntryPtr & item);
 
   static bool removeFromHashEntry(UserEntryList & list,
     const std::string & host, const std::string & user,

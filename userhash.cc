@@ -64,6 +64,21 @@ unsigned long userEntryCount = 0;
 #endif
 
 
+UserHash::UserHash(void)
+{
+  this->hosttable.resize(HASHTABLESIZE);
+  this->domaintable.resize(HASHTABLESIZE);
+  this->usertable.resize(HASHTABLESIZE);
+  this->iptable.resize(HASHTABLESIZE);
+  this->userCount = this->previousCount = 0;
+}
+
+
+UserHash::~UserHash(void)
+{
+  this->clear();
+}
+
 int
 UserHash::hashFunc(const std::string & key)
 {
@@ -127,8 +142,8 @@ UserHash::add(const std::string & nick, const std::string & userhost,
       }
 
       UserEntryPtr newuser(new UserEntry(nick, user, host, fakeHost, userClass,
-	gecos, (ip.length() > 0) ? BotSock::inet_addr(ip) : INADDR_NONE, 
-	(fromTrace ? 0 : std::time(NULL)), isOper));
+        gecos, ip.empty() ? INADDR_NONE : BotSock::inet_addr(ip),
+        (fromTrace ? 0 : std::time(NULL)), isOper));
 
       // Add it to the hash tables
       UserHash::addToHash(this->hosttable, newuser->getHost(), newuser);
@@ -226,7 +241,7 @@ UserHash::updateOper(const std::string & nick, const std::string & userhost,
 {
   UserEntryPtr find(this->findUser(nick, userhost));
 
-  if (NULL != find)
+  if (find)
   {
     find->setOper(true);
   }
@@ -239,7 +254,7 @@ UserHash::onVersionReply(const std::string & nick, const std::string & userhost,
 {
   UserEntryPtr find(this->findUser(nick, userhost));
 
-  if (0 != find)
+  if (find)
   {
     find->hasVersion(version);
     if (vars[VAR_TRAP_CTCP_VERSIONS]->getBool())
@@ -258,7 +273,7 @@ UserHash::onPrivmsg(const std::string & nick, const std::string & userhost,
   {
     UserEntryPtr find(this->findUser(nick, userhost));
 
-    if (0 != find)
+    if (find)
     {
 	TrapList::matchPrivmsg(find, privmsg);
     }
@@ -274,7 +289,7 @@ UserHash::onNotice(const std::string & nick, const std::string & userhost,
   {
     UserEntryPtr find(this->findUser(nick, userhost));
 
-    if (0 != find)
+    if (find)
     {
 	TrapList::matchNotice(find, notice);
     }
@@ -291,6 +306,7 @@ UserHash::checkVersionTimeout(void)
   {
     std::time_t now = std::time(0);
 
+    int n = 0;
     for (UserEntryTable::iterator i = usertable.begin(); i != usertable.end();
       ++i)
     {
@@ -298,6 +314,7 @@ UserHash::checkVersionTimeout(void)
       {
         (*hp)->checkVersionTimeout(now, timeout);
       }
+      ++n;
     }
   }
 }
@@ -309,7 +326,7 @@ UserHash::updateNick(const std::string & oldNick, const std::string & userhost,
 {
   UserEntryPtr find(this->findUser(oldNick, userhost));
 
-  if (NULL != find)
+  if (find)
   {
     find->setNick(newNick);
 
@@ -440,7 +457,7 @@ UserHash::remove(const std::string & nick, const std::string & userhost,
 
 void
 UserHash::addToHash(UserEntryTable & table, const std::string & key,
-  UserEntryPtr item)
+  const UserEntryPtr & item)
 {
   int index = UserHash::hashFunc(key);
 
@@ -450,7 +467,7 @@ UserHash::addToHash(UserEntryTable & table, const std::string & key,
 
 void
 UserHash::addToHash(UserEntryTable & table, const BotSock::Address & key,
-  UserEntryPtr item)
+  const UserEntryPtr & item)
 {
   int index = UserHash::hashFunc(key);
 
@@ -529,6 +546,7 @@ void
 UserHash::clearHash(UserEntryTable & table)
 {
   table.clear();
+  table.resize(HASHTABLESIZE);
 }
 
 
@@ -718,7 +736,7 @@ UserHash::listGecos(BotClient * client, const PatternPtr gecos,
 bool
 UserHash::have(std::string nick) const
 {
-  return (NULL != this->findUser(nick));
+  return (this->findUser(nick));
 }
 
 
@@ -758,13 +776,15 @@ UserHash::findUser(const std::string & nick, const std::string & userhost) const
 
     const int hashIndex = UserHash::hashFunc(lcUser);
 
-    for (UserEntryList::const_iterator f = this->usertable[hashIndex].begin();
-        f != this->usertable[hashIndex].end(); ++f)
+    const UserEntryList & fnerd = this->usertable[hashIndex];
+
+    UserEntryList::const_iterator find =
+      std::find_if(fnerd.begin(), fnerd.end(),
+          boost::bind(&UserEntry::matches, _1, lcNick, lcUser, lcHost));
+
+    if (find != fnerd.end())
     {
-      if ((*f)->matches(lcNick, lcUser, lcHost))
-      {
-	result = *f;
-      }
+      result = *find;
     }
   }
 
@@ -1794,11 +1814,7 @@ UserHash::status(BotClient * client)
   for (UserEntryTable::iterator index = this->hosttable.begin();
     index != this->hosttable.end(); ++index)
   {
-    for (UserEntryList::iterator pos = index->begin(); pos != index->end();
-      ++pos)
-    {
-      ++hostHashCount;
-    }
+    hostHashCount += index->size();
   }
   if (hostHashCount != this->userCount)
   {
@@ -1810,11 +1826,7 @@ UserHash::status(BotClient * client)
   for (UserEntryTable::iterator index = this->domaintable.begin();
     index != this->domaintable.end(); ++index)
   {
-    for (UserEntryList::iterator pos = index->begin(); pos != index->end();
-      ++pos)
-    {
-      ++domainHashCount;
-    }
+    domainHashCount += index->size();
   }
   if (domainHashCount != this->userCount)
   {
@@ -1826,11 +1838,7 @@ UserHash::status(BotClient * client)
   for (UserEntryTable::iterator index = this->iptable.begin();
     index != this->iptable.end(); ++index)
   {
-    for (UserEntryList::iterator pos = index->begin(); pos != index->end();
-      ++pos)
-    {
-      ++ipHashCount;
-    }
+    ipHashCount += index->size();
   }
   if (ipHashCount != this->userCount)
   {
@@ -1850,7 +1858,7 @@ UserHash::getIP(std::string nick, const std::string & userhost) const
   UserEntryPtr entry(this->findUser(nick, userhost));
   BotSock::Address result = INADDR_NONE;
 
-  if (NULL != entry)
+  if (entry)
   {
     result = entry->getIP();
   }
@@ -1865,7 +1873,7 @@ UserHash::isOper(std::string nick, const std::string & userhost) const
   UserEntryPtr find(this->findUser(nick, userhost));
   bool result = false;
 
-  if (NULL != find)
+  if (find)
   {
     // Found the user -- is it an oper?
     result = find->getOper();
