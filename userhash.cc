@@ -768,55 +768,6 @@ UserHash::listNicks(BotClient * client, const PatternPtr nick,
 }
 
 
-int
-UserHash::listGecos(BotClient * client, const PatternPtr gecos,
-  std::string className, const bool count) const
-{
-  int numfound = 0;
-
-  // Convert class name to uppercase now
-  className = server.downCase(className);
-
-  for (UserEntryTable::const_iterator index = this->domaintable.begin();
-    index != this->domaintable.end(); ++index)
-  {
-    for (UserEntryList::const_iterator userptr = index->begin();
-      userptr != index->end(); ++userptr)
-    {
-      if (gecos->match((*userptr)->getGecos()) && (className.empty() ||
-	(0 == className.compare((*userptr)->getClass()))))
-      {
-        if (!numfound++)
-        {
-	  if (!count)
-	  {
-            client->send("The following clients match " + gecos->get() + ":");
-	  }
-        }
-	if (!count)
-	{
-          client->send((*userptr)->output(vars[VAR_GLIST_FORMAT]->getString()));
-	}
-      }
-    }
-  }
-
-  std::string outmsg;
-  if (numfound > 0)
-  {
-    outmsg = boost::lexical_cast<std::string>(numfound) + " matches for " +
-      gecos->get() + " found.";
-  }
-  else
-  {
-    outmsg = "No matches for " + gecos->get() + " found.";
-  }
-  client->send(outmsg);
-
-  return numfound;
-}
-
-
 bool
 UserHash::have(std::string nick) const
 {

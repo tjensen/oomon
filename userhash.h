@@ -90,8 +90,6 @@ public:
   int listNicks(class BotClient * client, const PatternPtr nick,
     std::string className, const ListAction action = LIST_VIEW,
     const std::string & from = "", const std::string & reason = "") const;
-  int listGecos(class BotClient * client, const PatternPtr gecos,
-    std::string className, const bool count = false) const;
 
   void reportClasses(class BotClient * client, const std::string & className)
     const;
