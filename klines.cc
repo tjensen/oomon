@@ -19,11 +19,14 @@
 
 // $Id$
 
-// C++ headers
+// Std C++ headers
 #include <iostream>
 #include <string>
 #include <list>
 #include <algorithm>
+
+// Boost C++ Headers
+#include <boost/lexical_cast.hpp>
 
 #include "strtype"
 #include "klines.h"
@@ -92,8 +95,8 @@ KlineList::find(BotClient * client, const Pattern *pattern, const bool count,
     }
   }
   client->send(std::string("End of FIND") + lineType + " " + pattern->get() +
-    " (" + IntToStr(Klines.size()) + " " + lineType + "-lines, " +
-    IntToStr(matches) + " matches)");
+    " (" + boost::lexical_cast<std::string>(Klines.size()) + " " + lineType +
+    "-lines, " + boost::lexical_cast<std::string>(matches) + " matches)");
 }
 
 

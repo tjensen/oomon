@@ -29,6 +29,7 @@
 
 // Boost C++ Headers
 #include <boost/bind.hpp>
+#include <boost/lexical_cast.hpp>
 
 // Std C headers
 #include <sys/types.h>
@@ -305,7 +306,7 @@ void
 ProxyList::status(BotClient * client) const
 {
   std::string scanners("Proxy scanners: ");
-  scanners += IntToStr(this->scanners.size());
+  scanners += boost::lexical_cast<std::string>(this->scanners.size());
   client->send(scanners);
 
   int cacheCount = 0;
@@ -318,9 +319,9 @@ ProxyList::status(BotClient * client) const
     }
   }
   std::string cache("Proxy cache: ");
-  cache += IntToStr(cacheCount);
+  cache += boost::lexical_cast<std::string>(cacheCount);
   cache += '/';
-  cache += IntToStr(this->safeHosts.size());
+  cache += boost::lexical_cast<std::string>(this->safeHosts.size());
   cache += " (";
   cache += ULongToStr(this->cacheHits);
   cache += " hits, ";

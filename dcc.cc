@@ -25,6 +25,7 @@
 
 // Boost C++ Headers
 #include <boost/bind.hpp>
+#include <boost/lexical_cast.hpp>
 
 // OOMon Headers
 #include "strtype"
@@ -409,7 +410,7 @@ DCC::who(BotClient * client) const
   if (this->isConnected())
   {
       text += ") ";
-      text += IntToStr(this->idleTime());
+      text += boost::lexical_cast<std::string>(this->idleTime());
   }
   else
   {
@@ -438,7 +439,7 @@ DCC::statsP(StrList & output) const
     if (vars[VAR_STATSP_SHOW_IDLE]->getBool())
     {
       notice += " Idle: ";
-      notice += IntToStr(this->idleTime());
+      notice += boost::lexical_cast<std::string>(this->idleTime());
     }
 
     output.push_back(notice);

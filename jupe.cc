@@ -23,6 +23,9 @@
 #include <string>
 #include <ctime>
 
+// Boost C++ Headers
+#include <boost/lexical_cast.hpp>
+
 // OOMon Headers
 #include "strtype"
 #include "jupe.h"
@@ -199,6 +202,7 @@ JupeJoinList::onNotice(const std::string & notice)
 void
 JupeJoinList::status(BotClient * client) const
 {
-  client->send("Juped channel joiners: " + IntToStr(this->list.size()));
+  client->send("Juped channel joiners: " +
+    boost::lexical_cast<std::string>(this->list.size()));
 }
 

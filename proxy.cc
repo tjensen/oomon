@@ -27,6 +27,9 @@
 #include <algorithm>
 #include <ctime>
 
+// Boost C++ Headers
+#include <boost/lexical_cast.hpp>
+
 // Std C headers
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -85,7 +88,8 @@ Proxy::detectedProxy(void)
 
   std::string notice = std::string("Open ") + this->typeName() +
     " proxy detected for " + this->nick() + "!" + this->userhost() +
-    " [" + this->address() + ":" + IntToStr(this->port()) + "]";
+    " [" + this->address() + ":" +
+    boost::lexical_cast<std::string>(this->port()) + "]";
   ::SendAll(notice, UserFlags::OPER);
   Log::Write(notice);
 

@@ -22,6 +22,9 @@
 // Std C++ Headers
 #include <string>
 
+// Boost C++ Headers
+#include <boost/lexical_cast.hpp>
+
 // Std C Headers
 #include <sys/types.h>
 
@@ -153,7 +156,7 @@ RegExPattern::match(const std::string & text) const
   else
   {
     throw OOMon::regex_error(std::string("pcre_exec returned ") +
-      IntToStr(result));
+      boost::lexical_cast<std::string>(result));
   }
 #elif defined(HAVE_POSIX_REGEX)
   int result = regexec(&this->regex, text.c_str(), 0, NULL, 0);

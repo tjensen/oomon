@@ -28,6 +28,9 @@
 #include <algorithm>
 #include <ctime>
 
+// Boost C++ Headers
+#include <boost/lexical_cast.hpp>
+
 // Std C Headers
 #include <stdio.h>
 
@@ -135,7 +138,8 @@ UserHash::add(const std::string & nick, const std::string & userhost,
 
           if (newuser->getScore() >= vars[VAR_SEEDRAND_REPORT_MIN]->getInt())
           {
-	    std::string scoreStr(IntToStr(newuser->getScore()));
+	    std::string scoreStr(
+	      boost::lexical_cast<std::string>(newuser->getScore()));
 
 	    std::string notice("Random (score: ");
 	    notice += scoreStr;
@@ -316,7 +320,8 @@ UserHash::updateNick(const std::string & oldNick, const std::string & userhost,
 	  !Config::IsOKHost(userhost, find->info->getIp()) &&
 	  !find->info->getOper())
         {
-	  std::string scoreStr(IntToStr(find->info->getScore()));
+	  std::string scoreStr(
+	    boost::lexical_cast<std::string>(find->info->getScore()));
 
 	  std::string notice("Random (score: ");
 	  notice += scoreStr;
@@ -666,8 +671,8 @@ UserHash::listUsers(BotClient * client, const PatternPtr userhost,
     std::string outmsg;
     if (numfound > 0)
     {
-      outmsg = IntToStr(numfound) + " matches for " + userhost->get() +
-	" found.";
+      outmsg = boost::lexical_cast<std::string>(numfound) + " matches for " +
+	userhost->get() + " found.";
     }
     else
     {
@@ -721,7 +726,8 @@ UserHash::listNicks(BotClient * client, const PatternPtr nick,
   std::string outmsg;
   if (numfound > 0)
   {
-    outmsg = IntToStr(numfound) + " matches for " + nick->get() + " found.";
+    outmsg = boost::lexical_cast<std::string>(numfound) + " matches for " +
+      nick->get() + " found.";
   }
   else
   {
@@ -770,7 +776,8 @@ UserHash::listGecos(BotClient * client, const PatternPtr gecos,
   std::string outmsg;
   if (numfound > 0)
   {
-    outmsg = IntToStr(numfound) + " matches for " + gecos->get() + " found.";
+    outmsg = boost::lexical_cast<std::string>(numfound) + " matches for " +
+      gecos->get() + " found.";
   }
   else
   {
@@ -846,7 +853,7 @@ UserHash::reportSeedrand(BotClient * client, const PatternPtr mask,
   if (!count)
   {
     client->send("Searching " + mask->get() + ".  Threshold is " +
-      IntToStr(threshold));
+      boost::lexical_cast<std::string>(threshold));
   }
 
   std::list<UserHash::ScoreNode> scores;
@@ -882,18 +889,21 @@ UserHash::reportSeedrand(BotClient * client, const PatternPtr mask,
 
   if (0 == scores.size())
   {
-    client->send("No matches (score >= " + IntToStr(threshold) + ") for " +
-      mask->get() + " found.");
+    client->send("No matches (score >= " +
+      boost::lexical_cast<std::string>(threshold) + ") for " + mask->get() +
+      " found.");
   }
   else if (1 == scores.size())
   {
-    client->send("1 match (score >= " + IntToStr(threshold) + ") for " +
-      mask->get() + " found.");
+    client->send("1 match (score >= " +
+      boost::lexical_cast<std::string>(threshold) + ") for " + mask->get() +
+      " found.");
   }
   else
   {
-    client->send(IntToStr(scores.size()) + " matches (score >= " +
-      IntToStr(threshold) + ") for " + mask->get() + " found.");
+    client->send(boost::lexical_cast<std::string>(scores.size()) +
+      " matches (score >= " + boost::lexical_cast<std::string>(threshold) +
+      ") for " + mask->get() + " found.");
   }
 }
 
@@ -1497,14 +1507,15 @@ UserHash::checkHostClones(const std::string & host)
     return;
   }
 
-  std::string rate(IntToStr(cloneCount + reportedClones));
+  std::string rate(boost::lexical_cast<std::string>(cloneCount +
+    reportedClones));
   rate += " connect";
   if (1 != (cloneCount + reportedClones))
   {
     rate += 's';
   }
   rate += " in ";
-  rate += IntToStr(now - oldest);
+  rate += boost::lexical_cast<std::string>(now - oldest);
   rate += " second";
   if (1 != (now - oldest))
   {
@@ -1514,9 +1525,9 @@ UserHash::checkHostClones(const std::string & host)
   std::string notice;
   if (reportedClones)
   {
-    notice = IntToStr(cloneCount);
+    notice = boost::lexical_cast<std::string>(cloneCount);
     notice += " more possible clones (";
-    notice += IntToStr(cloneCount + reportedClones);
+    notice += boost::lexical_cast<std::string>(cloneCount + reportedClones);
     notice += " total) from ";
     notice += host;
     notice += ':';
@@ -1675,14 +1686,15 @@ UserHash::checkIpClones(const BotSock::Address & ip)
     return;
   }
 
-  std::string rate(IntToStr(cloneCount + reportedClones));
+  std::string rate(boost::lexical_cast<std::string>(cloneCount +
+    reportedClones));
   rate += " connect";
   if (1 != (cloneCount + reportedClones))
   {
     rate += 's';
   }
   rate += " in ";
-  rate += IntToStr(now - oldest);
+  rate += boost::lexical_cast<std::string>(now - oldest);
   rate += " second";
   if (1 != (now - oldest))
   {
@@ -1692,9 +1704,9 @@ UserHash::checkIpClones(const BotSock::Address & ip)
   std::string notice;
   if (reportedClones)
   {
-    notice = IntToStr(cloneCount);
+    notice = boost::lexical_cast<std::string>(cloneCount);
     notice += " more possible clones (";
-    notice += IntToStr(cloneCount + reportedClones);
+    notice += boost::lexical_cast<std::string>(cloneCount + reportedClones);
     notice += " total) from ";
     notice += BotSock::inet_ntoa(ip);
     notice += ':';
@@ -1818,7 +1830,7 @@ UserHash::checkIpClones(const BotSock::Address & ip)
 void
 UserHash::status(BotClient * client)
 {
-  client->send("Users: " + IntToStr(this->userCount));
+  client->send("Users: " + boost::lexical_cast<std::string>(this->userCount));
 
   int userHashCount = 0;
   long scoreSum = 0;
@@ -1833,7 +1845,8 @@ UserHash::status(BotClient * client)
   }
   if (userHashCount != this->userCount)
   {
-    client->send("Users in usertable: " + IntToStr(userHashCount));
+    client->send("Users in usertable: " +
+      boost::lexical_cast<std::string>(userHashCount));
   }
 
   int hostHashCount = 0;
@@ -1847,7 +1860,8 @@ UserHash::status(BotClient * client)
   }
   if (hostHashCount != this->userCount)
   {
-    client->send("Users in hosttable: " + IntToStr(hostHashCount));
+    client->send("Users in hosttable: " +
+      boost::lexical_cast<std::string>(hostHashCount));
   }
 
   int domainHashCount = 0;
@@ -1861,7 +1875,8 @@ UserHash::status(BotClient * client)
   }
   if (domainHashCount != this->userCount)
   {
-    client->send("Users in domaintable: " + IntToStr(domainHashCount));
+    client->send("Users in domaintable: " +
+      boost::lexical_cast<std::string>(domainHashCount));
   }
 
   int ipHashCount = 0;
@@ -1875,11 +1890,13 @@ UserHash::status(BotClient * client)
   }
   if (ipHashCount != this->userCount)
   {
-    client->send("Users in iptable: " + IntToStr(ipHashCount));
+    client->send("Users in iptable: " +
+      boost::lexical_cast<std::string>(ipHashCount));
   }
 
   client->send("Average seedrand score: " +
-    ((this->userCount > 0) ? IntToStr(scoreSum / this->userCount) : "N/A"));
+    ((this->userCount > 0) ?
+    boost::lexical_cast<std::string>(scoreSum / this->userCount) : "N/A"));
 }
 
 

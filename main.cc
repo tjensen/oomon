@@ -28,6 +28,9 @@
 #include <ctime>
 #include <csignal>
 
+// Boost C++ Headers
+#include <boost/lexical_cast.hpp>
+
 // Std C Headers
 #include <sys/types.h>
 #include <sys/time.h>
@@ -218,8 +221,8 @@ process()
       catch (OOMon::timeout_error)
       {
         std::cerr << "Connection from IRC server timed out." << std::endl;
-        server.quit("Server inactive for " + IntToStr(server.getIdle()) +
-          " seconds");
+        server.quit("Server inactive for " +
+	  boost::lexical_cast<std::string>(server.getIdle()) + " seconds");
       }
 
       server.checkUserDelta();
@@ -393,7 +396,7 @@ main(int argc, char **argv)
     {
       if (forkresult == -1)
       {
-        std::cerr << "Unable to fork! Error " << IntToStr(errno) << std::endl;
+        std::cerr << "Unable to fork! Error " << errno << std::endl;
         return EXIT_FORK_ERROR;
       }
       return EXIT_NOERROR;

@@ -24,6 +24,9 @@
 #include <string>
 #include <ctime>
 
+// Boost C++ Headers
+#include <boost/lexical_cast.hpp>
+
 // OOMon Headers
 #include "userentry.h"
 #include "botsock.h"
@@ -84,7 +87,7 @@ UserEntry::checkVersionTimeout(const std::time_t now, const std::time_t timeout)
       notice += " (";
       notice += userhost;
       notice += ") in ";
-      notice += IntToStr(elapsed);
+      notice += boost::lexical_cast<std::string>(elapsed);
       notice += " seconds.";
 
       ::SendAll(notice, UserFlags::OPER, WATCH_CTCPVERSIONS);

@@ -28,6 +28,7 @@
 
 // Boost C++ Headers
 #include <boost/bind.hpp>
+#include <boost/lexical_cast.hpp>
 
 // Std C Headers
 #include <netdb.h>
@@ -166,7 +167,8 @@ void
 Dnsbl::status(BotClient * client) const
 {
 #ifdef HAVE_LIBADNS
-  client->send("DNSBL queries: " + IntToStr(this->_queries.size()));
+  client->send("DNSBL queries: " +
+    boost::lexical_cast<std::string>(this->_queries.size()));
 #endif /* HAVE_LIBADNS */
 }
 

@@ -18,7 +18,8 @@
 #include <string>
 #include <list>
 
-// Std C Headers
+// Boost C++ Headers
+#include <boost/lexical_cast.hpp>
 
 // OOMon Headers
 #include "strtype"
@@ -138,8 +139,9 @@ seedrandScore(const std::string & text)
     std::string::size_type offset = allChars.find(ch);
     if (std::string::npos == offset)
     {
-      std::cerr << "Invalid character '" << ch << "' (asc:" << IntToStr(ch) <<
-	") in '" << text << "'.  Skipping..." << std::endl;
+      std::cerr << "Invalid character '" << ch << "' (asc:" <<
+	static_cast<int>(ch) << ") in '" << text << "'.  Skipping..." <<
+	std::endl;
       return 0;
     }
 

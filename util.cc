@@ -26,6 +26,9 @@
 #include <functional>
 #include <ctime>
 
+// Boost C++ Headers
+#include <boost/lexical_cast.hpp>
+
 // C headers
 #include <stdio.h>
 #include <sys/time.h>
@@ -1031,7 +1034,8 @@ timeDiff(std::time_t diff)
   amount = diff % 60;
   if (amount != 0)
   {
-    result = IntToStr(amount) + "s";
+    result = boost::lexical_cast<std::string>(amount);
+    result += 's';
   }
   diff /= 60;
 
@@ -1039,7 +1043,7 @@ timeDiff(std::time_t diff)
   amount = diff % 60;
   if (amount != 0)
   {
-    result = IntToStr(amount) + "m" + result;
+    result = boost::lexical_cast<std::string>(amount) + "m" + result;
   }
   diff /= 60;
 
@@ -1047,7 +1051,7 @@ timeDiff(std::time_t diff)
   amount = diff % 24;
   if (amount != 0)
   {
-    result = IntToStr(amount) + "h" + result;
+    result = boost::lexical_cast<std::string>(amount) + "h" + result;
   }
   diff /= 24;
 
@@ -1055,14 +1059,14 @@ timeDiff(std::time_t diff)
   amount = diff % 7;
   if (amount != 0)
   {
-    result = IntToStr(amount) + "d" + result;
+    result = boost::lexical_cast<std::string>(amount) + "d" + result;
   }
   diff /= 7;
 
   // Weeks
   if (diff != 0)
   {
-    result = IntToStr(diff) + "w" + result;
+    result = boost::lexical_cast<std::string>(diff) + "w" + result;
   }
 
   return result;

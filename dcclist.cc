@@ -26,6 +26,9 @@
 #include <algorithm>
 #include <cerrno>
 
+// Boost C++ Headers
+#include <boost/lexical_cast.hpp>
+
 // OOMon Headers
 #include "strtype"
 #include "oomon.h"
@@ -323,7 +326,7 @@ DCCList::statsP(StrList & output)
     if (copy->statsP(output)) ++operCount;
   }
 
-  output.push_back(IntToStr(operCount) + " OOMon oper" +
+  output.push_back(boost::lexical_cast<std::string>(operCount) + " OOMon oper" +
     (operCount == 1 ? "" : "s"));
 }
 
@@ -414,8 +417,10 @@ DCCList::sendAll(const std::string & from, const std::string & skipId,
 void
 DCCList::status(BotClient * client) const
 {
-  client->send("DCC Connections: " + IntToStr(this->connections.size()));
-  client->send("DCC Listeners: " + IntToStr(this->listeners.size()));
+  client->send("DCC Connections: " +
+    boost::lexical_cast<std::string>(this->connections.size()));
+  client->send("DCC Listeners: " +
+    boost::lexical_cast<std::string>(this->listeners.size()));
 }
 
 

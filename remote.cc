@@ -25,6 +25,9 @@
 #include <iostream>
 #include <string>
 
+// Boost C++ Headers
+#include <boost/lexical_cast.hpp>
+
 // OOMon Headers
 #include "strtype"
 #include "remote.h"
@@ -155,7 +158,7 @@ Remote::onConnect(void)
 
     Log::Write("Connection initiated with host " +
       BotSock::inet_ntoa(this->_sock.getRemoteAddress()) + ":" +
-      IntToStr(ntohs(this->_sock.getRemotePort())));
+      boost::lexical_cast<std::string>(ntohs(this->_sock.getRemotePort())));
 
     if (this->isClient())
     {
@@ -167,7 +170,7 @@ Remote::onConnect(void)
   {
     Log::Write("Connection attempt from unauthorized host " +
       BotSock::inet_ntoa(this->_sock.getRemoteAddress()) + ":" +
-      IntToStr(ntohs(this->_sock.getRemotePort())));
+      boost::lexical_cast<std::string>(ntohs(this->_sock.getRemotePort())));
   }
 
   return result;
@@ -935,8 +938,8 @@ int
 Remote::sendVersion(void)
 {
   return this->write(Remote::PROTOCOL_NAME + " " +
-    IntToStr(Remote::PROTOCOL_VERSION_MAJOR) + " " +
-    IntToStr(Remote::PROTOCOL_VERSION_MINOR) + '\n');
+    boost::lexical_cast<std::string>(Remote::PROTOCOL_VERSION_MAJOR) + " " +
+    boost::lexical_cast<std::string>(Remote::PROTOCOL_VERSION_MINOR) + '\n');
 }
 
 

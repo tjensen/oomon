@@ -27,6 +27,7 @@
 
 // Boost C++ Headers
 #include <boost/bind.hpp>
+#include <boost/lexical_cast.hpp>
 
 // OOMon Headers
 #include "strtype"
@@ -649,7 +650,13 @@ IRC::onPrivmsg(const std::string & from, const std::string & userhost,
     }
     else
     {
-      std::string msg("*" + from + "* " + text + " <" + userhost + ">");
+      std::string msg("*");
+      msg += from;
+      msg += "* ";
+      msg += text;
+      msg += " <";
+      msg += userhost;
+      msg += '>';
 
       Log::Write(msg);
       ::SendAll("(IRC) " + msg, UserFlags::OPER, WATCH_MSGS);
@@ -771,7 +778,8 @@ IRC::kline(const std::string & from, const int minutes,
 
   if (minutes > 0)
   {
-    line = "KLINE " + IntToStr(minutes) + " " + target + " :" + reason;
+    line = "KLINE " + boost::lexical_cast<std::string>(minutes) + " " +
+      target + " :" + reason;
   }
   else
   {
@@ -806,7 +814,8 @@ IRC::dline(const std::string & from, const int minutes,
 
   if (minutes > 0)
   {
-    line = "DLINE " + IntToStr(minutes) + " " + target + " :" + reason;
+    line = "DLINE " + boost::lexical_cast<std::string>(minutes) + " " +
+      target + " :" + reason;
   }
   else
   {
@@ -1066,23 +1075,25 @@ IRC::status(BotClient * client) const
   KlineList::size_type klineCount = this->klines.size();
   if (vars[VAR_TRACK_TEMP_KLINES]->getBool() && (klineCount > 0))
   {
-    client->send("K: lines: " + IntToStr(klineCount) + " (" +
-      IntToStr(this->klines.permSize()) + " permanent)");
+    client->send("K: lines: " + boost::lexical_cast<std::string>(klineCount) +
+      " (" + boost::lexical_cast<std::string>(this->klines.permSize()) +
+      " permanent)");
   }
   else if (vars[VAR_TRACK_PERM_KLINES]->getBool())
   {
-    client->send("K: lines: " + IntToStr(klineCount));
+    client->send("K: lines: " + boost::lexical_cast<std::string>(klineCount));
   }
 
   KlineList::size_type dlineCount = this->dlines.size();
   if (vars[VAR_TRACK_TEMP_DLINES]->getBool() && (dlineCount > 0))
   {
-    client->send("D: lines: " + IntToStr(dlineCount) + " (" +
-      IntToStr(this->dlines.permSize()) + " permanent)");
+    client->send("D: lines: " + boost::lexical_cast<std::string>(dlineCount) +
+      " (" + boost::lexical_cast<std::string>(this->dlines.permSize()) +
+      " permanent)");
   }
   else if (vars[VAR_TRACK_PERM_DLINES]->getBool())
   {
-    client->send("D: lines: " + IntToStr(dlineCount));
+    client->send("D: lines: " + boost::lexical_cast<std::string>(dlineCount));
   }
 }
 
@@ -1093,8 +1104,8 @@ IRC::subSpamTrap(const bool sub)
   if (sub)
   {
     this->msg(vars[VAR_SPAMTRAP_NICK]->getString(), ".nicksub " +
-      IntToStr(vars[VAR_SPAMTRAP_MIN_SCORE]->getInt()) + " " +
-      this->getServerName() + " raw");
+      boost::lexical_cast<std::string>(vars[VAR_SPAMTRAP_MIN_SCORE]->getInt()) +
+      " " + this->getServerName() + " raw");
   }
   else
   {
@@ -1137,8 +1148,12 @@ IRC::checkUserDelta(void)
     if ((this->lastUserDeltaCheck > 0) &&
       (delta > vars[VAR_USER_COUNT_DELTA_MAX]->getInt()))
     {
-      std::string msg("*** User count increased by " + IntToStr(delta) +
-	" in " + IntToStr(lapse) + " seconds.");
+      std::string msg("*** User count increased by ");
+      msg += boost::lexical_cast<std::string>(delta);
+      msg += " in ";
+      msg += boost::lexical_cast<std::string>(lapse);
+      msg += " seconds.";
+
       clients.sendAll(msg, UserFlags::OPER);
       Log::Write(msg);
     }

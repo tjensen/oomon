@@ -24,6 +24,9 @@
 #include <map>
 #include <ctime>
 
+// Boost C++ Headers
+#include <boost/lexical_cast.hpp>
+
 // Std C headers
 #include <stdio.h>
 #include <netdb.h>
@@ -111,7 +114,7 @@ makeKline(const std::string & mask, const std::string & reason,
 
   if (minutes > 0)
   {
-    temp = IntToStr(minutes) + " ";
+    temp = boost::lexical_cast<std::string>(minutes) + " ";
   }
 
   return ".kline " + temp + mask + " " + reason;
@@ -372,9 +375,10 @@ addToNickChangeList(const std::string & userhost, const std::string & oldNick,
         if ((ncp->nickChangeCount >= vars[VAR_NICK_CHANGE_MAX_COUNT]->getInt())
 	  && !ncp->noticed)
         {
-	  std::string rate(IntToStr(ncp->nickChangeCount));
+	  std::string rate(boost::lexical_cast<std::string>(ncp->nickChangeCount));
 	  rate += " in ";
-	  rate += IntToStr(ncp->lastNickChange - ncp->firstNickChange);
+	  rate += boost::lexical_cast<std::string>(ncp->lastNickChange -
+	    ncp->firstNickChange);
 	  rate += " second";
 	  if (1 != (ncp->lastNickChange - ncp->firstNickChange))
 	  {
@@ -1036,43 +1040,54 @@ CheckProxy(const std::string & ip, const std::string & host,
 void
 status(BotClient * client)
 {
-  client->send("Nick changers: " + IntToStr(nickChanges.size()));
-  client->send("Connect flooders: " + IntToStr(connects.size()));
+  client->send("Nick changers: " +
+    boost::lexical_cast<std::string>(nickChanges.size()));
+  client->send("Connect flooders: " +
+    boost::lexical_cast<std::string>(connects.size()));
   if (vars[VAR_WATCH_LINKS_NOTICES]->getBool())
   {
-    client->send("Links lookers: " + IntToStr(linkLookers.size()));
+    client->send("Links lookers: " +
+      boost::lexical_cast<std::string>(linkLookers.size()));
   }
   if (vars[VAR_WATCH_TRACE_NOTICES]->getBool())
   {
-    client->send("Trace lookers: " + IntToStr(traceLookers.size()));
+    client->send("Trace lookers: " +
+      boost::lexical_cast<std::string>(traceLookers.size()));
   }
   if (vars[VAR_WATCH_MOTD_NOTICES]->getBool())
   {
-    client->send("Motd lookers: " + IntToStr(motdLookers.size()));
+    client->send("Motd lookers: " +
+      boost::lexical_cast<std::string>(motdLookers.size()));
   }
   if (vars[VAR_WATCH_INFO_NOTICES]->getBool())
   {
-    client->send("Info lookers: " + IntToStr(infoLookers.size()));
+    client->send("Info lookers: " +
+      boost::lexical_cast<std::string>(infoLookers.size()));
   }
   if (vars[VAR_WATCH_STATS_NOTICES]->getBool())
   {
-    client->send("Stats lookers: " + IntToStr(statsLookers.size()));
+    client->send("Stats lookers: " +
+      boost::lexical_cast<std::string>(statsLookers.size()));
   }
   if (vars[VAR_WATCH_FLOODER_NOTICES]->getBool())
   {
-    client->send("Possible flooders: " + IntToStr(possibleFlooders.size()));
+    client->send("Possible flooders: " +
+      boost::lexical_cast<std::string>(possibleFlooders.size()));
   }
   if (vars[VAR_WATCH_SPAMBOT_NOTICES]->getBool())
   {
-    client->send("Possible spambots: " + IntToStr(spambots.size()));
+    client->send("Possible spambots: " +
+      boost::lexical_cast<std::string>(spambots.size()));
   }
   if (vars[VAR_WATCH_TOOMANY_NOTICES]->getBool())
   {
-    client->send("Too many connections: " + IntToStr(tooManyConn.size()));
+    client->send("Too many connections: " +
+      boost::lexical_cast<std::string>(tooManyConn.size()));
   }
   if (vars[VAR_WATCH_OPERFAIL_NOTICES]->getBool())
   {
-    client->send("Oper fails: " + IntToStr(operfails.size()));
+    client->send("Oper fails: " +
+      boost::lexical_cast<std::string>(operfails.size()));
   }
 
   if (vars[VAR_WATCH_JUPE_NOTICES]->getBool())

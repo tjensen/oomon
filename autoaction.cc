@@ -22,6 +22,9 @@
 // Std C++ Headers
 #include <string>
 
+// Boost C++ Headers
+#include <boost/lexical_cast.hpp>
+
 // OOMon Headers
 #include "autoaction.h"
 #include "userhash.h"
@@ -58,8 +61,8 @@ doKline(const std::string & mask, int duration, const std::string & reason)
   {
     if (duration > 0)
     {
-      ::SendAll(".kline " + IntToStr(duration) + " " + mask + " " + reason,
-	UserFlags(UserFlags::OPER, UserFlags::KLINE));
+      ::SendAll(".kline " + boost::lexical_cast<std::string>(duration) + " " +
+	mask + " " + reason, UserFlags(UserFlags::OPER, UserFlags::KLINE));
     }
     else
     {
@@ -82,8 +85,8 @@ doDline(const std::string & mask, const int duration,
   {
     if (duration > 0)
     {
-      ::SendAll(".dline " + IntToStr(duration) + " " + mask + " " + reason,
-	UserFlags(UserFlags::OPER, UserFlags::DLINE));
+      ::SendAll(".dline " + boost::lexical_cast<std::string>(duration) + " " +
+        mask + " " + reason, UserFlags(UserFlags::OPER, UserFlags::DLINE));
     }
     else
     {

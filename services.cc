@@ -23,6 +23,9 @@
 #include <string>
 #include <ctime>
 
+// Boost C++ Headers
+#include <boost/lexical_cast.hpp>
+
 // Std C Headers
 #include <stdio.h>
 
@@ -55,7 +58,7 @@ Services::check()
     if (vars[VAR_XO_SERVICES_ENABLE]->getBool())
     {
       server.msg(vars[VAR_XO_SERVICES_REQUEST]->getString(), "clones " +
-        IntToStr(vars[VAR_SERVICES_CLONE_LIMIT]->getInt()));
+        boost::lexical_cast<std::string>(vars[VAR_SERVICES_CLONE_LIMIT]->getInt()));
     }
 
     if (vars[VAR_SPAMTRAP_ENABLE]->getBool())
@@ -92,7 +95,7 @@ Services::onXoNotice(std::string text)
     server.same(server.getServerName(), parms[2]))
   {
     std::string nick = parms[0];
-    std::string count(IntToStr(this->cloneCount));
+    std::string count(boost::lexical_cast<std::string>(this->cloneCount));
 
     std::string notice(vars[VAR_XO_SERVICES_RESPONSE]->getString());
     notice += " reports ";
@@ -277,8 +280,15 @@ Services::onSpamtrapMessage(const std::string & text)
       {
         std::string klineType = FirstWord(copy);
 
-        std::string notice("*** SpamTrap report: " + nick + " (" + userhost +
-          ") Score: " + IntToStr(score) + " [" + copy + "]");
+        std::string notice("*** SpamTrap report: ");
+	notice += nick;
+	notice += " (";
+	notice += userhost;
+	notice += ") Score: ";
+	notice += boost::lexical_cast<std::string>(score);
+	notice += " [";
+	notice += copy;
+	notice += ']';
 
         ::SendAll(notice, UserFlags::OPER, WATCH_SPAMTRAP);
         Log::Write(notice);
@@ -291,7 +301,8 @@ Services::onSpamtrapMessage(const std::string & text)
     return;
   }
 
-  std::string notice("*** SpamTrap message: " + text);
+  std::string notice("*** SpamTrap message: ");
+  notice += text;
 
   ::SendAll(notice, UserFlags::OPER, WATCH_SPAMTRAP);
   Log::Write(notice);
@@ -346,8 +357,12 @@ Services::onSpamtrapNotice(const std::string & text)
 	    if ((score >= vars[VAR_SPAMTRAP_MIN_SCORE]->getInt()) &&
 	      server.same(serverName, server.getServerName()))
 	    {
-              std::string notice("*** SpamTrap report: " + nick + " (" +
-	        userhost + ") Score: " + IntToStr(score));
+              std::string notice("*** SpamTrap report: ");
+	      notice += nick;
+	      notice += " (";
+	      notice += userhost;
+	      notice += ") Score: ";
+	      notice += boost::lexical_cast<std::string>(score);
 
               ::SendAll(notice, UserFlags::OPER, WATCH_SPAMTRAP);
               Log::Write(notice);
@@ -371,7 +386,8 @@ Services::onSpamtrapNotice(const std::string & text)
     return;
   }
 
-  std::string notice("*** SpamTrap notice: " + text);
+  std::string notice("*** SpamTrap notice: ");
+  notice += text;
 
   ::SendAll(notice, UserFlags::OPER, WATCH_SPAMTRAP);
   Log::Write(notice);

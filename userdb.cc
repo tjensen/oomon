@@ -25,6 +25,7 @@
 
 // Boost C++ Headers
 #include <boost/shared_ptr.hpp>
+#include <boost/lexical_cast.hpp>
 
 // OOMon Headers
 #include "userdb.h"
@@ -70,7 +71,7 @@ UserDB::getEcho(const std::string & handle)
 void
 UserDB::setEcho(const std::string & handle, const bool value)
 {
-  std::string text = IntToStr(value ? 1 : 0);
+  std::string text = boost::lexical_cast<std::string>(value ? 1 : 0);
 
   int result = this->put(handle + ":echo", text);
 

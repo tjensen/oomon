@@ -24,7 +24,9 @@
 #include <string>
 #include <algorithm>
 
+// Boost C++ Headers
 #include <boost/bind.hpp>
+#include <boost/lexical_cast.hpp>
 
 #include "oomon.h"
 #include "cmdparser.h"
@@ -306,9 +308,9 @@ CommandParser::cmdKline(BotClient * from, const std::string & command,
     {
       if (minutes)
       {
-        ::SendAll("KLINE " + IntToStr(minutes) + " " + parm + " (" + reason +
-          " [" + from->handleAndBot() + "])", UserFlags::OPER, WATCH_KLINES,
-	  from);
+        ::SendAll("KLINE " + boost::lexical_cast<std::string>(minutes) + " " +
+	  parm + " (" + reason + " [" + from->handleAndBot() + "])",
+	  UserFlags::OPER, WATCH_KLINES, from);
       }
       else
       {
@@ -367,9 +369,9 @@ CommandParser::cmdDline(BotClient * from, const std::string & command,
     {
       if (minutes)
       {
-        ::SendAll("DLINE " + IntToStr(minutes) + " " + parm + " (" +
-	  parameters + " [" + from->handleAndBot() + "])", UserFlags::OPER,
-	  WATCH_DLINES, from);
+        ::SendAll("DLINE " + boost::lexical_cast<std::string>(minutes) + " " +
+	  parm + " (" + parameters + " [" + from->handleAndBot() + "])",
+	  UserFlags::OPER, WATCH_DLINES, from);
       }
       else
       {
@@ -888,7 +890,8 @@ CommandParser::cmdFindk(BotClient * from, const std::string & command,
       {
         int removed = server.findAndRemoveK(from->handleAndBot(), pattern.get(),
           searchPerms, searchTemps, searchReason);
-        from->send("*** " + IntToStr(removed) + " K-lines removed.");
+        from->send("*** " + boost::lexical_cast<std::string>(removed) +
+	  " K-lines removed.");
       }
       else
       {
@@ -959,7 +962,8 @@ CommandParser::cmdFindd(BotClient * from, const std::string & command,
       {
         int removed = server.findAndRemoveD(from->handleAndBot(), pattern.get(),
           searchPerms, searchTemps, searchReason);
-        from->send("*** " + IntToStr(removed) + " D-lines removed.");
+        from->send("*** " + boost::lexical_cast<std::string>(removed) +
+	  " D-lines removed.");
       }
       else
       {
