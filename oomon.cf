@@ -57,19 +57,6 @@ F:192.168.*.*
 # User settings file - default is oomon-users.db
 #U:oomon-users.db
 
-# Ports (other than the default, 4000)
-#P:4001
-
-# Links (server)
-#:Handle:hostmask:password:flags:
-L:OOMon2:rye.toast.pc:botsecret:
-L:OOMon3:wheat.toast.pc:botsecret:
-
-# Connections (client)
-#:Handle:hostname:passowrd:flags:port:
-C:OOMon2:rye.toast.pc:botsecret:4000:
-C:OOMon3:wheat.toast.pc:botsecret:9000:
-
 # Y-line descriptions go here (see .class command)
 Y:1:Blah users
 Y:2:Semi-blah users

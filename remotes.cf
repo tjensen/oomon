@@ -20,19 +20,75 @@
 # Sample included config file
 # $Id$
 
+# ====================================================================
+# Botnet Listener Port - This defines on what port number we accept
+#                        remote bot connections.  By default, we
+#                        listen to port 4000.
+#
+# Syntax
+#  P:port:
+#
+# port - The port number to listen to for remote bot connections.
+# ====================================================================
+#P:4001:
+
+
+# ====================================================================
+# Botnet Listener - This defines what bots are allowed to connect to
+#                   us, where they are the initiator.
+#
+# Syntax:
+#  L:Bot:hostmask:password:
+#
+# Bot - The name of the bot allowed to connect to us.
+#
+# hostmask - A pattern matching the hostname or IP of the bot.
+#
+# password - Plaintext password the bot must use to authenticate
+#            itself.  This should match the remote bot's C: line
+#            password for us.
+# ====================================================================
+L:OOMon2:rye.toast.pc:botsecret:
+L:OOMon3:wheat.toast.pc:botsecret:
+
+
+# ====================================================================
+# Botnet Connector - This defines what bots we are allowed to connect
+#                    to, where we are the initiator.
+#
+# Syntax:
+#  C:Bot:hostname:password:port:
+#
+# Bot - The name of the bot we can connect to.
+#
+# hostname - The hostname or IP address we must connect to in order
+#            to link with the bot.
+#
+# password - Plaintext password we must use to authenticate with the
+#            bot.  This should match the remote bot's L: line password
+#            for us.
+#
+# port - The port number we must connect to in order to link with the
+#        bot.  This should be the remote bot's P: line value.
+# ====================================================================
+C:OOMon2:rye.toast.pc:botsecret:4000:
+C:OOMon3:wheat.toast.pc:botsecret:9000:
+
+
+# ====================================================================
 # Remote users
 #
-#Syntax:
+# Syntax:
 #  R:handle@bot:flags:
 #
 # handle@bot - The handle and bot of the user(s) to give access.  This
 #              field can also contain a mask or regex pattern.
 #
-# flags - This defines which commands the user may use.  See the userlist.cf
-#         file for a detailed list of available flags.  Although it is
-#         possible to include the "R" flag in a remote user line, the flag
-#         has no meaning and is silently ignored.
-#
+# flags - This defines which commands the user may use.  See the
+#         userlist.cf file for a detailed list of available flags.
+#         Although it is possible to include the "R" flag in a remote
+#         user line, the flag has no meaning and is silently ignored.
+# ====================================================================
 
 # Give access to all remote commands to Toast@OOMon2
 R:Toast@OOMon2:CDGKMNOWX:
