@@ -194,7 +194,7 @@ IRC::quit(const std::string & message)
 #endif
 
   this->write("QUIT :" + message + "\n");
-  Log::Write("Disconnecting from server");
+  Log::Write("Disconnecting from server: " + message);
   this->reset();
 
   this->amIAnOper = 0;
