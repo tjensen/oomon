@@ -1197,11 +1197,12 @@ UserHash::reportMulti(BotClient * client, const unsigned int minimum) const
   unsigned int minclones((minimum > 0) ? minimum : UserHash::multiMin);
   bool foundAny(false);
 
-  typedef std::map<std::string, unsigned int> UnsortedMap;
-  UnsortedMap unsorted;
-  for (UserEntryTable::const_iterator i = this->hosttable.begin();
-      i != this->hosttable.end(); ++i)
+  for (UserEntryTable::const_iterator i = this->domaintable.begin();
+      i != this->domaintable.end(); ++i)
   {
+    typedef std::map<std::string, unsigned int> UnsortedMap;
+    UnsortedMap unsorted;
+
     for (UserEntryList::const_iterator userptr = i->begin();
         userptr != i->end(); ++userptr)
     {
@@ -1222,21 +1223,21 @@ UserHash::reportMulti(BotClient * client, const unsigned int minimum) const
         }
       }
     }
-  }
 
-  for (UnsortedMap::const_iterator pos = unsorted.begin();
-      pos != unsorted.end(); ++pos)
-  {
-    if (pos->second >= minclones)
+    for (UnsortedMap::const_iterator pos = unsorted.begin();
+        pos != unsorted.end(); ++pos)
     {
-      if (!foundAny)
+      if (pos->second >= minclones)
       {
-        foundAny = true;
-        client->send("Multiple clients from the following userhosts:");
+        if (!foundAny)
+        {
+          foundAny = true;
+          client->send("Multiple clients from the following userhosts:");
+        }
+        boost::format outfmt(" %s %2u -- %s");
+        client->send(str(outfmt % ((pos->second > minclones) ? "==>" : "   ") %
+              pos->second % pos->first));
       }
-      boost::format outfmt(" %s %2u -- %s");
-      client->send(str(outfmt % ((pos->second > minclones) ? "==>" : "   ") %
-            pos->second % pos->first));
     }
   }
 
@@ -1253,11 +1254,12 @@ UserHash::reportHMulti(BotClient * client, const unsigned int minimum) const
   unsigned int minclones((minimum > 0) ? minimum : UserHash::multiMin);
   bool foundAny(false);
 
-  typedef std::map<std::string, unsigned int> UnsortedMap;
-  UnsortedMap unsorted;
   for (UserEntryTable::const_iterator i = this->hosttable.begin();
       i != this->hosttable.end(); ++i)
   {
+    typedef std::map<std::string, unsigned int> UnsortedMap;
+    UnsortedMap unsorted;
+
     for (UserEntryList::const_iterator userptr = i->begin();
         userptr != i->end(); ++userptr)
     {
@@ -1267,21 +1269,21 @@ UserHash::reportHMulti(BotClient * client, const unsigned int minimum) const
         ++unsorted[server.downCase((*userptr)->getHost())];
       }
     }
-  }
 
-  for (UnsortedMap::const_iterator pos = unsorted.begin();
-      pos != unsorted.end(); ++pos)
-  {
-    if (pos->second >= minclones)
+    for (UnsortedMap::const_iterator pos = unsorted.begin();
+        pos != unsorted.end(); ++pos)
     {
-      if (!foundAny)
+      if (pos->second >= minclones)
       {
-        foundAny = true;
-        client->send("Multiple clients from the following hosts:");
+        if (!foundAny)
+        {
+          foundAny = true;
+          client->send("Multiple clients from the following hosts:");
+        }
+        boost::format outfmt(" %s %2u -- *@%s");
+        client->send(str(outfmt % ((pos->second > minclones) ? "==>" : "   ") %
+              pos->second % pos->first));
       }
-      boost::format outfmt(" %s %2u -- *@%s");
-      client->send(str(outfmt % ((pos->second > minclones) ? "==>" : "   ") %
-            pos->second % pos->first));
     }
   }
 
@@ -1291,17 +1293,19 @@ UserHash::reportHMulti(BotClient * client, const unsigned int minimum) const
   }
 }
 
+
 void
 UserHash::reportUMulti(BotClient * client, const unsigned int minimum) const
 {
   unsigned int minclones((minimum > 0) ? minimum : UserHash::multiMin);
   bool foundAny(false);
 
-  typedef std::map<std::string, unsigned int> UnsortedMap;
-  UnsortedMap unsorted;
   for (UserEntryTable::const_iterator i = this->usertable.begin();
       i != this->usertable.end(); ++i)
   {
+    typedef std::map<std::string, unsigned int> UnsortedMap;
+    UnsortedMap unsorted;
+
     for (UserEntryList::const_iterator userptr = i->begin();
         userptr != i->end(); ++userptr)
     {
@@ -1311,21 +1315,21 @@ UserHash::reportUMulti(BotClient * client, const unsigned int minimum) const
         ++unsorted[server.downCase((*userptr)->getUser())];
       }
     }
-  }
 
-  for (UnsortedMap::const_iterator pos = unsorted.begin();
-      pos != unsorted.end(); ++pos)
-  {
-    if (pos->second >= minclones)
+    for (UnsortedMap::const_iterator pos = unsorted.begin();
+        pos != unsorted.end(); ++pos)
     {
-      if (!foundAny)
+      if (pos->second >= minclones)
       {
-        foundAny = true;
-        client->send("Multiple clients from the following usernames:");
+        if (!foundAny)
+        {
+          foundAny = true;
+          client->send("Multiple clients from the following usernames:");
+        }
+        boost::format outfmt(" %s %2u -- %s@*");
+        client->send(str(outfmt % ((pos->second > minclones) ? "==>" : "   ") %
+              pos->second % pos->first));
       }
-      boost::format outfmt(" %s %2u -- %s@*");
-      client->send(str(outfmt % ((pos->second > minclones) ? "==>" : "   ") %
-            pos->second % pos->first));
     }
   }
 
@@ -1335,17 +1339,19 @@ UserHash::reportUMulti(BotClient * client, const unsigned int minimum) const
   }
 }
 
+
 void
 UserHash::reportVMulti(BotClient * client, const unsigned int minimum) const
 {
   unsigned int minclones((minimum > 0) ? minimum : UserHash::multiMin);
   bool foundAny(false);
 
-  typedef std::map<std::string, unsigned int> UnsortedMap;
-  UnsortedMap unsorted;
-  for (UserEntryTable::const_iterator i = this->hosttable.begin();
-      i != this->hosttable.end(); ++i)
+  for (UserEntryTable::const_iterator i = this->iptable.begin();
+      i != this->iptable.end(); ++i)
   {
+    typedef std::map<std::string, unsigned int> UnsortedMap;
+    UnsortedMap unsorted;
+
     for (UserEntryList::const_iterator userptr = i->begin();
         userptr != i->end(); ++userptr)
     {
@@ -1363,21 +1369,21 @@ UserHash::reportVMulti(BotClient * client, const unsigned int minimum) const
         ++unsorted[server.downCase(user + '@' + IP + ".*")];
       }
     }
-  }
 
-  for (UnsortedMap::const_iterator pos = unsorted.begin();
-      pos != unsorted.end(); ++pos)
-  {
-    if (pos->second >= minclones)
+    for (UnsortedMap::const_iterator pos = unsorted.begin();
+        pos != unsorted.end(); ++pos)
     {
-      if (!foundAny)
+      if (pos->second >= minclones)
       {
-        foundAny = true;
-        client->send("Multiple clients from the following vhosts:");
+        if (!foundAny)
+        {
+          foundAny = true;
+          client->send("Multiple clients from the following vhosts:");
+        }
+        boost::format outfmt(" %s %2u -- %s");
+        client->send(str(outfmt % ((pos->second > minclones) ? "==>" : "   ") %
+              pos->second % pos->first));
       }
-      boost::format outfmt(" %s %2u -- %s");
-      client->send(str(outfmt % ((pos->second > minclones) ? "==>" : "   ") %
-            pos->second % pos->first));
     }
   }
 
