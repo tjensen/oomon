@@ -54,13 +54,6 @@ void KlineList::Add(const std::string & userhost, const std::string & reason,
 {
   if (!userhost.empty())
   {
-    if (Klines.end() != std::find(Klines.begin(), Klines.end(),
-      KlineItem(userhost)))
-    {
-      // If the k-line already exists, we want to replace it!
-      this->Remove(userhost);
-    }
-
 #ifdef KLINES_DEBUG
     std::cout << std::string("Adding ") + lineType + "-line: " << userhost <<
       " (" << reason << ')' << std::endl;
