@@ -122,7 +122,7 @@ DCCList::listen(const std::string & nick, const std::string & userhost)
 void
 DCCList::setAllFD(fd_set & readset, fd_set & writeset)
 {
-  FDSetter s(readset, writeset);
+  BotSock::FDSetter s(readset, writeset);
 
   std::for_each(this->listeners.begin(), this->listeners.end(), s);
   std::for_each(this->connections.begin(), this->connections.end(), s);

@@ -24,6 +24,9 @@
 // Std C++ headers
 #include <string>
 
+// Boost C++ headers
+#include <boost/shared_ptr.hpp>
+
 // Std C headers
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -46,6 +49,7 @@
 class BotSock
 {
 public:
+  typedef boost::shared_ptr<BotSock> ptr;
   typedef in_addr_t Address;
   typedef in_port_t Port;
 
@@ -109,6 +113,20 @@ public:
   static const BotSock::Address ClassCNetMask;
 
   virtual bool onConnect() { return true; };
+
+  class FDSetter
+  {
+  public:
+    FDSetter(fd_set & readset, fd_set & writeset) : _readset(readset),
+      _writeset(writeset) { }
+    void operator()(BotSock::ptr s)
+    {
+      s->setFD(this->_readset, this->_writeset);
+    }
+  private:
+    fd_set & _readset;
+    fd_set & _writeset;
+  };
 
 protected:
   virtual bool onRead(std::string) { return true; };

@@ -94,20 +94,6 @@ private:
     const fd_set & _writeset;
   };
 
-  class FDSetter
-  {
-  public:
-    FDSetter(fd_set & readset, fd_set & writeset) : _readset(readset),
-      _writeset(writeset) { }
-    void operator()(DCCPtr dccSocket)
-    {
-      dccSocket->setFD(this->_readset, this->_writeset);
-    }
-  private:
-    fd_set & _readset;
-    fd_set & _writeset;
-  };
-
   class WhoList
   {
   public:

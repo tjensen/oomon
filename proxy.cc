@@ -219,11 +219,8 @@ Proxy::check(const std::string & address, const std::string & hostname,
 void
 Proxy::setAllFD(fd_set & readset, fd_set & writeset)
 {
-  for (ProxyList::iterator pos = Proxy::items.begin();
-    pos != Proxy::items.end(); ++pos)
-  {
-    (*pos)->setFD(readset, writeset);
-  }
+  std::for_each(Proxy::items.begin(), Proxy::items.end(),
+    BotSock::FDSetter(readset, writeset));
 }
 
 
