@@ -57,6 +57,7 @@
 #include "engine.h"
 #include "irc.h"
 #include "vars.h"
+#include "format.h"
 
 
 #ifdef DEBUG
@@ -86,10 +87,26 @@ Proxy::detectedProxy(void)
   // We DEFINITELY do not want to cache this one!
   _detectedProxy = true;
 
-  std::string notice = std::string("Open ") + this->typeName() +
-    " proxy detected for " + this->nick() + "!" + this->userhost() +
-    " [" + this->address() + ":" +
-    boost::lexical_cast<std::string>(this->port()) + "]";
+  std::string portString = boost::lexical_cast<std::string>(this->port());
+
+  Format reason;
+  reason.setStringToken('n', this->nick());
+  reason.setStringToken('u', this->userhost());
+  reason.setStringToken('i', this->address());
+  reason.setStringToken('p', portString);
+  reason.setStringToken('t', this->typeName());
+
+  std::string notice("Open ");
+  notice += this->typeName();
+  notice += " proxy detected for ";
+  notice += this->nick();
+  notice += "!";
+  notice += this->userhost();
+  notice += " [";
+  notice += this->address();
+  notice += ":";
+  notice += portString;
+  notice += "]";
   ::SendAll(notice, UserFlags::OPER);
   Log::Write(notice);
 
@@ -97,7 +114,7 @@ Proxy::detectedProxy(void)
     BotSock::inet_addr(this->address()),
     vars[VAR_SCAN_PROXY_ACTION]->getAction(),
     vars[VAR_SCAN_PROXY_ACTION]->getInt(),
-    vars[VAR_SCAN_PROXY_REASON]->getString(), false);
+    reason.format(vars[VAR_SCAN_PROXY_REASON]->getString()), false);
 }
 
 

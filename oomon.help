@@ -1646,6 +1646,13 @@ set scan_proxy_reason
 .d.This setting determines the kill, k-line, or
 .d.d-line reason to use when a client is
 .d.detected to be connecting from an open proxy.
+.d.Instances of "%n" will be replaced by the
+.d.offender's nick, "%u" will be replaced by the
+.d.offender's userhost, "%i" will be replaced by
+.d.the offender's IP address, "%p" will be
+.d.replaced by the port number of the open
+.d.proxy, and "%t" will be replaced by the type
+.d.of proxy detected.
 .f.mo
 set seedrand_command_min
 .s.set seedrand_command_min [<integer>]
