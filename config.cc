@@ -30,6 +30,7 @@
 #include "oomon.h"
 
 // C++ headers
+#include <algorithm>
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -898,5 +899,30 @@ Config::loadSettings()
   {
      return false;
   }
+}
+
+
+//////////////////////////////////////////////////////////////////////
+// haveChannel(channel)
+//
+// Description:
+//  Determines whether a channel is listed in the bot's config file.
+//
+// Parameters:
+//  channel - The channel to look for in the config file.
+//
+// Return Value:
+//  The function returns true if the channel is listed in the config
+//  file and false otherwise.
+//////////////////////////////////////////////////////////////////////
+bool
+Config::haveChannel(const std::string & channel)
+{
+  StrVector channels;
+
+  StrSplit(channels, DownCase(Server.Channels), ",");
+
+  return (channels.end() != std::find(channels.begin(), channels.end(),
+    DownCase(channel)));
 }
 

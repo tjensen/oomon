@@ -156,6 +156,7 @@ public:
   static std::string GetOperNick() { return OperNick; }
   static std::string GetOperPass() { return OperPass; }
   static std::string GetChannels() { return Server.Channels; }
+  static bool haveChannel(const std::string & channel);
   static std::string GetLogFile() { return LogFile; }
   static std::string GetMOTD() { return MOTD; }
   static BotSock::Port GetPort() { return port; }

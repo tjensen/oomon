@@ -52,8 +52,8 @@
 IRC server;
 
 
-IRC::IRC(): BotSock(false, true), supportETrace(false), klines('K'),
-  dlines('D')
+IRC::IRC(): BotSock(false, true), supportETrace(false), supportKnock(false),
+  klines('K'), dlines('D')
 {
   this->amIAnOper = false;
   this->serverName = "";
@@ -193,6 +193,10 @@ IRC::onRead(std::string text)
 	  {
 	    this->supportETrace = true;
 	  }
+	  else if (params[idx] == "KNOCK")
+	  {
+	    this->supportKnock = true;
+	  }
 	}
 	break;
       case 204:	// ontraceuser(body)
@@ -320,6 +324,19 @@ IRC::onRead(std::string text)
 	  }
 	}
 	break;
+      case 473:		/* ERR_INVITEONLYCHAN */
+	if (params.size() > 3)
+	{
+	  std::string channel = params[3];
+
+          // If the IRC server supports the KNOCK command and the invite-only
+	  // channel is listed in the bot's config file, issue a KNOCK.
+	  if (this->supportKnock && Config::haveChannel(channel))
+	  {
+	    this->knock(channel);
+	  }
+	}
+	break;
       case 709:
         if (this->gettingTrace && (params.size() > 9))
         {
@@ -376,9 +393,23 @@ IRC::onRead(std::string text)
 	}
 	break;
       case IRC_INVITE:
-	if ((params.size() >= 3) && Same(params[2], this->myNick))
+	if (params.size() >= 3)
 	{
-	  Log::Write("Invited to channel " + params[3] + " by " + from + '.');
+	  std::string to = params[2];
+	  std::string channel = params[3];
+
+          // Make sure the INVITE was directed at the bot
+          if (Same(to, this->myNick))
+	  {
+	    // Is the channel listed in the config file?
+	    if (Config::haveChannel(channel))
+	    {
+	      // Yes, so accept the invite by joining the channel!
+	      this->join(channel);
+	    }
+
+	    Log::Write("Invited to channel " + params[3] + " by " + from + '.');
+	  }
 	}
 	break;
       case IRC_NOTICE:
@@ -1045,16 +1076,77 @@ IRC::op(const std::string & channel, const std::string & nick)
   this->write("MODE " + channel + " +o " + nick + "\n");
 }
 
+//////////////////////////////////////////////////////////////////////
+// join(channel)
+//
+// Description:
+//  Sends a JOIN command to the IRC server.
+//
+// Parameters:
+//  channel - The channel to attempt to join.
+//
+// Return Value:
+//  None.
+//////////////////////////////////////////////////////////////////////
+void
+IRC::join(const std::string & channel)
+{
+  this->write("JOIN " + channel + "\n");
+}
+
+//////////////////////////////////////////////////////////////////////
+// join(channel, key)
+//
+// Description:
+//  Sends a JOIN command with a key to the IRC server.
+//
+// Parameters:
+//  channel - The channel to attempt to join.
+//  key     - The channel key to use when joining.
+//
+// Return Value:
+//  None.
+//////////////////////////////////////////////////////////////////////
 void
 IRC::join(const std::string & channel, const std::string & key)
 {
   this->write("JOIN " + channel + " " + key + "\n");
 }
 
+//////////////////////////////////////////////////////////////////////
+// part(channel)
+//
+// Description:
+//  Sends a PART command to the IRC server.
+//
+// Parameters:
+//  channel - The channel to attempt to leave.
+//
+// Return Value:
+//  None.
+//////////////////////////////////////////////////////////////////////
 void
 IRC::part(const std::string & channel)
 {
   this->write("PART " + channel + "\n");
+}
+
+//////////////////////////////////////////////////////////////////////
+// knock(channel)
+//
+// Description:
+//  Sends a KNOCK command to the IRC server.
+//
+// Parameters:
+//  channel - The channel for which the knock is intended.
+//
+// Return Value:
+//  None.
+//////////////////////////////////////////////////////////////////////
+void
+IRC::knock(const std::string & channel)
+{
+  this->write("KNOCK " + channel + "\n");
 }
 
 

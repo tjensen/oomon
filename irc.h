@@ -68,8 +68,10 @@ public:
   void trace(const std::string & Target = "");
   void statsL(const std::string &);
   void retrace(const std::string &);
-  void join(const std::string &, const std::string &);
-  void part(const std::string &);
+  void join(const std::string & channel, const std::string & key);
+  void join(const std::string & channel);
+  void part(const std::string & channel);
+  void knock(const std::string & channel);
   void whois(const std::string & nick);
   void op(const std::string &, const std::string &);
   void umode(const std::string &);
@@ -112,6 +114,7 @@ private:
   bool gettingTempKlines;
   bool gettingDlines;
   bool supportETrace;
+  bool supportKnock;
   std::string myNick;
   std::string serverName;
   KlineList klines;
