@@ -307,7 +307,6 @@ UserHash::checkVersionTimeout(void)
   {
     std::time_t now = std::time(0);
 
-    int n = 0;
     for (UserEntryTable::iterator i = usertable.begin(); i != usertable.end();
       ++i)
     {
@@ -315,7 +314,6 @@ UserHash::checkVersionTimeout(void)
       {
         (*hp)->checkVersionTimeout(now, timeout);
       }
-      ++n;
     }
   }
 }
