@@ -45,7 +45,7 @@ TrapList::TrapMap TrapList::traps;
 
 Trap::Trap(const TrapAction action, const long timeout,
   const std::string & line)
-  : action_(action), timeout_(timeout), filter_(line, Filter::FIELD_NUH),
+  : action_(action), timeout_(timeout), filter_(line, Filter::FIELD_NUH, true),
   lastMatch_(0), matchCount_(0), loaded_(false)
 {
   std::string rest = this->filter_.rest();
