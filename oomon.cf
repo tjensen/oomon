@@ -36,7 +36,7 @@ S:plasma.toast.pc:6667::#monitors:
 I:userlist.cf
 
 # Exceptions
-E:*@*blackened.com
+E:*@*toast.pc
 
 # Spoofers (don't kline spoofers with IPs matching the following)
 F:192.168.*.*
@@ -61,13 +61,13 @@ F:192.168.*.*
 
 # Links (server)
 #:Handle:hostmask:password:flags:
-L:LarzMON:bots.blackened.com:botsecret:K:
-L:OOMon2:the-project.org:botsecret:K:
+L:OOMon2:rye.toast.pc:botsecret:K:
+L:OOMon3:wheat.toast.pc:botsecret:K:
 
 # Connections (client)
 #:Handle:hostname:passowrd:flags:port:
-C:LarzMON:bots.blackened.com:botsecret:K:9000:
-C:OOMon2:the-project.org:botsecret:K:4000:
+C:OOMon2:rye.toast.pc:botsecret:K:4000:
+C:OOMon3:wheat.toast.pc:botsecret:K:9000:
 
 # Y-line descriptions go here (see .class command)
 Y:1:Blah users
@@ -81,4 +81,4 @@ Y:restricted:Restricted Users
 
 # Set this to be the vhost you want your open wingate/proxy checker to
 # connect from, if any.
-#W:wingate.checker.vhost.com
+#W:sourdough.plasma.pc
