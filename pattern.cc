@@ -43,7 +43,7 @@
 
 
 #ifdef PATTERN_DEBUG
-unsigned long patternCount = 0;
+static unsigned long patternCount = 0;
 #endif
 
 
@@ -432,5 +432,14 @@ grabPattern(std::string & input, const std::string & delimiters)
     input = input.substr(pos);
   }
   return result;
+}
+
+
+void
+patternStatus(BotClient * client)
+{
+#ifdef PATTERN_DEBUG
+  client->send("Patterns: " + boost::lexical_cast<std::string>(patternCount));
+#endif
 }
 

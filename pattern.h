@@ -26,6 +26,7 @@
 
 // Boost C++ Headers
 #include <boost/shared_ptr.hpp>
+#include <boost/lexical_cast.hpp>
 #include <boost/utility.hpp>
 
 // Std C Headers
@@ -33,6 +34,7 @@
 
 // OOMon Headers
 #include "oomon.h"
+#include "botclient.h"
 
 #if defined(HAVE_LIBPCRE)
 # include <pcre.h>
@@ -109,7 +111,9 @@ private:
 PatternPtr smartPattern(const std::string & text, const bool nick);
 
 std::string grabPattern(std::string & input,
-  const std::string & delimiters = " ");
+    const std::string & delimiters = " ");
+
+void patternStatus(BotClient * client);
 
 
 #endif /* __PATTERN_H__ */
