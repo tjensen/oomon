@@ -1012,6 +1012,9 @@ DCC::parse(std::string text)
     case DCC_GLIST:
       this->glist(To, text);
       break;
+    case DCC_LOCOPS:
+      this->locops(To, text);
+      break;
     case DCC_TEST:
 #ifdef DCC_DEBUG
       if (Flags & UF_MASTER)
@@ -1249,6 +1252,34 @@ DCC::glist(const std::string & to, std::string text)
       else
       {
         this->send("*** Syntax: .glist [-class <name>] [-count] [-r] <pattern>");
+      }
+    }
+    else
+    {
+      this->notRemote();
+    }
+  }
+  else
+  {
+    this->noAccess();
+  }
+}
+
+
+void
+DCC::locops(const std::string & to, std::string text)
+{
+  if (this->Flags & UF_WALLOPS)
+  {
+    if (to.empty())
+    {
+      if (!text.empty())
+      {
+        server.locops("(" + this->getHandle(false) + ") " + text);
+      }
+      else
+      {
+	this->send("*** Syntax: .locops <text>");
       }
     }
     else
@@ -2486,6 +2517,7 @@ DCC::getCommand(const std::string & text)
   else if (text == "GLIST") return DCC_GLIST;
   else if (text == "NETS") return DCC_NETS;
   else if (text == "INFO") return DCC_INFO;
+  else if (text == "LOCOPS") return DCC_LOCOPS;
 #ifdef DCC_DEBUG
   else if (text == "TEST") return DCC_TEST;
 #endif

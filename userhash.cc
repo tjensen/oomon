@@ -147,6 +147,7 @@ UserHash::add(const std::string & nick, const std::string & userhost,
 	    {
 	      notice = notice + " [" + ip + "]";
 	    }
+
 	    ::SendAll(notice, UF_OPER, WATCH_SEEDRAND);
 	    Log::Write(notice);
 

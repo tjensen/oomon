@@ -514,6 +514,11 @@ load
 .f.m
 .l.save
 .l.trap
+locops
+.s.locops <text>
+.d.Sends a message to all local server operators.
+.f.w
+.l.watch
 motd
 .s.motd
 .d.Redisplays the Message of the Day.

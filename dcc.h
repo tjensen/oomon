@@ -94,6 +94,7 @@ private:
   void set(const std::string & to, std::string text);
   void spamsub(const std::string & to, std::string text);
   void spamunsub(const std::string & to, std::string text);
+  void locops(const std::string & to, std::string text);
 
   void kClone(const int Minutes, const std::string & Target);
   void kFlood(const int Minutes, const std::string & Target);
@@ -141,6 +142,9 @@ private:
     DCC_CLONES, DCC_GLIST, DCC_LIST, DCC_FINDK, DCC_RELOAD, DCC_DOMAINS,
     DCC_CLASS, DCC_HMULTI, DCC_UMULTI, DCC_VMULTI, DCC_FINDD, DCC_SEEDRAND,
     DCC_NETS, DCC_TRAP, DCC_SET,
+
+    // +W commands
+    DCC_LOCOPS,
 
     // +M commands
     DCC_DIE, DCC_CONN, DCC_DISCONN, DCC_RAW, DCC_TEST, DCC_SAVE, DCC_LOAD,
