@@ -49,7 +49,7 @@ foreach $filename (sort { $a cmp $b } uniq(@includes) )
 
 			system("mkdir -p $dir");
 
-			system("cp $BOOST_DIR $dir/");
+			system("cp $BOOST_DIR/$filename $dir/");
 		}
 	}
 }
