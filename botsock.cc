@@ -41,6 +41,8 @@
 #include "botclient.h"
 #include "util.h"
 
+// Define the following to see a trace of BotSock method calls
+#undef BOTSOCK_TRACE
 
 #ifdef DEBUG
 # define BOTSOCK_DEBUG
@@ -71,6 +73,11 @@ BotSock::BotSock(const bool blocking_, const bool lineBuffered)
 {
   if ((this->plug = ::socket(AF_INET, SOCK_STREAM, 0)) < 0)
   {
+    std::cerr << "socket() failed: " << errno <<
+#if defined(HAVE_STRERROR)
+      " (" << strerror(errno) << ')' <<
+#endif
+      std::endl;
     throw OOMon::socket_error("socket() failed");
   } 
 
@@ -99,6 +106,11 @@ BotSock::BotSock(const BotSock *listener, const bool blocking,
   socklen_t size = sizeof(remotehost);
   if (-1 == (this->plug = ::accept(listener->plug, &remotehost, &size)))
   {
+    std::cerr << "accept() failed: " << errno <<
+#if defined(HAVE_STRERROR)
+      " (" << strerror(errno) << ')' <<
+#endif
+      std::endl;
     throw OOMon::accept_error("accept() failed");
   }
 
@@ -148,7 +160,7 @@ BotSock::connect(const BotSock::Address address, const BotSock::Port port)
   socketname.sin_family = AF_INET;
   socketname.sin_port = htons(port);
 
-#ifdef BOTSOCK_DEBUG
+#ifdef BOTSOCK_TRACE
   std::cout << "BotSock::connect(): ::connect()" << std::endl;
 #endif
 
@@ -163,7 +175,11 @@ BotSock::connect(const BotSock::Address address, const BotSock::Port port)
     }
     else
     { 
-      std::cerr << "connect() error: " << errno << std::endl;
+      std::cerr << "connect() failed: " << errno <<
+#if defined(HAVE_STRERROR)
+        " (" << strerror(errno) << ')' <<
+#endif
+        std::endl;
       this->connected = this->connecting = true;
       return false;
     }
@@ -210,7 +226,11 @@ BotSock::listen(const BotSock::Port port, const int backlog)
 
   if (::listen(this->plug, backlog) < 0)
   {
-    std::cerr << "listen() error: " << errno << std::endl;
+    std::cerr << "listen() failed: " << errno <<
+#if defined(HAVE_STRERROR)
+      " (" << strerror(errno) << ')' <<
+#endif
+      std::endl;
     this->connected = this->connecting = this->listening = false;
     return false;
   }
@@ -273,7 +293,7 @@ BotSock::process(const fd_set & readset, const fd_set & writeset)
       memset(buff, 0, sizeof(buff));
 #endif
 
-#ifdef BOTSOCK_DEBUG
+#ifdef BOTSOCK_TRACE
       std::cout << "BotSock::process(): this->read()" << std::endl;
 #endif
 
@@ -570,7 +590,11 @@ BotSock::setBlocking(const bool value)
 
     if (-1 == ::fcntl(this->plug, F_SETFL, flags))
     {
-      std::cerr << "fcntl() error: " << errno << std::endl;
+      std::cerr << "fcntl() failed: " << errno <<
+#if defined(HAVE_STRERROR)
+        " (" << strerror(errno) << ')' <<
+#endif
+        std::endl;
       return false;
     }
   }
@@ -596,11 +620,11 @@ BotSock::nsLookup(const std::string & address)
 
     if (NULL == host)
     {
-      std::cerr << "Error: gethostbyname() " << errno <<
+      std::cerr << "gethostbyname() failed: " << errno <<
 #if defined(HAVE_STRERROR)
-	" (" << ::strerror(errno) << ")" <<
+        " (" << strerror(errno) << ')' <<
 #endif
-	std::endl;
+        std::endl;
       return INADDR_NONE;
     }
 
@@ -626,9 +650,9 @@ BotSock::nsLookup(const BotSock::Address & address)
   }
   else
   {
-    std::cerr << "Error: gethostbyaddr() " << errno <<
+    std::cerr << "gethostbyaddr() failed: " << errno <<
 #if defined(HAVE_STRERROR)
-      " (" << ::strerror(errno) << ")" <<
+      " (" << strerror(errno) << ')' <<
 #endif
       std::endl;
   }
@@ -675,7 +699,11 @@ BotSock::bind(const BotSock::Address & address, const BotSock::Port & port)
   if (::bind(this->plug, reinterpret_cast<struct sockaddr *>(&localaddr),
     sizeof(localaddr)) < 0)
   {
-    std::cerr << "bind() error: " << errno << std::endl;
+    std::cerr << "bind() failed: " << errno <<
+#if defined(HAVE_STRERROR)
+      " (" << strerror(errno) << ')' <<
+#endif
+      std::endl;
     return false;
   }
 
@@ -752,7 +780,7 @@ BotSock::onConnect(void)
 
   if (!this->onConnectHandler.empty())
   {
-#ifdef BOTSOCK_DEBUG
+#ifdef BOTSOCK_TRACE
     std::cout << "BotSock::onConnect()" << std::endl;
 #endif
 
@@ -773,7 +801,7 @@ BotSock::onRead(const std::string & text)
 
   if (!this->onReadHandler.empty())
   {
-#ifdef BOTSOCK_DEBUG
+#ifdef BOTSOCK_TRACE
     std::cout << "BotSock::onRead()" << std::endl;
 #endif
 
@@ -794,7 +822,7 @@ BotSock::onRead(const char *data, const int size)
 
   if (!this->onBinaryReadHandler.empty())
   {
-#ifdef BOTSOCK_DEBUG
+#ifdef BOTSOCK_TRACE
     std::cout << "BotSock::onBinaryRead()" << std::endl;
 #endif
 
