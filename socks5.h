@@ -33,16 +33,22 @@ public:
     const std::string & userhost)
     : Proxy(hostname, nick, userhost), state(STATE_WAIT1)
   {
-    this->setType(SOCKS5);
     this->setBinary(true);
+  }
+  virtual ~Socks5(void)
+  {
+    if (!this->_detectedProxy)
+    {
+      Proxy::addToCache(this->address(), this->port(), Proxy::SOCKS5);
+    }
   }
 
   virtual bool onConnect();
 
 protected:
   virtual bool onRead(const char *text, const int size);
-  virtual ProxyType getType() const { return Proxy::SOCKS5; };
-  virtual std::string getTypeName() const { return "SOCKS5"; };
+  virtual std::string typeName(void) const { return "SOCKS5"; };
+  virtual Proxy::ProxyType type(void) const { Proxy::SOCKS5; };
 
   enum { STATE_WAIT1, STATE_WAIT2 } state;
 };

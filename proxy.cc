@@ -83,10 +83,6 @@ Proxy::~Proxy(void)
 #ifdef PROXY_DEBUG
   std::cout << "Proxy checker ending..." << std::endl;
 #endif
-  if (!_detectedProxy)
-  {
-    Proxy::addToCache(this->getAddress(), this->getPort(), this->getType());
-  }
 }
 
 
@@ -96,14 +92,14 @@ Proxy::detectedProxy(void)
   // We DEFINITELY do not want to cache this one!
   _detectedProxy = true;
 
-  std::string notice = std::string("Open ") + this->getTypeName() +
-    " proxy detected for " + this->getNick() + "!" + this->getUserhost() +
-    " [" + this->getAddress() + ":" + IntToStr(this->getPort()) + "]";
+  std::string notice = std::string("Open ") + this->typeName() +
+    " proxy detected for " + this->nick() + "!" + this->userhost() +
+    " [" + this->address() + ":" + IntToStr(this->port()) + "]";
   ::SendAll(notice, UF_OPER);
   Log::Write(notice);
 
-  doAction(this->getNick(), this->getUserhost(),
-    BotSock::inet_addr(this->getAddress()),
+  doAction(this->nick(), this->userhost(),
+    BotSock::inet_addr(this->address()),
     vars[VAR_SCAN_PROXY_ACTION]->getAction(),
     vars[VAR_SCAN_PROXY_ACTION]->getInt(),
     vars[VAR_SCAN_PROXY_REASON]->getString(), false);
@@ -127,7 +123,7 @@ Proxy::connect(const std::string & address, const BotSock::Port port)
 // Returns true if no errors occurred
 //
 bool
-Proxy::connect(Proxy *newProxy, const std::string & address,
+Proxy::connect(ProxyPtr newProxy, const std::string & address,
   const BotSock::Port port)
 {
 #ifdef PROXY_DEBUG
@@ -141,7 +137,6 @@ Proxy::connect(Proxy *newProxy, const std::string & address,
   if (!newProxy->connect(address, port))
   {
     std::cerr << "Connect to proxy failed (other)" << std::endl;
-    delete newProxy;
     return false;
   }
 
@@ -168,47 +163,45 @@ Proxy::check(const std::string & address, const std::string & hostname,
 {
   try
   {
-    Proxy *newProxy;
-
     if (!Proxy::skipCheck(address, 23, WINGATE))
     {
-      newProxy = new WinGate(hostname, nick, userhost);
+      ProxyPtr newProxy(new WinGate(hostname, nick, userhost));
       Proxy::connect(newProxy, address, 23);
     }
 
     if (!Proxy::skipCheck(address, 1080, SOCKS4))
     {
-      newProxy = new Socks4(hostname, nick, userhost);
+      ProxyPtr newProxy(new Socks4(hostname, nick, userhost));
       Proxy::connect(newProxy, address, 1080);
     }
 
     if (!Proxy::skipCheck(address, 1080, SOCKS5))
     {
-      newProxy = new Socks5(hostname, nick, userhost);
+      ProxyPtr newProxy(new Socks5(hostname, nick, userhost));
       Proxy::connect(newProxy, address, 1080);
     }
 
     if (!Proxy::skipCheck(address, 80, HTTP))
     {
-      newProxy = new Http(hostname, nick, userhost);
+      ProxyPtr newProxy(new Http(hostname, nick, userhost));
       Proxy::connect(newProxy, address, 80);
     }
 
     if (!Proxy::skipCheck(address, 1080, HTTP))
     {
-      newProxy = new Http(hostname, nick, userhost);
+      ProxyPtr newProxy(new Http(hostname, nick, userhost));
       Proxy::connect(newProxy, address, 1080);
     }
 
     if (!Proxy::skipCheck(address, 3128, HTTP))
     {
-      newProxy = new Http(hostname, nick, userhost);
+      ProxyPtr newProxy(new Http(hostname, nick, userhost));
       Proxy::connect(newProxy, address, 3128);
     }
 
     if (!Proxy::skipCheck(address, 8080, HTTP))
     {
-      newProxy = new Http(hostname, nick, userhost);
+      ProxyPtr newProxy(new Http(hostname, nick, userhost));
       Proxy::connect(newProxy, address, 8080);
     }
   }
@@ -234,6 +227,28 @@ Proxy::setAllFD(fd_set & readset, fd_set & writeset)
 }
 
 
+bool
+Proxy::ProxyProcessor::operator()(ProxyPtr proxy)
+{
+  bool remove;
+
+  try
+  {
+    remove = !proxy->process(this->_readset, this->_writeset);
+  }
+  catch (OOMon::timeout_error)
+  {
+#ifdef PROXY_DEBUG
+    std::cout << "Proxy connection to " << proxy->address() <<
+      " timed out." << std::endl;
+#endif
+    remove = true;
+  }
+
+  return remove;
+}
+
+
 // ProcessAll(readset, writeset)
 //
 // Processes any received data at each proxy connection.
@@ -247,42 +262,17 @@ Proxy::processAll(const fd_set & readset, const fd_set & writeset)
   std::replace_if(Proxy::safeHosts.begin(), Proxy::safeHosts.end(),
     std::bind2nd(std::mem_fun_ref(&Proxy::CacheEntry::isExpired), now), empty);
 
-  for (ProxyList::iterator pos = Proxy::items.begin();
-    pos != Proxy::items.end(); ++pos)
-  {
-    bool keepSocket;
-    Proxy *tmp = (*pos);
+  ProxyProcessor p(readset, writeset);
 
-    try
-    {
-      keepSocket = tmp->process(readset, writeset);
-    }
-    catch (OOMon::timeout_error)
-    {
-#ifdef PROXY_DEBUG
-      std::cout << "Proxy connection to " << tmp->getAddress() <<
-	" timed out." << std::endl;
-#endif
-      keepSocket = false;
-    }
+  Proxy::items.remove_if(p);
+}
 
-    if (!keepSocket)
-    {
-      --pos;
-      Proxy::items.remove(tmp);
 
-#ifdef PROXY_DEBUG
-      std::cout << "Closing proxy connection to " << tmp->getAddress() <<
-	":" << tmp->getPort() << std::endl;
-#endif
-      delete tmp;
-
-#ifdef PROXY_DEBUG
-      std::cout << Proxy::items.size() <<
-	" proxies queued up for processing." << std::endl;
-#endif
-    }
-  }
+bool
+Proxy::ProxyIsChecking::operator()(ProxyPtr proxy)
+{
+  return ((proxy->address() == this->_address) &&
+    (proxy->port() == this->_port) && (proxy->type() == this->_type));
 }
 
 
@@ -290,20 +280,8 @@ bool
 Proxy::isChecking(const std::string & address, const BotSock::Port port,
   const ProxyType type)
 {
-  for (ProxyList::iterator pos = Proxy::items.begin();
-    pos != Proxy::items.end(); ++pos)
-  {
-    if (((*pos)->getAddress() == address) && ((*pos)->getPort() == port) &&
-      ((*pos)->getType() == type))
-    {
-#ifdef PROXY_DEBUG
-      std::cout << "Already scanning " << address << ":" << port << " (" <<
-	(*pos)->getTypeName() << ")" << std::endl;
-#endif
-      return true;
-    }
-  }
-  return false;
+  return (Proxy::items.end() != std::find_if(Proxy::items.begin(),
+    Proxy::items.end(), ProxyIsChecking(address, port, type)));
 }
 
 
@@ -359,7 +337,8 @@ Proxy::status(StrList & output)
 {
   output.push_back("Proxy scanners: " + IntToStr(Proxy::items.size()));
 
-  int cacheCount = 0;
+  int cacheCount = std::count_if(Proxy::safeHosts.begin(),
+    Proxy::safeHosts.end(), std::not1(std::mem_fun_ref(&Proxy::CacheEntry::isEmpty)));
   for (Proxy::Cache::iterator pos = Proxy::safeHosts.begin();
     pos < Proxy::safeHosts.end(); ++pos)
   {

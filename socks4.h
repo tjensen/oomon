@@ -32,16 +32,22 @@ public:
   Socks4(const std::string & hostname, const std::string & nick,
     const std::string & userhost) : Proxy(hostname, nick, userhost)
   {
-    this->setType(SOCKS4);
     this->setBinary(true);
+  }
+  virtual ~Socks4(void)
+  {
+    if (!this->_detectedProxy)
+    {
+      Proxy::addToCache(this->address(), this->port(), Proxy::SOCKS4);
+    }
   }
 
   virtual bool onConnect();
 
 protected:
   virtual bool onRead(const char *text, const int size);
-  virtual ProxyType getType() const { return Proxy::SOCKS4; };
-  virtual std::string getTypeName() const { return "SOCKS4"; };
+  virtual Proxy::ProxyType type(void) const { Proxy::SOCKS4; };
+  virtual std::string typeName(void) const { return "SOCKS4"; };
 };
 
 #endif /* __SOCKS4_H__ */

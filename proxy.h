@@ -24,6 +24,10 @@
 // Std C++ headers
 #include <string>
 #include <list>
+#include <functional>
+
+// Boost C++ headers
+#include <boost/shared_ptr.hpp>
 
 // Std C headers
 #include <sys/types.h>
@@ -37,6 +41,9 @@
 
 class Proxy : public BotSock
 {
+private:
+  typedef boost::shared_ptr<Proxy> ProxyPtr;
+
 public:
   enum ProxyType { SOCKS4, SOCKS5, WINGATE, HTTP };
 
@@ -44,9 +51,13 @@ public:
     const std::string & userhost);
   virtual ~Proxy(void);
 
+  std::string address(void) const { return this->_address; };
+  BotSock::Port port(void) const { return this->_port; };
+  virtual ProxyType type(void) const = 0;
+
   static void check(const std::string &, const std::string &,
     const std::string &, const std::string &);
-  static bool connect(Proxy *newProxy, const std::string & address,
+  static bool connect(ProxyPtr newProxy, const std::string & address,
     const BotSock::Port port);
   static void processAll(const fd_set & readset, const fd_set & writeset);
   static void setAllFD(fd_set & readset, fd_set & writeset);
@@ -67,20 +78,41 @@ public:
 protected:
   void detectedProxy(void);
 
-  std::string getAddress(void) const { return this->_address; };
-  BotSock::Port getPort(void) const { return this->_port; };
+  std::string hostname(void) const { return this->_hostname; };
+  std::string nick(void) const { return this->_nick; };
+  std::string userhost(void) const { return this->_userhost; };
 
-  std::string getHostname(void) const { return this->_hostname; };
-  std::string getNick(void) const { return this->_nick; };
-  std::string getUserhost(void) const { return this->_userhost; };
+  virtual std::string typeName(void) const = 0;
 
-  void setType(const ProxyType & type) { this->_type = type; };
-  ProxyType getType(void) const { return this->_type; };
-  virtual std::string getTypeName(void) const = 0;
+  bool _detectedProxy;
 
 private:
-  typedef std::list<Proxy *> ProxyList;
+  typedef std::list<ProxyPtr> ProxyList;
   static ProxyList items;
+
+  class ProxyProcessor : public std::unary_function<ProxyPtr, bool>
+  {
+  public:
+    explicit ProxyProcessor(const fd_set & readset, const fd_set & writeset)
+      : _readset(readset), _writeset(writeset) { }
+    bool operator()(ProxyPtr proxy);
+  private:
+    const fd_set & _readset;
+    const fd_set & _writeset;
+  };
+
+  class ProxyIsChecking : public std::unary_function<ProxyPtr, bool>
+  {
+  public:
+    explicit ProxyIsChecking(const std::string & address,
+      const BotSock::Port port, const ProxyType type) : _address(address),
+      _port(port), _type(type) { }
+    bool operator()(ProxyPtr proxy);
+  private:
+    const std::string & _address;
+    const BotSock::Port & _port;
+    const ProxyType _type;
+  };
 
   class CacheEntry
   {
@@ -136,10 +168,8 @@ private:
   static const time_t CACHE_EXPIRE;
   static const ProxyList::size_type CACHE_SIZE;
 
-  ProxyType _type;
   std::string _address, _hostname, _nick, _userhost;
   BotSock::Port _port;
-  bool _detectedProxy;
 
   bool connect(const std::string & address, const BotSock::Port port);
 };
