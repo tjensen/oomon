@@ -467,6 +467,15 @@ timeStamp(const TimeStampFormat format, time_t when)
 
   switch (format)
   {
+    case TIMESTAMP_CLIENT:
+#ifdef HAVE_SNPRINTF
+      snprintf(ts_holder, sizeof(ts_holder),
+#else
+      sprintf(ts_holder,
+#endif
+	"%2.2d:%2.2d:%2.2d", time_val->tm_hour, time_val->tm_min,
+	time_val->tm_sec);
+	break;
     case TIMESTAMP_KLINE:
 #ifdef HAVE_SNPRINTF
       snprintf(ts_holder, sizeof(ts_holder),

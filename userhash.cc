@@ -1356,8 +1356,8 @@ UserHash::checkHostClones(const std::string & host)
   while (NULL != find)
   {
     if (server.same(find->info->getHost(), host) &&
-      ((now - find->info->getConnectTime()) <
-      (vars[VAR_CLONE_MAX_TIME]->getInt() + 1)))
+      ((now - find->info->getConnectTime()) <=
+      vars[VAR_CLONE_MAX_TIME]->getInt()))
     {
       if (find->info->getReportTime() > 0)
       {
@@ -1410,38 +1410,31 @@ UserHash::checkHostClones(const std::string & host)
   bool lastIdentd, currentIdentd;
   bool differentUser;
 
+  std::string notice1;
+
   while (find)
   {
     if (server.same(find->info->getHost(), host) &&
-      ((now - find->info->getConnectTime()) <
-      (vars[VAR_CLONE_MAX_TIME]->getInt() + 1)) &&
+      ((now - find->info->getConnectTime()) <=
+      vars[VAR_CLONE_MAX_TIME]->getInt()) &&
       (find->info->getReportTime() == 0))
     {
       ++cloneCount;
 
 #ifdef USERHASH_DEBUG
       std::cout << "clone(" << cloneCount << "): " <<
-	find->info->output("%n %u %i") << std::endl;
+	find->info->output("%n %@ %i") << std::endl;
 #endif
 
-      time_t conntime = find->info->getConnectTime();
-      struct tm *tmrec = localtime(&conntime);
-          
-      char notice[MAX_BUFF];
-      char notice1[MAX_BUFF];
+      std::string notice;
       if (cloneCount == 1)  
-      { 
-        sprintf(notice1, "  %s is %s@%s (%2.2d:%2.2d:%2.2d)",
-          find->info->getNick().c_str(), find->info->getUser().c_str(),
-          find->info->getHost().c_str(), tmrec->tm_hour, tmrec->tm_min,
-	  tmrec->tm_sec);
+      {
+	notice1 = find->info->output(
+	  vars[VAR_CLONE_REPORT_FORMAT]->getString());
       }
       else
       {
-        sprintf(notice, "  %s is %s@%s (%2.2d:%2.2d:%2.2d)",
-	  find->info->getNick().c_str(), find->info->getUser().c_str(),
-	  find->info->getHost().c_str(), tmrec->tm_hour, tmrec->tm_min,
-	  tmrec->tm_sec);
+	notice = find->info->output(vars[VAR_CLONE_REPORT_FORMAT]->getString());
       }
   
       lastIdentd = currentIdentd = true;
@@ -1484,7 +1477,7 @@ UserHash::checkHostClones(const std::string & host)
 	// do nothing
       }
       else if (cloneCount == 2) 
-      {   
+      {
         ::SendAll(notice1, UF_OPER);
         ::SendAll(notice, UF_OPER);
         Log::Write(notice1);
@@ -1522,8 +1515,8 @@ UserHash::checkIpClones(const BotSock::Address & ip)
   while (NULL != find)
   {
     if (BotSock::sameClassC(find->info->getIp(), ip) &&
-      ((now - find->info->getConnectTime()) <
-      (vars[VAR_CLONE_MAX_TIME]->getInt() + 1)))
+      ((now - find->info->getConnectTime()) <=
+      vars[VAR_CLONE_MAX_TIME]->getInt()))
     {
       if (find->info->getReportTime() > 0)
       {
@@ -1578,38 +1571,30 @@ UserHash::checkIpClones(const BotSock::Address & ip)
   bool lastIdentd, currentIdentd;
   bool differentIp, differentUser;
 
+  std::string notice1;
+
   while (find)
   {
     if (BotSock::sameClassC(find->info->getIp(), ip) &&
-      ((now - find->info->getConnectTime()) <
-      (vars[VAR_CLONE_MAX_TIME]->getInt() + 1)) &&
-      (find->info->getReportTime() == 0))
+      ((now - find->info->getConnectTime()) <=
+      vars[VAR_CLONE_MAX_TIME]->getInt()) && (find->info->getReportTime() == 0))
     {
       ++cloneCount;
 
 #ifdef USERHASH_DEBUG
       std::cout << "clone(" << cloneCount << "): " <<
-	find->info->output("%n %u %i") << std::endl;
+	find->info->output("%n %@ %i") << std::endl;
 #endif
 
-      time_t conntime = find->info->getConnectTime();
-      struct tm *tmrec = localtime(&conntime);
-          
-      char notice[MAX_BUFF];
-      char notice1[MAX_BUFF];
+      std::string notice;
       if (cloneCount == 1)  
-      { 
-        sprintf(notice1, "  %s is %s@%s (%2.2d:%2.2d:%2.2d)",
-          find->info->getNick().c_str(), find->info->getUser().c_str(),
-          find->info->getHost().c_str(), tmrec->tm_hour, tmrec->tm_min,
-	  tmrec->tm_sec);
+      {
+	notice1 = find->info->output(
+	  vars[VAR_CLONE_REPORT_FORMAT]->getString());
       }
       else
       {
-        sprintf(notice, "  %s is %s@%s (%2.2d:%2.2d:%2.2d)",
-	  find->info->getNick().c_str(), find->info->getUser().c_str(),
-	  find->info->getHost().c_str(), tmrec->tm_hour, tmrec->tm_min,
-	  tmrec->tm_sec);
+	notice = find->info->output(vars[VAR_CLONE_REPORT_FORMAT]->getString());
       }
   
       lastIdentd = currentIdentd = true;
@@ -1662,7 +1647,7 @@ UserHash::checkIpClones(const BotSock::Address & ip)
 	// do nothing
       }
       else if (cloneCount == 2) 
-      {   
+      {
         ::SendAll(notice1, UF_OPER);
         ::SendAll(notice, UF_OPER);
         Log::Write(notice1);
@@ -1916,6 +1901,14 @@ UserHash::UserEntry::output(const std::string & format) const
 	  break;
 	case 'S':
 	  result += ::IntToStr(this->getScore(), 4);
+	  ++next;
+	  break;
+	case 'T':
+	  if (this->getConnectTime() != 0)
+	  {
+	    result += '(' + timeStamp(TIMESTAMP_CLIENT,
+	      this->getConnectTime()) + ')';
+	  }
 	  ++next;
 	  break;
 	case 'U':
