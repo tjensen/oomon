@@ -1140,6 +1140,10 @@ set dnsbl_proxy_zone
 .d.Note: Configuring OOMon with multiple OPM
 .d.DNSBL zones may cause significant lag if the
 .d.bot is not linked with the ADNS library.
+.d.
+.d.To completely disable DNSBL lookups, simply
+.d.clear this setting by issuing the command,
+.d.".set -dnsbl_proxy_zone".
 .f.mo
 .l.set dnsbl_proxy_action
 set extra_kline_info
