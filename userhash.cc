@@ -85,7 +85,7 @@ UserHash::hashFunc(const std::string & key)
 int
 UserHash::hashFunc(const BotSock::Address & key)
 {
-  return (key & BotSock::vhost_netmask) % HASHTABLESIZE;
+  return (key & BotSock::ClassCNetMask) % HASHTABLESIZE;
 }
 
 
@@ -159,10 +159,6 @@ UserHash::add(const std::string & nick, const std::string & userhost,
           if (ip != "")
           {
             CheckProxy(ip, host, nick, userhost);
-
-#ifdef DETECT_VHOST_CLONES
-            addIP(ip);
-#endif
           }
 
 	  BotSock::Address ipAddr = BotSock::inet_addr(ip);
@@ -929,8 +925,8 @@ UserHash::reportNets(StrList & output, const int num)
         for (std::list<UserHash::SortEntry>::iterator pos = sort.begin();
 	  pos != sort.end(); ++pos)
         {
-          if ((userptr->info->getIp() & BotSock::vhost_netmask) ==
-	    (pos->rec->getIp() & BotSock::vhost_netmask))
+          if ((userptr->info->getIp() & BotSock::ClassCNetMask) ==
+	    (pos->rec->getIp() & BotSock::ClassCNetMask))
 	  {
 	    found = true;
             if (++(pos->count) > maxCount)
@@ -1293,8 +1289,8 @@ UserHash::reportVMulti(StrList & output, const int minimum)
       temp = top;
       while (temp != userptr)
         if (server.same(temp->info->getUser(), userptr->info->getUser()) &&
-          ((userptr->info->getIp() & BotSock::vhost_netmask) ==
-	  (userptr->info->getIp() & BotSock::vhost_netmask)))
+          ((userptr->info->getIp() & BotSock::ClassCNetMask) ==
+	  (userptr->info->getIp() & BotSock::ClassCNetMask)))
 	{
           break;
 	}
@@ -1306,8 +1302,8 @@ UserHash::reportVMulti(StrList & output, const int minimum)
         temp = temp->collision;
         while (temp) {
           if (server.same(temp->info->getUser(), userptr->info->getUser()) &&
-            ((userptr->info->getIp() & BotSock::vhost_netmask) ==
-	    (userptr->info->getIp() & BotSock::vhost_netmask)))
+            ((userptr->info->getIp() & BotSock::ClassCNetMask) ==
+	    (userptr->info->getIp() & BotSock::ClassCNetMask)))
 	  {
             if (vars[VAR_OPER_IN_MULTI]->getBool() || (!temp->info->getOper() &&
 	      !Config::IsOper(temp->info->getUserHost(), temp->info->getIp())))

@@ -109,7 +109,6 @@ public:
   static bool sameClassC(const BotSock::Address & ip1,
     const BotSock::Address & ip2);
 
-  static const BotSock::Address vhost_netmask;
   static const BotSock::Address ClassCNetMask;
 
   virtual bool onConnect() { return true; };

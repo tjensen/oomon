@@ -80,16 +80,6 @@
 #undef USE_FLAGS
 
 
-// Define this to detect vhost clones - needs to be reworked
-#undef DETECT_VHOST_CLONES
-
-// Netmask used for detecting vhosts (warning: do not change!)
-#define VHOST_NETMASK "255.255.255.0"
-
-#define MAX_IP_CONNECTS 5
-#define MAX_IP_TIME 10
-
-
 // Use services.ca style services (BROKEN -- DO NOT USE)
 #undef CA_SERVICES
 #define CA_SERVICES_REQUEST 	"CA-SVCS"

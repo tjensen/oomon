@@ -101,17 +101,6 @@ static NoticeList<ConnectEntry> connects;
 static NoticeList<OperFailNoticeEntry> operfails;
 
 
-#define IP_TABLE_SIZE 300
-typedef struct ip_entry
-{
-  BotSock::Address net;
-  int		ip_count, total_count;
-  time_t	last_ip, first_ip;
-} IP_ENTRY;
-
-IP_ENTRY ips[IP_TABLE_SIZE];
-
-
 static std::string
 makeKline(const std::string & mask, const std::string & reason,
   const int minutes = 0)
@@ -869,92 +858,6 @@ void
 onTooManyConnNotice(const std::string & text)
 {
   tooManyConn.onNotice(text);
-}
-
-
-void
-addIP(std::string ip)
-{
-  int first_empty_entry = -1;
-  bool found_entry = false;
-  int i;
-
-  time_t current_time = time(NULL);
-
-  BotSock::Address IP = BotSock::inet_addr(ip);
-
-  ip = ip.substr(0, ip.rfind('.')) + ".";
-
-  for (i = 0; i < IP_TABLE_SIZE; i++ )
-  {
-    if (ips[i].net)
-    { 
-      if (ips[i].net == (IP & BotSock::vhost_netmask))
-      {
-        found_entry = true;
-  
-        /* if its an old old entry, let it drop to 0, then start counting
-           (this should be very unlikely case)
-         */
-        if ((ips[i].last_ip + MAX_IP_TIME) < current_time)
-        {
-          ips[i].ip_count = 0;
-          ips[i].total_count = 0;
-          ips[i].first_ip = current_time;
-        }
-
-        ips[i].ip_count++;
-        ips[i].total_count++;
-
-        if (ips[i].ip_count >= MAX_IP_CONNECTS)
-        {
-          char buffer[MAX_BUFF];
-          sprintf(buffer,
-	    "Possible VHost clones from *@%s* (%d connects in %ld seconds)",
-	    ip.c_str(), ips[i].total_count,
-	    static_cast<long>(current_time - ips[i].first_ip));
-          ::SendAll(buffer, UF_OPER);
-          Log::Write(buffer);
-
-          ips[i].ip_count = 0;
-          ips[i].last_ip = current_time;
-        }       
-        else            
-        {     
-          ips[i].last_ip = current_time;
-        }     
-      }         
-      else
-      {         
-        if ((ips[i].last_ip + MAX_IP_TIME) < current_time)
-        {     
-          ips[i].net = 0;
-        }   
-      }
-    }         
-    else
-    {         
-      if (first_empty_entry < 0)
-      {
-        first_empty_entry = i;
-      }
-    }             
-  }               
-                
-/*            
-   If this is a new entry, then found_entry will still be NO
-*/                
-  if (!found_entry)    
-  {     
-    if (first_empty_entry >= 0)
-    {     
-      ips[first_empty_entry].net = IP & BotSock::vhost_netmask;
-      ips[first_empty_entry].last_ip = current_time;
-      ips[first_empty_entry].first_ip = current_time;
-      ips[first_empty_entry].ip_count = 1;
-      ips[first_empty_entry].total_count = 1;
-    }   
-  }
 }
 
 

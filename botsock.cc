@@ -46,8 +46,6 @@
 #endif
 
 
-const BotSock::Address BotSock::vhost_netmask =
-  BotSock::inet_addr(VHOST_NETMASK);
 const BotSock::Address BotSock::ClassCNetMask =
   BotSock::inet_addr("255.255.255.0");
 

@@ -75,7 +75,6 @@ void CheckProxy(const std::string &, const std::string &, const std::string &,
 
 bool checkForSpoof(const std::string & nick, const std::string & user, 
   const std::string & host, const std::string & ip);
-void addIP(std::string ip);
 
 void status(StrList & output);
 
