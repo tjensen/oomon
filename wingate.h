@@ -37,8 +37,7 @@
 class WinGate : public Proxy
 {
 public:
-  WinGate(const std::string & hostname, const std::string & nick,
-    const std::string & userhost);
+  WinGate(const UserEntryPtr user);
   virtual ~WinGate(void)
   {
     if (!this->detectedProxy_)

@@ -31,6 +31,7 @@
 
 // OOMon Headers
 #include "adnswrap.h"
+#include "userentry.h"
 
 
 class Dnsbl
@@ -39,12 +40,10 @@ public:
   Dnsbl(void) { }
   virtual ~Dnsbl(void) { }
 
-  bool check(const BotSock::Address & addr, const std::string & nick,
-    const std::string & userhost);
+  bool check(const BotSock::Address & addr, const UserEntryPtr user);
 
   static void openProxyDetected(const BotSock::Address & addr,
-    const std::string & nick, const std::string & userhost,
-    const std::string & zone);
+      const UserEntryPtr user, const std::string & zone);
 
 #ifdef HAVE_LIBADNS
   void process(void);
@@ -53,16 +52,15 @@ public:
   void status(class BotClient * client) const;
 
 private:
-  bool checkZone(const BotSock::Address & addr, const std::string & nick,
-    const std::string & userhost, const std::string & zone);
+  bool checkZone(const BotSock::Address & addr, const UserEntryPtr user,
+      const std::string & zone);
 
 #ifdef HAVE_LIBADNS
   class Query
   {
   public:
-    Query(const BotSock::Address & addr, const std::string & nick,
-      const std::string & userhost, const std::string & zone) : addr_(addr),
-      nick_(nick), userhost_(userhost), zone_(zone) { }
+    Query(const BotSock::Address & addr, const UserEntryPtr user,
+      const std::string & zone) : addr_(addr), user_(user), zone_(zone) { }
 
     bool process(void);
 
@@ -70,8 +68,7 @@ private:
 
   private:
     const BotSock::Address addr_;
-    const std::string nick_;
-    const std::string userhost_;
+    const UserEntryPtr user_;
     const std::string zone_;
   };
 

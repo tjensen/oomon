@@ -36,6 +36,7 @@
 #include "oomon.h"
 #include "proxy.h"
 #include "botsock.h"
+#include "userentry.h"
 
 
 class ProxyList
@@ -47,23 +48,22 @@ public:
   ProxyList(void);
   virtual ~ProxyList(void) { }
 
-  void check(const std::string &, const std::string &,
-    const std::string &, const std::string &);
-  bool connect(ProxyPtr newProxy, const std::string & address,
-    const BotSock::Port port);
+  void check(const BotSock::Address & address, const UserEntryPtr user);
+  bool connect(ProxyPtr newProxy, const BotSock::Address & address,
+      const BotSock::Port port);
   void processAll(const fd_set & readset, const fd_set & writeset);
   void setAllFD(fd_set & readset, fd_set & writeset);
-  bool isChecking(const std::string &, const BotSock::Port,
-    Proxy::Protocol) const;
-  bool isVerifiedClean(const std::string & address,
-    const BotSock::Port port, const Proxy::Protocol type);
-  void addToCache(const std::string & address, const BotSock::Port port,
-    const Proxy::Protocol type);
-  bool skipCheck(const std::string & address, const BotSock::Port & port,
-    const Proxy::Protocol & type)
+  bool isChecking(const BotSock::Address &, const BotSock::Port,
+      Proxy::Protocol) const;
+  bool isVerifiedClean(const BotSock::Address & address,
+      const BotSock::Port port, const Proxy::Protocol type);
+  void addToCache(const BotSock::Address & address, const BotSock::Port port,
+      const Proxy::Protocol type);
+  bool skipCheck(const BotSock::Address & address, const BotSock::Port & port,
+      const Proxy::Protocol & type)
   {
     return (this->isChecking(address, port, type) ||
-      this->isVerifiedClean(address, port, type));
+        this->isVerifiedClean(address, port, type));
   }
 
   void status(class BotClient * client) const;
@@ -72,8 +72,7 @@ public:
 
 private:
   void initiateCheck(const Proxy::Protocol type, const std::string & port,
-    const std::string & address, const std::string & hostname,
-    const std::string & nick, const std::string & userhost);
+    const BotSock::Address & address, const UserEntryPtr user);
 
   typedef std::list<ProxyPtr> SockList;
   SockList scanners;
@@ -92,12 +91,12 @@ private:
   class ProxyIsChecking : public std::unary_function<ProxyPtr, bool>
   {
   public:
-    explicit ProxyIsChecking(const std::string & address,
-      const BotSock::Port port, const Proxy::Protocol type) : address_(address),
-      port_(port), type_(type) { }
+    explicit ProxyIsChecking(const BotSock::Address & address,
+        const BotSock::Port port, const Proxy::Protocol type)
+      : address_(address), port_(port), type_(type) { }
     bool operator()(ProxyPtr proxy);
   private:
-    const std::string & address_;
+    const BotSock::Address & address_;
     const BotSock::Port & port_;
     const Proxy::Protocol type_;
   };
@@ -107,8 +106,8 @@ private:
   public:
     CacheEntry(void) : ip_(INADDR_NONE) { };
     CacheEntry(const BotSock::Address & ip, const BotSock::Port & port,
-      const Proxy::Protocol & type)
-      : ip_(ip), port_(port), type_(type), checked_(std::time(NULL)) { };
+        const Proxy::Protocol & type)
+      : ip_(ip), port_(port), type_(type), checked_(std::time(NULL)) { }
 
     bool isEmpty(void) const { return (INADDR_NONE == ip_); };
     bool operator==(const CacheEntry & rhs) const

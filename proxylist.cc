@@ -85,7 +85,7 @@ ProxyList::ProxyList(void) : safeHosts(ProxyList::CACHE_SIZE), cacheHits(0),
 // Returns true if no errors occurred
 //
 bool
-ProxyList::connect(ProxyPtr newProxy, const std::string & address,
+ProxyList::connect(ProxyPtr newProxy, const BotSock::Address & address,
   const BotSock::Port port)
 {
 #ifdef PROXYLIST_DEBUG
@@ -115,8 +115,7 @@ ProxyList::connect(ProxyPtr newProxy, const std::string & address,
 
 void
 ProxyList::initiateCheck(const Proxy::Protocol type, const std::string & port,
-  const std::string & address, const std::string & hostname,
-  const std::string & nick, const std::string & userhost)
+  const BotSock::Address & address, const UserEntryPtr user)
 {
   try
   {
@@ -130,25 +129,25 @@ ProxyList::initiateCheck(const Proxy::Protocol type, const std::string & port,
       {
 	case Proxy::HTTP:
           {
-            ProxyPtr tmp(new Http(hostname, nick, userhost));
+            ProxyPtr tmp(new Http(user));
             newProxy.swap(tmp);
           }
 	  break;
 	case Proxy::WINGATE:
           {
-            ProxyPtr tmp(new WinGate(hostname, nick, userhost));
+            ProxyPtr tmp(new WinGate(user));
             newProxy.swap(tmp);
           }
 	  break;
 	case Proxy::SOCKS4:
           {
-            ProxyPtr tmp(new Socks4(hostname, nick, userhost));
+            ProxyPtr tmp(new Socks4(user));
             newProxy.swap(tmp);
           }
 	  break;
 	case Proxy::SOCKS5:
           {
-            ProxyPtr tmp(new Socks5(hostname, nick, userhost));
+            ProxyPtr tmp(new Socks5(user));
             newProxy.swap(tmp);
           }
 	  break;
@@ -181,8 +180,7 @@ ProxyList::initiateCheck(const Proxy::Protocol type, const std::string & port,
 // Returns true if no errors occurred
 //
 void
-ProxyList::check(const std::string & address, const std::string & hostname,
-  const std::string & nick, const std::string & userhost)
+ProxyList::check(const BotSock::Address & address, const UserEntryPtr user)
 {
   StrVector http, socks4, socks5, wingate;
 
@@ -193,20 +191,19 @@ ProxyList::check(const std::string & address, const std::string & hostname,
 
   for (StrVector::iterator pos = http.begin(); pos != http.end(); ++pos)
   {
-    ProxyList::initiateCheck(Proxy::HTTP, *pos, address, hostname, nick,
-      userhost);
+    ProxyList::initiateCheck(Proxy::HTTP, *pos, address, user);
   }
   for (StrVector::iterator pos = socks4.begin(); pos != socks4.end(); ++pos)
   {
-    initiateCheck(Proxy::SOCKS4, *pos, address, hostname, nick, userhost);
+    ProxyList::initiateCheck(Proxy::SOCKS4, *pos, address, user);
   }
   for (StrVector::iterator pos = socks5.begin(); pos != socks5.end(); ++pos)
   {
-    initiateCheck(Proxy::SOCKS5, *pos, address, hostname, nick, userhost);
+    ProxyList::initiateCheck(Proxy::SOCKS5, *pos, address, user);
   }
   for (StrVector::iterator pos = wingate.begin(); pos != wingate.end(); ++pos)
   {
-    initiateCheck(Proxy::WINGATE, *pos, address, hostname, nick, userhost);
+    ProxyList::initiateCheck(Proxy::WINGATE, *pos, address, user);
   }
 }
 
@@ -273,8 +270,8 @@ ProxyList::ProxyIsChecking::operator()(ProxyPtr proxy)
 
 
 bool
-ProxyList::isChecking(const std::string & address, const BotSock::Port port,
-  const Proxy::Protocol type) const
+ProxyList::isChecking(const BotSock::Address & address,
+    const BotSock::Port port, const Proxy::Protocol type) const
 {
   return (this->scanners.end() != std::find_if(this->scanners.begin(),
     this->scanners.end(), ProxyList::ProxyIsChecking(address, port, type)));
@@ -282,10 +279,10 @@ ProxyList::isChecking(const std::string & address, const BotSock::Port port,
 
 
 void
-ProxyList::addToCache(const std::string & address, const BotSock::Port port,
-  const Proxy::Protocol type)
+ProxyList::addToCache(const BotSock::Address & address,
+    const BotSock::Port port, const Proxy::Protocol type)
 {
-  ProxyList::CacheEntry newEntry(BotSock::inet_addr(address), port, type);
+  ProxyList::CacheEntry newEntry(address, port, type);
   ProxyList::CacheEntry empty;
 
   ProxyList::Cache::iterator findEmpty = std::find(this->safeHosts.begin(),
@@ -306,10 +303,10 @@ ProxyList::addToCache(const std::string & address, const BotSock::Port port,
 
 
 bool
-ProxyList::isVerifiedClean(const std::string & address,
-  const BotSock::Port port, const Proxy::Protocol type)
+ProxyList::isVerifiedClean(const BotSock::Address & address,
+    const BotSock::Port port, const Proxy::Protocol type)
 {
-  const ProxyList::CacheEntry tmp(BotSock::inet_addr(address), port, type);
+  const ProxyList::CacheEntry tmp(address, port, type);
 
   ProxyList::Cache::iterator pos = std::find(this->safeHosts.begin(),
     this->safeHosts.end(), tmp);
@@ -343,9 +340,10 @@ ProxyList::isVerifiedClean(const std::string & address,
 void
 ProxyList::status(BotClient * client) const
 {
-  std::string scanners("Proxy scanners: ");
-  scanners += boost::lexical_cast<std::string>(this->scanners.size());
-  client->send(scanners);
+  ProxyList::SockList::size_type size(this->scanners.size());
+  std::string scanCount("Proxy scanners: ");
+  scanCount += boost::lexical_cast<std::string>(size);
+  client->send(scanCount);
 
   int cacheCount = 0;
   for (ProxyList::Cache::const_iterator pos = this->safeHosts.begin();

@@ -1077,16 +1077,15 @@ onTooManyConnNotice(const std::string & text)
 
 
 void
-CheckProxy(const std::string & ip, const std::string & host,
-  const std::string & nick, const std::string & userhost)
+checkProxy(const BotSock::Address & ip, const UserEntryPtr user)
 {
   // If the IP is listed by the DNSBL, there's no reason to do a Wingate
   // or SOCKS proxy check of our own!
-  if (!dnsbl.check(BotSock::inet_addr(ip), nick, userhost))
+  if (!dnsbl.check(ip, user))
   {
     if (vars[VAR_SCAN_FOR_PROXIES]->getBool())
     {
-      proxies.check(ip, host, nick, userhost);
+      proxies.check(ip, user);
     }
   }
 }

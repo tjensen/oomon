@@ -41,8 +41,7 @@
 #endif
 
 
-WinGate::WinGate(const std::string & hostname, const std::string & nick,
-  const std::string & userhost) : Proxy(hostname, nick, userhost)
+WinGate::WinGate(const UserEntryPtr user) : Proxy(user)
 {
   registerOnConnectHandler(boost::bind(&WinGate::onConnect, this));
   registerOnReadHandler(boost::bind(&WinGate::onRead, this, _1));
@@ -57,7 +56,7 @@ bool
 WinGate::onConnect()
 {
 #ifdef WINGATE_DEBUG
-  std::cout << "WinGate proxy detector connected to " << this->getAddress() <<
+  std::cout << "WinGate proxy detector connected to " << this->textAddress() <<
     ":" << this->getPort() << std::endl;
 #endif
 

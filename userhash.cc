@@ -197,9 +197,10 @@ UserHash::add(const std::string & nick, const std::string & userhost,
             reason.format(vars[VAR_SEEDRAND_REASON]->getString()), false);
         }
 
-        if (!ip.empty() && !config.isExempt(newuser, Config::EXEMPT_PROXY))
+        if ((newuser->getIP() != INADDR_NONE) &&
+            !config.isExempt(newuser, Config::EXEMPT_PROXY))
         {
-          CheckProxy(ip, host, nick, userhost);
+          checkProxy(newuser->getIP(), newuser);
         }
 
         if (vars[VAR_CTCPVERSION_ENABLE]->getBool() &&

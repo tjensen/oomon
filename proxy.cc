@@ -65,10 +65,8 @@
 #endif
 
 
-Proxy::Proxy(const std::string & hostname, const std::string & nick,
-  const std::string & userhost)
-  : BotSock(), detectedProxy_(false), hostname_(hostname), nick_(nick),
-  userhost_(userhost)
+Proxy::Proxy(const UserEntryPtr user)
+  : BotSock(), detectedProxy_(false), user_(user)
 {
 }
 
@@ -92,7 +90,7 @@ Proxy::detectedProxy(void)
   Format reason;
   reason.setStringToken('n', this->nick());
   reason.setStringToken('u', this->userhost());
-  reason.setStringToken('i', this->address());
+  reason.setStringToken('i', this->textAddress());
   reason.setStringToken('p', portString);
   reason.setStringToken('t', this->typeName());
 
@@ -103,27 +101,25 @@ Proxy::detectedProxy(void)
   notice += "!";
   notice += this->userhost();
   notice += " [";
-  notice += this->address();
+  notice += this->textAddress();
   notice += ":";
   notice += portString;
   notice += "]";
   ::SendAll(notice, UserFlags::OPER, WATCH_PROXYSCANS);
   Log::Write(notice);
 
-  doAction(this->nick(), this->userhost(),
-    BotSock::inet_addr(this->address()),
-    vars[VAR_SCAN_PROXY_ACTION]->getAction(),
-    vars[VAR_SCAN_PROXY_ACTION]->getInt(),
-    reason.format(vars[VAR_SCAN_PROXY_REASON]->getString()), false);
+  doAction(this->nick(), this->userhost(), this->address(),
+      vars[VAR_SCAN_PROXY_ACTION]->getAction(),
+      vars[VAR_SCAN_PROXY_ACTION]->getInt(),
+      reason.format(vars[VAR_SCAN_PROXY_REASON]->getString()), false);
 }
 
 
 bool
-Proxy::connect(const std::string & address, const BotSock::Port port)
+Proxy::connect(const BotSock::Address & address, const BotSock::Port port)
 {
-  this->address_ = address;
   this->port_ = port;
 
-  return this->BotSock::connect(this->address_, this->port_);
+  return this->BotSock::connect(this->address(), this->port());
 }
 

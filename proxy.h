@@ -32,6 +32,7 @@
 #include "strtype"
 #include "oomon.h"
 #include "botsock.h"
+#include "userentry.h"
 
 
 class Proxy : public BotSock
@@ -39,29 +40,29 @@ class Proxy : public BotSock
 public:
   enum Protocol { SOCKS4, SOCKS5, WINGATE, HTTP };
 
-  Proxy(const std::string & hostname, const std::string & nick,
-    const std::string & userhost);
+  Proxy(const UserEntryPtr user);
   virtual ~Proxy(void);
 
-  bool connect(const std::string & address, const BotSock::Port port);
+  bool connect(const BotSock::Address & address, const BotSock::Port port);
 
-  std::string address(void) const { return this->address_; };
-  BotSock::Port port(void) const { return this->port_; };
+  BotSock::Address address(void) const { return this->user_->getIP(); }
+  std::string textAddress(void) const { return this->user_->getTextIP(); }
+  BotSock::Port port(void) const { return this->port_; }
   virtual Proxy::Protocol type(void) const = 0;
 
 protected:
   void detectedProxy(void);
 
-  std::string hostname(void) const { return this->hostname_; };
-  std::string nick(void) const { return this->nick_; };
-  std::string userhost(void) const { return this->userhost_; };
+  std::string hostname(void) const { return this->user_->getHost(); }
+  std::string nick(void) const { return this->user_->getNick(); }
+  std::string userhost(void) const { return this->user_->getUserHost(); }
 
   virtual std::string typeName(void) const = 0;
 
   bool detectedProxy_;
 
 private:
-  std::string address_, hostname_, nick_, userhost_;
+  const UserEntryPtr user_;
   BotSock::Port port_;
 };
 

@@ -30,8 +30,7 @@
 class Socks4 : public Proxy
 {
 public:
-  Socks4(const std::string & hostname, const std::string & nick,
-    const std::string & userhost);
+  Socks4(const UserEntryPtr user);
   virtual ~Socks4(void)
   {
     if (!this->detectedProxy_)

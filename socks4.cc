@@ -49,8 +49,7 @@
 #endif
 
 
-Socks4::Socks4(const std::string & hostname, const std::string & nick,
-  const std::string & userhost) : Proxy(hostname, nick, userhost)
+Socks4::Socks4(const UserEntryPtr user) : Proxy(user)
 {
   registerOnConnectHandler(boost::bind(&Socks4::onConnect, this));
   registerOnBinaryReadHandler(boost::bind(&Socks4::onRead, this, _1, _2));
@@ -65,7 +64,7 @@ bool
 Socks4::onConnect()
 {
 #ifdef SOCKS4_DEBUG
-  std::cout << "SOCKS4 proxy detector connected to " << this->getAddress() <<
+  std::cout << "SOCKS4 proxy detector connected to " << this->textAddress() <<
     ":" << this->getPort() << std::endl;
 #endif
 

@@ -44,8 +44,7 @@
 #endif
 
 
-Http::Http(const std::string & hostname, const std::string & nick,
-  const std::string & userhost) : Proxy(hostname, nick, userhost)
+Http::Http(const UserEntryPtr user) : Proxy(user)
 {
   registerOnConnectHandler(boost::bind(&Http::onConnect, this));
   registerOnReadHandler(boost::bind(&Http::onRead, this, _1));
@@ -61,7 +60,7 @@ Http::onConnect()
 {
 #ifdef HTTP_DEBUG
   std::cout << "HTTP CONNECT proxy detector connected to " <<
-    this->getAddress() << ":" << this->getPort() << std::endl;
+    this->textAddress() << ":" << this->getPort() << std::endl;
 #endif
 
   std::string buffer("CONNECT ");

@@ -31,8 +31,7 @@
 class Http : public Proxy
 {
 public:
-  Http(const std::string & hostname, const std::string & nick,
-    const std::string & userhost);
+  Http(const UserEntryPtr user);
   virtual ~Http(void)
   {
     if (!this->detectedProxy_)

@@ -49,9 +49,7 @@
 #endif
 
 
-Socks5::Socks5(const std::string & hostname, const std::string & nick,
-  const std::string & userhost)
-  : Proxy(hostname, nick, userhost), state(STATE_WAIT1)
+Socks5::Socks5(const UserEntryPtr user) : Proxy(user), state(STATE_WAIT1)
 {
   registerOnConnectHandler(boost::bind(&Socks5::onConnect, this));
   registerOnBinaryReadHandler(boost::bind(&Socks5::onRead, this, _1, _2));
@@ -66,7 +64,7 @@ bool
 Socks5::onConnect()
 {
 #ifdef SOCKS5_DEBUG
-  std::cout << "SOCKS5 proxy detector connected to " << this->getAddress() <<
+  std::cout << "SOCKS5 proxy detector connected to " << this->textAddress() <<
     ":" << this->getPort() << std::endl;
 #endif
 

@@ -72,8 +72,7 @@ void klineClones(const bool kline, const std::string & rate,
   const bool differentUser, const bool differentIp,
   const bool identd);
 
-void CheckProxy(const std::string &, const std::string &, const std::string &,
-  const std::string &);
+void checkProxy(const BotSock::Address & ip, const UserEntryPtr user);
 
 bool checkForSpoof(const std::string & nick, const std::string & user, 
   const std::string & host, const std::string & ip,
