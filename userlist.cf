@@ -1,0 +1,53 @@
+# ===========================================================================
+# OOMon - Objected Oriented Monitor Bot
+# Copyright (C) 2003  Timothy L. Jensen
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+# ===========================================================================
+
+# Sample included config file
+# $Id$
+
+# I chose to put operators in a seperate file
+#:Handle:userhostmask:password:flags:
+#
+# Handle - Similar to a nick.  In fact, you may want to set this to be the
+#          oper's preferred nick.  More than one O: line can have the same
+#          handle.  If no handle is specified, the user's nick on IRC will
+#          be used for chatting, etc.
+#
+# userhostmask - In the form of user@host with asterisks and/or question
+#                marks to make it pretty :P
+#
+# password - Plaintext or crypted password, depending on whether USE_CRYPT
+#            was defined (see oomon.h) and if configure could find a
+#            usable crypt(3) function.
+#
+# flags - This defines which commands the user may use. Possibilities are:
+#          C - Channel (.join, .part, .op)
+#          D - Dline (.dline, .undline)
+#          G - Gline (.gline, .gclone, .gflood, etc.)
+#          K - Kline (.kline, .kclone, .kflood, etc.)
+#          M - Master (.die, .reload, etc.)
+#          N - Can see client nick changes
+#          O - Oper (.kill, .multi, .list, etc.)
+#          R - Remote (.command@otherbot)
+#          W - Can see WALLOPS/OPERWALL/LOCOPS
+#          X - Can see client connects/disconnects
+#
+O:Toast:toast@plasma.toast.pc:9oXu/uVLpyWCQ:CDGKMNORWX:
+O:Narcotic:crusher@chalupa.monkeys.smelt:8fMPqfJqkeI6M:CKOWX:
+O:LarZ:mjr@blackened.is.the.end:exVKOvn/mjRr.:CDGKNOWX:
+O::*@*:::

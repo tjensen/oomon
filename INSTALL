@@ -1,0 +1,87 @@
+$Id$
+
+*** HOW TO COMPILE OOMON:
+
+First, run the configure script as follows:
+
+	./configure [options]
+
+Type "./configure --help" to get a list of options you may use.  The
+following options are specific to OOMon:
+
+  --enable-pcre[=DIR]
+    By default, the configure script will attempt to automatically
+    determine if the Perl-Compatible Regular Expressions library is
+    available on your system.  Use this option to tell configure
+    where the PCRE files are located if it is unable to locate them
+    on its own.
+    
+  --enable-gdbm[=DIR]
+    By default, the configure script will attempt to automatically
+    determine if GDBM database routines are available on your system.
+    Use this option to tell configure where the GDBM files are located
+    if it is unable to locate them on its own.
+
+Another commonly used option is "--prefix=PREFIX", which you should use
+if you want OOMon to be installed in a location other than the default.
+
+If the script is unable to find your C++ compiler (this is NOT the same
+as not being able to find the GNU C++ libraries), you might try the
+following:
+
+	CXX=g++;export CXX
+	./configure
+
+Or for those using csh and its derivatives:
+
+	setenv CXX g++
+	./configure
+
+If it STILL doesn't work, make sure a C++ compiler is actually
+installed.  Chances are one isn't!
+
+In fact, if on your system c++ is NOT GNU C++, I recommend you use
+GNU's compiler anyway.  It's what I use, and who knows what sort of
+crazy things other compilers do!
+
+Please note that it is no longer necessary to modify oomon.h at this
+point.  All configurable settings can now be modified at run-time
+through the use of the ".set" command.
+
+With that said, you can now build the executable:
+
+	make
+
+Assuming no errors occurred, when the build completes you should
+then install OOMon with the following command:
+
+	make install
+
+When the install completes (without errors), modify the oomon.cf
+(and userlist.cf) files to suit your needs.  These should be
+located within the installation directory structure.
+
+Once that's done, you're ready to roll.  To start it:
+
+	./oomon
+
+I think that's everything.
+
+-----------------------------------------------------------------------
+NOTE TO USERS OF HYBRID-7 BASED SERVERS:
+
+You will need to install and load the spy_*_notice.so modules in order
+to see STATS notices, etc, with oomon.  You should be able to find
+these modules in the contrib/ directory of your ircd source tree.
+-----------------------------------------------------------------------
+
+For those who are interested, I have successfully built and run OOMon
+on the following platforms:
+
+	FreeBSD
+	Solaris
+	Linux
+	Cygwin
+
+If you have any success stories to add, please let me know!
+

@@ -1,0 +1,13 @@
+config.log
+defs.h
+config.cache
+sig.inc
+config.status
+makefile
+oomon
+oomon.log
+oomon.pid
+oomon.out
+oomon-users.db
+oomon.settings
+.depend

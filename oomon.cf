@@ -1,0 +1,84 @@
+# ===========================================================================
+# OOMon - Objected Oriented Monitor Bot
+# Copyright (C) 2003  Timothy L. Jensen
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+# ===========================================================================
+
+# Example OOMon config file
+# $Id$
+
+# Confused? Visit the following URL:
+#
+#    http://oomon.sourceforge.net/oomon_cf.html
+
+# Bot parameters
+#:Nick:username:vhost:realname:opernick:operpass:
+B:OOMon:::Object Oriented Monitor Bot:oomon:Cabbages:
+
+# Server info and channel(s)
+#:hostname:port:password:channel(s):
+S:plasma.toast.pc:6667::#monitors:
+
+# Include another config file here
+I:userlist.cf
+
+# Exceptions
+E:*@*blackened.com
+
+# Spoofers (don't kline spoofers with IPs matching the following)
+F:192.168.*.*
+
+# MOTD file - default is oomon-motd.txt
+#M:oomon-motd.txt
+
+# Log file - default is oomon.log
+#G:oomon.log
+
+# Help file - default is oomon.help
+#H:oomon.help
+
+# OOMon settings file - default is oomon.settings
+#T:oomon.settings
+
+# User settings file - default is oomon-users.db
+#U:oomon-users.db
+
+# Ports (other than the default, 4000)
+#P:4001
+
+# Links (server)
+#:Handle:hostmask:password:flags:
+L:LarzMON:bots.blackened.com:botsecret:K:
+L:OOMon2:the-project.org:botsecret:K:
+
+# Connections (client)
+#:Handle:hostname:passowrd:flags:port:
+C:LarzMON:bots.blackened.com:botsecret:K:9000:
+C:OOMon2:the-project.org:botsecret:K:4000:
+
+# Y-line descriptions go here (see .class command)
+Y:1:Blah users
+Y:2:Semi-blah users
+Y:3:Users without lives
+Y:5:Yeehaw
+Y:20:Did I mention I'm bored?
+Y:opers:IRC Operators
+Y:users:Normal Users
+Y:restricted:Restricted Users
+
+# Set this to be the vhost you want your open wingate/proxy checker to
+# connect from, if any.
+#W:wingate.checker.vhost.com

@@ -1,0 +1,11 @@
+$Id$
+Thank you for using OOMon!
+
+This is the default MOTD
+
+Online documentation can be read at:
+   http://oomon.sourceforge.net/
+
+Send bug reports and suggestions to:
+   oomon-discuss@lists.sourceforge.net
+

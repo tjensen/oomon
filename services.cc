@@ -1,0 +1,424 @@
+// ===========================================================================
+// OOMon - Objected Oriented Monitor Bot
+// Copyright (C) 2003  Timothy L. Jensen
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+// ===========================================================================
+
+// $Id$
+
+// Std C++ Headers
+#include <string>
+
+// Std C Headers
+#include <stdio.h>
+#include <time.h>
+
+// OOMon Headers
+#include "oomon.h"
+#include "services.h"
+#include "engine.h"
+#include "irc.h"
+#include "util.h"
+#include "main.h"
+#include "log.h"
+#include "vars.h"
+
+
+Services services;
+
+
+void
+Services::check()
+{
+  time_t now = time(NULL);
+
+  if ((this->lastCheckedTime +
+    (vars[VAR_SERVICES_CHECK_INTERVAL]->getInt() * 60)) < now)
+  {
+    this->lastCheckedTime = now;
+
+    if (vars[VAR_XO_SERVICES_ENABLE]->getBool())
+    {
+      server.msg(vars[VAR_XO_SERVICES_REQUEST]->getString(), "clones " +
+        IntToStr(vars[VAR_SERVICES_CLONE_LIMIT]->getInt()));
+    }
+
+    if (vars[VAR_SPAMTRAP_ENABLE]->getBool())
+    {
+      server.whois(vars[VAR_SPAMTRAP_NICK]->getString());
+    }
+
+#ifdef CA_SERVICES
+    /* check if services.ca just signed on or off */
+    server.isOn(CA_SERVICES_REQUEST);
+#endif
+  }
+}
+
+
+void
+Services::onXoNotice(std::string Text)
+{
+  if (!vars[VAR_XO_SERVICES_ENABLE]->getBool())
+  {
+    return;
+  }
+
+  char text[MAX_BUFF];
+  char *body;
+  char *parm1;
+  char *parm2;
+  char *parm3;
+  char dccbuff[MAX_BUFF];
+  char userathost[MAX_HOST];
+  bool identd;
+
+  strncpy(text, Text.c_str(), sizeof(text));
+  text[sizeof(text) - 1] = 0;
+  body = text;
+
+  while(*body == ' ')
+    body++;
+
+  parm1 = strtok(body, " ");
+  if(parm1 == NULL)
+    return;
+
+  parm2 = strtok(NULL, " ");
+  if(parm2 == NULL)
+    return;
+
+  parm3 = strtok(NULL, ""); 
+  if(parm3 == NULL)
+    return;
+  
+  if (strstr(parm3,"users"))
+    {
+      this->cloningHost = parm1;
+      this->userCount = parm3;
+      this->klineSuggested = false;
+      return;
+    }
+    
+  if ((strcasecmp("on", parm2) == 0) &&
+    (strcasecmp(server.getServerName().c_str(), parm3) == 0))
+  {
+    sprintf(dccbuff, "%s reports %s cloning %s nick %s",
+      vars[VAR_XO_SERVICES_RESPONSE]->getString().c_str(),
+      this->userCount.c_str(), this->cloningHost.c_str(), parm1);
+
+    ::SendAll(dccbuff, UF_OPER);
+    Log::Write(dccbuff);
+  
+    if (!this->klineSuggested)
+    {
+          char *user;
+          char *host;
+          char user_host[MAX_HOST+1];
+      
+          strncpy(userathost, this->cloningHost.c_str(), MAX_HOST);
+	  userathost[MAX_HOST - 1] = 0;
+      
+          /* strtok is going to destroy the original userathost,
+             so save a copy for our own uses */
+  
+          strncpy(user_host, userathost, sizeof(user_host));
+	  user_host[sizeof(user_host) - 1] = 0;
+      
+          user = strtok(userathost,"@");
+          if(user == NULL)
+            return; 
+                    
+          identd = true;
+          if(*user == '~')
+            identd = false;
+  
+          host = strtok(NULL, "");
+          if(host == NULL)
+            return;  
+          
+          
+          suggestKline(true, user, host, false, identd, MK_CLONES);
+            
+          this->klineSuggested = true;
+        }     
+    }         
+}
+
+
+void
+Services::onCaNotice(std::string Text)
+{
+#ifdef CA_SERVICES
+  char *text[MAX_BUFF];
+  char *body;
+  char *parm1, *parm2, *parm3, *parm4;
+  char *user, *host, *tmp;
+  char dccbuff[MAX_BUFF];
+  char userathost[MAX_HOST];
+  
+        while(*body == ' ')
+                body++;
+
+        parm1 = strtok(body, " ");
+        if (parm1 == NULL)
+                return;
+
+        parm2 = strtok(NULL, " ");
+        if(parm2 == NULL)
+                return;
+
+        parm3 = strtok(NULL, " ");
+        if(parm3 == NULL)
+                return;
+
+        parm4 = strtok(NULL, " ");
+        if(parm4 == NULL)
+                return;
+  
+        /*
+         * If this is services.ca suggesting a kline, we'll do it
+         * ourselves, thanks very much.  Just return.
+         */     
+        if (strcasecmp("kline",parm2) == 0)
+                return;
+        
+        if (strcasecmp("Nickflood",parm1) == 0)
+        {
+//#if defined(AUTOKSERVICES) && defined(AUTO_KILL_NICK_FLOODERS)
+//          if (vars[VAR_AUTO_PILOT]->getBool())
+//          {
+//            server.kill("Auto-Kill", parm3, "CaSvcs-Reported Nick Flooding");
+//            sprintf(dccbuff,
+//              "AutoKilled %s %s for CaSvcs-Reported Nick Flooding", parm3,
+//              parm4);
+//            ::SendAll(dccbuff, UF_OPER, WATCH_KILLS, NULL);
+//            Log::Write(dccbuff);
+//          }
+//          else
+//#endif   
+//          { 
+//            sprintf(dccbuff, "CaSvcs-Reported Nick flooding %s %s", parm3,
+//              parm4);
+//	      ::SendAll(dccbuff, UF_OPER, WATCH_KILLS, NULL);
+//	      Log::Write(dccbuff);
+//          }
+        }
+            
+        sprintf(dccbuff,"%s: %s %s %s %s", CA_SERVICES_RESPONSE, parm1, parm2,
+	  parm3, strtok(NULL, ""));
+        ::SendAll(dccbuff, UF_OPER); 
+	Log::Write(dccbuff);
+        
+        /*              
+         * Nope, services.ca is reporting clones.  Determine the
+         * user@host.
+         */ 
+
+        tmp = strtok(dccbuff, "(");	/* Chop off up to the '(' */
+        tmp = strtok(NULL, ")"); 	/* Chop off up to the ')' */
+                
+        user = strtok(tmp, "@");	/* Chop off up to the ')' */
+        if (user == NULL)
+                return;			/* Hrm, strtok couldn't parse. */
+              
+        host = strtok(NULL, "");
+        if (host == NULL)
+                return;			/* Hrm, strtok couldn't parse. */
+
+        if (strcasecmp("user-clones", parm2) == 0)
+	{
+                /*      
+                 * Is this services.ca reporting multiple user@hosts?
+                 */
+                suggestKline(false,user,host,false,(*user != '~'),MK_CLONES);
+        }
+	else if (strcasecmp("site-clones",parm2) == 0)
+	{
+                /*
+                 * Multiple site clones?
+                 */
+                suggestKline(false,user,host,true,(*user != '~'),MK_CLONES);
+        }
+	else if (strcasecmp("Nickflood",parm1) == 0)
+	{
+                /*
+                 * Nick flooding twit.
+                 */
+                suggestKline(false,user,host,false,(*user != '~'),MK_FLOODING);
+        }
+#endif /* CA_SERVICES */
+}
+
+void
+Services::onIson(const std::string & text)
+{
+#ifdef CA_SERVICES
+  StrVector nicks;
+
+  StrSplit(nicks, " ", UpCase(text), true);
+
+  if (nicks.end() == nicks.find(UpCase(CA_SERVICES_REQUEST)))
+  {
+    // CA services disconnected - stop receiving reports
+    this->gettingCaReports = false;
+  }
+  else
+  {
+    // CA services is connected 
+    if (!this->gettingCaReports)
+    {
+      // Start receiving reports from CA services
+      Msg(CA_SERVICES_REQUEST, "ADDNOTIFY HERE");
+      this->gettingCaReports = true;
+    }
+  }
+#endif
+}
+
+
+void
+Services::onSpamtrapMessage(const std::string & text)
+{
+  std::string copy = text;
+
+  if (Same("SPAM", FirstWord(copy)))
+  {
+    if (Same(server.getServerName(), FirstWord(copy)))
+    {
+      std::string nick = FirstWord(copy);
+
+      std::string user = FirstWord(copy);
+      std::string host = FirstWord(copy);
+      std::string userhost = user + '@' + host;
+
+      int score = atoi(FirstWord(copy).c_str());
+
+      if (score >= vars[VAR_SPAMTRAP_MIN_SCORE]->getInt())
+      {
+        std::string klineType = FirstWord(copy);
+
+        std::string notice("*** SpamTrap report: " + nick + " (" + userhost +
+          ") Score: " + IntToStr(score) + " [" + copy + "]");
+
+        ::SendAll(notice, UF_OPER, WATCH_SPAMTRAP);
+        Log::Write(notice);
+
+        doAction(nick, userhost, users.getIP(nick, userhost),
+	  vars[VAR_SPAMTRAP_ACTION]->getAction(),
+	  vars[VAR_SPAMTRAP_ACTION]->getInt(), copy, false);
+      }
+    }
+    return;
+  }
+
+  std::string notice("*** SpamTrap message: " + text);
+
+  ::SendAll(notice, UF_OPER, WATCH_SPAMTRAP);
+  Log::Write(notice);
+}
+
+
+void
+Services::onSpamtrapNotice(const std::string & text)
+{
+// [14-Feb/09:45] -spamtrap!spamtrap@spam.trap- cocol (aan@ip57-12.cbn.net.id) (score 59) on irc2.secsup.org
+  std::string copy = text;
+
+  if (0 == text.find("No tracked users on servers matching"))
+  {
+    // Just ignore this reply
+    return;
+  }
+
+  std::string nick = FirstWord(copy);
+  
+  if ((nick.length() > 2) && (nick[0] = BOLD_TOGGLE) &&
+    (nick[nick.length() - 1] == BOLD_TOGGLE))
+  {
+    nick = nick.substr(1, nick.length() - 2);
+
+    if (0 == copy.find("still being processed."))
+    {
+      // Just ignore this reply
+      return;
+    }
+
+    std::string userhost = FirstWord(copy);
+
+    if ((userhost.length() > 2) && (userhost[0] = '(') &&
+      (userhost[userhost.length() - 1] == ')'))
+    {
+      userhost = userhost.substr(1, userhost.length() - 2);
+
+      if (Same("(score", FirstWord(copy)))
+      {
+	std::string scoreText = FirstWord(copy);
+
+	if ((scoreText.length() > 1) &&
+	  (scoreText[scoreText.length() - 1] == ')'))
+	{
+	  int score = atoi(scoreText.substr(0, scoreText.length() - 1).c_str());
+
+	  if (Same("on", FirstWord(copy)))
+	  {
+	    std::string serverName = FirstWord(copy);
+
+	    if ((score >= vars[VAR_SPAMTRAP_MIN_SCORE]->getInt()) &&
+	      Same(serverName, server.getServerName()))
+	    {
+              std::string notice("*** SpamTrap report: " + nick + " (" +
+	        userhost + ") Score: " + IntToStr(score));
+
+              ::SendAll(notice, UF_OPER, WATCH_SPAMTRAP);
+              Log::Write(notice);
+
+              doAction(nick, userhost, users.getIP(nick, userhost),
+	        vars[VAR_SPAMTRAP_ACTION]->getAction(),
+	        vars[VAR_SPAMTRAP_ACTION]->getInt(),
+	        vars[VAR_SPAMTRAP_DEFAULT_REASON]->getString(), false);
+
+	    }
+            return;
+	  }
+	}
+      }
+    }
+  }
+  else if ((0 == copy.find("tracked users on")) ||
+    (0 == copy.find("tracked user on")))
+  {
+    // Just ignore this header information
+    return;
+  }
+
+  std::string notice("*** SpamTrap notice: " + text);
+
+  ::SendAll(notice, UF_OPER, WATCH_SPAMTRAP);
+  Log::Write(notice);
+}
+
+
+void
+Services::pollSpamtrap()
+{
+  if (vars[VAR_SPAMTRAP_ENABLE]->getBool())
+  {
+    server.msg(vars[VAR_SPAMTRAP_NICK]->getString(), ".server " +
+      server.getServerName());
+  }
+}
+

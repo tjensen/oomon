@@ -1,0 +1,124 @@
+# ===========================================================================
+# OOMon - Objected Oriented Monitor Bot
+# Copyright (C) 2003  Timothy L. Jensen
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+# ===========================================================================
+
+# @configure_input@
+
+# $Id$
+
+.SUFFIXES:
+.SUFFIXES: .cc .o
+
+CXX = @CXX@
+LD = @LD@
+RM = @RM@
+CP = @CP@
+MV = @MV@
+LN = @LN@
+MKDIR = @MKDIR@ -p
+INSTALL = @INSTALL@
+INSTALL_BIN = @INSTALL_PROGRAM@
+INSTALL_DATA = @INSTALL_DATA@
+
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+bindir = @bindir@
+libexecdir = @libexecdir@
+sysconfdir = @sysconfdir@
+logdir = @localstatedir@/logs
+
+CXXFLAGS = @CXXFLAGS@
+CPPFLAGS = @CPPFLAGS@
+
+OBJS =	arglist.o autoaction.o botdb.o botsock.o config.o dcc.o dcclist.o \
+	engine.o flood.o help.o helptopic.o http.o irc.o jupe.o klines.o \
+	links.o log.o main.o pattern.o proxy.o remote.o remotelist.o \
+	seedrand.o services.o socks4.o socks5.o trap.o userdb.o userhash.o \
+	util.o vars.o watch.o wingate.o
+SRCS =	arglist.cc autoaction.cc botdb.cc botsock.cc config.cc dcc.cc \
+	dcclist.cc engine.cc flood.cc help.cc helptopic.cc http.cc irc.cc \
+	jupe.cc klines.cc links.cc log.cc main.cc pattern.cc proxy.cc \
+	remote.cc remotelist.cc seedrand.cc services.cc socks4.cc socks5.cc \
+	trap.cc userdb.cc userhash.cc util.cc vars.cc watch.cc wingate.cc
+LIBS = @LIBS@
+LDFLAGS = @LDFLAGS@
+OOMON_DEFS = @DEFS@ -DLOGDIR=\"$(logdir)\" -DETCDIR=\"$(sysconfdir)\" $(DEFS)
+EXE = oomon
+RM = @RM@
+
+VERSION = @VERSION@
+
+$(EXE): $(OBJS)
+	$(LD) -o $@ $(OBJS) $(LDFLAGS) $(LIBS)
+
+.cc.o:
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(OOMON_DEFS) -c $<
+
+install: $(EXE) install-mkdirs
+	$(INSTALL_BIN) $(EXE) $(bindir)
+	$(INSTALL_DATA) oomon.cf $(sysconfdir)/oomon.cf.sample
+	-@if test ! -e $(sysconfdir)/oomon.cf; then \
+		echo "$(INSTALL_DATA) oomon.cf $(sysconfdir)/oomon.cf"; \
+		$(INSTALL_DATA) oomon.cf $(sysconfdir)/oomon.cf; \
+	fi
+	$(INSTALL_DATA) userlist.cf $(sysconfdir)/userlist.cf.sample
+	-@if test ! -e $(sysconfdir)/userlist.cf; then \
+		echo "$(INSTALL_DATA) userlist.cf $(sysconfdir)/userlist.cf"; \
+		$(INSTALL_DATA) userlist.cf $(sysconfdir)/userlist.cf; \
+	fi
+	$(INSTALL_DATA) oomon-motd.txt $(sysconfdir)/oomon-motd.txt.sample
+	-@if test ! -e $(sysconfdir)/oomon-motd.txt; then \
+		echo "$(INSTALL_DATA) oomon-motd.txt $(sysconfdir)/oomon-motd.txt"; \
+		$(INSTALL_DATA) oomon-motd.txt $(sysconfdir)/oomon-motd.txt; \
+	fi
+	$(INSTALL_DATA) oomon.help $(sysconfdir)/oomon.help
+
+install-mkdirs:
+	-@if test ! -d $(prefix); then \
+		echo "$(MKDIR) $(prefix)"; \
+		$(MKDIR) $(prefix); \
+	fi
+	-@if test ! -d $(exec_prefix); then \
+		echo "$(MKDIR) $(exec_prefix)"; \
+		$(MKDIR) $(exec_prefix); \
+	fi
+	-@if test ! -d $(bindir); then \
+		echo "$(MKDIR) $(bindir)"; \
+		$(MKDIR) $(bindir); \
+	fi
+	-@if test ! -d $(sysconfdir); then \
+		echo "$(MKDIR) $(sysconfdir)"; \
+		$(MKDIR) $(sysconfdir); \
+	fi
+	-@if test ! -d $(logdir); then \
+		echo "$(MKDIR) $(logdir)"; \
+		$(MKDIR) $(logdir); \
+	fi
+
+clean:
+	$(RM) $(EXE) $(OBJS) oomon.core oomon.pid oomon.out make.out oomon.log
+
+distclean: clean
+	$(RM) makefile sig.inc config.status config.cache config.log defs.h
+
+depend:
+	mkdep $(CPPFLAGS) $(SRCS)
+
+love:
+	@echo not war?
+

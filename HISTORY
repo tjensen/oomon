@@ -1,0 +1,170 @@
+OOMon-2.0                                                (31 May 2003)
+---------
+	* added ".set" command!  OOMon is almost entirely configurable
+	  at run-time now.  You no longer need to recompile whenever
+	  you need to change a setting.
+
+	* added interface to SpamTrap.
+
+	* added HTTP proxy detector (scans ports 80, 1080, 3128, and
+	  8080).
+
+	* added ".watch" command for enabling/disabling various types
+	  of messages OOMon sends.  Each user can configure his own
+	  watch list to his liking.
+
+	* added the ability for connected opers to see client connects,
+	  disconnects, and nick changes through the use of the .watch
+	  command.
+
+	* added the ability for connected opers to see private messages
+	  send to the OOMon via IRC.  This is also configurable using
+	  the .watch command.
+
+	* added new wildcard characters for nickname matching:
+	    #  matches 1 numeric character
+	    &  matches 1 alphabetical character
+	    %  matches 1 numeric or alphabetical character
+	  Example:
+	    .nfind &&&-###
+
+	* rewrote large portions of the clone and flood detection
+	  routines.
+
+	* added "-count" and "-remove" parameters to the .findk and
+	  .findd commands.
+
+	* the ".iplist" command is now an alias to the ".list"
+	  command.  ".list" is now able to search clients by IP or
+	  hostname.
+
+	* added "-class <class>" argument to ".list" and ".killlist"
+	  commands.  Examples:
+	    .list -class opers *@*.net
+	    .killlist -class 7 *ivan@*.ru clones
+
+	* added ".seedrand" command and automatic random-nick drone
+	  detection.
+
+	* wingate detector now catches proxies that send a
+	  "Enter : <host> [port] :" prompt.
+
+	* added ".status" command for viewing various OOMon internals
+
+	* settings (see ".set" command) and traps (see ".trap" command)
+	  are now saved to a file
+
+	* added detection for juped channel joiners
+
+	* added ability to trap clients by IP address
+
+	* OOMon will now detect when users /oper up
+
+	* added ability to track temporary k-lines.  Please note that
+	  this should not be enabled unless your ircd is configured
+	  to send server notices when temporary k-lines expire!
+
+	* IRC notices and messages are now logged
+
+	* traps (see ".trap" command) can now trap nick changes as
+	  well as connects
+
+	* added ability to automatically k-line users who trigger
+	  "Invalid username" server notices.
+
+	* added ability to store k-line (temporary and permanent)
+	  reasons internally in a format that is similar to hybrid.
+	  When enabled, a date/time stamp is appeneded to k-line
+	  reasons in the internal database.
+
+	* updated help for various commands
+
+	* config file and PID file filenames can now be specified
+	  at the command line.  All other filenames can be changed
+	  in the config file.
+
+	* fixed broken CTCP CHAT handler.
+
+	* stdout/stderr are now redirected to /dev/null when forking
+	  OOMon into the background.
+
+	* improved the logic that detects unresolved IP addresses.
+
+	* "cluster" routine is now smarter regarding two-letter TLDs.
+
+	* unauthed connects are now unable to chat or see chatter from
+	  other OOMon users when UNAUTHED_MAY_CHAT is OFF.
+
+	* remote links/trace/stats/etc. flooding no longer causes the
+	  OOMon to try to kill or kline the client.  Instead, OOMon
+	  will simply report the abuse.  Only local clients may be
+	  killed or klined for flooding.
+
+	* fixed problem when OOMon's desired nickname is already in
+	  use.
+
+
+OOMon-1.2.1                                              (23 Jan 2003)
+-----------
+	* fixed nick change handler
+
+
+OOMon-1.2                                                (18 Jan 2003)
+---------
+	* now responds to CTCP PING and VERSION queries
+
+	* e-lined proxies no longer get k-lined
+
+	* certain messages now only go to clients with the correct flags
+
+	* bot now sends a QUIT message before disconnecting from server
+
+	* added configuration option to determine if a /stats P is the
+	  same as a /stats p
+
+	* added configuration option that enables/disables putting
+	  [handle@botname] in kill/k-line/d-line/etc. reasons
+
+	* added configuration option that limits DCC CHAT to o-lined
+	  users only
+
+	* added support for non-numeric client classes
+
+	* added support for encrypted passwords
+
+	* added support for new "nick [user@host]" trace format in hybrid-7rc6
+
+	* added f-lines for spoof check exceptions
+
+	* added "W" user flag for showing WALLOPS, OPERWALLS, and LOCOPS
+
+	* added "C" user flag for access to channel commands
+
+	* an "end of trace" message now gets displayed when a .reload users
+	  command completes
+
+	* added check for open proxies at port 23 and 1080
+
+	* added DNSBL open proxy check
+
+	* support CTCP CHAT requests to have the bot initiate a DCC CHAT
+	  request
+
+	* .killlist command now is fully logged
+
+	* bot can now automatically fork() into the background
+
+	* added .umulti, .hmulti, .vmulti commands
+
+	* added .op, .join, .part commands
+
+	* added .iplist command, similar to .list
+
+	* added .trap command for catching connecting clients that match
+	  certain nick!user@hostname masks
+
+	* added .undline, .findd, and .reload dlines commands
+
+	* added .echo command to enable/disable the displaying of one's
+	  own chatter
+
