@@ -411,7 +411,7 @@ Config::parseOLine(const StrVector & fields)
   std::string handle(fields[0]);
   if (handle.empty())
   {
-    throw Config::syntax_error("bad bot handle '" + handle + "'");
+    throw Config::syntax_error("bad user handle '" + handle + "'");
   }
 
   PatternPtr pattern(smartPattern(fields[1], false));
@@ -449,7 +449,7 @@ void
 Config::parseRLine(const StrVector & fields)
 {
   PatternPtr pattern(smartPattern(fields[0], false));
-  UserFlags flags(Config::userFlags(fields[1]));
+  UserFlags flags(Config::userFlags(fields[1], true));
 
   boost::shared_ptr<Config::Remote> remote(new Config::Remote(pattern, flags));
 
@@ -821,30 +821,67 @@ Config::remoteFlags(const std::string & client) const
 
 
 UserFlags
-Config::userFlags(const std::string & text)
+Config::userFlags(const std::string & text, const bool remote)
 {
   UserFlags result(UserFlags::NONE());
 
-  if (text.find('C') != std::string::npos)
-    result |= UserFlags::CHANOP;
-  if (text.find('D') != std::string::npos)
-    result |= UserFlags::DLINE;
-  if (text.find('G') != std::string::npos)
-    result |= UserFlags::GLINE;
-  if (text.find('K') != std::string::npos)
-    result |= UserFlags::KLINE;
-  if (text.find('M') != std::string::npos)
-    result |= UserFlags::MASTER;
-  if (text.find('N') != std::string::npos)
-    result |= UserFlags::NICK;
-  if (text.find('O') != std::string::npos)
-    result |= UserFlags::OPER;
-  if (text.find('R') != std::string::npos)
-    result |= UserFlags::REMOTE;
-  if (text.find('W') != std::string::npos)
-    result |= UserFlags::WALLOPS;
-  if (text.find('X') != std::string::npos)
-    result |= UserFlags::CONN;
+  for (std::string::const_iterator pos = text.begin(); pos != text.end(); ++pos)
+  {
+    switch (UpCase(*pos))
+    {
+      case '\t':
+      case ' ':
+        // Ignore whitespace
+        break;
+
+      case 'C':
+        result |= UserFlags::CHANOP;
+        break;
+
+      case 'D':
+        result |= UserFlags::DLINE;
+        break;
+
+      case 'G':
+        result |= UserFlags::GLINE;
+        break;
+
+      case 'K':
+        result |= UserFlags::KLINE;
+        break;
+
+      case 'M':
+        result |= UserFlags::MASTER;
+        break;
+
+      case 'N':
+        result |= UserFlags::NICK;
+        break;
+
+      case 'O':
+        result |= UserFlags::OPER;
+        break;
+
+      case 'W':
+        result |= UserFlags::WALLOPS;
+        break;
+
+      case 'X':
+        result |= UserFlags::CONN;
+        break;
+
+      case 'R':
+        if (!remote)
+        {
+          result |= UserFlags::REMOTE;
+          break;
+        }
+
+      default:
+        throw Config::syntax_error("bad user flag '" + std::string(1, *pos) +
+            "'");
+    }
+  }
 
   return result;
 }

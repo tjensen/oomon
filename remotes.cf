@@ -84,10 +84,10 @@ C:OOMon3:wheat.toast.pc:botsecret:9000:
 # handle@bot - The handle and bot of the user(s) to give access.  This
 #              field can also contain a mask or regex pattern.
 #
-# flags - This defines which commands the user may use.  See the
-#         userlist.cf file for a detailed list of available flags.
-#         Although it is possible to include the "R" flag in a remote
-#         user line, the flag has no meaning and is silently ignored.
+# flags - This defines which commands the user may use.  With the
+#         exception of the "R" flag, all user flags allowed in O:
+#         lines are also allowed in R: lines.  See the sample
+#         userlist.cf file for a detailed list of user flags.
 # ====================================================================
 
 # Give access to all remote commands to Toast@OOMon2

@@ -104,7 +104,8 @@ class Config
     };
 
   private:
-    static UserFlags userFlags(const std::string & text);
+    static UserFlags userFlags(const std::string & text,
+        const bool remote = false);
 
     typedef boost::function<void(const StrVector &)>
       ParserFunction;
