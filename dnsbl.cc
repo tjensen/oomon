@@ -29,6 +29,7 @@
 #include <boost/bind.hpp>
 
 // Std C Headers
+#include <netdb.h>
 #include <errno.h>
 
 // OOMon Headers
