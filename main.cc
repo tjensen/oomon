@@ -220,7 +220,7 @@ process()
       }
       catch (OOMon::timeout_error)
       {
-        std::cerr << "Connection from IRC server timed out." << std::endl;
+        std::cerr << "Connection to IRC server timed out." << std::endl;
         server.quit("Server inactive for " +
 	  boost::lexical_cast<std::string>(server.getIdle()) + " seconds");
       }

@@ -106,12 +106,19 @@ bool
 Dnsbl::check(const BotSock::Address & addr, const std::string & nick,
   const std::string & userhost)
 {
-  StrVector zones;
+  bool result = false;
 
-  StrSplit(zones, vars[VAR_DNSBL_PROXY_ZONE]->getString(), " ,", true);
+  if (vars[VAR_DNSBL_PROXY_ENABLE]->getBool())
+  {
+    StrVector zones;
 
-  return (zones.end() != std::find_if(zones.begin(), zones.end(),
-    boost::bind(&Dnsbl::checkZone, this, addr, nick, userhost, _1)));
+    StrSplit(zones, vars[VAR_DNSBL_PROXY_ZONE]->getString(), " ,", true);
+
+    result = (zones.end() != std::find_if(zones.begin(), zones.end(),
+      boost::bind(&Dnsbl::checkZone, this, addr, nick, userhost, _1)));
+  }
+
+  return result;
 }
 
 

@@ -1134,7 +1134,19 @@ set dnsbl_proxy_action
 .d.parameter is for temporary k-lines only.
 .f.mo
 .l.info actions
+.l.set dnsbl_proxy_enable
 .l.set dnsbl_proxy_reason
+.l.set dnsbl_proxy_zone
+set dnsbl_proxy_enable
+.s.set dnsbl_proxy_enable [ON|OFF]
+.d.This setting determine whether the monitor
+.d.bot should query a DNS Blackhole List (DNSBL)
+.d.to determine if connecting clients are
+.d.running open proxies.
+.f.mo
+.l.set dnsbl_proxy_action
+.l.set dnsbl_proxy_reason
+.l.set dnsbl_proxy_zone
 set dnsbl_proxy_reason
 .s.set dnsbl_proxy_reason [<text>]
 .d.The k-line or d-line reason to use for
@@ -1150,12 +1162,10 @@ set dnsbl_proxy_zone
 .d.Note: Configuring OOMon with multiple OPM
 .d.DNSBL zones may cause significant lag if the
 .d.bot is not linked with the ADNS library.
-.d.
-.d.To completely disable DNSBL lookups, simply
-.d.clear this setting by issuing the command,
-.d.".set -dnsbl_proxy_zone".
 .f.mo
 .l.set dnsbl_proxy_action
+.l.set dnsbl_proxy_enable
+.l.set dnsbl_proxy_reason
 set extra_kline_info
 .s.set extra_kline_info [ON|OFF]
 .d.When ON, subsequent k-lines and d-lines will

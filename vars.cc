@@ -141,6 +141,9 @@ Vars::Vars(void) : vec(VAR_COUNT)
   this->vec[VAR_DNSBL_PROXY_ACTION] =
     SettingPtr(new ActionSetting("DNSBL_PROXY_ACTION",
     DEFAULT_DNSBL_PROXY_ACTION));
+  this->vec[VAR_DNSBL_PROXY_ENABLE] =
+    SettingPtr(new BoolSetting("DNSBL_PROXY_ENABLE",
+    DEFAULT_DNSBL_PROXY_ENABLE));
   this->vec[VAR_DNSBL_PROXY_REASON] =
     SettingPtr(new StrSetting("DNSBL_PROXY_REASON",
     DEFAULT_DNSBL_PROXY_REASON));
