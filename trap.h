@@ -77,6 +77,8 @@ private:
   PatternPtr	_userhost;
   PatternPtr	_gecos;
   PatternPtr	_version;
+  PatternPtr	_privmsg;
+  PatternPtr	_notice;
   RegExPatternPtr	_rePattern;
   std::string	_reason;	// For Kills, K-Lines, and D-Lines only
   std::time_t	_lastMatch;
@@ -85,7 +87,8 @@ private:
   static void split(const std::string & pattern, std::string & nick,
     std::string & userhost);
   static bool parsePattern(std::string & pattern, PatternPtr & nick,
-    PatternPtr & userhost, PatternPtr & gecos, PatternPtr & version);
+    PatternPtr & userhost, PatternPtr & gecos, PatternPtr & version,
+    PatternPtr & privmsg, PatternPtr & notice);
 };
 
 

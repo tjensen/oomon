@@ -62,6 +62,10 @@ public:
 
   void onVersionReply(const std::string & nick, const std::string & userhost,
     const std::string & version);
+  void onPrivmsg(const std::string & nick, const std::string & userhost,
+    const std::string & privmsg);
+  void onNotice(const std::string & nick, const std::string & userhost,
+    const std::string & notice);
 
   void checkVersionTimeout(void);
 

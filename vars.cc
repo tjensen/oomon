@@ -401,8 +401,15 @@ Vars::Vars(void) : vec(VAR_COUNT)
     SettingPtr(new BoolSetting("TRACK_TEMP_KLINES", DEFAULT_TRACK_TEMP_KLINES));
   this->vec[VAR_TRAP_CONNECTS] =
     SettingPtr(new BoolSetting("TRAP_CONNECTS", DEFAULT_TRAP_CONNECTS));
+  this->vec[VAR_TRAP_CTCP_VERSIONS] =
+    SettingPtr(new BoolSetting("TRAP_CTCP_VERSIONS",
+	DEFAULT_TRAP_CTCP_VERSIONS));
   this->vec[VAR_TRAP_NICK_CHANGES] =
     SettingPtr(new BoolSetting("TRAP_NICK_CHANGES", DEFAULT_TRAP_NICK_CHANGES));
+  this->vec[VAR_TRAP_NOTICES] =
+    SettingPtr(new BoolSetting("TRAP_NOTICES", DEFAULT_TRAP_NOTICES));
+  this->vec[VAR_TRAP_PRIVMSGS] =
+    SettingPtr(new BoolSetting("TRAP_PRIVMSGS", DEFAULT_TRAP_PRIVMSGS));
   this->vec[VAR_UMODE] = SettingPtr(new UmodeSetting("UMODE", DEFAULT_UMODE));
   this->vec[VAR_UNAUTHED_MAY_CHAT] =
     SettingPtr(new BoolSetting("UNAUTHED_MAY_CHAT", DEFAULT_UNAUTHED_MAY_CHAT));

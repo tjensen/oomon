@@ -685,6 +685,7 @@ IRC::onPrivmsg(const std::string & from, const std::string & userhost,
       {
 	this->locops(msg);
       }
+      users.onPrivmsg(from, userhost, text);
     }
   }
 }
@@ -741,6 +742,7 @@ IRC::onNotice(const std::string & from, const std::string & userhost,
     {
       // Log all non-server notices
       Log::Write("-" + from + "- " + text + " <" + userhost + ">");
+      users.onNotice(from, userhost, text);
     }
   }
 }

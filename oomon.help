@@ -337,23 +337,31 @@ info traps
 .d.
 .d.Rules in the .trap command line have the
 .d.syntax, "<field>=<pattern>", where "<field>" can
-.d.be one of: nick, userhost, gecos, or version and
-.d."<pattern>" can be a regular expression or a
-.d.glob-style wildcard pattern.
+.d.be one of: nick, userhost, gecos, version,
+.d.privmsg, or notice and "<pattern>" can be a
+.d.regular expression or a glob-style wildcard
+.d.pattern.
 .d.
 .d.Multiple rules can be specified by separating
 .d.them with commas.  In order for a trap to match
 .d.a client, all rules in the trap must match.
 .d.
 .d.Note: To trap against CTCP VERSION replies, the
-.d.CTCPVERSION_ENABLE setting must be ON!
+.d.CTCPVERSION_ENABLE and TRAP_CTCP_VERSIONS
+.d.settings must be ON!  To trap against PRIVMSGs,
+.d.the TRAP_PRIVMSGS setting must be ON!  To trap
+.d.against NOTICEs, the TRAP_NOTICES setting must
+.d.be ON!
 .e.> .trap kline_host userhost=*.aol.com,version=/iroffer/ No iroffer bots allowed from AOL!
 .e.Toast@OOMon added trap KLINE_HOST: userhost=*.aol.com,version=/iroffer/ (No iroffer bots allowed from AOL!)
 .l.info patterns
 .l.info regex
 .l.set ctcpversion_enable
 .l.set trap_connects
+.l.set trap_ctcp_versions
 .l.set trap_nick_changes
+.l.set trap_notices
+.l.set trap_privmsgs
 .l.trap
 join
 .s.join <#channel> [<key>]
@@ -812,7 +820,10 @@ set
 .t.track_temp_dlines
 .t.track_temp_klines
 .t.trap_connects
+.t.trap_ctcp_versions
 .t.trap_nick_changes
+.t.trap_notices
+.t.trap_privmsgs
 .t.umode
 .t.unauthed_may_chat
 .t.user_count_delta_max
@@ -2091,7 +2102,22 @@ set trap_connects
 .d.When ON, the monitor bot will try to match
 .d.connecting clients with all traps.
 .f.mo
+.l.set trap_ctcp_versions
 .l.set trap_nick_changes
+.l.set trap_notices
+.l.set trap_privmsgs
+.l.trap
+.l.watch
+set trap_ctcp_versions
+.s.set trap_ctcp_versions [ON|OFF]
+.d.When ON, the monitor bot will try to match
+.d.traps against clients that provide CTCP
+.d.VERSION replies.
+.f.mo
+.l.set trap_connects
+.l.set trap_nick_changes
+.l.set trap_notices
+.l.set trap_privmsgs
 .l.trap
 .l.watch
 set trap_nick_changes
@@ -2100,6 +2126,33 @@ set trap_nick_changes
 .d.nick-changing clients with all traps.
 .f.mo
 .l.set trap_connects
+.l.set trap_ctcp_versions
+.l.set trap_notices
+.l.set trap_privmsgs
+.l.trap
+.l.watch
+set trap_notices
+.s.set trap_notices [ON|OFF]
+.d.When ON, the monitor bot will try to match
+.d.traps against clients that send the bot
+.d.NOTICEs.
+.f.mo
+.l.set trap_connects
+.l.set trap_ctcp_versions
+.l.set trap_nick_changes
+.l.set trap_privmsgs
+.l.trap
+.l.watch
+set trap_privmsgs
+.s.set trap_privmsgs [ON|OFF]
+.d.When ON, the monitor bot will try to match
+.d.traps against clients that send the bot
+.d.PRIVMSGs.
+.f.mo
+.l.set trap_connects
+.l.set trap_ctcp_versions
+.l.set trap_nick_changes
+.l.set trap_notices
 .l.trap
 .l.watch
 set umode
@@ -2394,7 +2447,10 @@ trap
 .l.kill
 .l.kline
 .l.set trap_connects
+.l.set trap_ctcp_versions
 .l.set trap_nick_changes
+.l.set trap_notices
+.l.set trap_privmsgs
 umulti
 .s.umulti [<number>]
 .d.Shows any user@* masks with multiple

@@ -61,7 +61,7 @@ Trap::Trap(const TrapAction action, const long timeout,
     std::string copy = line;
 
     if (Trap::parsePattern(copy, this->_nick, this->_userhost,
-      this->_gecos, this->_version))
+      this->_gecos, this->_version, this->_privmsg, this->_notice))
     {
       this->_reason = trimLeft(copy);
     }
@@ -73,6 +73,8 @@ Trap::Trap(const TrapAction action, const long timeout,
       this->_userhost.reset();
       this->_gecos.reset();
       this->_version.reset();
+      this->_privmsg.reset();
+      this->_notice.reset();
 
       std::string pattern = FirstWord(copy);
       std::string nick, userhost;
@@ -95,8 +97,9 @@ Trap::Trap(const TrapAction action, const long timeout,
 Trap::Trap(const Trap & copy)
   : _action(copy._action), _timeout(copy._timeout), _nick(copy._nick),
   _userhost(copy._userhost), _gecos(copy._gecos), _version(copy._version),
-  _rePattern(copy._rePattern), _reason(copy._reason),
-  _lastMatch(copy._lastMatch), _matchCount(copy._matchCount)
+  _privmsg(copy._privmsg), _notice(copy._notice), _rePattern(copy._rePattern),
+  _reason(copy._reason), _lastMatch(copy._lastMatch),
+  _matchCount(copy._matchCount)
 {
 }
 
@@ -127,6 +130,8 @@ Trap::matches(const UserEntryPtr user, const std::string & version,
     if ((this->_nick && !this->_nick->match(user->getNick())) ||
       (this->_gecos && !this->_gecos->match(user->getGecos())) ||
       (this->_version && !this->_version->match(version)) ||
+      (this->_privmsg && !this->_privmsg->match(privmsg)) ||
+      (this->_notice && !this->_notice->match(notice)) ||
       (this->_userhost && !this->_userhost->match(user->getUserHost()) &&
       !this->_userhost->match(user->getUserIP())))
     {
@@ -207,6 +212,34 @@ Trap::operator==(const Trap & other) const
     else
     {
       if (other._version)
+      {
+	return false;
+      }
+    }
+    if (this->_privmsg)
+    {
+      if (!other._privmsg || (this->_privmsg->get() != other._privmsg->get()))
+      {
+	return false;
+      }
+    }
+    else
+    {
+      if (other._privmsg)
+      {
+	return false;
+      }
+    }
+    if (this->_notice)
+    {
+      if (!other._notice || (this->_notice->get() != other._notice->get()))
+      {
+	return false;
+      }
+    }
+    else
+    {
+      if (other._notice)
       {
 	return false;
       }
@@ -381,6 +414,24 @@ Trap::getPattern(void) const
       }
       result += "version=";
       result += this->_version->get();
+    }
+    if (this->_privmsg)
+    {
+      if (!result.empty())
+      {
+	result += ',';
+      }
+      result += "privmsg=";
+      result += this->_privmsg->get();
+    }
+    if (this->_notice)
+    {
+      if (!result.empty())
+      {
+	result += ',';
+      }
+      result += "notice=";
+      result += this->_notice->get();
     }
   }
   return result;
@@ -758,7 +809,8 @@ TrapList::save(std::ofstream & file)
 
 bool
 Trap::parsePattern(std::string & pattern, PatternPtr & nick,
-  PatternPtr & userhost, PatternPtr & gecos, PatternPtr & version)
+  PatternPtr & userhost, PatternPtr & gecos, PatternPtr & version,
+  PatternPtr & privmsg, PatternPtr & notice)
 {
   while (!pattern.empty())
   {
@@ -785,6 +837,18 @@ Trap::parsePattern(std::string & pattern, PatternPtr & nick,
       pattern.erase(0, 8);
       std::string temp = grabPattern(pattern, " ,");
       version = smartPattern(temp, false);
+    }
+    else if ((pattern.length() >= 8) && Same("privmsg=", pattern.substr(0, 8)))
+    {
+      pattern.erase(0, 8);
+      std::string temp = grabPattern(pattern, " ,");
+      privmsg = smartPattern(temp, false);
+    }
+    else if ((pattern.length() >= 7) && Same("notice=", pattern.substr(0, 7)))
+    {
+      pattern.erase(0, 7);
+      std::string temp = grabPattern(pattern, " ,");
+      notice = smartPattern(temp, false);
     }
     else
     {

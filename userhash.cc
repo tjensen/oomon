@@ -237,7 +237,42 @@ UserHash::onVersionReply(const std::string & nick, const std::string & userhost,
   if (0 != find)
   {
     find->hasVersion(version);
-    TrapList::matchCtcpVersion(find, version);
+    if (vars[VAR_TRAP_CTCP_VERSIONS]->getBool())
+    {
+      TrapList::matchCtcpVersion(find, version);
+    }
+  }
+}
+
+
+void
+UserHash::onPrivmsg(const std::string & nick, const std::string & userhost,
+  const std::string & privmsg)
+{
+  if (vars[VAR_TRAP_PRIVMSGS]->getBool())
+  {
+    UserEntryPtr find(this->findUser(nick, userhost));
+
+    if (0 != find)
+    {
+	TrapList::matchPrivmsg(find, privmsg);
+    }
+  }
+}
+
+
+void
+UserHash::onNotice(const std::string & nick, const std::string & userhost,
+  const std::string & notice)
+{
+  if (vars[VAR_TRAP_NOTICES]->getBool())
+  {
+    UserEntryPtr find(this->findUser(nick, userhost));
+
+    if (0 != find)
+    {
+	TrapList::matchNotice(find, notice);
+    }
   }
 }
 
