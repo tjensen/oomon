@@ -271,22 +271,39 @@ void
 RemoteList::sendRemoteCommand(BotClient * from, const std::string & bot,
   const std::string & command, const std::string & parameters)
 {
-  RemotePtr remoteBot(this->findBot(bot));
-
-  if (0 == remoteBot.get())
+  if (0 == bot.compare("*"))
   {
-    from->send("*** Unknown bot name: " + bot);
+    this->sendAllRemoteCommand(from, command, parameters);
   }
   else
   {
-    std::string source(from->handle());
-    source += '@';
-    source += from->bot();
+    RemotePtr remoteBot(this->findBot(bot));
 
-    std::string id(from->id());
+    if (0 == remoteBot.get())
+    {
+      from->send("*** Unknown bot name: " + bot);
+    }
+    else
+    {
+      std::string source(from->handle());
+      source += '@';
+      source += from->bot();
 
-    remoteBot->sendRemoteCommand(source, bot, id, command, parameters);
+      std::string id(from->id());
+
+      remoteBot->sendRemoteCommand(source, bot, id, command, parameters);
+    }
   }
+}
+
+
+void
+RemoteList::sendAllRemoteCommand(BotClient * from, const std::string & command,
+  const std::string & parameters)
+{
+  std::for_each(this->_connections.begin(), this->_connections.end(),
+    boost::bind(&Remote::sendAllRemoteCommandPtr, _1, from, command,
+      parameters));
 }
 
 

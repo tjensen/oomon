@@ -646,21 +646,36 @@ Remote::onCommand(const std::string & from, const std::string & command,
         this->_clientFlags = Config::getRemoteFlags(from);
 
         this->_targetEstablished = true;
-        if (Same(to, Config::GetNick()))
-        {
-          try
-          {
-            this->_parser.parse(this, cmd, args);
-          }
-          catch (CommandParser::exception & e)
-          {
-            this->send(e.what());
-          }
-        }
-        else
-        {
-	  remotes.sendRemoteCommand(this, to, cmd, args);
-        }
+	if (0 == to.compare("*"))
+	{
+	  try
+	  {
+	    this->_parser.parse(this, cmd, args);
+	  }
+	  catch (CommandParser::exception & e)
+	  {
+	    this->send(e.what());
+	  }
+	  remotes.sendAllRemoteCommand(this, cmd, args);
+	}
+	else
+	{
+	  if (Same(to, Config::GetNick()))
+	  {
+	    try
+	    {
+	      this->_parser.parse(this, cmd, args);
+	    }
+	    catch (CommandParser::exception & e)
+	    {
+	      this->send(e.what());
+	    }
+	  }
+	  else
+	  {
+	    remotes.sendRemoteCommand(this, to, cmd, args);
+	  }
+	}
         this->_targetEstablished = false;
 
 	result = true;
@@ -1011,5 +1026,21 @@ Remote::sendRemoteCommand(const std::string & from, const std::string & to,
   msg += parameters;
 
   return this->sendCommand(from, "COMMAND", msg);
+}
+
+
+int
+Remote::sendAllRemoteCommandPtr(BotClient * skip, const std::string & command,
+  const std::string & parameters)
+{
+  int result = 0;
+
+  if (this != skip)
+  {
+    result = this->sendRemoteCommand(skip->handleAndBot(), "*", skip->id(),
+      command, parameters);
+  }
+
+  return result;
 }
 

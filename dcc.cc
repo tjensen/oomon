@@ -220,8 +220,9 @@ DCC::parse(std::string text)
         command = command.substr(0, at);
       }
 
-      if (to.empty() || Same(to, Config::GetNick()))
+      if (to.empty() || (0 == to.compare("*")) || Same(to, Config::GetNick()))
       {
+	// ISSUE LOCAL COMMAND
         try
         {
           this->_parser.parse(this, command, text);
@@ -235,7 +236,8 @@ DCC::parse(std::string text)
           result = false;
         }
       }
-      else
+
+      if (!to.empty() && !Same(to, Config::GetNick()))
       {
 	// ISSUE REMOTE COMMAND
 	remotes.sendRemoteCommand(this, to, command, text);

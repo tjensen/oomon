@@ -80,8 +80,11 @@ public:
   int sendChat(const std::string & from, const std::string & text);
   int sendBotJoin(const std::string & oldnode, const std::string & newnode);
   int sendBotPart(const std::string & from, const std::string & node);
+
   int sendRemoteCommand(const std::string & from, const std::string & to,
     const std::string & clientId, const std::string & command,
+    const std::string & parameters);
+  int sendAllRemoteCommandPtr(BotClient * skip, const std::string & command,
     const std::string & parameters);
 
   bool onConnect(void);

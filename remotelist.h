@@ -68,6 +68,8 @@ public:
     const Remote *skip = 0);
   void sendRemoteCommand(class BotClient * client, const std::string & bot,
     const std::string & command, const std::string & parameters);
+  void sendAllRemoteCommand(BotClient * from, const std::string & command,
+    const std::string & parameters);
 
   void cmdConn(BotClient * from, const std::string & command,
     std::string parameters);
