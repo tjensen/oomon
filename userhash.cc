@@ -1004,8 +1004,12 @@ UserHash::reportNets(BotClient * client, const int minimum)
       for (UserEntryList::iterator userptr = i->begin(); userptr != i->end();
           ++userptr)
       {
-        BotSock::Address net((*userptr)->getIP() & BotSock::ClassCNetMask);
-        ++unsorted[net];
+        BotSock::Address ip((*userptr)->getIP());
+
+        if (INADDR_NONE != ip)
+        {
+          ++unsorted[ip & BotSock::ClassCNetMask];
+        }
       }
     }
 
