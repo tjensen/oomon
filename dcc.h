@@ -101,6 +101,8 @@ private:
 
   bool parse(std::string text);
 
+  void addCommands(void);
+
   void addCommand(const std::string & command,
     void (DCC::*)(class BotClient *from, const std::string & command,
     std::string parameters), const UserFlags flags,

@@ -51,20 +51,42 @@
 
 
 DCC::DCC(const std::string & nick, const std::string & userhost)
-  : _sock(), _flags(UserFlags::NONE())
+  : _sock(false, true), _flags(UserFlags::NONE())
 {
-  this->_sock.setBuffering(true);
   this->_sock.registerOnConnectHandler(boost::bind(&DCC::onConnect, this));
   this->_sock.registerOnReadHandler(boost::bind(&DCC::onRead, this, _1));
+  this->_sock.setBuffering(true);
 
   this->_echoMyChatter = false;
   this->_userhost = userhost;
   this->_nick = nick;
-
   this->_watches = WatchSet::defaults();
-
   this->_id = ptrToStr(this);
 
+  this->addCommands();
+}
+
+
+DCC::DCC(DCC *listener, const std::string & nick, const std::string & userhost)
+  : _sock(&listener->_sock, false, true), _flags(UserFlags::NONE())
+{
+  this->_sock.registerOnConnectHandler(boost::bind(&DCC::onConnect, this));
+  this->_sock.registerOnReadHandler(boost::bind(&DCC::onRead, this, _1));
+  this->_sock.setBuffering(true);
+
+  this->_echoMyChatter = listener->_echoMyChatter;
+  this->_userhost = listener->_userhost;
+  this->_nick = listener->_nick;
+  this->_watches = listener->_watches;
+  this->_id = ptrToStr(this);
+
+  this->addCommands();
+}
+
+
+void
+DCC::addCommands(void)
+{
   // anonymous commands
   this->addCommand("AUTH", &DCC::cmdAuth, UserFlags::NONE());
   this->addCommand("HELP", &DCC::cmdHelp, UserFlags::NONE());
@@ -79,21 +101,6 @@ DCC::DCC(const std::string & nick, const std::string & userhost)
 
   // UserFlags::WALLOPS commands
   this->addCommand("LOCOPS", &DCC::cmdLocops, UserFlags::WALLOPS);
-}
-
-
-DCC::DCC(DCC *listener, const std::string & nick, const std::string & userhost)
-  : _sock(listener), _parser(listener->_parser)
-{
-  this->_sock.setBuffering(true);
-  this->_sock.registerOnConnectHandler(boost::bind(&DCC::onConnect, this));
-  this->_sock.registerOnReadHandler(boost::bind(&DCC::onRead, this, _1));
-
-  this->_echoMyChatter = listener->_echoMyChatter;
-  this->_userhost = listener->_userhost;
-  this->_nick = listener->_nick;
-  this->_watches = listener->_watches;
-  this->_id = ptrToStr(this);
 }
 
 
@@ -253,7 +260,7 @@ DCC::cmdAuth(BotClient *from, const std::string & command,
     this->handle(handle);
     this->flags(flags);
     this->_sock.setTimeout(0);
-    this->send("*** Authorization granted!");
+    from->send("*** Authorization granted!");
 
     std::string notice(this->handle() + " (" + this->userhost() +
       ") has been authorized");
@@ -264,7 +271,7 @@ DCC::cmdAuth(BotClient *from, const std::string & command,
   }
   else
   {
-    this->send("*** Authorization denied!");
+    from->send("*** Authorization denied!");
     ::SendAll(this->userhost() + " has failed authorization!",
       UserFlags::AUTHED, WatchSet(), this);
     Log::Write(this->userhost() + " has failed authorization!");
@@ -470,13 +477,13 @@ DCC::cmdEcho(BotClient *from, const std::string & command,
   {
     if (parm == "")
     {
-      this->send(std::string("*** ECHO is ") +
+      from->send(std::string("*** ECHO is ") +
         (this->_echoMyChatter ? "ON" : "OFF"));
     }
     else if (parm == "ON")
     {
       this->_echoMyChatter = true;
-      this->send("*** ECHO is now ON.");
+      from->send("*** ECHO is now ON.");
       if (this->isAuthed())
       {
         userConfig->setEcho(this->handle(), true);
@@ -485,7 +492,7 @@ DCC::cmdEcho(BotClient *from, const std::string & command,
     else if (parm == "OFF")
     {
       this->_echoMyChatter = false;
-      this->send("*** ECHO is now OFF.");
+      from->send("*** ECHO is now OFF.");
       if (this->isAuthed())
       {
         userConfig->setEcho(this->handle(), false);
@@ -493,7 +500,7 @@ DCC::cmdEcho(BotClient *from, const std::string & command,
     }
     else
     {
-      this->send("*** Huh?  Turn echo ON or OFF?");
+      from->send("*** Huh?  Turn echo ON or OFF?");
     }
   }
   catch (OOMon::botdb_error & e)

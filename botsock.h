@@ -28,6 +28,7 @@
 // Boost C++ headers
 #include <boost/shared_ptr.hpp>
 #include <boost/function.hpp>
+#include <boost/utility.hpp>
 
 // Std C headers
 #include <sys/types.h>
@@ -48,7 +49,7 @@
 #endif
 
 
-class BotSock
+class BotSock : private boost::noncopyable
 {
 public:
   typedef boost::shared_ptr<BotSock> ptr;
@@ -61,7 +62,6 @@ public:
   BotSock(const bool _blocking = false, const bool lineBuffered = false);
   BotSock(const BotSock *listener, const bool blocking = false,
     const bool lineBuffered = false);
-  BotSock(const BotSock & copy);
   virtual ~BotSock(void);
 
   bool connect(const Address address, const Port port);

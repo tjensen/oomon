@@ -87,26 +87,6 @@ BotSock::BotSock(const BotSock *listener, const bool blocking,
 }
 
 
-BotSock::BotSock(const BotSock & copy)
-{
-  // Don't copy the OnConnect and OnRead handlers because we can't
-  // guarantee they still exist (or are correct)!
-  this->buffer = copy.buffer;
-  this->bindAddress = copy.bindAddress;
-  this->timeout = copy.timeout;
-  this->lastActivity = copy.lastActivity;
-  this->connectTime = copy.connectTime;
-  this->connected = copy.connected;
-  this->connecting = copy.connecting;
-  this->listening = copy.listening;
-  this->blocking = copy.blocking;
-  this->lineBuffered = copy.lineBuffered;
-  this->binary = copy.binary;
-  this->plug = copy.plug;
-  this->backlog = copy.backlog;
-}
-
-
 BotSock::~BotSock(void)
 {
   if (0 != ::close(this->plug))

@@ -27,6 +27,7 @@
 
 // Boost C++ Headers
 #include <boost/function.hpp>
+#include <boost/utility.hpp>
 
 // OOMon Headers
 #include "oomon.h"
@@ -36,7 +37,7 @@
 #include "util.h"
 
 
-class CommandParser
+class CommandParser : private boost::noncopyable
 {
 public:
   CommandParser(void);
