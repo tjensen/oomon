@@ -36,7 +36,7 @@
 #include "irc.h"
 
 
-#ifdef DEBUG
+#if defined(DEBUG) || defined(PROXY_DEBUG)
 # define WINGATE_DEBUG
 #endif
 
@@ -57,7 +57,7 @@ WinGate::onConnect()
 {
 #ifdef WINGATE_DEBUG
   std::cout << "WinGate proxy detector connected to " << this->textAddress() <<
-    ":" << this->getPort() << std::endl;
+    ":" << this->port() << std::endl;
 #endif
 
   return true;

@@ -53,6 +53,7 @@
 #include "botexcept.h"
 #include "botclient.h"
 #include "http.h"
+#include "httppost.h"
 #include "config.h"
 #include "log.h"
 #include "util.h"
@@ -127,9 +128,15 @@ ProxyList::initiateCheck(const Proxy::Protocol type, const std::string & port,
 
       switch (type)
       {
-	case Proxy::HTTP:
+	case Proxy::HTTP_CONNECT:
           {
             ProxyPtr tmp(new Http(user));
+            newProxy.swap(tmp);
+          }
+	  break;
+	case Proxy::HTTP_POST:
+          {
+            ProxyPtr tmp(new HttpPost(user));
             newProxy.swap(tmp);
           }
 	  break;
@@ -184,16 +191,24 @@ ProxyList::check(const BotSock::Address & address, const UserEntryPtr user)
 {
   if (vars[VAR_SCAN_FOR_PROXIES]->getBool())
   {
-    StrVector http, socks4, socks5, wingate;
+    StrVector httpConnect, httpPost, socks4, socks5, wingate;
 
-    StrSplit(http, vars[VAR_SCAN_HTTP_CONNECT_PORTS]->getString(), " ,", true);
+    StrSplit(httpConnect, vars[VAR_SCAN_HTTP_CONNECT_PORTS]->getString(), " ,",
+        true);
+    StrSplit(httpPost, vars[VAR_SCAN_HTTP_POST_PORTS]->getString(), " ,", true);
     StrSplit(socks4, vars[VAR_SCAN_SOCKS4_PORTS]->getString(), " ,", true);
     StrSplit(socks4, vars[VAR_SCAN_SOCKS5_PORTS]->getString(), " ,", true);
     StrSplit(wingate, vars[VAR_SCAN_WINGATE_PORTS]->getString(), " ,", true);
 
-    for (StrVector::iterator pos = http.begin(); pos != http.end(); ++pos)
+    for (StrVector::iterator pos = httpConnect.begin();
+        pos != httpConnect.end(); ++pos)
     {
-      ProxyList::initiateCheck(Proxy::HTTP, *pos, address, user);
+      ProxyList::initiateCheck(Proxy::HTTP_CONNECT, *pos, address, user);
+    }
+    for (StrVector::iterator pos = httpPost.begin(); pos != httpPost.end();
+        ++pos)
+    {
+      ProxyList::initiateCheck(Proxy::HTTP_POST, *pos, address, user);
     }
     for (StrVector::iterator pos = socks4.begin(); pos != socks4.end(); ++pos)
     {

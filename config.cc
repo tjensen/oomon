@@ -133,13 +133,13 @@ class Config::bad_port_number : public Config::syntax_error
 Config config;
 
 
-Config::Config(void)
+Config::Config(void) : proxyTargetAddress_(INADDR_NONE)
 {
   this->initialize();
 }
 
 
-Config::Config(const std::string & filename)
+Config::Config(const std::string & filename) : proxyTargetAddress_(INADDR_NONE)
 {
   this->initialize();
   this->parse(filename);
@@ -177,11 +177,19 @@ Config::initialize(void)
   this->addParser("M", 1, boost::bind(&Config::parseMLine, this, _1));
   this->addParser("O", 4, boost::bind(&Config::parseOLine, this, _1));
   this->addParser("P", 1, boost::bind(&Config::parsePLine, this, _1));
+  this->addParser("PROXY-MATCH", 1, boost::bind(&Config::parseProxyMatchLine,
+        this, _1));
+  this->addParser("PROXY-SEND", 1, boost::bind(&Config::parseProxySendLine,
+        this, _1));
+  this->addParser("PROXY-TARGET", 2, boost::bind(&Config::parseProxyTargetLine,
+        this, _1));
+  this->addParser("PROXY-VHOST", 1, boost::bind(&Config::parseProxyVhostLine,
+        this, _1));
   this->addParser("R", 2, boost::bind(&Config::parseRLine, this, _1));
   this->addParser("S", 4, boost::bind(&Config::parseSLine, this, _1));
   this->addParser("T", 1, boost::bind(&Config::parseTLine, this, _1));
   this->addParser("U", 1, boost::bind(&Config::parseULine, this, _1));
-  this->addParser("W", 1, boost::bind(&Config::parseWLine, this, _1));
+  this->addParser("W", 1, boost::bind(&Config::parseProxyVhostLine, this, _1));
   this->addParser("Y", 2, boost::bind(&Config::parseYLine, this, _1));
 }
 
@@ -492,6 +500,61 @@ Config::parsePLine(const StrVector & fields)
 
 
 void
+Config::parseProxyMatchLine(const StrVector & fields)
+{
+  PatternPtr pattern(smartPattern(fields[0], false));
+  this->proxyMatches_.push_back(pattern);
+}
+
+
+void
+Config::parseProxySendLine(const StrVector & fields)
+{
+  std::string tmp;
+
+  // Reconstruct the original line
+  for (StrVector::const_iterator pos = fields.begin(); pos != fields.end();
+      ++pos)
+  {
+    if (!tmp.empty())
+    {
+      tmp += ':';
+    }
+
+    tmp += *pos;
+  }
+  this->proxySendLines_.push_back(tmp);
+}
+
+
+void
+Config::parseProxyTargetLine(const StrVector & fields)
+{
+  this->proxyTargetAddress_ = BotSock::inet_addr(fields[0]);
+  if (INADDR_NONE == this->proxyTargetAddress_)
+  {
+    throw Config::syntax_error("bad address '" + fields[0] + "'");
+  }
+
+  try
+  {
+    this->proxyTargetPort_ = boost::lexical_cast<BotSock::Address>(fields[1]);
+  }
+  catch (boost::bad_lexical_cast)
+  {
+    throw Config::bad_port_number();
+  }
+}
+
+
+void
+Config::parseProxyVhostLine(const StrVector & fields)
+{
+  this->proxyVhost_ = fields[0];
+}
+
+
+void
 Config::parseRLine(const StrVector & fields)
 {
   PatternPtr pattern(smartPattern(fields[0], false));
@@ -537,13 +600,6 @@ void
 Config::parseULine(const StrVector & fields)
 {
   this->userDBFilename_ = ::expandPath(fields[0], ETCDIR);
-}
-
-
-void
-Config::parseWLine(const StrVector & fields)
-{
-  this->proxyVhost_ = fields[0];
 }
 
 
@@ -950,6 +1006,55 @@ Config::remoteFlags(const std::string & client) const
   }
 
   return flags;
+}
+
+
+bool
+Config::isOpenProxyLine(const std::string & text) const
+{
+  bool result(false);
+
+  try
+  {
+    for (Config::PatternList::const_iterator pos = this->proxyMatches_.begin();
+        pos != this->proxyMatches_.end(); ++pos)
+    {
+      if ((*pos)->match(text))
+      {
+        result = true;
+        break;
+      }
+    }
+  }
+  catch (OOMon::regex_error & e)
+  {
+    Log::Write("RegEx error in Config::isOpenProxyLine(): " + e.what());
+    std::cerr << "RegEx error in Config::isOpenProxyLine(): " << e.what() <<
+                                                                 std::endl;
+  }
+
+  return result;
+}
+
+
+StrVector
+Config::proxySendLines(void) const
+{
+  return this->proxySendLines_;
+}
+
+
+BotSock::Address
+Config::proxyTargetAddress(void) const
+{
+  return this->proxyTargetAddress_;
+}
+
+
+BotSock::Address
+Config::proxyTargetPort(void) const
+{
+  return this->proxyTargetPort_;
 }
 
 

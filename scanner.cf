@@ -1,0 +1,95 @@
+# ===========================================================================
+# OOMon - Objected Oriented Monitor Bot
+# Copyright (C) 2004  Timothy L. Jensen
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+# ===========================================================================
+
+# Sample included config file
+# $Id$
+
+
+# ====================================================================
+# Proxy Scanner Match - Defines incoming data that will cause a proxy
+#                       scanner to declare that an open proxy has
+#                       been detected.  Multiple proxy-match lines
+#                       may be specified.
+#                       NOTE: This setting only applies to "HTTP POST"
+#                       proxy scanners!
+#
+# Syntax
+#  proxy-match:<pattern>
+#
+# pattern - A mask or regular expression to match against incoming
+#           data.
+# ====================================================================
+proxy-match:*Welcome to the* Internet Relay Chat Network*
+proxy-match:NOTICE *
+proxy-match:ERROR *
+
+
+# ====================================================================
+# Proxy Scanner Send - Defines the data proxy scanners should send
+#                      after successfully making a proxied connection.
+#                      Multiple proxy-send lines may be specified and
+#                      and will be sent in the order they are defined.
+#                      NOTE: This setting only applies to "HTTP POST"
+#                      proxy scanners!
+#
+# Syntax
+#  proxy-send:<text>
+#
+# text - Data to send out the proxied connection.  Usually, you will
+#        want to send IRC user registration commands if proxy-target
+#        points to an IRC server (see below).
+# ====================================================================
+proxy-send:USER scanner scanner scanner scanner
+proxy-send:NICK scanner
+
+
+# ====================================================================
+# Proxy Scanner Target - Defines the address and port number to try to
+#                        connect to when scanning for open proxies.
+#                        Only one proxy-target line may be specified.
+#                        By default, OOMon will attempt to connect to
+#                        the IRC server it is currently monitoring, so
+#                        if your S: line contains a secret or private
+#                        IP address, you should define this line with
+#                        a publicly accessible IP.
+#
+# Syntax
+#  proxy-target:<address>:<port>
+#
+# address - A numeric IP address.
+# port - A valid TCP port number.
+# ====================================================================
+#proxy-target:192.168.1.1:6667
+
+
+# ====================================================================
+# Proxy Scanner Virtual Host - The bot will try to bind to this
+#                              address when scanning hosts for open
+#                              proxies.  Only one proxy-vhost may be
+#                              specified.
+#
+# Syntax
+#  proxy-vhost:<address>
+#
+# address - The address to bind to when scanning hosts.  A numeric IP
+#           is preferred, but a fully qualified domain name is also
+#           allowed.
+# ====================================================================
+#proxy-vhost:sourdough.toast.pc
+

@@ -44,7 +44,7 @@
 #include "config.h"
 
 
-#ifdef DEBUG
+#if defined(DEBUG) || defined(PROXY_DEBUG)
 # define SOCKS4_DEBUG
 #endif
 
@@ -65,7 +65,7 @@ Socks4::onConnect()
 {
 #ifdef SOCKS4_DEBUG
   std::cout << "SOCKS4 proxy detector connected to " << this->textAddress() <<
-    ":" << this->getPort() << std::endl;
+    ":" << this->port() << std::endl;
 #endif
 
   struct passwd *tmppw = getpwuid(getuid());
@@ -77,9 +77,13 @@ Socks4::onConnect()
   else
     tmp = "";
 
-  BotSock::Port port = config.serverPort();
-  BotSock::Address dst = ntohl(server.getRemoteAddress());
-  //BotSock::Address dst = ntohl(inet_addr("198.175.186.5"));
+  BotSock::Port port = config.proxyTargetPort();
+  BotSock::Address dst = ntohl(config.proxyTargetAddress());
+  if (INADDR_NONE == dst)
+  {
+    port = config.serverPort();
+    dst = ntohl(server.getRemoteAddress());
+  }
 
   char buff[128];
 

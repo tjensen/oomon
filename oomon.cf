@@ -32,9 +32,10 @@ B:OOMon:::Object Oriented Monitor Bot:oomon:Cabbages:
 #:hostname:port:password:channel(s):
 S:plasma.toast.pc:6667::#monitors:
 
-# Include another config file here
+# Include other config files here
 I:userlist.cf
 I:remotes.cf
+I:scanner.cf
 
 # DCC Listen port number.  Default is 0, which means let the OS pick a
 # port number for us.
@@ -107,6 +108,3 @@ Y:opers:IRC Operators
 Y:users:Normal Users
 Y:restricted:Restricted Users
 
-# Set this to be the vhost you want your open wingate/proxy checker to
-# connect from, if any.
-#W:sourdough.plasma.pc

@@ -50,6 +50,7 @@
 #include "wingate.h"
 #include "botexcept.h"
 #include "http.h"
+#include "httppost.h"
 #include "config.h"
 #include "log.h"
 #include "util.h"

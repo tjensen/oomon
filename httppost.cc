@@ -30,7 +30,7 @@
 
 // OOMon Headers
 #include "oomon.h"
-#include "http.h"
+#include "httppost.h"
 #include "log.h"
 #include "main.h"
 #include "irc.h"
@@ -40,26 +40,23 @@
 
 
 #if defined(DEBUG) || defined(PROXY_DEBUG)
-# define HTTP_DEBUG
+# define HTTPPOST_DEBUG
 #endif
 
 
-Http::Http(const UserEntryPtr user) : Proxy(user)
+HttpPost::HttpPost(const UserEntryPtr user) : Proxy(user)
 {
-  registerOnConnectHandler(boost::bind(&Http::onConnect, this));
-  registerOnReadHandler(boost::bind(&Http::onRead, this, _1));
+  registerOnConnectHandler(boost::bind(&HttpPost::onConnect, this));
+  registerOnReadHandler(boost::bind(&HttpPost::onRead, this, _1));
   this->setBuffering(true);
 }
 
 
-// OnConnect()
-//
-//
 bool
-Http::onConnect()
+HttpPost::onConnect(void)
 {
-#ifdef HTTP_DEBUG
-  std::cout << "HTTP CONNECT proxy detector connected to " <<
+#ifdef HTTPPOST_DEBUG
+  std::cout << "HTTP POST proxy detector connected to " <<
     this->textAddress() << ":" << this->port() << std::endl;
 #endif
 
@@ -71,17 +68,38 @@ Http::onConnect()
     dst = server.getRemoteAddress();
   }
 
-  std::string buffer("CONNECT ");
+  std::string buffer("POST http://");
   buffer += BotSock::inet_ntoa(dst);
   buffer += ':';
   buffer += boost::lexical_cast<std::string>(port);
-  buffer += " HTTP/1.0";
+  buffer += " HTTP/1.0\r\n";
 
-#ifdef HTTP_DEBUG
-  std::cout << "HTTP << " << buffer << std::endl;
+  StrVector sendLines(config.proxySendLines());
+  if (sendLines.empty())
+  {
+    buffer += "\r\n";
+  }
+  else
+  {
+    std::string extra;
+    for (StrVector::iterator pos = sendLines.begin(); pos != sendLines.end();
+        ++pos)
+    {
+      extra += *pos;
+      extra += "\r\n";
+    }
+
+    buffer += "Content-Length: ";
+    buffer += boost::lexical_cast<std::string>(extra.length());
+    buffer += "\r\n\r\n";
+    buffer += extra;
+  }
+
+#ifdef HTTPPOST_DEBUG
+  std::cout << "HTTP_POST << " << buffer << std::endl;
 #endif
 
-  if (this->write(buffer + "\r\n\r\n") > 0)
+  if (this->write(buffer) > 0)
   {
     return true;
   }
@@ -91,20 +109,20 @@ Http::onConnect()
 
 
 bool
-Http::onRead(std::string text)
+HttpPost::onRead(std::string text)
 {
-#ifdef HTTP_DEBUG
-  std::cout << "HTTP >> " << text << std::endl;
+#ifdef HTTPPOST_DEBUG
+  std::cout << "HTTP_POST >> " << text << std::endl;
 #endif
 
-  if ((std::string::npos != text.find("HTTP/1.0 200 Connection established")) ||
-    (std::string::npos != text.find("HTTP/1.1 200 Connection established")))
+  if (config.isOpenProxyLine(text))
   {
-#ifdef HTTP_DEBUG
-    std::cout << "OPEN HTTP CONNECT PROXY DETECTED!" << std::endl;
+#ifdef HTTPPOST_DEBUG
+    std::cout << "OPEN HTTP POST PROXY DETECTED!" << std::endl;
 #endif
     this->detectedProxy();
   }
+
   return false;
 }
 

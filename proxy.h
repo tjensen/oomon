@@ -38,7 +38,7 @@
 class Proxy : public BotSock
 {
 public:
-  enum Protocol { SOCKS4, SOCKS5, WINGATE, HTTP };
+  enum Protocol { SOCKS4, SOCKS5, WINGATE, HTTP_CONNECT, HTTP_POST };
 
   Proxy(const UserEntryPtr user);
   virtual ~Proxy(void);

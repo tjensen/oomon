@@ -1,5 +1,5 @@
-#ifndef __HTTP_H__
-#define __HTTP_H__
+#ifndef __HTTPPOST_H__
+#define __HTTPPOST_H__
 // ===========================================================================
 // OOMon - Objected Oriented Monitor Bot
 // Copyright (C) 2004  Timothy L. Jensen
@@ -28,15 +28,15 @@
 #include "proxylist.h"
 
 
-class Http : public Proxy
+class HttpPost : public Proxy
 {
 public:
-  Http(const UserEntryPtr user);
-  virtual ~Http(void)
+  HttpPost(const UserEntryPtr user);
+  virtual ~HttpPost(void)
   {
     if (!this->detectedProxy_)
     {
-      proxies.addToCache(this->address(), this->port(), Proxy::HTTP_CONNECT);
+      proxies.addToCache(this->address(), this->port(), Proxy::HTTP_POST);
     }
   }
 
@@ -44,8 +44,8 @@ public:
 
 protected:
   bool onRead(std::string);
-  virtual std::string typeName(void) const { return "HTTP CONNECT"; };
-  virtual Proxy::Protocol type(void) const { return Proxy::HTTP_CONNECT; };
+  virtual std::string typeName(void) const { return "HTTP POST"; };
+  virtual Proxy::Protocol type(void) const { return Proxy::HTTP_POST; };
 };
 
 #endif

@@ -45,17 +45,17 @@ CXXFLAGS = @CXXFLAGS@ -I./libs
 
 OBJS =	action.o adnswrap.o arglist.o autoaction.o botdb.o botsock.o \
         cmdparser.o config.o dcc.o dcclist.o dnsbl.o engine.o filter.o flood.o \
-        format.o help.o helptopic.o http.o irc.o jupe.o klines.o links.o log.o \
-        main.o pattern.o proxy.o proxylist.o remote.o remotelist.o seedrand.o \
-	services.o socks4.o socks5.o trap.o userdb.o userentry.o userflags.o \
-	userhash.o util.o vars.o watch.o wingate.o
+        format.o help.o helptopic.o http.o httppost.o irc.o jupe.o klines.o \
+        links.o log.o main.o pattern.o proxy.o proxylist.o remote.o \
+        remotelist.o seedrand.o services.o socks4.o socks5.o trap.o userdb.o \
+        userentry.o userflags.o userhash.o util.o vars.o watch.o wingate.o
 SRCS =	action.cc adnswrap.cc arglist.cc autoaction.cc botdb.cc botsock.cc \
         cmdparser.cc config.cc dcc.cc dcclist.cc dnsbl.cc engine.cc filter.cc \
-        flood.cc format.cc help.cc helptopic.cc http.cc irc.cc jupe.cc \
-        klines.cc links.cc log.cc main.cc pattern.cc proxy.cc proxylist.cc \
-        remote.cc remotelist.cc seedrand.cc services.cc socks4.cc socks5.cc \
-        trap.cc userdb.cc userentry.cc userflags.cc userhash.cc util.cc \
-        vars.cc watch.cc wingate.cc
+        flood.cc format.cc help.cc helptopic.cc http.cc httppost.cc irc.cc \
+        jupe.cc klines.cc links.cc log.cc main.cc pattern.cc proxy.cc \
+        proxylist.cc remote.cc remotelist.cc seedrand.cc services.cc socks4.cc \
+        socks5.cc trap.cc userdb.cc userentry.cc userflags.cc userhash.cc \
+        util.cc vars.cc watch.cc wingate.cc
 LIBS = @LIBS@
 LDFLAGS = @LDFLAGS@
 BOOST_DEFS = -DBOOST_DISABLE_THREADS
@@ -94,6 +94,11 @@ install: $(EXE) $(MKPASSWD) install-mkdirs
 	-@if test ! -e $(sysconfdir)/remotes.cf; then \
 		echo "$(INSTALL_DATA) remotes.cf $(sysconfdir)/remotes.cf"; \
 		$(INSTALL_DATA) remotes.cf $(sysconfdir)/remotes.cf; \
+	fi
+	$(INSTALL_DATA) scanner.cf $(sysconfdir)/scanner.cf.sample
+	-@if test ! -e $(sysconfdir)/scanner.cf; then \
+		echo "$(INSTALL_DATA) scanner.cf $(sysconfdir)/scanner.cf"; \
+		$(INSTALL_DATA) scanner.cf $(sysconfdir)/scanner.cf; \
 	fi
 	$(INSTALL_DATA) oomon-motd.txt $(sysconfdir)/oomon-motd.txt.sample
 	-@if test ! -e $(sysconfdir)/oomon-motd.txt; then \

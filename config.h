@@ -109,7 +109,12 @@ class Config
     std::string classDescription(const std::string & name) const;
     UserFlags remoteFlags(const std::string & client) const;
 
+    bool isOpenProxyLine(const std::string & text) const;
+    StrVector proxySendLines(void) const;
+    BotSock::Address proxyTargetAddress(void) const;
+    BotSock::Address proxyTargetPort(void) const;
     std::string proxyVhost(void) const;
+
     BotSock::Port remotePort(void) const { return this->remotePort_; }
     BotSock::Port dccPort(void) const { return this->dccPort_; }
 
@@ -150,11 +155,14 @@ class Config
     void parseMLine(const StrVector & fields);
     void parseOLine(const StrVector & fields);
     void parsePLine(const StrVector & fields);
+    void parseProxyMatchLine(const StrVector & fields);
+    void parseProxySendLine(const StrVector & fields);
+    void parseProxyTargetLine(const StrVector & fields);
+    void parseProxyVhostLine(const StrVector & fields);
     void parseRLine(const StrVector & fields);
     void parseSLine(const StrVector & fields);
     void parseTLine(const StrVector & fields);
     void parseULine(const StrVector & fields);
-    void parseWLine(const StrVector & fields);
     void parseYLine(const StrVector & fields);
 
     struct Oper;
@@ -198,6 +206,10 @@ class Config
     BotSock::Port serverPort_;
     std::string serverPassword_;
     std::string channels_;
+    Config::PatternList proxyMatches_;
+    StrVector proxySendLines_;
+    BotSock::Address proxyTargetAddress_;
+    BotSock::Port proxyTargetPort_;
     std::string proxyVhost_;
     std::string logFilename_;
     std::string motdFilename_;
