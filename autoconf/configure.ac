@@ -35,6 +35,9 @@ AC_PATH_PROG(MKDIR, mkdir)
 AC_PATH_PROG(TOUCH, touch)
 AC_PROG_INSTALL
 
+db_note="yes"
+regex_note="yes"
+
 # use directory structure of cached as default (hack)
 if test "$libexecdir" = '${exec_prefix}/libexec' &&
    test "$localstatedir" = '${prefix}/var'; then
@@ -56,6 +59,10 @@ if test "$GXX" = yes; then
 	case $gxx_version in
 	  2.9*)	CXXFLAGS="$CXXFLAGS -ftemplate-depth-20";;
 	esac
+
+        case $gxx_version in
+          2*) gxx_note="yes";;
+        esac
 fi
 
 
@@ -129,7 +136,7 @@ AC_CHECK_FUNC(fchmod, AC_DEFINE(HAVE_FCHMOD, 1, [Define if your system has a fch
 AC_CHECK_FUNC(flock, AC_DEFINE(HAVE_FLOCK, 1, [Define if your system has a flock() function.]),)
 AC_CHECK_FUNC(lockf, AC_DEFINE(HAVE_LOCKF, 1, [Define if your system has a lockf() function.]),)
 AC_CHECK_FUNC(strerror, AC_DEFINE(HAVE_STRERROR, 1, [Define if your system has a strerror() function.]),)
-AC_CHECK_FUNC(regcomp, AC_DEFINE(HAVE_POSIX_REGEX, 1, [Define if using POSIX regular expressions.]),)
+AC_CHECK_FUNC(regcomp, [regex_note="" AC_DEFINE(HAVE_POSIX_REGEX, 1, [Define if using POSIX regular expressions.])],)
 AC_CHECK_FUNC(snprintf, AC_DEFINE(HAVE_SNPRINTF, 1, [Define if your system has a snprintf() function.]),)
 AC_CHECK_FUNC(getaddrinfo, AC_DEFINE(HAVE_GETADDRINFO, 1, [Define if your system has a getaddrinfo() function.]),)
 AC_CHECK_FUNC(getnameinfo, AC_DEFINE(HAVE_GETNAMEINFO, 1, [Define if your system has a getnameinfo() function.]),)
@@ -213,6 +220,7 @@ if test "X$cf_enable_pcre" != "Xno" ; then
   fi
   AC_DEFINE(HAVE_LIBPCRE, 1, [Define if using PCRE for regex.])
   PCRE_MSG="yes"
+  regex_note=""
 else
   PCRE_MSG="no"
 fi
@@ -290,6 +298,7 @@ if test "X$cf_enable_adns" != "Xno" ; then
   ADNS_MSG="yes"
 else
   ADNS_MSG="no"
+  adns_note="yes"
 fi
 
 # GDBM support
@@ -363,6 +372,7 @@ if test "X$cf_enable_gdbm" != "Xno" ; then
   fi
   AC_DEFINE(HAVE_LIBGDBM, 1, [Define if using GDBM style DB.])
   GDBM_MSG="yes"
+  db_note=""
 else
   GDBM_MSG="no"
 fi
@@ -374,7 +384,7 @@ AC_TRY_COMPILE([#include <sys/types.h>
 #include <limits.h>
 #include <db.h>],
 [DB *foo = dbopen("foo.db", O_CREAT | O_RDWR, S_IRUSR | S_IWUSR, DB_HASH, NULL);],
-AC_DEFINE(HAVE_BSDDB, 1, [Define if using BSD style DB.]) AC_MSG_RESULT(yes),
+[ db_note="" AC_DEFINE(HAVE_BSDDB, 1, [Define if using BSD style DB.]) AC_MSG_RESULT(yes)],
 AC_MSG_RESULT(no))
 
 AC_MSG_CHECKING(whether socklen_t is defined)
@@ -519,19 +529,54 @@ I=`eval echo ${user_path}` ; I=`eval echo ${I}`
 J=`eval echo ${superuser_path}` ; J=`eval echo ${J}`
 K=`eval echo ${localstatedir}/logs` ; K=`eval echo ${K}`
 
-echo ""
-echo "OOMon has been configured with the following options:"
-echo ""
-echo "                                    Binaries: $B"
-echo "                         Configuration files: $D"
-echo "                                   Log files: $K"
-echo "  Perl-Compatible Regular Expressions (PCRE): ${PCRE_MSG}"
-echo "                 GNU Database Manager (GDBM): ${GDBM_MSG}"
-echo "             Asynchronous DNS Library (ADNS): ${ADNS_MSG}"
-echo ""
-echo "            Compiler: ${CXX}"
-echo "      Compiler flags: ${CXXFLAGS}"
-echo "        Linker flags: ${LDFLAGS}"
-echo "           Libraries: ${LIBS}"
+cat <<REPORT_END
+
+OOMon has been configured with the following options:
+
+                                    Binaries: $B
+                         Configuration files: $D
+                                   Log files: $K
+  Perl-Compatible Regular Expressions (PCRE): ${PCRE_MSG}
+                 GNU Database Manager (GDBM): ${GDBM_MSG}
+             Asynchronous DNS Library (ADNS): ${ADNS_MSG}
+
+            Compiler: ${CXX}
+      Compiler flags: ${CXXFLAGS}
+        Linker flags: ${LDFLAGS}
+           Libraries: ${LIBS}
+
+REPORT_END
+
+if test -n "$gxx_note" -o -n "$adns_note" -o -n "$db_note" -o -n "$regex_note"; then
+        echo "Notes:"
+        if test ! -z "$gxx_note"; then
+                cat <<GXX_NOTE_END
+ * You are using an old branch of GNU C++.  Please consider upgrading to 3.3.
+GXX_NOTE_END
+        fi
+        if test ! -z "$adns_note"; then
+                cat <<ADNS_NOTE_END
+ * ADNS will help your OOMon be more responsive during DNSBL lookups and is
+   highly recommended!  Download it from http://www.gnu.org/software/adns/,
+   install, and then re-run this configure script.
+ADNS_NOTE_END
+        fi
+        if test -n "$db_note"; then
+                cat <<DB_NOTE_END
+ * You do not have a supported DB library installed.  Consider installing
+   GDBM to save watches and other per-user settings.  Download it from
+   http://www.gnu.org/software/gdbm/, install, and then re-run this configure
+   script.
+DB_NOTE_END
+        fi
+        if test -n "$regex_note"; then
+                cat <<REGEX_NOTE_END
+ * You do not have a supported regular expression library installed.  Please
+   consider installing PCRE to add highly versatile searching capabilities
+   to your OOMon.  Download it from http://www.pcre.org/, install, and then
+   re-run this configure script.
+REGEX_NOTE_END
+        fi
+fi
 
 echo ""
