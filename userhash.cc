@@ -59,6 +59,11 @@ const static int CLONE_DETECT_INC = 15;
 UserHash users;
 
 
+#ifdef DEBUG_USERHASH
+unsigned long userEntryCount = 0;
+#endif
+
+
 int
 UserHash::hashFunc(const std::string & key)
 {
@@ -1835,6 +1840,10 @@ void
 UserHash::status(BotClient * client)
 {
   client->send("Users: " + boost::lexical_cast<std::string>(this->userCount));
+#ifdef DEBUG_USERHASH
+  client->send("userEntryCount: " +
+    boost::lexical_cast<std::string>(userEntryCount));
+#endif
 
   int userHashCount = 0;
   long scoreSum = 0;

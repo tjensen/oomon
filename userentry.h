@@ -42,7 +42,7 @@ public:
     const std::string & aUserClass, const std::string & aGecos,
     const BotSock::Address anIp, const std::time_t aConnectTime,
     const bool oper);
-  virtual ~UserEntry() {};
+  virtual ~UserEntry(void);
 
   void setNick(const std::string & aNick);
   void setOper(const bool oper) { this->isOper = oper; };
@@ -56,20 +56,20 @@ public:
 
   void checkVersionTimeout(const std::time_t now, const std::time_t timeout);
 
-  std::string getNick() const { return this->nick; };
-  std::string getUser() const { return this->user; };
-  std::string getHost() const { return this->host; };
-  std::string getFakeHost() const { return this->fakeHost; };
-  std::string getDomain() const { return this->domain; };
-  std::string getClass() const { return this->userClass; };
-  std::string getGecos() const { return this->gecos; };
-  BotSock::Address getIP() const { return this->ip; };
-  std::string getTextIP() const
+  std::string getNick(void) const { return this->nick; };
+  std::string getUser(void) const { return this->user; };
+  std::string getHost(void) const { return this->host; };
+  std::string getFakeHost(void) const { return this->fakeHost; };
+  std::string getDomain(void) const { return this->domain; };
+  std::string getClass(void) const { return this->userClass; };
+  std::string getGecos(void) const { return this->gecos; };
+  BotSock::Address getIP(void) const { return this->ip; };
+  std::string getTextIP(void) const
   {
     return BotSock::inet_ntoa(this->ip);
   }
-  bool getOper() const { return this->isOper; };
-  int getScore() const { return this->randScore; };
+  bool getOper(void) const { return this->isOper; };
+  int getScore(void) const { return this->randScore; };
   std::string getUserHost(void) const
   {
     std::string result(this->user);
@@ -102,8 +102,8 @@ public:
     result += BotSock::inet_ntoa(this->ip);
     return result;
   }
-  std::time_t getConnectTime() const { return this->connectTime; };
-  std::time_t getReportTime() const { return this->reportTime; };
+  std::time_t getConnectTime(void) const { return this->connectTime; };
+  std::time_t getReportTime(void) const { return this->reportTime; };
 
   std::string output(const std::string & format) const;
 

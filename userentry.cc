@@ -41,6 +41,11 @@
 #include "util.h"
 
 
+#ifdef DEBUG_USERHASH
+extern unsigned long userEntryCount;
+#endif
+
+
 UserEntry::UserEntry(const std::string & aNick,
   const std::string & aUser, const std::string & aHost,
   const std::string & aFakeHost, const std::string & aUserClass,
@@ -52,6 +57,17 @@ UserEntry::UserEntry(const std::string & aNick,
   versioned(0), isOper(oper)
 {
   this->setNick(aNick);
+#ifdef DEBUG_USERHASH
+  ++userEntryCount;
+#endif
+}
+
+
+UserEntry::~UserEntry(void)
+{
+#ifdef DEBUG_USERHASH
+  --userEntryCount;
+#endif
 }
 
 
