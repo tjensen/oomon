@@ -117,7 +117,7 @@ AC_CHECK_HEADERS(sys/un.h sys/select.h sys/fcntl.h sys/file.h sys/time.h sys/wai
 # non sys/ ones
 AC_CHECK_HEADERS(stdarg.h unistd.h fcntl.h string.h memory.h netdb.h limits.h crypt.h)
 AC_CHECK_HEADERS(termbits.h)
-AC_CHECK_HEADERS([algorithm bitset cctype cerrno csignal cstdlib ctime fstream functional iostream list map set string vector],,AC_MSG_ERROR([Bad or missing STL implementation]))
+AC_CHECK_HEADERS([algorithm bitset cctype cerrno csignal cstdlib ctime deque fstream functional iostream list map set string vector],,AC_MSG_ERROR([Bad or missing STL implementation]))
 AC_CHECK_FUNC(setsid, AC_DEFINE(HAVE_SETSID, 1, [Define if your system has a setsid() function.]),)
 AC_CHECK_FUNC(getpgid, AC_DEFINE(HAVE_GETPGID, 1, [Define if your system has a getpgid() function.]),)
 AC_CHECK_FUNC(getsid, AC_DEFINE(HAVE_GETSID, 1, [Define if your system has a getsid() function.]),)
