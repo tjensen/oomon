@@ -38,8 +38,10 @@
 #else
 # include <map>
 #endif
-#ifdef HAVE_FLOCK
+#if defined(HAVE_FLOCK)
 # include <sys/file.h>
+#elif defined(HAVE_LOCKF)
+# include <unistd.h>
 #endif
 
 
@@ -63,8 +65,11 @@ class BotDB::Lock
     {
       if (this->fd_ != -1)
       {
-#ifdef HAVE_FLOCK
+#if defined(HAVE_FLOCK)
         flock(this->fd_, operation);
+#elif defined(HAVE_LOCKF)
+        lseek(this->fd_, 0, SEEK_SET);
+        lockf(this->fd_, operation, 0);
 #endif
       }
     }
@@ -72,11 +77,27 @@ class BotDB::Lock
     {
       if (this->fd_ != -1)
       {
-#ifdef HAVE_FLOCK
-        flock(this->fd_, LOCK_UN);
+#if defined(HAVE_FLOCK)
+        flock(this->fd_, Lock::UNLOCK);
+#elif defined(HAVE_LOCKF)
+        lseek(this->fd_, 0, SEEK_SET);
+        lockf(this->fd_, Lock::UNLOCK, 0);
 #endif
       }
     }
+#if defined(HAVE_FLOCK)
+    static const int UNLOCK = LOCK_UN;
+    static const int SHARED = LOCK_SH;
+    static const int EXCLUSIVE = LOCK_EX;
+#elif defined(HAVE_LOCKF)
+    static const int UNLOCK = F_ULOCK;
+    static const int SHARED = F_TLOCK;
+    static const int EXCLUSIVE = F_LOCK;
+#else
+    static const int UNLOCK = 0;
+    static const int SHARED = 0;
+    static const int EXCLUSIVE = 0;
+#endif
   private:
     const int fd_;
 };
@@ -117,9 +138,7 @@ BotDB::~BotDB()
 int
 BotDB::del(const std::string & key)
 {
-#ifdef HAVE_FLOCK
-  BotDB::Lock lock(this->fd(), LOCK_EX);
-#endif
+  BotDB::Lock lock(this->fd(), BotDB::Lock::EXCLUSIVE);
 
 #if defined(HAVE_LIBGDBM)
   datum k = { dptr: const_cast<char *>(key.c_str()), dsize: key.length() + 1 };
@@ -173,9 +192,7 @@ BotDB::fd()
 int
 BotDB::get(const std::string & key, std::string & data)
 {
-#ifdef HAVE_FLOCK
-  BotDB::Lock lock(this->fd(), LOCK_SH);
-#endif
+  BotDB::Lock lock(this->fd(), BotDB::Lock::SHARED);
 
 #if defined(HAVE_LIBGDBM)
   datum k = { dptr: const_cast<char *>(key.c_str()), dsize: key.length() + 1 };
@@ -223,9 +240,7 @@ BotDB::get(const std::string & key, std::string & data)
 int
 BotDB::put(const std::string & key, const std::string & data)
 {
-#ifdef HAVE_FLOCK
-  BotDB::Lock lock(this->fd(), LOCK_EX);
-#endif
+  BotDB::Lock lock(this->fd(), BotDB::Lock::EXCLUSIVE);
 
 #if defined(HAVE_LIBGDBM)
   datum k, d;
