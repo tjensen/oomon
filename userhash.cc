@@ -563,7 +563,8 @@ UserHash::clear()
 
 
 int
-UserHash::findUsers(BotClient * client, const Filter & filter) const
+UserHash::findUsers(BotClient * client, const Filter & filter, const bool count)
+  const
 {
   int numfound = 0;
 
@@ -576,8 +577,19 @@ UserHash::findUsers(BotClient * client, const Filter & filter) const
       if (filter.matches(*pos))
       {
 	++numfound;
-	std::string outmsg((*pos)->output(vars[VAR_LIST_FORMAT]->getString()));
-        client->send(outmsg);
+        if (!count)
+        {
+          std::string buffer("  ");
+          buffer += (*pos)->getNick();
+          buffer += ' ';
+          buffer += (*pos)->getUserHost();
+          if ((*pos)->getIP() != INADDR_NONE)
+          {
+            buffer += ' ';
+            buffer += (*pos)->getTextIP();
+          }
+          client->send(buffer);
+        }
       }
     }
   }

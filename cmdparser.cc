@@ -864,12 +864,12 @@ CommandParser::cmdFindu(BotClient * from, const std::string & command,
       {
         Filter filter(parameters, Filter::FIELD_NUHG);
 
-        users.findUsers(from, filter);
+        users.findUsers(from, filter, false);
       }
     }
     else
     {
-      ArgList args;
+      ArgList args("-count");
       args.addPatterns("-class");
 
       if (-1 == args.parseCommand(parameters))
@@ -880,7 +880,7 @@ CommandParser::cmdFindu(BotClient * from, const std::string & command,
 
       if (parameters.empty())
       {
-        CommandParser::syntax(command, "[-class <pattern>] <pattern>");
+        CommandParser::syntax(command, "[-count] [-class <pattern>] <pattern>");
       }
       else
       {
@@ -904,7 +904,7 @@ CommandParser::cmdFindu(BotClient * from, const std::string & command,
           filter.add(Filter::FIELD_CLASS, classPattern);
         }
 
-        users.findUsers(from, filter);
+        users.findUsers(from, filter, args.haveUnary("-count"));
       }
     }
   }

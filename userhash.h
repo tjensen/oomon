@@ -82,7 +82,8 @@ public:
   void checkHostClones(const std::string & host);
   void checkIpClones(const BotSock::Address & ip);
 
-  int findUsers(class BotClient * client, const Filter & filter) const;
+  int findUsers(class BotClient * client, const Filter & filter,
+    const bool count) const;
   int listUsers(class BotClient * client, const PatternPtr userhost,
     std::string className, const ListAction action = LIST_VIEW,
     const std::string & from = "", const std::string & reason = "") const;
