@@ -42,7 +42,7 @@ public:
     const std::string & aUserClass, const std::string & aGecos,
     const BotSock::Address anIp, const std::time_t aConnectTime,
     const bool oper);
-  virtual ~UserEntry(void);
+  ~UserEntry(void);
 
   void setNick(const std::string & aNick);
   void setOper(const bool oper) { this->isOper = oper; }
