@@ -40,12 +40,12 @@
 #include "userentry.h"
 
 
-std::list<Trap> TrapList::traps;
+TrapList::TrapMap TrapList::traps;
 
 
 Trap::Trap(const TrapAction action, const long timeout,
   const std::string & line)
-  : action_(action), timeout_(timeout), matchCount_(0)
+  : action_(action), timeout_(timeout), lastMatch_(0), matchCount_(0)
 {
   if ((line.length() > 0) && (line[0] == '/'))
   {
@@ -574,16 +574,42 @@ Trap::doAction(const UserEntryPtr user) const
 
 
 Trap
-TrapList::add(const TrapAction action, const long timeout,
-  const std::string & line)
+TrapList::add(const unsigned int key, const TrapAction action,
+  const long timeout, const std::string & line)
 {
   Trap trap(action, timeout, line);
 
-  traps.remove(trap);
-
-  traps.push_back(trap);
+  const TrapMap::iterator begin = key ? traps.lower_bound(key) : traps.begin();
+  const TrapMap::iterator end = key ? traps.upper_bound(key) : traps.end();
+  TrapMap::iterator pos;
+  for (pos = begin; pos != end; ++pos)
+  {
+    if (pos->second == trap)
+    {
+      break;
+    }
+  }
+  if (pos == end)
+  {
+    traps.insert(std::make_pair(key ? key : TrapList::getMaxKey() + 100, trap));
+  }
 
   return trap;
+}
+
+
+unsigned int
+TrapList::getMaxKey(void)
+{
+  TrapMap::reverse_iterator last = traps.rbegin();
+  unsigned int result = 0;
+
+  if (last != traps.rend())
+  {
+    result = last->first;
+  }
+
+  return result;
 }
 
 
@@ -605,14 +631,6 @@ TrapList::cmd(BotClient * client, std::string line)
   long timeout = 0;
   bool modified = false;
 
-  std::string copy = line;
-  std::string aword = FirstWord(copy);
-  if (isNumeric(aword))
-  {
-    timeout = atol(aword.c_str());
-    line = copy;
-  }
-
   if (flag == "" || flag == "LIST")
   {
     TrapList::list(client, showCounts, showTimes);
@@ -621,22 +639,34 @@ TrapList::cmd(BotClient * client, std::string line)
   {
     if (client->flags().has(UserFlags::MASTER))
     {
-      if (TrapList::remove(line))
+      std::string copy = line;
+      std::string val = FirstWord(copy);
+      bool success = false;
+      try
+      {
+        unsigned int key = boost::lexical_cast<unsigned int>(val);
+        success = TrapList::remove(key);
+      }
+      catch (boost::bad_lexical_cast)
+      {
+        success = TrapList::remove(line);
+      }
+      if (success)
       {
         modified = true;
 
         if (0 != client->id().compare("CONFIG"))
         {
-	  std::string notice(client->handleAndBot());
-	  notice += " removed trap: ";
-	  notice += line;
+          std::string notice(client->handleAndBot());
+          notice += " removed trap: ";
+          notice += line;
           ::SendAll(notice, UserFlags::OPER, WATCH_TRAPS);
           Log::Write(notice);
         }
       }
       else
       {
-        client->send(std::string("*** No trap exists for: ") + line);
+        client->send(std::string("*** No such trap: ") + line);
       }
     }
     else
@@ -644,15 +674,34 @@ TrapList::cmd(BotClient * client, std::string line)
       client->send("*** You don't have access to remove traps!");
     }
   }
-  else
+  else // command == "ADD"
   {
+    unsigned int key = 0;
+
+    try
+    {
+      key = boost::lexical_cast<unsigned int>(flag);
+      flag = UpCase(FirstWord(line));
+    }
+    catch (boost::bad_lexical_cast)
+    {
+      // user didn't specify a key
+    }
+    std::string copy = line;
+    std::string aword = FirstWord(copy);
+    if (isNumeric(aword))
+    {
+      timeout = atol(aword.c_str());
+      line = copy;
+    }
+
     if (client->flags().has(UserFlags::MASTER))
     {
       try
       {
         TrapAction actionType = TrapList::actionType(flag);
 
-        Trap node = TrapList::add(actionType, timeout, line);
+        Trap node = TrapList::add(key, actionType, timeout, line);
 
         modified = true;
 
@@ -689,27 +738,28 @@ TrapList::cmd(BotClient * client, std::string line)
 
 
 bool
-TrapList::remove(const Trap & item)
+TrapList::remove(const unsigned int key)
 {
-  std::list<Trap>::size_type before = traps.size();
+  const TrapMap::iterator begin = traps.lower_bound(key);
+  const TrapMap::iterator end = traps.upper_bound(key);
 
-  traps.remove(item);
+  traps.erase(begin, end);
 
-  return (traps.size() == before);
+  return (begin != end);
 }
-
 
 bool
 TrapList::remove(const std::string & pattern)
 {
   bool found = false;
 
-  for (std::list<Trap>::iterator pos = traps.begin(); pos != traps.end(); )
+  for (TrapMap::iterator pos = traps.begin(); pos != traps.end(); )
   {
-    if (*pos == pattern)
+    if (pos->second == pattern)
     {
       found = true;
-      pos = traps.erase(pos);
+      traps.erase(pos);
+      break;
     }
     else
     {
@@ -720,7 +770,6 @@ TrapList::remove(const std::string & pattern)
   return found;
 }
 
-
 void
 TrapList::match(const UserEntryPtr user, const std::string & version,
   const std::string & privmsg, const std::string & notice)
@@ -728,15 +777,14 @@ TrapList::match(const UserEntryPtr user, const std::string & version,
   if (!Config::IsOKHost(user->getUserHost(), user->getIP()) &&
     !Config::IsOper(user->getUserHost(), user->getIP()))
   {
-    for (std::list<Trap>::iterator pos = traps.begin(); pos != traps.end();
-      ++pos)
+    for (TrapMap::iterator pos = traps.begin(); pos != traps.end(); ++pos)
     {
       try
       {
-        if (pos->matches(user, version, privmsg, notice))
+        if (pos->second.matches(user, version, privmsg, notice))
         {
-	  pos->updateStats();
-	  pos->doAction(user);
+	  pos->second.updateStats();
+	  pos->second.doAction(user);
         }
       }
       catch (OOMon::regex_error & e)
@@ -778,10 +826,13 @@ TrapList::list(BotClient * client, bool showCounts, bool showTimes)
 {
   int count = 0;
 
-  for (std::list<Trap>::iterator pos = traps.begin(); pos != traps.end(); ++pos)
+  for (TrapMap::iterator pos = traps.begin(); pos != traps.end(); ++pos)
   {
-    client->send(pos->getString(showCounts, showTimes));
-    count++;
+    std::string text(boost::lexical_cast<std::string>(pos->first));
+    text += ' ';
+    text += pos->second.getString(showCounts, showTimes);
+    client->send(text);
+    ++count;
   }
   if (count > 0)
   {
@@ -797,12 +848,13 @@ TrapList::list(BotClient * client, bool showCounts, bool showTimes)
 void
 TrapList::save(std::ofstream & file)
 {
-  for (std::list<Trap>::iterator pos = TrapList::traps.begin();
+  for (TrapMap::iterator pos = TrapList::traps.begin();
     pos != TrapList::traps.end(); ++pos)
   {
-    file << "TRAP " << TrapList::actionString(pos->getAction()) << " " <<
-      pos->getTimeout() << " " << pos->getPattern() << " " <<
-      pos->getReason() << std::endl;
+    file << "TRAP " << pos->first << " " <<
+      TrapList::actionString(pos->second.getAction()) << " " <<
+      pos->second.getTimeout() << " " << pos->second.getPattern() << " " <<
+      pos->second.getReason() << std::endl;
   }
 }
 

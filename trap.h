@@ -24,7 +24,7 @@
 // Std C++ Headers
 #include <fstream>
 #include <string>
-#include <list>
+#include <map>
 #include <ctime>
 
 // Boost C++ Headers
@@ -96,7 +96,7 @@ class TrapList
 {
 public:
   static void cmd(class BotClient * client, std::string line);
-  static bool remove(const Trap & pattern);
+  static bool remove(const unsigned int key);
   static bool remove(const std::string & pattern);
   static void clear(void) { TrapList::traps.clear(); };
 
@@ -117,10 +117,12 @@ public:
   static std::string actionString(const TrapAction & action);
 
 private:
-  static std::list<Trap> traps;
+  typedef std::multimap<unsigned int, Trap> TrapMap;
+  static TrapMap traps;
 
-  static Trap add(const TrapAction action, const long timeout,
-    const std::string & line);
+  static Trap add(const unsigned int key, const TrapAction action,
+    const long timeout, const std::string & line);
+  static unsigned int getMaxKey(void);
 };
 
 #endif /* __TRAP_H__ */
