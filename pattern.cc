@@ -30,6 +30,7 @@
 #include "pattern.h"
 #include "botexcept.h"
 #include "util.h"
+#include "irc.h"
 
 #if defined(HAVE_LIBPCRE)
 # include <pcre.h>
@@ -326,7 +327,7 @@ SMatch(std::string TEST, std::string MASK, bool special)
 bool
 MatchesMask(std::string TEST, std::string MASK, bool special)
 {
-  return SMatch(UpCase(TEST), UpCase(MASK), special);
+  return SMatch(server.upCase(TEST), server.upCase(MASK), special);
 }
 
 

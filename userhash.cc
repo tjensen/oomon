@@ -62,19 +62,19 @@ UserHash::hashFunc(const std::string & key)
 
   if (len > 0)
   {
-    i = key[0];
+    i = server.downCase(key[0]);
 
     if (len > 1)
     {
-      i |= (key[1] << 8);
+      i |= (server.downCase(key[1]) << 8);
 
       if (len > 2)
       {
-        i |= (key[2] << 16);
+        i |= (server.downCase(key[2]) << 16);
 
 	if (len > 3)
 	{
-          i |= (key[3] << 24);
+          i |= (server.downCase(key[3]) << 24);
 	}
       }
     }
@@ -101,8 +101,8 @@ UserHash::add(const std::string & nick, const std::string & userhost,
   if (std::string::npos != at)
   {
     // Get username and hostname from user@host
-    std::string user = DownCase(userhost.substr(0, at));
-    std::string host = DownCase(userhost.substr(at + 1));
+    std::string user = userhost.substr(0, at);
+    std::string host = userhost.substr(at + 1);
 
     if (!checkForSpoof(nick, user, host, ip))
     {
@@ -182,8 +182,8 @@ UserHash::updateOper(const std::string & nick, const std::string & userhost,
 
   if (std::string::npos != at)
   {
-    std::string user = DownCase(userhost.substr(0, at));
-    std::string host = DownCase(userhost.substr(at + 1));
+    std::string user = server.downCase(userhost.substr(0, at));
+    std::string host = server.downCase(userhost.substr(at + 1));
 
     int index = UserHash::hashFunc(user);
 
@@ -191,9 +191,10 @@ UserHash::updateOper(const std::string & nick, const std::string & userhost,
 
     while (NULL != find)
     {
-      if ((nick == find->info->getNick()) && (user == find->info->getUser()) &&
+      if ((nick == find->info->getNick()) &&
+	(user == server.downCase(find->info->getUser())) &&
 	(vars[VAR_BROKEN_HOSTNAME_MUNGING]->getBool() ||
-	(host == find->info->getHost())))
+	(host == server.downCase(find->info->getHost()))))
       {
         find->info->setOper(true);
 
@@ -214,8 +215,7 @@ UserHash::updateNick(const std::string & oldNick, const std::string & userhost,
 
   if (std::string::npos != at)
   {
-    std::string user = DownCase(userhost.substr(0, at));
-    std::string host = DownCase(userhost.substr(at + 1));
+    std::string user = userhost.substr(0, at);
 
     int index = UserHash::hashFunc(user);
 
@@ -273,8 +273,8 @@ UserHash::remove(const std::string & nick, const std::string & userhost,
 
   if (std::string::npos != at)
   {
-    std::string user = DownCase(userhost.substr(0, at));
-    std::string host = DownCase(userhost.substr(at + 1));
+    std::string user = userhost.substr(0, at);
+    std::string host = userhost.substr(at + 1);
     std::string domain = getDomain(host, false);
 
     // Set this to true if we are unable to remove the entry from one or
@@ -406,9 +406,9 @@ UserHash::removeFromHashEntry(HashRec *table[], const int index,
 
   while (find)
   {
-    if (((host == "") || (find->info->getHost() == host)) &&
-      ((user == "") || (find->info->getUser() == user)) &&
-      ((nick == "") || (find->info->getNick() == nick)))
+    if (((host == "") || (server.same(find->info->getHost(), host))) &&
+      ((user == "") || (server.same(find->info->getUser(), user))) &&
+      ((nick == "") || (server.same(find->info->getNick(), nick))))
     {
       if (prev)
 	prev->collision = find->collision;
@@ -539,7 +539,7 @@ UserHash::listUsers(StrList & output, const Pattern *userhost,
     }
 
     // Convert our class name to uppercase now
-    className = DownCase(className);
+    className = server.downCase(className);
 
     for (int index = 0; index < HASHTABLESIZE; ++index)
     {
@@ -601,7 +601,7 @@ UserHash::listNicks(StrList & output, const Pattern *nick,
   }
 
   // Convert class name to uppercase now
-  className = DownCase(className);
+  className = server.downCase(className);
 
   for (int index = 0; index < HASHTABLESIZE; ++index)
   {
@@ -649,7 +649,7 @@ UserHash::listGecos(StrList & output, const Pattern *gecos,
   int numfound = 0;
 
   // Convert class name to uppercase now
-  className = DownCase(className);
+  className = server.downCase(className);
 
   for (int index = 0; index < HASHTABLESIZE; ++index)
   {
@@ -696,7 +696,7 @@ UserHash::listGecos(StrList & output, const Pattern *gecos,
 bool
 UserHash::have(std::string nick) const
 {
-  nick = DownCase(nick);
+  nick = server.downCase(nick);
 
   for (int i = 0; i < HASHTABLESIZE; ++i)
   {
@@ -704,7 +704,7 @@ UserHash::have(std::string nick) const
 
     while (find)
     {
-      if (DownCase(find->info->getNick()) == DownCase(nick))
+      if (server.downCase(find->info->getNick()) == nick)
       {
         return true;
       }
@@ -726,7 +726,7 @@ UserHash::reportClasses(StrList & output, const std::string & className)
     UserHash::HashRec *userptr = this->domaintable[i];
     while (userptr)
     {
-      Classes[DownCase(userptr->info->getClass())]++;
+      Classes[server.downCase(userptr->info->getClass())]++;
       userptr = userptr->collision;
     }
   }
@@ -739,7 +739,7 @@ UserHash::reportClasses(StrList & output, const std::string & className)
   for (ClassType::iterator pos = Classes.begin(); pos != Classes.end();
     ++pos)
   {
-    if ((0 == className.length()) || (pos->first == DownCase(className)))
+    if ((0 == className.length()) || (pos->first == server.downCase(className)))
     {
       snprintf(outmsg, sizeof(outmsg), "%-10s %-6d %s", pos->first.c_str(),
 	pos->second, Config::GetYLineDescription(pos->first).c_str());
@@ -830,7 +830,7 @@ UserHash::reportDomains(StrList & output, const int num)
       for (std::list<UserHash::SortEntry>::iterator pos = sort.begin();
 	pos != sort.end(); ++pos)
       {
-        if (userptr->info->getDomain() == pos->rec->getDomain())
+        if (server.same(userptr->info->getDomain(), pos->rec->getDomain()))
 	{
 	  found = true;
           if (++(pos->count) > maxCount)
@@ -1003,7 +1003,7 @@ UserHash::reportClones(StrList & output)
 
       while (temp != userptr)
       {
-        if ((temp->info->getHost() == userptr->info->getHost()))
+        if (server.same(temp->info->getHost(), userptr->info->getHost()))
 	{
 	  break;
 	}
@@ -1024,7 +1024,7 @@ UserHash::reportClones(StrList & output)
         temp = temp->collision;
         while (temp)
 	{
-          if (temp->info->getHost() == userptr->info->getHost())
+          if (server.same(temp->info->getHost(), userptr->info->getHost()))
 	  {
 	    ++numfound;
             connfromhost.push_back(temp->info->getConnectTime());
@@ -1102,8 +1102,8 @@ UserHash::reportMulti(StrList & output, const int minimum)
       temp = top;
       while (temp != userptr)
       {
-        if ((temp->info->getUser() == userptr->info->getUser()) &&
-          (temp->info->getDomain() == userptr->info->getDomain()))
+        if (server.same(temp->info->getUser(), userptr->info->getUser()) &&
+          server.same(temp->info->getDomain(), userptr->info->getDomain()))
 	{
           break;
 	}
@@ -1117,8 +1117,8 @@ UserHash::reportMulti(StrList & output, const int minimum)
         temp = temp->collision;
         while (temp)
 	{
-          if ((temp->info->getUser() == userptr->info->getUser()) &&
-            (temp->info->getDomain() == userptr->info->getDomain()))
+          if (server.same(temp->info->getUser(), userptr->info->getUser()) &&
+            server.same(temp->info->getDomain(), userptr->info->getDomain()))
 	  {
             if (vars[VAR_OPER_IN_MULTI]->getBool() || (!temp->info->getOper() &&
 	      !Config::IsOper(temp->info->getUserHost(), temp->info->getIp())))
@@ -1173,14 +1173,14 @@ UserHash::reportHMulti(StrList & output, const int minimum)
       // Ensure we haven't already checked this hostname
       temp = top;
       while (temp != userptr)
-        if ((temp->info->getHost() == userptr->info->getHost()))
+        if (server.same(temp->info->getHost(), userptr->info->getHost()))
           break;
         else
           temp = temp->collision;
       if (temp == userptr) {
         temp = temp->collision;
         while (temp) {
-          if ((temp->info->getHost() == userptr->info->getHost()))
+          if (server.same(temp->info->getHost(), userptr->info->getHost()))
 	  {
             if (vars[VAR_OPER_IN_MULTI]->getBool() || (!temp->info->getOper() &&
 	      !Config::IsOper(temp->info->getUserHost(), temp->info->getIp())))
@@ -1228,14 +1228,14 @@ UserHash::reportUMulti(StrList & output, const int minimum)
       // Ensure we haven't already checked this username
       temp = top;
       while (temp != userptr)
-        if ((temp->info->getUser() == userptr->info->getUser()))
+        if (server.same(temp->info->getUser(), userptr->info->getUser()))
           break;
         else
           temp = temp->collision;
       if (temp == userptr) {
         temp = temp->collision;
         while (temp) {
-          if ((temp->info->getUser() == userptr->info->getUser()))
+          if (server.same(temp->info->getUser(), userptr->info->getUser()))
 	  {
             if (vars[VAR_OPER_IN_MULTI]->getBool() || (!temp->info->getOper() &&
 	      !Config::IsOper(temp->info->getUserHost(), temp->info->getIp())))
@@ -1283,7 +1283,7 @@ UserHash::reportVMulti(StrList & output, const int minimum)
       /* Ensure we haven't already checked this user & domain */
       temp = top;
       while (temp != userptr)
-        if ((temp->info->getUser() == userptr->info->getUser()) &&
+        if (server.same(temp->info->getUser(), userptr->info->getUser()) &&
           ((userptr->info->getIp() & BotSock::vhost_netmask) ==
 	  (userptr->info->getIp() & BotSock::vhost_netmask)))
 	{
@@ -1296,7 +1296,7 @@ UserHash::reportVMulti(StrList & output, const int minimum)
       if (temp == userptr) {
         temp = temp->collision;
         while (temp) {
-          if ((temp->info->getUser() == userptr->info->getUser()) &&
+          if (server.same(temp->info->getUser(), userptr->info->getUser()) &&
             ((userptr->info->getIp() & BotSock::vhost_netmask) ==
 	    (userptr->info->getIp() & BotSock::vhost_netmask)))
 	  {
@@ -1353,7 +1353,7 @@ UserHash::checkHostClones(const std::string & host)
   
   while (NULL != find)
   {
-    if ((find->info->getHost() == host) &&
+    if (server.same(find->info->getHost(), host) &&
       ((now - find->info->getConnectTime()) < (CLONE_CONNECT_FREQ + 1)))
     {
       if (find->info->getReportTime() > 0)
@@ -1400,7 +1400,7 @@ UserHash::checkHostClones(const std::string & host)
     
   while (find)
   {
-    if ((find->info->getHost() == host) &&
+    if (server.same(find->info->getHost(), host) &&
       (now - find->info->getConnectTime() < CLONE_CONNECT_FREQ + 1) &&
       find->info->getReportTime() == 0)
     {
@@ -1450,7 +1450,7 @@ UserHash::checkHostClones(const std::string & host)
           current_identd = false;
         }
 
-        if (lastUser != currentUser)
+        if (!server.same(lastUser, currentUser))
         {
           different = true;
         }
@@ -1562,10 +1562,10 @@ UserHash::getIP(std::string nick, const std::string & userhost) const
 
   if (std::string::npos != at)
   {
-    std::string user = DownCase(userhost.substr(0, at));
-    std::string host = DownCase(userhost.substr(at + 1));
+    std::string user = server.downCase(userhost.substr(0, at));
+    std::string host = server.downCase(userhost.substr(at + 1));
 
-    nick = DownCase(nick);
+    nick = server.downCase(nick);
 
     int index = UserHash::hashFunc(host);
 
@@ -1573,8 +1573,9 @@ UserHash::getIP(std::string nick, const std::string & userhost) const
 
     while (NULL != find)
     {
-      if ((nick.empty() || (nick == DownCase(find->info->getNick()))) &&
-	(user == find->info->getUser()) && (host == find->info->getHost()))
+      if ((nick.empty() || (nick == server.downCase(find->info->getNick()))) &&
+	(user == server.downCase(find->info->getUser())) &&
+	(host == server.downCase(find->info->getHost())))
       {
         // Found the user -- return its IP address
         return find->info->getIp();
@@ -1593,10 +1594,10 @@ UserHash::isOper(std::string nick, const std::string & userhost) const
 
   if (std::string::npos != at)
   {
-    std::string user = DownCase(userhost.substr(0, at));
-    std::string host = DownCase(userhost.substr(at + 1));
+    std::string user = server.downCase(userhost.substr(0, at));
+    std::string host = server.downCase(userhost.substr(at + 1));
 
-    nick = DownCase(nick);
+    nick = server.downCase(nick);
 
     int index = UserHash::hashFunc(host);
 
@@ -1604,8 +1605,9 @@ UserHash::isOper(std::string nick, const std::string & userhost) const
 
     while (NULL != find)
     {
-      if ((nick == DownCase(find->info->getNick())) &&
-	(user == find->info->getUser()) && (host == find->info->getHost()))
+      if ((nick == server.downCase(find->info->getNick())) &&
+	(user == server.downCase(find->info->getUser())) &&
+	(host == server.downCase(find->info->getHost())))
       {
         // Found the user -- is it an oper?
         return find->info->getOper();
@@ -1640,7 +1642,7 @@ UserHash::UserEntry::UserEntry(const std::string & aNick,
   const std::string & aUserClass, const std::string & aGecos,
   const BotSock::Address anIp, const time_t aConnectTime, const bool oper)
   : user(aUser), host(aHost), domain(::getDomain(aHost, false)),
-  userClass(::DownCase(aUserClass)), gecos(aGecos), ip(anIp),
+  userClass(::server.downCase(aUserClass)), gecos(aGecos), ip(anIp),
   connectTime(aConnectTime), reportTime(0), isOper(oper), linkCount(0)
 {
   this->setNick(aNick);

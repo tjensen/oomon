@@ -42,6 +42,11 @@ enum IRCCommand
   IRC_NOTICE, IRC_PRIVMSG, IRC_WALLOPS, IRC_ERROR
 };
 
+enum CaseMapping
+{
+  CASEMAP_RFC1459, CASEMAP_STRICT_RFC1459, CASEMAP_ASCII
+};
+
 
 class IRC : public BotSock
 {
@@ -104,6 +109,12 @@ public:
 
   virtual bool onConnect();
 
+  char upCase(const char c) const;
+  std::string upCase(const std::string & text) const;
+  char downCase(const char c) const;
+  std::string downCase(const std::string & text) const;
+  bool same(const std::string & text1, const std::string & text2) const;
+
 protected:
   virtual bool onRead(std::string text);
 
@@ -115,6 +126,7 @@ private:
   bool gettingDlines;
   bool supportETrace;
   bool supportKnock;
+  CaseMapping caseMapping;
   std::string myNick;
   std::string serverName;
   KlineList klines;
@@ -122,7 +134,7 @@ private:
   time_t lastUserDeltaCheck;
   time_t lastWrite;
 
-  void onCTCP(const std::string & From, const std::string & UserHost,
+  void onCtcp(const std::string & From, const std::string & UserHost,
     const std::string & To, std::string Text);
   void onPrivmsg(const std::string &, const std::string &,
     const std::string &, std::string);

@@ -43,6 +43,7 @@
 #include "vars.h"
 #include "pattern.h"
 #include "botsock.h"
+#include "irc.h"
 #include "log.h"
 #include "botexcept.h"
 
@@ -920,9 +921,9 @@ Config::haveChannel(const std::string & channel)
 {
   StrVector channels;
 
-  StrSplit(channels, DownCase(Server.Channels), ",");
+  StrSplit(channels, server.downCase(Server.Channels), ",");
 
   return (channels.end() != std::find(channels.begin(), channels.end(),
-    DownCase(channel)));
+    server.downCase(channel)));
 }
 

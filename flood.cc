@@ -107,13 +107,13 @@ void
 FloodList::onNotice(const std::string & notice, std::string text,
   time_t now)
 {
-  if (DownCase(FirstWord(text)) != "requested")
+  if (server.downCase(FirstWord(text)) != "requested")
   {
     // broken.  ignore it.
     return;
   }
 
-  if (DownCase(FirstWord(text)) != "by")
+  if (server.downCase(FirstWord(text)) != "by")
   {
     // broken.  ignore it.
     return;
@@ -134,7 +134,7 @@ FloodList::onNotice(const std::string & notice, std::string text,
     ((userhost[0] == '[') && (userhost[userhost.length() - 1] == ']')) ||
     ((userhost[0] == '(') && (userhost[userhost.length() - 1] == ')')))
   {
-    userhost = DownCase(userhost.substr(1, userhost.length() - 2));
+    userhost = server.downCase(userhost.substr(1, userhost.length() - 2));
   }
 
   // Remove brackets/parentheses from serverName
@@ -142,7 +142,7 @@ FloodList::onNotice(const std::string & notice, std::string text,
     ((serverName[0] == '[') && (serverName[serverName.length() - 1] == ']')) ||
     ((serverName[0] == '(') && (serverName[serverName.length() - 1] == ')')))
   {
-    serverName = DownCase(serverName.substr(1, serverName.length() - 2));
+    serverName = server.downCase(serverName.substr(1, serverName.length() - 2));
   }
 
   /* Don't complain about opers */
@@ -154,6 +154,7 @@ FloodList::onNotice(const std::string & notice, std::string text,
 
   ::SendAll(notice, UF_OPER, this->getWatch());
 
-  this->addFlood(nick, userhost, now, Same(serverName, server.getServerName()));
+  this->addFlood(nick, userhost, now, server.same(serverName,
+    server.getServerName()));
 }
 

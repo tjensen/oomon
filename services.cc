@@ -269,9 +269,9 @@ Services::onIson(const std::string & text)
 #ifdef CA_SERVICES
   StrVector nicks;
 
-  StrSplit(nicks, " ", UpCase(text), true);
+  StrSplit(nicks, " ", server.upCase(text), true);
 
-  if (nicks.end() == nicks.find(UpCase(CA_SERVICES_REQUEST)))
+  if (nicks.end() == nicks.find(server.upCase(CA_SERVICES_REQUEST)))
   {
     // CA services disconnected - stop receiving reports
     this->gettingCaReports = false;
@@ -295,9 +295,9 @@ Services::onSpamtrapMessage(const std::string & text)
 {
   std::string copy = text;
 
-  if (Same("SPAM", FirstWord(copy)))
+  if ("SPAM" == server.upCase(FirstWord(copy)))
   {
-    if (Same(server.getServerName(), FirstWord(copy)))
+    if (server.same(server.getServerName(), FirstWord(copy)))
     {
       std::string nick = FirstWord(copy);
 
@@ -364,7 +364,7 @@ Services::onSpamtrapNotice(const std::string & text)
     {
       userhost = userhost.substr(1, userhost.length() - 2);
 
-      if (Same("(score", FirstWord(copy)))
+      if ("(score" == server.downCase(FirstWord(copy)))
       {
 	std::string scoreText = FirstWord(copy);
 
@@ -373,12 +373,12 @@ Services::onSpamtrapNotice(const std::string & text)
 	{
 	  int score = atoi(scoreText.substr(0, scoreText.length() - 1).c_str());
 
-	  if (Same("on", FirstWord(copy)))
+	  if ("on" == server.downCase(FirstWord(copy)))
 	  {
 	    std::string serverName = FirstWord(copy);
 
 	    if ((score >= vars[VAR_SPAMTRAP_MIN_SCORE]->getInt()) &&
-	      Same(serverName, server.getServerName()))
+	      server.same(serverName, server.getServerName()))
 	    {
               std::string notice("*** SpamTrap report: " + nick + " (" +
 	        userhost + ") Score: " + IntToStr(score));

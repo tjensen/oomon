@@ -699,7 +699,7 @@ onNickChange(std::string Text)
     userhost = userhost.substr(1, userhost.length() - 2);
   }
 
-  addToNickChangeList(DownCase(userhost), nick1, nick2);
+  addToNickChangeList(server.downCase(userhost), nick1, nick2);
   users.updateNick(nick1, userhost, nick2);
 }
 
@@ -814,13 +814,13 @@ onStatsNotice(std::string text)
   {
     std::string copy = text;
 
-    if (DownCase(FirstWord(copy)) != "requested")
+    if (server.downCase(FirstWord(copy)) != "requested")
     {
       // broken.  ignore it.
       return;
     }
 
-    if (DownCase(FirstWord(copy)) != "by")
+    if (server.downCase(FirstWord(copy)) != "by")
     {
       // broken.  ignore it.
       return;
@@ -1093,13 +1093,13 @@ onOperNotice(std::string text)
     userhost = userhost.substr(1, userhost.length() - 2);
   }
 
-  if (!Same("is", FirstWord(text)))
+  if ("is" != server.downCase(FirstWord(text)))
     return;
-  if (!Same("now", FirstWord(text)))
+  if ("now" != server.downCase(FirstWord(text)))
     return;
-  if (!Same("an", FirstWord(text)))
+  if ("an" != server.downCase(FirstWord(text)))
     return;
-  if (!Same("operator", FirstWord(text)))
+  if ("operator" != server.downCase(FirstWord(text)))
     return;
 
   users.updateOper(nick, userhost, true);
@@ -1260,35 +1260,35 @@ onGlineRequest(const std::string & text)
 
   std::string nuh = FirstWord(copy);
 
-  if (!Same("on", FirstWord(copy)))
+  if ("on" != server.downCase(FirstWord(copy)))
     return;
 
-  std::string server = FirstWord(copy);
+  std::string serverName = FirstWord(copy);
 
   std::string ishas = FirstWord(copy);
 
   std::string voodoo;
 
-  if (Same("is", ishas))
+  if (server.downCase(ishas) == "is")
   {
-    if (!Same("requesting", FirstWord(copy)))
+    if ("requesting" != server.downCase(FirstWord(copy)))
       return;
 
     voodoo = " requested ";
   }
-  else if (Same("has", ishas))
+  else if ("has" == server.downCase(ishas))
   {
-    if (!Same("triggered", FirstWord(copy)))
+    if ("triggered" != server.downCase(FirstWord(copy)))
       return;
     
     voodoo = " triggered ";
   }
   else return;
 
-  if (!Same("gline", FirstWord(copy)))
+  if ("gline" != server.downCase(FirstWord(copy)))
     return;
 
-  if (!Same("for", FirstWord(copy)))
+  if ("for" != server.downCase(FirstWord(copy)))
     return;
 
   std::string mask = FirstWord(copy);

@@ -53,7 +53,7 @@ IRC server;
 
 
 IRC::IRC(): BotSock(false, true), supportETrace(false), supportKnock(false),
-  klines('K'), dlines('D')
+  caseMapping(CASEMAP_RFC1459), klines('K'), dlines('D')
 {
   this->amIAnOper = false;
   this->serverName = "";
@@ -197,6 +197,23 @@ IRC::onRead(std::string text)
 	  {
 	    this->supportKnock = true;
 	  }
+	  else if (params[idx].substr(0, 12) == "CASEMAPPING=")
+	  {
+	    std::string map = params[idx].substr(12);
+
+	    if (Same(map, "ascii"))
+	    {
+	      this->caseMapping = CASEMAP_ASCII;
+	    }
+	    else if (Same(map, "strict-rfc1459"))
+	    {
+	      this->caseMapping = CASEMAP_STRICT_RFC1459;
+	    }
+	    else
+	    {
+	      this->caseMapping = CASEMAP_RFC1459;
+	    }
+	  }
 	}
 	break;
       case 204:	// ontraceuser(body)
@@ -281,11 +298,11 @@ IRC::onRead(std::string text)
 	  // :plasma.toast.pc 311 Toast Toast toast Plasma.Toast.PC * :i
 	  std::string nick = params[3];
 
-	  if (Same(nick, vars[VAR_SPAMTRAP_NICK]->getString()))
+	  if (this->same(nick, vars[VAR_SPAMTRAP_NICK]->getString()))
 	  {
 	    std::string userhost = params[4] + '@' + params[5];
 
-	    if (Same(userhost, vars[VAR_SPAMTRAP_USERHOST]->getString()))
+	    if (this->same(userhost, vars[VAR_SPAMTRAP_USERHOST]->getString()))
 	    {
 	      services.pollSpamtrap();
 	    }
@@ -367,26 +384,26 @@ IRC::onRead(std::string text)
       case IRC_NICK:
 	if (params.size() > 2)
 	{
-	  if (Same(from, this->myNick))
+	  if (this->same(from, this->myNick))
 	  {
 	    this->myNick = params[2];
 	  }
 	}
 	break;
       case IRC_JOIN:
-	if ((params.size() >= 3) && Same(from, this->myNick))
+	if ((params.size() >= 3) && this->same(from, this->myNick))
 	{
 	  Log::Write("Joined channel " + params[2]);
 	}
 	break;
       case IRC_PART:
-	if ((params.size() >= 3) && Same(from, this->myNick))
+	if ((params.size() >= 3) && this->same(from, this->myNick))
 	{
 	  Log::Write("Parted channel " + params[2]);
 	}
 	break;
       case IRC_KICK:
-	if ((params.size() >= 5) && Same(params[3], this->myNick))
+	if ((params.size() >= 5) && this->same(params[3], this->myNick))
 	{
 	  Log::Write("Kicked from channel " + params[2] + " by " + from + 
 	    " (" + params[4] + ')');
@@ -399,7 +416,7 @@ IRC::onRead(std::string text)
 	  std::string channel = params[3];
 
           // Make sure the INVITE was directed at the bot
-          if (Same(to, this->myNick))
+          if (this->same(to, this->myNick))
 	  {
 	    // Is the channel listed in the config file?
 	    if (Config::haveChannel(channel))
@@ -465,14 +482,14 @@ IRC::onRead(std::string text)
 }
 
 void
-IRC::onCTCP(const std::string & from, const std::string & userhost,
+IRC::onCtcp(const std::string & from, const std::string & userhost,
   const std::string & to, std::string text)
 {
-  std::string command = UpCase(FirstWord(text));
+  std::string command = this->upCase(FirstWord(text));
 
   BotSock::Address ip = users.getIP(from, userhost);
 
-  if ((command == "DCC") && (Same(to, this->myNick)))
+  if ((command == "DCC") && (this->same(to, this->myNick)))
   {
     if (!vars[VAR_OPER_ONLY_DCC]->getBool() || Config::IsOper(userhost, ip))
     {
@@ -536,14 +553,14 @@ IRC::onPrivmsg(const std::string & from, const std::string & userhost,
 
     if (end != std::string::npos)
     {
-      this->onCTCP(from, userhost, to, ctcp.substr(0, end));
+      this->onCtcp(from, userhost, to, ctcp.substr(0, end));
     }
   }
-  else if (Same(to, this->myNick))
+  else if (this->same(to, this->myNick))
   {
     if (vars[VAR_SPAMTRAP_ENABLE]->getBool() &&
-      Same(from, vars[VAR_SPAMTRAP_NICK]->getString()) &&
-      Same(userhost, vars[VAR_SPAMTRAP_USERHOST]->getString()))
+      this->same(from, vars[VAR_SPAMTRAP_NICK]->getString()) &&
+      this->same(userhost, vars[VAR_SPAMTRAP_USERHOST]->getString()))
     {
       services.onSpamtrapMessage(text);
     }
@@ -566,7 +583,7 @@ void
 IRC::onNotice(const std::string & from, const std::string & userhost,
 	const std::string & to, std::string text)
 {
-  if (Same(from, serverName))
+  if (this->same(from, serverName))
   {
     if (text.length() > 14)
       if (text.substr(0, 14) == "*** Notice -- ")
@@ -620,35 +637,35 @@ IRC::onNotice(const std::string & from, const std::string & userhost,
 	{
 	  CS_Clones(text.substr(16));
 	}
-	else if (UpCase(text).find("LINKS ") == 0)
+	else if (this->upCase(text).find("LINKS ") == 0)
 	{
 	  if (vars[VAR_WATCH_LINKS_NOTICES]->getBool())
 	  {
 	    onLinksNotice(text.substr(6));
 	  }
 	}
-	else if (UpCase(text).find("TRACE ") == 0)
+	else if (this->upCase(text).find("TRACE ") == 0)
 	{
 	  if (vars[VAR_WATCH_TRACE_NOTICES]->getBool())
 	  {
 	    onTraceNotice(text.substr(6));
 	  }
 	}
-	else if (UpCase(text).find("MOTD ") == 0)
+	else if (this->upCase(text).find("MOTD ") == 0)
 	{
 	  if (vars[VAR_WATCH_MOTD_NOTICES]->getBool())
 	  {
 	    onMotdNotice(text.substr(5));
 	  }
 	}
-	else if (UpCase(text).find("INFO ") == 0)
+	else if (this->upCase(text).find("INFO ") == 0)
 	{
 	  if (vars[VAR_WATCH_INFO_NOTICES]->getBool())
 	  {
 	    onInfoNotice(text.substr(5));
 	  }
 	}
-	else if (UpCase(text).find("STATS ") == 0)
+	else if (this->upCase(text).find("STATS ") == 0)
 	{
 	  onStatsNotice(text.substr(6));
 	}
@@ -660,7 +677,7 @@ IRC::onNotice(const std::string & from, const std::string & userhost,
 	    jupeJoiners.onNotice(text);
 	  }
 	}
-	else if (DownCase(text).find("possible flooder") == 0)
+	else if (this->downCase(text).find("possible flooder") == 0)
         {
 	  if (vars[VAR_WATCH_FLOODER_NOTICES]->getBool())
 	  {
@@ -668,14 +685,15 @@ IRC::onNotice(const std::string & from, const std::string & userhost,
 	  }
 	}
 	else if (std::string::npos !=
-	  DownCase(text).find("is a possible spambot"))
+	  this->downCase(text).find("is a possible spambot"))
         {
 	  if (vars[VAR_WATCH_SPAMBOT_NOTICES]->getBool())
 	  {
 	    onSpambotNotice(text);
 	  }
 	}
-	else if (0 == DownCase(text).find("too many local connections for"))
+	else if (0 ==
+	  this->downCase(text).find("too many local connections for"))
 	{
 	  if (vars[VAR_WATCH_TOOMANY_NOTICES]->getBool())
 	  {
@@ -786,24 +804,24 @@ IRC::onNotice(const std::string & from, const std::string & userhost,
 	}
       } else
       // plasma.engr.arizona.edu *** You need oper and N flag for +n
-      if (UpCase(text) == "*** YOU NEED OPER AND N FLAG FOR +N")
+      if (this->upCase(text) == "*** YOU NEED OPER AND N FLAG FOR +N")
       {
 	Log::Write("I don't have an N flag in my o: line! :(");
       }
   }
-  else if (Same(from, vars[VAR_XO_SERVICES_RESPONSE]->getString()))
+  else if (this->same(from, vars[VAR_XO_SERVICES_RESPONSE]->getString()))
   {
     services.onXoNotice(text);
   }
-  else if (Same(from, CA_SERVICES_RESPONSE))
+  else if (this->same(from, CA_SERVICES_RESPONSE))
   {
     services.onCaNotice(text);
   }
-  else if (Same(to, this->myNick))
+  else if (this->same(to, this->myNick))
   {
     if (vars[VAR_SPAMTRAP_ENABLE]->getBool() &&
-      Same(from, vars[VAR_SPAMTRAP_NICK]->getString()) &&
-      Same(userhost, vars[VAR_SPAMTRAP_USERHOST]->getString()))
+      this->same(from, vars[VAR_SPAMTRAP_NICK]->getString()) &&
+      this->same(userhost, vars[VAR_SPAMTRAP_USERHOST]->getString()))
     {
       services.onSpamtrapNotice(text);
     }
@@ -1242,27 +1260,294 @@ IRC::checkUserDelta(void)
 IRCCommand
 IRC::getCommand(const std::string & text)
 {
-  if (text == std::string("PING"))
+  if (text == "PING")
     return IRC_PING;
-  else if (text == std::string("NICK"))
+  else if (text == "NICK")
     return IRC_NICK;
-  else if (text == std::string("JOIN"))
+  else if (text == "JOIN")
     return IRC_JOIN;
-  else if (text == std::string("PART"))
+  else if (text == "PART")
     return IRC_PART;
-  else if (text == std::string("KICK"))
+  else if (text == "KICK")
     return IRC_KICK;
-  else if (text == std::string("INVITE"))
+  else if (text == "INVITE")
     return IRC_INVITE;
-  else if (text == std::string("NOTICE"))
+  else if (text == "NOTICE")
     return IRC_NOTICE;
-  else if (text == std::string("PRIVMSG"))
+  else if (text == "PRIVMSG")
     return IRC_PRIVMSG;
-  else if (text == std::string("WALLOPS"))
+  else if (text == "WALLOPS")
     return IRC_WALLOPS;
-  else if (text == std::string("ERROR"))
+  else if (text == "ERROR")
     return IRC_ERROR;
   else
     return IRC_UNKNOWN;
 }
+
+
+//////////////////////////////////////////////////////////////////////
+// upCase(c)
+//
+// Description:
+//  Converts a character to upper-case.
+//
+// Parameters:
+//  c - An upper or lower-case character.
+//
+// Return Value:
+//  The function returns the upper-case representation of the
+//  character.
+//////////////////////////////////////////////////////////////////////
+char
+IRC::upCase(const char c) const
+{
+  char result;
+
+  if (this->caseMapping == CASEMAP_ASCII)
+  {
+    if ((c >= 97) && (c <= 122))
+    {
+      result = static_cast<char>((c - 32));
+    }
+    else
+    {
+      result = c;
+    }
+  }
+  else if (this->caseMapping == CASEMAP_STRICT_RFC1459)
+  {
+    if ((c >= 97) && (c <= 125))
+    {
+      result = static_cast<char>((c - 32));
+    }
+    else
+    {
+      result = c;
+    }
+  }
+  else /* this->caseMapping == CASEMAP_RFC1459 */
+  {
+    if ((c >= 97) && (c <= 126))
+    {
+      result = static_cast<char>((c - 32));
+    }
+    else
+    {
+      result = c;
+    }
+  }
+
+  return result;
+}
+
+
+//////////////////////////////////////////////////////////////////////
+// upCase(text)
+//
+// Description:
+//  Converts a string to all upper-case characters.
+//
+// Parameters:
+//  text - A string containing upper and/or lower-case characters.
+//
+// Return Value:
+//  The function returns the upper-case representation of the string.
+//////////////////////////////////////////////////////////////////////
+std::string
+IRC::upCase(const std::string & text) const
+{
+  std::string result;
+
+  if (this->caseMapping == CASEMAP_ASCII)
+  {
+    for (std::string::const_iterator pos = text.begin(); pos != text.end();
+      ++pos)
+    {
+      if ((*pos >= 97) && (*pos <= 122))
+      {
+        result += static_cast<char>((*pos - 32));
+      }
+      else
+      {
+        result += static_cast<char>(*pos);
+      }
+    }
+  }
+  else if (this->caseMapping == CASEMAP_STRICT_RFC1459)
+  {
+    for (std::string::const_iterator pos = text.begin(); pos != text.end();
+      ++pos)
+    {
+      if ((*pos >= 97) && (*pos <= 125))
+      {
+        result += static_cast<char>((*pos - 32));
+      }
+      else
+      {
+        result += static_cast<char>(*pos);
+      }
+    }
+  }
+  else /* this->caseMapping == CASEMAP_RFC1459 */
+  {
+    for (std::string::const_iterator pos = text.begin(); pos != text.end();
+      ++pos)
+    {
+      if ((*pos >= 97) && (*pos <= 126))
+      {
+        result += static_cast<char>((*pos - 32));
+      }
+      else
+      {
+        result += static_cast<char>(*pos);
+      }
+    }
+  }
+
+  return result;
+}
+
+
+//////////////////////////////////////////////////////////////////////
+// downCase(c)
+//
+// Description:
+//  Converts a character to lower-case.
+//
+// Parameters:
+//  c - An upper or lower-case character.
+//
+// Return Value:
+//  The function returns the lower-case representation of the
+//  character.
+//////////////////////////////////////////////////////////////////////
+char
+IRC::downCase(const char c) const
+{
+  char result;
+
+  if (this->caseMapping == CASEMAP_ASCII)
+  {
+    if ((c >= 65) && (c <= 90))
+    {
+      result = static_cast<char>((c + 32));
+    }
+    else
+    {
+      result = c;
+    }
+  }
+  else if (this->caseMapping == CASEMAP_STRICT_RFC1459)
+  {
+    if ((c >= 65) && (c <= 93))
+    {
+      result = static_cast<char>((c + 32));
+    }
+    else
+    {
+      result = c;
+    }
+  }
+  else /* this->caseMapping == CASEMAP_RFC1459 */
+  {
+    if ((c >= 65) && (c <= 94))
+    {
+      result = static_cast<char>((c + 32));
+    }
+    else
+    {
+      result = c;
+    }
+  }
+
+  return result;
+}
+
+
+//////////////////////////////////////////////////////////////////////
+// downCase(text)
+//
+// Description:
+//  Converts a string to all lower-case characters.
+//
+// Parameters:
+//  text - A string containing upper and/or lower-case characters.
+//
+// Return Value:
+//  The function returns the lower-case representation of the string.
+//////////////////////////////////////////////////////////////////////
+std::string
+IRC::downCase(const std::string & text) const
+{
+  std::string result;
+
+  if (this->caseMapping == CASEMAP_ASCII)
+  {
+    for (std::string::const_iterator pos = text.begin(); pos != text.end();
+      ++pos)
+    {
+      if ((*pos >= 65) && (*pos <= 90))
+      {
+        result += static_cast<char>((*pos + 32));
+      }
+      else
+      {
+        result += static_cast<char>(*pos);
+      }
+    }
+  }
+  else if (this->caseMapping == CASEMAP_STRICT_RFC1459)
+  {
+    for (std::string::const_iterator pos = text.begin(); pos != text.end();
+      ++pos)
+    {
+      if ((*pos >= 65) && (*pos <= 93))
+      {
+        result += static_cast<char>((*pos + 32));
+      }
+      else
+      {
+        result += static_cast<char>(*pos);
+      }
+    }
+  }
+  else /* this->caseMapping == CASEMAP_RFC1459 */
+  {
+    for (std::string::const_iterator pos = text.begin(); pos != text.end();
+      ++pos)
+    {
+      if ((*pos >= 65) && (*pos <= 94))
+      {
+        result += static_cast<char>((*pos + 32));
+      }
+      else
+      {
+        result += static_cast<char>(*pos);
+      }
+    }
+  }
+
+  return result;
+}
+
+
+//////////////////////////////////////////////////////////////////////
+// same(text1, text2)
+//
+// Description:
+//  Case-insensitively compares two strings.
+//
+// Parameters:
+//  text1  - The first string.
+//  text2  - The second string.
+//
+// Return Value:
+//  The function returns true if both strings match.
+//////////////////////////////////////////////////////////////////////
+bool
+IRC::same(const std::string & text1, const std::string & text2) const
+{
+  return (this->upCase(text1) == this->upCase(text2));
+}
+
 

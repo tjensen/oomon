@@ -147,30 +147,30 @@ KlineList::ParseAndAdd(std::string Text)
 {
   std::string who = FirstWord(Text); // kline adder
 
-  if (!Same("added", FirstWord(Text)))
+  if ("added" != server.downCase(FirstWord(Text)))
     return;
 
   bool temporary = false;
   std::string time;
 
-  if (Same("temporary", FirstWord(Text)))
+  if ("temporary" == server.downCase(FirstWord(Text)))
   {
     temporary = true;
 
     time = FirstWord(Text);
 
-    if (!Same("min.", FirstWord(Text)))
+    if ("min." != server.downCase(FirstWord(Text)))
       return;
 
     std::string type = FirstWord(Text);
 
-    if ((lineType == 'K') && !Same("K-Line", type))
+    if ((lineType == 'K') && ("k-line" != server.downCase(type)))
       return;
-    else if ((lineType == 'D') && !Same("D-Line", type))
+    else if ((lineType == 'D') && ("d-line" != server.downCase(type)))
       return;
   }
 
-  if (!Same("for", FirstWord(Text)))
+  if ("for" != server.downCase(FirstWord(Text)))
     return;
 
   // This won't work all the time, since a badly entered kline might
@@ -233,13 +233,13 @@ KlineList::ParseAndAdd(std::string Text)
 void
 KlineList::onExpireNotice(std::string text)
 {
-  if (!Same("Temporary", FirstWord(text)))
+  if ("temporary" != server.downCase(FirstWord(text)))
     return;
-  if ((lineType == 'K') && !Same("K-line", FirstWord(text)))
+  if ((lineType == 'K') && ("k-line" != server.downCase(FirstWord(text))))
     return;
-  if ((lineType == 'D') && !Same("D-line", FirstWord(text)))
+  if ((lineType == 'D') && ("d-line" != server.downCase(FirstWord(text))))
     return;
-  if (!Same("for", FirstWord(text)))
+  if ("for" != server.downCase(FirstWord(text)))
     return;
 
   std::string mask = FirstWord(text);
@@ -248,7 +248,7 @@ KlineList::onExpireNotice(std::string text)
     mask = mask.substr(1, mask.length() - 2);
   }
 
-  if (!Same("expired", FirstWord(text)))
+  if ("expired" != server.downCase(FirstWord(text)))
     return;
 
   Remove(mask);
@@ -261,37 +261,37 @@ KlineList::ParseAndRemove(std::string Text)
 {
   std::string who = FirstWord(Text); // kline adder
 
-  if (!Same("has", FirstWord(Text)))
+  if ("has" != server.downCase(FirstWord(Text)))
     return;
-  if (!Same("removed", FirstWord(Text)))
+  if ("removed" != server.downCase(FirstWord(Text)))
     return;
-  if (!Same("the", FirstWord(Text)))
+  if ("the" != server.downCase(FirstWord(Text)))
     return;
 
   std::string temp = FirstWord(Text);
   bool temporary = false;
 
-  if (Same("temporary", temp))
+  if ("temporary" == server.downCase(temp))
   {
     temporary = true;
 
     if (lineType == 'K')
     {
-      if (!Same("K-Line", FirstWord(Text)))
+      if ("k-line" != server.downCase(FirstWord(Text)))
         return;
     }
     else if (lineType == 'D')
     {
-      if (!Same("D-Line", FirstWord(Text)))
+      if ("d-line" != server.downCase(FirstWord(Text)))
         return;
     }
   }
-  else if ((lineType == 'K') && !Same("K-Line", temp))
+  else if ((lineType == 'K') && ("k-line" != server.downCase(temp)))
     return;
-  else if ((lineType == 'D') && !Same("D-Line", temp))
+  else if ((lineType == 'D') && ("d-line" != server.downCase(temp)))
     return;
 
-  if (!Same("for:", FirstWord(Text)))
+  if ("for:" != server.downCase(FirstWord(Text)))
     return;
 
   // Again, spaces in the kline mask will screw this up.
