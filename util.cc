@@ -28,9 +28,9 @@
 
 // Boost C++ Headers
 #include <boost/lexical_cast.hpp>
+#include <boost/format.hpp>
 
 // C headers
-#include <stdio.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -437,45 +437,40 @@ ChkPass(std::string CORRECT, std::string TEST)
 std::string
 timeStamp(const TimeStampFormat format, std::time_t when)
 {
-  char ts_holder[MAX_BUFF];
-  struct std::tm *time_val;
-
-  time_val = std::localtime(&when);
+  struct std::tm *time_val = std::localtime(&when);
+  std::string result;
 
   switch (format)
   {
     case TIMESTAMP_CLIENT:
-#ifdef HAVE_SNPRINTF
-      snprintf(ts_holder, sizeof(ts_holder),
-#else
-      sprintf(ts_holder,
-#endif
-	"%2.2d:%2.2d:%2.2d", time_val->tm_hour, time_val->tm_min,
-	time_val->tm_sec);
-	break;
+      {
+        boost::format tsfmt("%02d:%02d:%02d");
+        result = str(tsfmt % time_val->tm_hour % time_val->tm_min %
+            time_val->tm_sec);
+      }
+      break;
+
     case TIMESTAMP_KLINE:
-#ifdef HAVE_SNPRINTF
-      snprintf(ts_holder, sizeof(ts_holder),
-#else
-      sprintf(ts_holder,
-#endif
-	"%d/%d/%d %2.2d.%2.2d", time_val->tm_year + 1900, time_val->tm_mon + 1,
-	time_val->tm_mday, time_val->tm_hour, time_val->tm_min);
-	break;
+      {
+        boost::format tsfmt("%d/%d/%d %02d.%02d");
+        result = str(tsfmt % (time_val->tm_year + 1900) %
+            (time_val->tm_mon + 1) % time_val->tm_mday % time_val->tm_hour %
+            time_val->tm_min);
+      }
+      break;
+
     case TIMESTAMP_LOG:
     default:
-#ifdef HAVE_SNPRINTF
-      snprintf(ts_holder, sizeof(ts_holder),
-#else
-      sprintf(ts_holder,
-#endif
-	"%d/%2.2d/%2.2d %2.2d:%2.2d:%2.2d", time_val->tm_year + 1900,
-	time_val->tm_mon + 1, time_val->tm_mday, time_val->tm_hour,
-	time_val->tm_min, time_val->tm_sec);
+      {
+        boost::format tsfmt("%d/%02d/%02d %02d:%02d:%02d");
+        result = str(tsfmt % (time_val->tm_year + 1900) %
+            (time_val->tm_mon + 1) % time_val->tm_mday % time_val->tm_hour %
+            time_val->tm_min % time_val->tm_sec);
+      }
       break;
   }
 
-  return std::string(ts_holder);
+  return result;
 }
 
 
@@ -1172,7 +1167,7 @@ hexDump(const void *buffer, const int size)
   const unsigned char *copy = reinterpret_cast<const unsigned char *>(buffer);
   std::string result;
 
-  if (copy != NULL)
+  if (copy)
   {
     for (int i = 0; i < size; ++i)
     {
