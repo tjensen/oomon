@@ -631,8 +631,9 @@ save
 .f.m
 .l.load
 .l.trap
-seedrand
+seedrand.drones
 .s.seedrand [-min <threshold>] [-count] [-r] [<pattern>]
+.s.drones [-min <threshold>] [-count] [-r] [<pattern>]
 .d.Searches currently connected client nicknames
 .d.that match the "nickmask" for possibly random
 .d.generated characters.  This command may be

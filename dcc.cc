@@ -2508,6 +2508,7 @@ DCC::getCommand(const std::string & text)
   else if (text == "FINDD") return DCC_FINDD;
   else if (text == "ECHO") return DCC_ECHO;
   else if (text == "SEEDRAND") return DCC_SEEDRAND;
+  else if (text == "DRONES") return DCC_SEEDRAND;
   else if (text == "STATUS") return DCC_STATUS;
   else if (text == "SAVE") return DCC_SAVE;
   else if (text == "LOAD") return DCC_LOAD;
