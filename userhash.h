@@ -51,6 +51,9 @@ public:
   BotSock::Address getIP(std::string nick, const std::string & userhost) const;
   bool isOper(std::string nick, const std::string & userhost) const;
 
+  void setMaskHost(const std::string & nick, const std::string & realHost,
+    const std::string & fakeHost);
+
   void updateNick(const std::string & oldNick, const std::string & userhost,
     const std::string & newNick);
   void updateOper(const std::string & nick, const std::string & userhost,
@@ -65,6 +68,10 @@ public:
     const BotSock::Address & ip);
 
   bool have(std::string nick) const;
+
+  class UserEntry * findUser(const std::string & nick) const;
+  class UserEntry * findUser(const std::string & nick,
+    const std::string & userhost) const;
 
   void checkHostClones(const std::string & host);
   void checkIpClones(const BotSock::Address & ip);
@@ -147,6 +154,7 @@ private:
   HashRec *domaintable[HASHTABLESIZE];
   HashRec *usertable[HASHTABLESIZE];
   HashRec *iptable[HASHTABLESIZE];
+  std::string maskNick, maskRealHost, maskFakeHost;
   int userCount, previousCount;
 };
 

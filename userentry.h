@@ -35,9 +35,10 @@ class UserEntry
 {
 public:
   UserEntry(const std::string & aNick, const std::string & aUser,
-    const std::string & aHost, const std::string & aUserClass,
-    const std::string & aGecos, const BotSock::Address anIp,
-    const std::time_t aConnectTime, const bool oper);
+    const std::string & aHost, const std::string & aFakeHost,
+    const std::string & aUserClass, const std::string & aGecos,
+    const BotSock::Address anIp, const std::time_t aConnectTime,
+    const bool oper);
   virtual ~UserEntry() {};
 
   void setNick(const std::string & aNick);
@@ -48,11 +49,16 @@ public:
   void version(void);
   void hasVersion(const std::string & version);
 
+  bool matches(const std::string & lowercaseNick) const;
+  bool matches(const std::string & lowercaseNick,
+    const std::string & lowercaseUser, const std::string & lowercaseHost) const;
+
   void checkVersionTimeout(const std::time_t now, const std::time_t timeout);
 
   std::string getNick() const { return this->nick; };
   std::string getUser() const { return this->user; };
   std::string getHost() const { return this->host; };
+  std::string getFakeHost() const { return this->fakeHost; };
   std::string getDomain() const { return this->domain; };
   std::string getClass() const { return this->userClass; };
   std::string getGecos() const { return this->gecos; };
@@ -72,6 +78,7 @@ private:
   std::string nick;
   std::string user;
   std::string host;
+  std::string fakeHost;
   std::string domain;
   std::string userClass;
   std::string gecos;

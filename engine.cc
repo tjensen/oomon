@@ -1427,3 +1427,27 @@ onJupeJoinNotice(const std::string & text)
   return result;
 }
 
+
+bool
+onMaskHostNotice(std::string text)
+{
+  bool result = false;
+
+  std::string nick(FirstWord(text));
+
+  if (0 == server.downCase(FirstWord(text)).compare("masking:"))
+  {
+    std::string realHost(FirstWord(text));
+
+    if (0 == server.downCase(FirstWord(text)).compare("as"))
+    {
+      std::string fakeHost(FirstWord(text));
+
+      users.setMaskHost(nick, realHost, fakeHost);
+
+      result = true;
+    }
+  }
+
+  return result;
+}

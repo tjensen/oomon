@@ -120,6 +120,7 @@ IRC::IRC(): BotSock(false, true), supportETrace(false), supportKnock(false),
   addServerNoticeParser("Rejecting *", ::onBotReject);
   addServerNoticeParser("* is clearing temp klines", ::onClearTempKlines);
   addServerNoticeParser("* is clearing temp dlines", ::onClearTempDlines);
+  addServerNoticeParser("* masking: * as *", ::onMaskHostNotice);
 }
 
 

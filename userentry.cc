@@ -43,12 +43,13 @@
 
 UserEntry::UserEntry(const std::string & aNick,
   const std::string & aUser, const std::string & aHost,
-  const std::string & aUserClass, const std::string & aGecos,
-  const BotSock::Address anIp, const std::time_t aConnectTime, const bool oper)
-  : user(aUser), host(aHost), domain(::getDomain(aHost, false)),
-  userClass(::server.downCase(aUserClass)), gecos(aGecos), ip(anIp),
-  connectTime(aConnectTime), reportTime(0), versioned(0), isOper(oper),
-  linkCount(0)
+  const std::string & aFakeHost, const std::string & aUserClass,
+  const std::string & aGecos, const BotSock::Address anIp,
+  const std::time_t aConnectTime, const bool oper)
+  : user(aUser), host(aHost), fakeHost(aFakeHost),
+  domain(::getDomain(aHost, false)), userClass(::server.downCase(aUserClass)),
+  gecos(aGecos), ip(anIp), connectTime(aConnectTime), reportTime(0),
+  versioned(0), isOper(oper), linkCount(0)
 {
   this->setNick(aNick);
 }
@@ -68,6 +69,33 @@ UserEntry::hasVersion(const std::string & version)
   TrapList::match(this->getNick(), this->getUserHost(), this->getIp(),
     this->getGecos(), version);
   this->versioned = 0;
+}
+
+
+bool
+UserEntry::matches(const std::string & lcNick) const
+{
+  return (0 == lcNick.compare(server.downCase(this->getNick())));
+}
+
+
+bool
+UserEntry::matches(const std::string & lcNick, const std::string & lcUser,
+  const std::string & lcHost) const
+{
+  if (vars[VAR_BROKEN_HOSTNAME_MUNGING]->getBool())
+  {
+    return (this->matches(lcNick) &&
+      (0 == lcUser.compare(server.downCase(this->getUser()))));
+  }
+  else
+  {
+    return (this->matches(lcNick) &&
+      (0 == lcUser.compare(server.downCase(this->getUser()))) &&
+      ((0 == lcHost.compare(server.downCase(this->getHost()))) ||
+       (!this->getFakeHost().empty() &&
+	(0 == lcHost.compare(server.downCase(this->getFakeHost()))))));
+  }
 }
 
 

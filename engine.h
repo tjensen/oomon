@@ -58,6 +58,7 @@ bool onClearTempDlines(std::string text);
 bool onGlineRequest(std::string text);
 bool onLineActive(std::string text);
 bool onJupeJoinNotice(const std::string & text);
+bool onMaskHostNotice(std::string text);
 
 bool onBotReject(std::string text);
 bool onCsClones(std::string text);
@@ -77,7 +78,6 @@ bool checkForSpoof(const std::string & nick, const std::string & user,
   const std::string & host, const std::string & ip);
 
 void status(class BotClient * client);
-
 
 #endif /* __ENGINE_H__ */
 

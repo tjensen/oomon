@@ -114,8 +114,15 @@ UserHash::add(const std::string & nick, const std::string & userhost,
       // If we made it this far, we'll just assume it isn't a spoofed
       // hostname.  Oh, happy day!
 
-      UserEntry * newuser = new UserEntry(nick, user, host, userClass, gecos,
-	(ip.length() > 0) ? BotSock::inet_addr(ip) : INADDR_NONE, 
+      std::string fakeHost;
+      if ((0 == server.downCase(nick).compare(this->maskNick)) &&
+	(0 == server.downCase(host).compare(this->maskRealHost)))
+      {
+	fakeHost = this->maskFakeHost;
+      }
+
+      UserEntry * newuser = new UserEntry(nick, user, host, fakeHost, userClass,
+	gecos, (ip.length() > 0) ? BotSock::inet_addr(ip) : INADDR_NONE, 
 	(fromTrace ? 0 : std::time(NULL)), isOper);
 
       // Add it to the hash tables
@@ -123,7 +130,7 @@ UserHash::add(const std::string & nick, const std::string & userhost,
       UserHash::addToHash(this->domaintable, newuser->getDomain(), newuser);
       UserHash::addToHash(this->usertable, newuser->getUser(), newuser);
       UserHash::addToHash(this->iptable, newuser->getIp(), newuser);
-      this->userCount++;
+      ++this->userCount;
 
       // Don't check for wingate or clones when doing a TRACE
       if (!fromTrace)
@@ -199,34 +206,24 @@ UserHash::add(const std::string & nick, const std::string & userhost,
 
 
 void
+UserHash::setMaskHost(const std::string & nick, const std::string & realHost,
+  const std::string & fakeHost)
+{
+  this->maskNick = server.downCase(nick);
+  this->maskRealHost = server.downCase(realHost);
+  this->maskFakeHost = fakeHost;
+}
+
+
+void
 UserHash::updateOper(const std::string & nick, const std::string & userhost,
   bool isOper)
 {
-  std::string::size_type at = userhost.find('@');
+  UserEntry * find = this->findUser(nick, userhost);
 
-  if (std::string::npos != at)
+  if (NULL != find)
   {
-    std::string user = server.downCase(userhost.substr(0, at));
-    std::string host = server.downCase(userhost.substr(at + 1));
-
-    int index = UserHash::hashFunc(user);
-
-    UserHash::HashRec *find = this->usertable[index];
-
-    while (NULL != find)
-    {
-      if ((0 == nick.compare(find->info->getNick())) &&
-	(0 == user.compare(server.downCase(find->info->getUser()))) &&
-	(vars[VAR_BROKEN_HOSTNAME_MUNGING]->getBool() ||
-	(0 == host.compare(server.downCase(find->info->getHost())))))
-      {
-        find->info->setOper(true);
-
-        // There shouldn't be any more, so just return
-        return;
-      }
-      find = find->collision;
-    }
+    find->setOper(true);
   }
 }
 
@@ -235,31 +232,11 @@ void
 UserHash::onVersionReply(const std::string & nick, const std::string & userhost,
   const std::string & version)
 {
-  std::string::size_type at = userhost.find('@');
+  UserEntry * find = this->findUser(nick, userhost);
 
-  if (std::string::npos != at)
+  if (NULL != find)
   {
-    std::string user = server.downCase(userhost.substr(0, at));
-    std::string host = server.downCase(userhost.substr(at + 1));
-
-    int index = UserHash::hashFunc(user);
-
-    UserHash::HashRec *find = this->usertable[index];
-
-    while (NULL != find)
-    {
-      if ((0 == nick.compare(find->info->getNick())) &&
-	(0 == user.compare(server.downCase(find->info->getUser()))) &&
-	(vars[VAR_BROKEN_HOSTNAME_MUNGING]->getBool() ||
-	(0 == host.compare(server.downCase(find->info->getHost())))))
-      {
-        find->info->hasVersion(version);
-
-        // There shouldn't be any more, so just return
-        return;
-      }
-      find = find->collision;
-    }
+    find->hasVersion(version);
   }
 }
 
@@ -292,69 +269,51 @@ void
 UserHash::updateNick(const std::string & oldNick, const std::string & userhost,
   const std::string & newNick)
 {
-  std::string::size_type at = userhost.find('@');
+  UserEntry * find = this->findUser(oldNick, userhost);
 
-  if (std::string::npos != at)
+  if (NULL != find)
   {
-    std::string user = userhost.substr(0, at);
+    find->setNick(newNick);
 
-    int index = UserHash::hashFunc(user);
-
-    UserHash::HashRec *find = this->usertable[index];
-
-    while (NULL != find)
+    if (vars[VAR_TRAP_NICK_CHANGES]->getBool())
     {
-      if (0 == oldNick.compare(find->info->getNick()))
+      TrapList::match(find->getNick(), userhost, find->getIp(),
+	find->getGecos());
+    }
+
+    if ((find->getScore() >= vars[VAR_SEEDRAND_REPORT_MIN]->getInt()) &&
+      !Config::IsOper(userhost, find->getIp()) &&
+      !Config::IsOKHost(userhost, find->getIp()) && !find->getOper())
+    {
+      std::string scoreStr(
+	boost::lexical_cast<std::string>(find->getScore()));
+
+      std::string notice("Random (score: ");
+      notice += scoreStr;
+      notice += ") nick change: ";
+      notice += find->getNick();
+      notice += " (";
+      notice += userhost;
+      notice += ")";
+      if (INADDR_NONE != find->getIp())
       {
-        find->info->setNick(newNick);
-
-        if (vars[VAR_TRAP_NICK_CHANGES]->getBool())
-        {
-          TrapList::match(find->info->getNick(), userhost, find->info->getIp(),
-	    find->info->getGecos());
-        }
-
-        if ((find->info->getScore() >=
-	  vars[VAR_SEEDRAND_REPORT_MIN]->getInt()) &&
-	  !Config::IsOper(userhost, find->info->getIp()) &&
-	  !Config::IsOKHost(userhost, find->info->getIp()) &&
-	  !find->info->getOper())
-        {
-	  std::string scoreStr(
-	    boost::lexical_cast<std::string>(find->info->getScore()));
-
-	  std::string notice("Random (score: ");
-	  notice += scoreStr;
-	  notice += ") nick change: ";
-	  notice += find->info->getNick();
-	  notice += " (";
-	  notice += userhost;
-	  notice += ")";
-	  if (INADDR_NONE != find->info->getIp())
-	  {
-	    notice += " [";
-	    notice += BotSock::inet_ntoa(find->info->getIp());
-	    notice += "]";
-	  }
-	  ::SendAll(notice, UserFlags::OPER, WATCH_SEEDRAND);
-	  Log::Write(notice);
-
-	  Format reason;
-	  reason.setStringToken('n', find->info->getNick());
-	  reason.setStringToken('u', userhost);
-	  reason.setStringToken('i', BotSock::inet_ntoa(find->info->getIp()));
-	  reason.setStringToken('s', scoreStr);
-
-	  doAction(find->info->getNick(), userhost, find->info->getIp(),
-	    vars[VAR_SEEDRAND_ACTION]->getAction(),
-	    vars[VAR_SEEDRAND_ACTION]->getInt(),
-	    reason.format(vars[VAR_SEEDRAND_REASON]->getString()), false);
-        }
-
-        // There shouldn't be any more, so just return
-        return;
+	notice += " [";
+	notice += BotSock::inet_ntoa(find->getIp());
+	notice += "]";
       }
-      find = find->collision;
+      ::SendAll(notice, UserFlags::OPER, WATCH_SEEDRAND);
+      Log::Write(notice);
+
+      Format reason;
+      reason.setStringToken('n', find->getNick());
+      reason.setStringToken('u', userhost);
+      reason.setStringToken('i', BotSock::inet_ntoa(find->getIp()));
+      reason.setStringToken('s', scoreStr);
+
+      doAction(find->getNick(), userhost, find->getIp(),
+	vars[VAR_SEEDRAND_ACTION]->getAction(),
+	vars[VAR_SEEDRAND_ACTION]->getInt(),
+	reason.format(vars[VAR_SEEDRAND_REASON]->getString()), false);
     }
   }
 }
@@ -792,22 +751,55 @@ UserHash::listGecos(BotClient * client, const PatternPtr gecos,
 bool
 UserHash::have(std::string nick) const
 {
-  nick = server.downCase(nick);
+  return (NULL != this->findUser(nick));
+}
 
-  for (int i = 0; i < HASHTABLESIZE; ++i)
+
+UserEntry *
+UserHash::findUser(const std::string & nick) const
+{
+  std::string lcNick(server.downCase(nick));
+
+  for (int hashIndex = 0; hashIndex < HASHTABLESIZE; ++hashIndex)
   {
-    UserHash::HashRec *find = this->hosttable[i];
-
-    while (find)
+    for (UserHash::HashRec *find = this->hosttable[hashIndex]; NULL != find;
+      find = find->collision)
     {
-      if (0 == server.downCase(find->info->getNick()).compare(nick))
+      if (find->info->matches(lcNick))
       {
-        return true;
+	return find->info;
       }
-      find = find->collision;
     }
   }
-  return false;
+
+  return NULL;
+}
+
+
+UserEntry *
+UserHash::findUser(const std::string & nick, const std::string & userhost) const
+{
+  std::string lcNick(server.downCase(nick));
+
+  std::string::size_type at = userhost.find('@');
+  if (std::string::npos != at)
+  {
+    std::string lcUser(server.downCase(userhost.substr(0, at)));
+    std::string lcHost(server.downCase(userhost.substr(at + 1)));
+
+    const int hashIndex = UserHash::hashFunc(lcUser);
+
+    for (UserHash::HashRec *find = this->usertable[hashIndex]; NULL != find;
+      find = find->collision)
+    {
+      if (find->info->matches(lcNick, lcUser, lcHost))
+      {
+	return find->info;
+      }
+    }
+  }
+
+  return NULL;
 }
 
 
@@ -1903,64 +1895,30 @@ UserHash::status(BotClient * client)
 BotSock::Address
 UserHash::getIP(std::string nick, const std::string & userhost) const
 {
-  std::string::size_type at = userhost.find('@');
+  UserEntry * entry = this->findUser(nick, userhost);
+  BotSock::Address result = INADDR_NONE;
 
-  if (std::string::npos != at)
+  if (NULL != entry)
   {
-    std::string user = server.downCase(userhost.substr(0, at));
-    std::string host = server.downCase(userhost.substr(at + 1));
-
-    nick = server.downCase(nick);
-
-    int index = UserHash::hashFunc(host);
-
-    UserHash::HashRec *find = this->hosttable[index];
-
-    while (NULL != find)
-    {
-      if ((nick.empty() ||
-	(0 == nick.compare(server.downCase(find->info->getNick())))) &&
-	(0 == user.compare(server.downCase(find->info->getUser()))) &&
-	(0 == host.compare(server.downCase(find->info->getHost()))))
-      {
-        // Found the user -- return its IP address
-        return find->info->getIp();
-      }
-      find = find->collision;
-    }
+    result = entry->getIp();
   }
-  return INADDR_NONE;
+
+  return result;
 }
 
 
 bool
 UserHash::isOper(std::string nick, const std::string & userhost) const
 {
-  std::string::size_type at = userhost.find('@');
+  UserEntry * find = this->findUser(nick, userhost);
+  bool result = false;
 
-  if (std::string::npos != at)
+  if (NULL != find)
   {
-    std::string user = server.downCase(userhost.substr(0, at));
-    std::string host = server.downCase(userhost.substr(at + 1));
-
-    nick = server.downCase(nick);
-
-    int index = UserHash::hashFunc(host);
-
-    UserHash::HashRec *find = this->hosttable[index];
-
-    while (NULL != find)
-    {
-      if ((0 == nick.compare(server.downCase(find->info->getNick()))) &&
-	(0 == user.compare(server.downCase(find->info->getUser()))) &&
-	(0 == host.compare(server.downCase(find->info->getHost()))))
-      {
-        // Found the user -- is it an oper?
-        return find->info->getOper();
-      }
-      find = find->collision;
-    }
+    // Found the user -- is it an oper?
+    result = find->getOper();
   }
+
   return false;
 }
 
