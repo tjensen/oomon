@@ -128,6 +128,8 @@ AC_CHECK_FUNC(fchmod, AC_DEFINE(HAVE_FCHMOD, 1, [Define if your system has a fch
 AC_CHECK_FUNC(strerror, AC_DEFINE(HAVE_STRERROR, 1, [Define if your system has a strerror() function.]),)
 AC_CHECK_FUNC(regcomp, AC_DEFINE(HAVE_POSIX_REGEX, 1, [Define if using POSIX regular expressions.]),)
 AC_CHECK_FUNC(snprintf, AC_DEFINE(HAVE_SNPRINTF, 1, [Define if your system has a snprintf() function.]),)
+AC_CHECK_FUNC(getaddrinfo, AC_DEFINE(HAVE_GETADDRINFO, 1, [Define if your system has a getaddrinfo() function.]),)
+AC_CHECK_FUNC(getnameinfo, AC_DEFINE(HAVE_GETNAMEINFO, 1, [Define if your system has a getnameinfo() function.]),)
 AC_HEADER_STDC
 AC_HEADER_TIME
 AC_HEADER_DIRENT
