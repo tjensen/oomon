@@ -683,8 +683,17 @@ onCsClones(std::string text)
     ::SendAll("CS clones: " + userhost, UserFlags::OPER);
     Log::Write("CS clones: " + userhost);
 
-    klineClones(false, "CS detected", user, host, users.getIP(nick, userhost),
-      "", false, false, identd);
+    BotSock::Address ip(INADDR_NONE);
+    std::string className;
+    UserEntryPtr find(users.findUser(nick, userhost));
+    if (find)
+    {
+      ip = find->getIP();
+      className = find->getClass();
+    }
+
+    klineClones(false, "CS detected", user, host, ip, className, false, false,
+        identd);
 
     result = true;
   }
