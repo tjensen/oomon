@@ -63,6 +63,8 @@ Http::onConnect()
     this->textAddress() << ":" << this->port() << std::endl;
 #endif
 
+  this->setProxyTimeout();
+
   BotSock::Port port = config.proxyTargetPort();
   BotSock::Address dst = config.proxyTargetAddress();
   if (INADDR_NONE == dst)

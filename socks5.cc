@@ -68,6 +68,8 @@ Socks5::onConnect()
     ":" << this->port() << std::endl;
 #endif
 
+  this->setProxyTimeout();
+
   char buff[64];
 
 #ifdef HAVE_SNPRINTF

@@ -1,9 +1,5 @@
 OOMon-2.3                                                (?? Oct 2004)
 ---------
-        * Added the "SCAN_MAX_COUNT" setting to limit the number of
-          simultaneous open proxy scans to help prevent resource
-          starvation.
-
         * Added an open HTTP POST proxy scanner.
 
         * Added config file "proxy-send:" and "proxy-match:" lines to
@@ -15,6 +11,14 @@ OOMon-2.3                                                (?? Oct 2004)
 
         * Renamed the "W:" line to "proxy-vhost:" and moved the
           sample line to a new sample scanners.cf file.
+
+        * Added the "SCAN_MAX_COUNT" setting to limit the number of
+          simultaneous open proxy scans to help prevent resource
+          starvation.
+
+        * Added the "SCAN_TIMEOUT" setting to limit the number of
+          seconds OOMon will remain connected while scanning for
+          open proxies.
 
         * Log all DCC CHAT and CTCP CHAT failures.
 

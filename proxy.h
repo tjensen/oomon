@@ -50,6 +50,12 @@ public:
   BotSock::Port port(void) const { return this->port_; }
   virtual Proxy::Protocol type(void) const = 0;
 
+  bool expired(void) const
+  {
+    return ((0 != this->timeout_) && (time(0) >= this->timeout_));
+  }
+  void setProxyTimeout(void);
+
 protected:
   void detectedProxy(void);
 
@@ -64,6 +70,7 @@ protected:
 private:
   const UserEntryPtr user_;
   BotSock::Port port_;
+  std::time_t timeout_;
 };
 
 #endif /* __PROXY_H__ */

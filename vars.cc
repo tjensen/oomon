@@ -294,6 +294,8 @@ Vars::Vars(void) : vec(VAR_COUNT)
     SettingPtr(new StrSetting("SCAN_SOCKS4_PORTS", DEFAULT_SCAN_SOCKS4_PORTS));
   this->vec[VAR_SCAN_SOCKS5_PORTS] =
     SettingPtr(new StrSetting("SCAN_SOCKS5_PORTS", DEFAULT_SCAN_SOCKS5_PORTS));
+  this->vec[VAR_SCAN_TIMEOUT] = SettingPtr(new IntSetting("SCAN_TIMEOUT",
+        DEFAULT_SCAN_TIMEOUT, 1));
   this->vec[VAR_SCAN_WINGATE_PORTS] =
     SettingPtr(new StrSetting("SCAN_WINGATE_PORTS",
     DEFAULT_SCAN_WINGATE_PORTS));

@@ -863,6 +863,7 @@ set
 .t.scan_proxy_reason
 .t.scan_socks4_ports
 .t.scan_socks5_ports
+.t.scan_timeout
 .t.scan_wingate_ports
 .t.seedrand_action
 .t.seedrand_command_min
@@ -1733,6 +1734,7 @@ set scan_for_proxies
 .l.set scan_proxy_reason
 .l.set scan_socks4_ports
 .l.set scan_socks5_ports
+.l.set scan_timeout
 .l.set scan_wingate_ports
 set scan_http_connect_ports
 .s.set scan_http_connect_ports [<port>[,<port>[,...]]]
@@ -1768,6 +1770,7 @@ set scan_max_count
 .d.starvation.
 .f.mo
 .l.set scan_for_proxies
+.l.set scan_timeout
 set scan_proxy_action
 .s.set scan_proxy_action [<action> [<time>]]
 .d.This setting determines how the monitor bot
@@ -1812,6 +1815,14 @@ set scan_socks5_ports
 .l.set scan_http_post_ports
 .l.set scan_socks4_ports
 .l.set scan_wingate_ports
+set scan_timeout
+.s.set scan_timeout [<integer>]
+.d.This setting determines the maximum number of
+.d.seconds an open proxy scanner will remain
+.d.connected.
+.f.mo
+.l.set scan_for_proxies
+.l.set scan_max_count
 set scan_wingate_ports
 .s.set scan_wingate_ports [<port>[,<port>[,...]]]
 .d.Determines the TCP port numbers to scan

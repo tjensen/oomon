@@ -296,6 +296,9 @@ ProxyList::processAll(const fd_set & readset, const fd_set & writeset)
   // Process active scans
   ProxyList::ProxyProcessor p(readset, writeset);
   this->scanners.remove_if(p);
+
+  // Remove any expired scans
+  this->scanners.remove_if(boost::bind(&Proxy::expired, _1));
 }
 
 

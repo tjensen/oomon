@@ -68,6 +68,8 @@ Socks4::onConnect()
     ":" << this->port() << std::endl;
 #endif
 
+  this->setProxyTimeout();
+
   struct passwd *tmppw = getpwuid(getuid());
 
   char *tmp;

@@ -60,6 +60,8 @@ WinGate::onConnect()
     ":" << this->port() << std::endl;
 #endif
 
+  this->setProxyTimeout();
+
   return true;
 }
 
@@ -73,6 +75,9 @@ WinGate::onConnect()
 bool
 WinGate::onRead(std::string text)
 {
+#ifdef WINGATE_DEBUG
+  std::cout << "WinGate >> " << text << std::endl;
+#endif
   if ((std::string::npos != text.find("WinGate>")) || (std::string::npos !=
     text.find("Enter : <host> [port] :")) || (std::string::npos !=
     text.find("Too many connected users - try again later")))

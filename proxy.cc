@@ -67,7 +67,7 @@
 
 
 Proxy::Proxy(const UserEntryPtr user)
-  : BotSock(), detectedProxy_(false), user_(user)
+  : BotSock(), detectedProxy_(false), user_(user), timeout_(0)
 {
 }
 
@@ -123,3 +123,14 @@ Proxy::connect(const BotSock::Port port)
   return this->BotSock::connect(this->address(), this->port());
 }
 
+
+void
+Proxy::setProxyTimeout(void)
+{
+  std::time_t seconds = vars[VAR_SCAN_TIMEOUT]->getInt();
+
+  if (seconds > 0)
+  {
+    this->timeout_ = time(0) + seconds;
+  }
+}
