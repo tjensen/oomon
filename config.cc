@@ -102,7 +102,8 @@ struct RemoteClient
 
 
 OperList Config::Opers;
-BotSock::Port Config::port = DEFAULT_PORT;
+BotSock::Port Config::remotePort = DEFAULT_REMOTE_PORT;
+BotSock::Port Config::dccPort = DEFAULT_DCC_PORT;
 Config::PatternList Config::Exceptions;
 Config::PatternList Config::Spoofers;
 LinkList Config::Links;
@@ -386,6 +387,24 @@ Config::Load(const std::string filename)
 	  }
 	}
 	break;
+      case 'd':
+      case 'D':
+	if (Parameters.size() > 0)
+	{
+	  // DCC Listen port number
+	  try
+	  {
+	    Config::dccPort = boost::lexical_cast<BotSock::Port>(Parameters[0]);
+#ifdef CONFIG_DEBUG
+            std::cout << "DCC Port: " << Config::dccPort << std::endl;
+#endif
+          }
+	  catch (boost::bad_lexical_cast)
+	  {
+	    std::cerr << "Bad port number in D: line!" << std::endl;
+	  }
+	}
+	break;
       case 'e':
       case 'E':
 	if (Parameters.size() > 0)
@@ -464,9 +483,10 @@ Config::Load(const std::string filename)
 	  // Port number
 	  try
 	  {
-	    Config::port = boost::lexical_cast<BotSock::Port>(Parameters[0]);
+	    Config::remotePort =
+	      boost::lexical_cast<BotSock::Port>(Parameters[0]);
 #ifdef CONFIG_DEBUG
-            std::cout << "Port: " << Config::port << std::endl;
+            std::cout << "Port: " << Config::remotePort << std::endl;
 #endif
           }
 	  catch (boost::bad_lexical_cast)
@@ -568,7 +588,8 @@ void Config::Clear()
   Links.clear();
   Connections.clear();
   YLines.clear();
-  port = DEFAULT_PORT;
+  remotePort = DEFAULT_REMOTE_PORT;
+  dccPort = DEFAULT_DCC_PORT;
   Server.Hostname = "";
   Server.port = 0;
   Server.Password = "";

@@ -64,7 +64,10 @@
 
 
 // OOMon will listen on this port for bot linking
-#define DEFAULT_PORT		4000
+#define DEFAULT_REMOTE_PORT	4000
+
+// OOMon will listen on this port for DCC connections
+#define DEFAULT_DCC_PORT	0
 
 
 // I like to fork.  Do you like to fork?  Everybody likes to fork!

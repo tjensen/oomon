@@ -432,7 +432,7 @@ RemoteList::listen(void)
 {
   this->_listeners.clear();
 
-  this->listen("", htons(Config::GetPort()));
+  this->listen("", htons(Config::getRemotePort()));
 }
 
 

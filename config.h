@@ -50,7 +50,8 @@ class Config
 private:
   typedef std::list<PatternPtr> PatternList;
   static OperList Opers;
-  static BotSock::Port port;
+  static BotSock::Port remotePort;
+  static BotSock::Port dccPort;
   static LinkList Links;
   static ConnList Connections;
   static YLineList YLines;
@@ -99,7 +100,6 @@ public:
   static bool haveChannel(const std::string & channel);
   static std::string GetLogFile() { return LogFile; }
   static std::string GetMOTD() { return MOTD; }
-  static BotSock::Port GetPort() { return port; }
   static bool IsOKHost(const std::string & userhost);
   static bool IsOKHost(const std::string & userhost, const std::string & ip);
   static bool IsOKHost(const std::string & userhost,
@@ -119,6 +119,8 @@ public:
   static bool IsSpoofer(const std::string &);
   static std::string getHelpFilename() { return helpFilename; }
   static std::string getUserDBFile() { return userDBFile; }
+  static BotSock::Port getRemotePort() { return remotePort; }
+  static BotSock::Port getDccPort() { return dccPort; }
   static bool saveSettings();
   static bool loadSettings();
 };

@@ -36,6 +36,10 @@ S:plasma.toast.pc:6667::#monitors:
 I:userlist.cf
 I:remotes.cf
 
+# DCC Listen port number.  Default is 0, which means let the OS pick a
+# port number for us.
+#D:0:
+
 # Exceptions
 E:*@*toast.pc
 

@@ -606,6 +606,8 @@ IRC::onCtcp(const std::string & from, const std::string & userhost,
     if (!clients.listen(from, userhost))
     {
       Log::Write("DCC CHAT listen failed for " + from);
+      this->notice(from,
+	"Unable to initiate DCC CHAT request!  Try again later?");
     }
   }
   else if ((command == std::string("PING")) ||

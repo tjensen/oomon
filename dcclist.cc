@@ -95,7 +95,7 @@ DCCList::listen(const std::string & nick, const std::string & userhost)
   {
     class DCCPtr newListener(new DCC);
 
-    if (newListener->listen(nick, userhost))
+    if (newListener->listen(nick, userhost, htons(Config::getDccPort())))
     {
       std::string request("DCC CHAT chat ");
       request += boost::lexical_cast<std::string>(htonl(

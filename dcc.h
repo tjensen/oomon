@@ -45,7 +45,7 @@ public:
   bool connect(const BotSock::Address address, const BotSock::Port port,
     const std::string nick, const std::string userhost);
   bool listen(const std::string nick, const std::string userhost,
-    const BotSock::Port port = 0, const int backlog = 1);
+    const BotSock::Port port, const int backlog = 1);
 
   void motd(void);
 
