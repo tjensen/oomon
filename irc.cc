@@ -610,6 +610,10 @@ IRC::onNotice(const std::string & from, const std::string & userhost,
 	{
 	  onOperNotice(text);
 	}
+	else if (text.find("Failed OPER attempt -") == 0)
+	{
+	  onOperFailNotice(text);
+        }
 	else if (text.find("Received KILL message for ") == 0)
 	{
           Kill_Add_Report(text.substr(26));

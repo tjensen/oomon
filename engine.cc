@@ -98,6 +98,8 @@ static NoticeList<TooManyConnNoticeEntry> tooManyConn;
 
 static NoticeList<ConnectEntry> connects;
 
+static NoticeList<OperFailNoticeEntry> operfails;
+
 
 #define IP_TABLE_SIZE 300
 typedef struct ip_entry
@@ -1061,6 +1063,10 @@ status(StrList & output)
   {
     output.push_back("Too many connections: " + IntToStr(tooManyConn.size()));
   }
+  if (vars[VAR_WATCH_OPERFAIL_NOTICES]->getBool())
+  {
+    output.push_back("Oper fails: " + IntToStr(operfails.size()));
+  }
 
   if (vars[VAR_WATCH_JUPE_NOTICES]->getBool())
   {
@@ -1092,6 +1098,12 @@ onOperNotice(std::string text)
     return;
 
   users.updateOper(nick, userhost, true);
+}
+
+void
+onOperFailNotice(const std::string & text)
+{
+  operfails.onNotice(text);
 }
 
 

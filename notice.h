@@ -516,5 +516,78 @@ protected:
 };
 
 
+class OperFailNoticeEntry : public SimpleNoticeEntry
+{
+public:
+  explicit OperFailNoticeEntry(const std::string & notice)
+  {
+    // Failed OPER attempt - host mismatch by ToastTEST (toast@cs6669210-179.austin.rr.com)
+    std::string copy = notice;
+
+    if (server.downCase(FirstWord(copy)) != "failed")
+      throw OOMon::notice_parse_error("operfail notice");
+
+    if (server.downCase(FirstWord(copy)) != "oper")
+      throw OOMon::notice_parse_error("operfail notice");
+
+    if (server.downCase(FirstWord(copy)) != "attempt")
+      throw OOMon::notice_parse_error("operfail notice");
+
+    if (server.downCase(FirstWord(copy)) != "-")
+      throw OOMon::notice_parse_error("operfail notice");
+
+    if (server.downCase(FirstWord(copy)) != "host")
+      throw OOMon::notice_parse_error("operfail notice");
+
+    if (server.downCase(FirstWord(copy)) != "mismatch")
+      throw OOMon::notice_parse_error("operfail notice");
+
+    if (server.downCase(FirstWord(copy)) != "by")
+      throw OOMon::notice_parse_error("operfail notice");
+
+    this->nick = FirstWord(copy);
+
+    this->userhost = FirstWord(copy);
+    // Remove the parentheses surrounding the user@host
+    if (this->userhost.length() >= 2)
+    {
+      this->userhost = this->userhost.substr(1, this->userhost.length() - 2);
+    }
+
+    Log::Write("*** " + notice);
+    ::SendAll("*** " + notice, UF_OPER, WATCH_OPERFAILS);
+  }
+
+  bool triggered(const int & count, const time_t & interval) const
+  {
+    return (SimpleNoticeEntry::triggered(count, interval) &&
+      (count > vars[VAR_OPERFAIL_MAX_COUNT]->getInt()) &&
+      (interval <= vars[VAR_OPERFAIL_MAX_TIME]->getInt()));
+  }
+
+  virtual void execute(void) const
+  {
+    ::SendAll("*** Too many failed oper attempts detected: " + this->nick +
+      " (" + this->userhost + ")", UF_OPER, WATCH_OPERFAILS);
+
+    doAction(this->nick, this->userhost,
+      ::users.getIP(this->nick, this->userhost),
+      vars[VAR_OPERFAIL_ACTION]->getAction(),
+      vars[VAR_OPERFAIL_ACTION]->getInt(),
+      vars[VAR_OPERFAIL_REASON]->getString(), true);
+  }
+
+  bool expired(const time_t interval) const
+  {
+    return (interval > vars[VAR_OPERFAIL_MAX_TIME]->getInt());
+  }
+
+  void update(const OperFailNoticeEntry & data)
+  {
+    SimpleNoticeEntry::update(data);
+  }
+};
+
+
 #endif /* __NOTICE_H__ */
 

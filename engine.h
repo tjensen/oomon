@@ -52,6 +52,7 @@ void onFlooderNotice(const std::string & text);
 void onSpambotNotice(const std::string & text);
 void onTooManyConnNotice(const std::string & text);
 void onOperNotice(std::string text);
+void onOperFailNotice(const std::string & text);
 void onInvalidUsername(std::string text);
 void onClearTempKlines(const std::string & text);
 void onClearTempDlines(const std::string & text);

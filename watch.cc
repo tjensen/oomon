@@ -75,6 +75,8 @@ WatchSet::getWatchValue(const std::string & watch)
     return WATCH_MSGS;
   else if (watch == "NICK_CHANGES")
     return WATCH_NICK_CHANGES;
+  else if (watch == "OPERFAILS")
+    return WATCH_OPERFAILS;
   else if (watch == "SEEDRAND")
     return WATCH_SEEDRAND;
   else if (watch == "SPAMBOTS")
@@ -211,6 +213,7 @@ WatchSet::defaults(void)
   result.add(WATCH_MOTDS);
   //result.add(WATCH_MSGS);
   //result.add(WATCH_NICK_CHANGES);
+  //result.add(WATCH_OPERFAILS);
   result.add(WATCH_SEEDRAND);
   result.add(WATCH_SPAMBOTS);
   result.add(WATCH_SPAMTRAP);
@@ -263,6 +266,8 @@ WatchSet::getWatchName(const Watch watch)
     return "MSGS";
   else if (watch == WATCH_NICK_CHANGES)
     return "NICK_CHANGES";
+  else if (watch == WATCH_OPERFAILS)
+    return "OPERFAILS";
   else if (watch == WATCH_SEEDRAND)
     return "SEEDRAND";
   else if (watch == WATCH_SPAMBOTS)
