@@ -1769,7 +1769,7 @@ DCC::seedrand(const std::string & to, std::string text)
 void
 DCC::status(const std::string & to, std::string text)
 {
-  if (this->Flags & UF_MASTER)
+  if (this->Flags & UF_AUTHED)
   {
     if (to == "")
     {
