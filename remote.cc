@@ -142,6 +142,7 @@ Remote::flags(void) const
 
   if (this->_targetEstablished)
   {
+    return this->_clientFlags;
   }
   else
   {
@@ -159,6 +160,7 @@ Remote::handle(void) const
 
   if (this->_targetEstablished)
   {
+    return this->_clientHandle;
   }
   else
   {
@@ -176,6 +178,7 @@ Remote::bot(void) const
 
   if (this->_targetEstablished)
   {
+    return this->_clientBot;
   }
   else
   {
@@ -193,6 +196,7 @@ Remote::id(void) const
 
   if (this->_targetEstablished)
   {
+    return this->_clientId;
   }
   else
   {
@@ -498,32 +502,42 @@ Remote::onCommand(const std::string & from, std::string text)
   bool result = true;
   try
   {
-    _targetEstablished = true;
-
-    std::string id(FirstWord(text));
-    std::string flags(FirstWord(text));
-
-    std::string command(FirstWord(text));
-
     std::string::size_type at(from.find('@'));
     if (std::string::npos != at)
     {
       std::string handle(from.substr(0, at));
       std::string bot(from.substr(at + 1));
 
+      std::string to(FirstWord(text));
+      std::string id(FirstWord(text));
+      std::string command(FirstWord(text));
+      std::string parameters(text);
+
       this->_clientHandle = handle;
       this->_clientBot = bot;
       this->_clientId = id;
       this->_clientFlags = Config::getRemoteFlags(from);
 
+#ifdef REMOTE_DEBUG
+      std::cout << handle << "@" << bot << " flags: " <<
+	UserFlags::getNames(this->_clientFlags, ' ') << std::endl;
+#endif /* REMOTE_DEBUG */
+
       this->_targetEstablished = true;
-      try
+      if (Same(to, Config::GetNick()))
       {
-        this->_parser.parse(this, command, text);
+        try
+        {
+          this->_parser.parse(this, command, parameters);
+        }
+        catch (CommandParser::exception & e)
+        {
+          this->send(e.what());
+        }
       }
-      catch (CommandParser::exception & e)
+      else
       {
-	this->send(e.what());
+	remotes.sendCommand(this, to, command, parameters);
       }
       this->_targetEstablished = false;
     }
@@ -596,28 +610,15 @@ int
 Remote::sendBroadcast(const std::string & from, const std::string & text,
   const std::string & flags, const std::string & watches)
 {
-  int result = 0;
+  std::string msg("* ");
+  msg += flags;
+  msg += ' ';
+  msg += watches;
+  msg += ' ';
+  msg += text;
+  msg += '\n';
 
-  std::string cmd(":");
-  cmd += from;
-  cmd += " BROADCAST * ";
-  cmd += flags;
-  cmd += ' ';
-  cmd += watches;
-  cmd += ' ';
-  cmd += text;
-  cmd += '\n';
-
-  if (this->ready())
-  {
-    result = this->_sock.write(cmd);
-  }
-  else
-  {
-    this->_sendQ += cmd;
-  }
-
-  return result;
+  return this->sendCommand(from, "BROADCAST", msg);
 }
 
 
@@ -642,32 +643,18 @@ Remote::sendBroadcastId(const std::string & from, const std::string & skipId,
   const std::string & skipBot, const std::string & text,
   const std::string & flags, const std::string & watches)
 {
-  int result = 0;
+  std::string msg(skipId);
+  msg += '@';
+  msg += skipBot;
+  msg += ' ';
+  msg += flags;
+  msg += ' ';
+  msg += watches;
+  msg += ' ';
+  msg += text;
+  msg += '\n';
 
-  std::string cmd(":");
-  cmd += from;
-  cmd += " BROADCAST ";
-  cmd += skipId;
-  cmd += '@';
-  cmd += skipBot;
-  cmd += ' ';
-  cmd += flags;
-  cmd += ' ';
-  cmd += watches;
-  cmd += ' ';
-  cmd += text;
-  cmd += '\n';
-
-  if (this->ready())
-  {
-    result = this->_sock.write(cmd);
-  }
-  else
-  {
-    this->_sendQ += cmd;
-  }
-
-  return result;
+  return this->sendCommand(from, "BROADCAST", msg);
 }
 
 
@@ -675,28 +662,14 @@ int
 Remote::sendNotice(const std::string & from, const std::string & clientId,
   const std::string & clientBot, const std::string & text)
 {
-  int result = 0;
+  std::string msg(clientId);
+  msg += ' ';
+  msg += clientBot;
+  msg += ' ';
+  msg += text;
+  msg += '\n';
 
-  std::string cmd(":");
-  cmd += from;
-  cmd += " NOTICE ";
-  cmd += clientId;
-  cmd += '@';
-  cmd += clientBot;
-  cmd += ' ';
-  cmd += text;
-  cmd += '\n';
-
-  if (this->ready())
-  {
-    result = this->_sock.write(cmd);
-  }
-  else
-  {
-    this->_sendQ += cmd;
-  }
-
-  return result;
+  return this->sendCommand(from, "NOTICE", msg);
 }
 
 
@@ -859,5 +832,21 @@ bool
 Remote::isConnectedTo(const std::string & Name) const
 {
   return this->_children.exists(Name);
+}
+
+int
+Remote::sendCommand(const std::string & from, const std::string & to,
+  const std::string & clientId, const std::string & command,
+  const std::string & parameters)
+{
+  std::string msg(to);
+  msg += ' ';
+  msg += clientId;
+  msg += ' ';
+  msg += command;
+  msg += ' ';
+  msg += parameters;
+
+  return this->sendCommand(from, "COMMAND", msg);
 }
 

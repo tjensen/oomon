@@ -25,6 +25,9 @@
 #include <string>
 #include <list>
 
+// Boost C++ Headers
+#include <boost/shared_ptr.hpp>
+
 // OOMon Headers
 #include "strtype"
 #include "oomon.h"
@@ -44,15 +47,19 @@ typedef std::list<class RemoteClient> RemoteClientList;
 
 class Config
 {
+public:
+  typedef boost::shared_ptr<Pattern> PatternPtr;
+
 private:
+  typedef std::list<PatternPtr> PatternList;
   static OperList Opers;
   static BotSock::Port port;
-  static std::list<Pattern *> Exceptions;
-  static std::list<Pattern *> Spoofers;
   static LinkList Links;
   static ConnList Connections;
   static YLineList YLines;
   static RemoteClientList remoteClients;
+  static PatternList Exceptions;
+  static PatternList Spoofers;
   static std::string Nick, UserName, IRCName, OperNick, OperPass;
   static std::string OurHostName;
   static std::string LogFile;
@@ -75,6 +82,7 @@ private:
     const std::string & Description);
   static void addRemoteClient(const std::string & mask,
     const std::string & flags);
+
 public:
   static void Clear();
   static void Load(const std::string filename = DEFAULT_CFGFILE);

@@ -35,6 +35,7 @@
 #include "botexcept.h"
 #include "cmdparser.h"
 #include "log.h"
+#include "main.h"
 
 
 #ifdef DEBUG
@@ -267,10 +268,25 @@ RemoteList::sendBotPart(const std::string & from, const std::string & node,
 
 
 void
-RemoteList::sendCommand(BotClient * from, const std::string & to,
+RemoteList::sendCommand(BotClient * from, const std::string & bot,
   const std::string & command, const std::string & parameters)
 {
-  from->send("*** Remote commands aren't implemented yet!");
+  RemotePtr remoteBot(this->findBot(bot));
+
+  if (0 == remoteBot.get())
+  {
+    from->send("*** Unknown bot name: " + bot);
+  }
+  else
+  {
+    std::string source(from->handle());
+    source += '@';
+    source += from->bot();
+
+    std::string id(from->id());
+
+    remoteBot->sendCommand(source, bot, id, command, parameters);
+  }
 }
 
 
@@ -306,7 +322,20 @@ RemoteList::cmdDisconn(BotClient * from, const std::string & command,
   }
   else
   {
-    from->send("*** I don't know how to disconnect!");
+    RemotePtr remote = remotes.findBot(bot);
+
+    if (remote.get() == 0)
+    {
+      from->send("*** Unknown bot name: " + bot);
+    }
+    else
+    {
+      from->send("*** Removing bot: " + bot);
+      ::SendAll("*** " + from->handleAndBot() + " disconnecting " + bot,
+	UserFlags::NONE(), WatchSet(), from);
+      Log::Write("*** " + from->handleAndBot() + " disconnected " + bot);
+      this->_connections.remove(remote);
+    }
   }
 }
 

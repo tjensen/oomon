@@ -119,7 +119,7 @@ CommandParser::CommandParser(void)
     EXACT_ONLY);
   this->addCommand("CONN",
     boost::bind(&RemoteList::cmdConn, &remotes, _1, _2, _3), UserFlags::MASTER);
-  this->addCommand("CONN",
+  this->addCommand("DISCONN",
     boost::bind(&RemoteList::cmdDisconn, &remotes, _1, _2, _3),
     UserFlags::MASTER);
   this->addCommand("RAW", &CommandParser::cmdRaw, UserFlags::MASTER,

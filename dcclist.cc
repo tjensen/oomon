@@ -277,7 +277,8 @@ DCCList::sendTo(const std::string & from, const std::string & clientId,
     notice += from;
     notice += "] ";
     notice += message;
-    client->send(message);
+
+    client->send(notice);
     result = true;
   }
 

@@ -19,25 +19,16 @@
 
 // $Id$
 
-// C headers
-#include <stdlib.h>
-#include <unistd.h>
-#include <sys/param.h>
-#include <sys/socket.h>
-#include <netdb.h>
-#include <arpa/inet.h>
-
 #include "oomon.h"
-#include "botclient.h"
 
-// C++ headers
+// Std C++ headers
 #include <algorithm>
 #include <iostream>
 #include <fstream>
 #include <string>
-#include "config.h"
 
 // OOMon Headers
+#include "config.h"
 #include "util.h"
 #include "help.h"
 #include "trap.h"
@@ -48,6 +39,7 @@
 #include "log.h"
 #include "botexcept.h"
 #include "userflags.h"
+#include "botclient.h"
 
 
 #ifdef DEBUG
@@ -63,11 +55,9 @@
 struct OperDef
 {
   OperDef() { };
-  OperDef(const OperDef & copy);
-  virtual ~OperDef() { delete this->pattern; };
 
   std::string Handle, Passwd;
-  Pattern *pattern;
+  Config::PatternPtr pattern;
   class UserFlags Flags;
 };
 
@@ -75,11 +65,9 @@ struct OperDef
 struct LinkDef
 {
   LinkDef() { };
-  LinkDef(const LinkDef & copy);
-  virtual ~LinkDef() { delete this->pattern; };
 
   std::string Handle, Passwd;
-  Pattern *pattern;
+  Config::PatternPtr pattern;
 };
 
 
@@ -102,32 +90,18 @@ struct YLine
 
 struct RemoteClient
 {
-  std::string mask;
-  UserFlags flags;
+  RemoteClient(const Config::PatternPtr _pattern, const UserFlags _flags)
+    : pattern(_pattern), flags(_flags) { }
+
+  const Config::PatternPtr pattern;
+  const UserFlags flags;
 };
-
-
-OperDef::OperDef(const OperDef & copy)
-{
-  this->pattern = smartPattern(copy.pattern->get(), false);
-  this->Handle = copy.Handle;
-  this->Passwd = copy.Passwd;
-  this->Flags = copy.Flags;
-}
-
-
-LinkDef::LinkDef(const LinkDef & copy)
-{
-  this->pattern = smartPattern(copy.pattern->get(), false);
-  this->Handle = copy.Handle;
-  this->Passwd = copy.Passwd;
-}
 
 
 OperList Config::Opers;
 BotSock::Port Config::port = DEFAULT_PORT;
-std::list<Pattern *> Config::Exceptions;
-std::list<Pattern *> Config::Spoofers;
+Config::PatternList Config::Exceptions;
+Config::PatternList Config::Spoofers;
 LinkList Config::Links;
 ConnList Config::Connections;
 YLineList Config::YLines;
@@ -167,7 +141,7 @@ void Config::AddOper(const std::string & Handle, const std::string & pattern,
   {
     OperDef temp;
     temp.Handle = Handle;
-    temp.pattern = smartPattern(pattern, false);
+    temp.pattern.reset(smartPattern(pattern, false));
     temp.Passwd = Passwd;
     temp.Flags = Config::parseUserFlags(Flags);
     Opers.push_back(temp);
@@ -239,7 +213,7 @@ void Config::AddLink(const std::string & Handle, const std::string & pattern,
     {
       LinkDef temp;
       temp.Handle = Handle;
-      temp.pattern = smartPattern(pattern, false);
+      temp.pattern.reset(smartPattern(pattern, false));
       temp.Passwd = Passwd;
       Links.push_back(temp);
 #ifdef CONFIG_DEBUG
@@ -304,12 +278,20 @@ void Config::AddYLine(const std::string & YClass,
 void
 Config::addRemoteClient(const std::string & mask, const std::string & flags)
 {
-  RemoteClient tmp;
+  try
+  {
+    PatternPtr pat(smartPattern(mask, false));
 
-  tmp.mask = mask;
-  tmp.flags = Config::parseUserFlags(flags);
-
-  remoteClients.push_back(tmp);
+    remoteClients.push_back(RemoteClient(pat, Config::parseUserFlags(flags)));
+  }
+  catch (OOMon::regex_error & e)
+  {
+    std::cerr << "Regex error: " << e.what() << std::endl;
+  }
+  catch (UserFlags::invalid_flag & e)
+  {
+    std::cerr << e.what() << endl;
+  }
 }
 
 
@@ -665,7 +647,7 @@ bool Config::IsOKHost(const std::string & userhost)
 {
   try
   {
-    for (std::list<Pattern *>::iterator pos = Exceptions.begin();
+    for (PatternList::iterator pos = Exceptions.begin();
       pos != Exceptions.end(); ++pos)
     {
       if ((*pos)->match(userhost))
@@ -827,14 +809,22 @@ Config::getRemoteFlags(const std::string & client)
 {
   UserFlags flags(UserFlags::NONE());
 
-  for (RemoteClientList::const_iterator pos = remoteClients.begin();
-    pos != remoteClients.end(); ++pos)
+  try
   {
-    if (Same(client, pos->mask))
+    for (RemoteClientList::const_iterator pos = remoteClients.begin();
+      pos != remoteClients.end(); ++pos)
     {
-      flags = pos->flags;
-      break;
+      if (pos->pattern->match(client))
+      {
+        flags |= UserFlags::AUTHED;
+        flags |= pos->flags;
+        break;
+      }
     }
+  }
+  catch (OOMon::regex_error & e)
+  {
+    std::cerr << "Regex error: " << e.what() << std::endl;
   }
 
   return flags;
@@ -884,7 +874,7 @@ bool Config::IsSpoofer(const std::string & ip)
 {
   try
   {
-    for (std::list<Pattern *>::iterator pos = Spoofers.begin();
+    for (PatternList::iterator pos = Spoofers.begin();
       pos != Spoofers.end(); ++pos)
     {
       if ((*pos)->match(ip))
