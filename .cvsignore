@@ -1,5 +1,7 @@
+configure
 config.log
 defs.h
+defs.h.in
 config.cache
 sig.inc
 config.status
