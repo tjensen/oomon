@@ -108,7 +108,7 @@
 //////////////////////////////////////////////////////////////////////
 
 // This is the version string :P
-#define OOMON_VERSION		"2.1-DEV"
+#define OOMON_VERSION		"2.1"
 
 // Maximum buffer size
 #define MAX_BUFF		1024
