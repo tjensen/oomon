@@ -65,6 +65,8 @@ WatchSet::getWatchValue(const std::string & watch)
     return WATCH_CHAT;
   else if (watch == "CONNECTS")
     return WATCH_CONNECTS;
+  else if (watch == "CONNFLOOD")
+    return WATCH_CONNFLOOD;
   else if (watch == "DISCONNECTS")
     return WATCH_DISCONNECTS;
   else if (watch == "DLINES")
@@ -226,6 +228,7 @@ WatchSet::defaults(void)
 
   result.add(WATCH_CHAT);
   //result.add(WATCH_CONNECTS);
+  result.add(WATCH_CONNFLOOD);
   //result.add(WATCH_DISCONNECTS);
   result.add(WATCH_DLINES);
   //result.add(WATCH_DLINE_MATCHES);
@@ -261,6 +264,8 @@ WatchSet::getWatchName(const Watch watch)
     return "CHAT";
   else if (watch == WATCH_CONNECTS)
     return "CONNECTS";
+  else if (watch == WATCH_CONNFLOOD)
+    return "CONNFLOOD";
   else if (watch == WATCH_DISCONNECTS)
     return "DISCONNECTS";
   else if (watch == WATCH_DLINES)

@@ -35,6 +35,7 @@
 #include "vars.h"
 #include "util.h"
 #include "main.h"
+#include "botsock.h"
 #include "botexcept.h"
 
 
@@ -401,6 +402,80 @@ public:
 protected:
   std::string user;
   std::string host;
+};
+
+
+class ConnectEntry : public SimpleNoticeEntry
+{
+public:
+  explicit ConnectEntry(const std::string & notice)
+  {
+    // nick user@host ip
+    std::string text(notice);
+
+    this->nick = FirstWord(text);
+    this->userhost = FirstWord(text);
+
+    std::string::size_type at = this->userhost.find('@');
+    if (std::string::npos == at)
+    {
+      this->host = this->userhost;
+    }
+    else
+    {
+      this->host = this->userhost.substr(at + 1);
+    }
+
+    this->ip = BotSock::inet_addr(FirstWord(text));
+  }
+
+  bool triggered(const int & count, const time_t & interval) const
+  {
+    return (SimpleNoticeEntry::triggered(count, interval) &&
+      (count > vars[VAR_CONNECT_FLOOD_MAX_COUNT]->getInt()) &&
+      (interval <= vars[VAR_CONNECT_FLOOD_MAX_TIME]->getInt()));
+  }
+
+  virtual void execute(void) const
+  {
+    ::SendAll("*** Connect flooder detected: " + this->nick + " (" +
+      this->userhost + ")", UF_OPER, WATCH_CONNFLOOD);
+
+    doAction(this->nick, this->userhost,
+      ::users.getIP(this->nick, this->userhost),
+      vars[VAR_CONNECT_FLOOD_ACTION]->getAction(),
+      vars[VAR_CONNECT_FLOOD_ACTION]->getInt(),
+      vars[VAR_CONNECT_FLOOD_REASON]->getString(), true);
+  }
+
+  bool expired(const time_t interval) const
+  {
+    return (interval > vars[VAR_CONNECT_FLOOD_MAX_TIME]->getInt());
+  }
+
+  void update(const ConnectEntry & data)
+  {
+    SimpleNoticeEntry::update(data);
+
+    this->host = data.host;
+    this->ip = data.ip;
+  }
+
+  bool operator==(const ConnectEntry & rhs) const
+  {
+    if ((INADDR_NONE != this->ip) && (INADDR_NONE != rhs.ip))
+    {
+      return (this->ip == rhs.ip);
+    }
+    else
+    {
+      return Same(this->host, rhs.host);
+    }
+  }
+
+protected:
+  std::string host;
+  BotSock::Address ip;
 };
 
 

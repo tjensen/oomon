@@ -80,8 +80,8 @@
 #undef USE_FLAGS
 
 
-// Define this to detect vhost clones
-#define DETECT_VHOST_CLONES
+// Define this to detect vhost clones - needs to be reworked
+#undef DETECT_VHOST_CLONES
 
 // Netmask used for detecting vhosts (warning: do not change!)
 #define VHOST_NETMASK "255.255.255.0"

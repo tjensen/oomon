@@ -96,6 +96,8 @@ static NoticeList<SpambotNoticeEntry> spambots;
 
 static NoticeList<TooManyConnNoticeEntry> tooManyConn;
 
+static NoticeList<ConnectEntry> connects;
+
 
 #define IP_TABLE_SIZE 300
 typedef struct ip_entry
@@ -523,6 +525,8 @@ onClientConnect(std::string Text)
     {
       Gecos = "";
     }
+
+    connects.onNotice(Nick + ' ' + UH + ' ' + IP);
 
     users.add(Nick, UH, IP, false, false, Class, Gecos);
   }
@@ -1035,6 +1039,7 @@ void
 status(StrList & output)
 {
   output.push_back("Nick changers: " + IntToStr(nickChanges.size()));
+  output.push_back("Connect flooders: " + IntToStr(connects.size()));
   if (vars[VAR_WATCH_LINKS_NOTICES]->getBool())
   {
     output.push_back("Links lookers: " + IntToStr(linkLookers.size()));

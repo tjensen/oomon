@@ -659,6 +659,10 @@ set
 .t.auto_save
 .t.broken_hostname_munging
 .t.check_for_spoofs
+.t.connect_flood_action
+.t.connect_flood_max_count
+.t.connect_flood_max_time
+.t.connect_flood_reason
 .t.default_dline_timeout
 .t.default_kline_timeout
 .t.dnsbl_proxy_action
@@ -833,6 +837,43 @@ set check_for_spoofs
 .l.set fake_ip_spoof_action
 .l.set illegal_char_spoof_action
 .l.set illegal_tld_spoof_action
+set connect_flood_action
+.s.set connect_flood_action [<action>]
+.d.This setting determines how the monitor bot
+.d.should respond when it detects a client has
+.d.been connect flooding.
+.f.mo
+.l.set connect_flood_max_count
+.l.set connect_flood_max_time
+.l.set connect_flood_reason
+set connect_flood_max_count
+.s.set connect_flood_max_count [<integer>]
+.d.This setting determines how many times a
+.d.client must connect before it is considered
+.d.to be connect flooding.
+.f.mo
+.l.set connect_flood_action
+.l.set connect_flood_max_time
+.l.set connect_flood_reason
+set connect_flood_max_time
+.s.set connect_flood_max_time [<integer>]
+.d.This setting determines the maximum number
+.d.of seconds that may pass between connections
+.d.for a client to be considered a connect
+.d.flooder.
+.f.mo
+.l.set connect_flood_action
+.l.set connect_flood_max_count
+.l.set connect_flood_reason
+set connect_flood_reason
+.s.set connect_flood_reason [<text>]
+.d.This setting determines the kill, k-line, or
+.d.d-line reason to use when a client is
+.d.detected to be connect flooding.
+.f.mo
+.l.set connect_flood_action
+.l.set connect_flood_max_count
+.l.set connect_flood_max_time
 set default_dline_timeout
 .s.set default_dline_timeout [<minutes>]
 .d.This setting determines the default duration
