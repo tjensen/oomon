@@ -300,11 +300,22 @@ RemoteList::cmdConn(BotClient * from, const std::string & command,
   {
     CommandParser::syntax(command, "<bot name>");
   }
+  else if (this->isConnected(bot))
+  {
+    std::string notice("*** ");
+    notice += bot;
+    notice += " is already connected to botnet!";
+
+    from->send(notice);
+  }
   else
   {
     if (!this->connect(bot))
     {
-      from->send("*** Unknown bot name: " + bot);
+      std::string notice("*** Unknown bot name: ");
+      notice += bot;
+
+      from->send(notice);
     }
   }
 }
@@ -326,14 +337,24 @@ RemoteList::cmdDisconn(BotClient * from, const std::string & command,
 
     if (remote.get() == 0)
     {
-      from->send("*** Unknown bot name: " + bot);
+      std::string notice("*** Unknown bot name: ");
+      notice += bot;
+
+      from->send(notice);
     }
     else
     {
+      std::string usernotice("*** Removing bot: ");
+      usernotice += bot;
       from->send("*** Removing bot: " + bot);
-      ::SendAll("*** " + from->handleAndBot() + " disconnecting " + bot,
-	UserFlags::NONE(), WatchSet(), from);
-      Log::Write("*** " + from->handleAndBot() + " disconnected " + bot);
+
+      std::string notice("*** ");
+      notice += from->handleAndBot();
+      notice += " disconnecting ";
+      notice += bot;
+      ::SendAll(notice, UserFlags::NONE(), WatchSet(), from);
+      Log::Write(notice);
+
       this->_connections.remove(remote);
     }
   }

@@ -425,6 +425,12 @@ Remote::parse(std::string text)
 bool
 Remote::onBotJoin(const std::string & from, const std::string & node)
 {
+  if (remotes.isConnected(node))
+  {
+    this->sendError(node + " is already connected to botnet!");
+    return false;
+  }
+
   if (!node.empty())
   {
     this->_children.Link(from, node);
