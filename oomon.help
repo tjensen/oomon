@@ -527,11 +527,11 @@ links
 list.iplist
 .s.list [-count] [-class <name>] <mask>
 .s.iplist [-count] [-class <name>] <mask>
-.d.Lists all users whose user@host matches the
-.d.mask parameter.  Use the "-count" argument
-.d.to display the number of matching clients.
-.d.Use the "-class" argument to search only clients
-.d.in a particular user class.
+.d.Lists all users whose user@host match the mask
+.d.parameter.  Use the "-count" argument to display
+.d.the number of matching clients.  Use the
+.d."-class" argument to search only clients in a
+.d.particular user class.
 .e.> .list *@*.phx.slimenet.com
 .e.  madox (reining@ip20.tuc.slimenet.com) [1.2.3.20]
 .e.  Ter|away (~J@ip24.phx.slimenet.com) [1.2.17.24]
