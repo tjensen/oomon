@@ -410,7 +410,7 @@ TrapList::cmd(BotClient * client, std::string line)
   long timeout = 0;
   bool modified = false;
 
-  if (flag == "" || flag == "LIST")
+  if (flag.empty() || (flag == "LIST"))
   {
     TrapList::list(client, showCounts, showTimes);
   }

@@ -136,7 +136,7 @@ FloodList::onNotice(const std::string & notice, std::string text,
   std::string userhost = FirstWord(text);
   std::string serverName = FirstWord(text);
 
-  if ((nick == "") || (userhost == ""))
+  if (nick.empty() || userhost.empty())
   {
     // broken.  ignore it.
     return false;

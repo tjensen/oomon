@@ -445,7 +445,7 @@ BotSock::setFD(fd_set & readset, fd_set & writeset) const
 void
 BotSock::bindTo(const std::string & address)
 {
-  if (address == "")
+  if (address.empty())
   {
     this->bindAddress = INADDR_ANY;
   }

@@ -1316,7 +1316,7 @@ chopUserhost(std::string NUH)
 
 #else
 
-  if (NUH != "")
+  if (!NUH.empty())
   {
     std::string::size_type pos = NUH.find('[');
     if (pos != std::string::npos)

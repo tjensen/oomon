@@ -477,7 +477,7 @@ void
 DCC::cmdWatch(BotClient *from, const std::string & command,
   std::string parameters)
 {
-  if (parameters == "")
+  if (parameters.empty())
   {
     from->send("Watching: " + WatchSet::getWatchNames(this->watches_, false));
   }
@@ -499,7 +499,7 @@ DCC::cmdEcho(BotClient *from, const std::string & command,
 
   try
   {
-    if (parm == "")
+    if (parm.empty())
     {
       from->send(std::string("*** ECHO is ") +
         (this->echoMyChatter_ ? "ON" : "OFF"));

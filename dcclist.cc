@@ -247,7 +247,7 @@ bool
 DCCList::sendChat(const std::string & From, std::string Text,
   const BotClient *skip)
 {
-  if (Text != "")
+  if (!Text.empty())
   {
     if (Text[0] != '\001')
     {
@@ -262,7 +262,7 @@ DCCList::sendChat(const std::string & From, std::string Text,
       if (i != std::string::npos)
         Text = Text.substr(0, i);
       std::string Command = FirstWord(Text);
-      if ((Command == "ACTION") && (Text != ""))
+      if (!Text.empty() && (Command == "ACTION"))
       {
         this->sendAll("<-> " + From + " " + Text, UserFlags::AUTHED, WATCH_CHAT,
 	  skip);

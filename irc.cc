@@ -204,7 +204,7 @@ IRC::quit(const std::string & message)
 bool
 IRC::onRead(std::string text)
 {
-  if (text == "")
+  if (text.empty())
     return true;
 
 #ifdef IRC_DEBUG
@@ -926,7 +926,7 @@ IRC::trace(const std::string & target)
 void
 IRC::statsL(const std::string & nick)
 {
-  if (nick != "")
+  if (!nick.empty())
   {
     this->write("STATS L " + nick + '\n');
   }
