@@ -869,9 +869,18 @@ CommandParser::cmdFindu(BotClient * from, const std::string & command,
     }
     else
     {
+      ArgList args;
+      args.addPatterns("-class");
+
+      if (-1 == args.parseCommand(parameters))
+      {
+        throw CommandParser::exception("*** Invalid parameter: " +
+          args.getInvalid());
+      }
+
       if (parameters.empty())
       {
-        CommandParser::syntax(command, "<pattern>");
+        CommandParser::syntax(command, "[-class <pattern>] <pattern>");
       }
       else
       {
@@ -888,6 +897,12 @@ CommandParser::cmdFindu(BotClient * from, const std::string & command,
         }
 
         Filter filter(field, smartPattern(pattern, false));
+
+        PatternPtr classPattern;
+        if (args.havePattern("-class", classPattern))
+        {
+          filter.add(Filter::FIELD_CLASS, classPattern);
+        }
 
         users.findUsers(from, filter);
       }

@@ -227,9 +227,11 @@ glist
 .f.o
 .l.list
 hlist
-.s.hlist <pattern>
+.s.hlist [-class <pattern>] <pattern>
 .d.Searches clients' hostnames for a particular
-.d.pattern and displays matching clients.
+.d.pattern and displays matching clients.  Use
+.d.the "-class" argument to search only clients
+.d.in matching user classes.
 .e.> .hlist /goat/
 .e.  foo (bar@chesgoat.felafel.net) [4.5.6.7]
 .e.  baz (quux@bingo.goats.fi) [9.8.7.6]
@@ -412,9 +414,11 @@ info traps
 .l.set trap_privmsgs
 .l.trap
 iplist
-.s.iplist <pattern>
+.s.iplist [-class <pattern>] <pattern>
 .d.Searches clients' IPs for a particular
-.d.pattern and displays matching clients.
+.d.pattern and displays matching clients.  Use
+.d.the "-class" argument to search only clients
+.d.in matching user classes.
 .e.> .iplist /^192\./
 .e.  foo (bar@argle.bargle) [192.168.1.2]
 .e.  baz (quux@razzle.dazzle) [192.168.52.69]
@@ -2525,9 +2529,11 @@ trap
 .l.set trap_notices
 .l.set trap_privmsgs
 ulist
-.s.ulist <pattern>
+.s.ulist [-class <pattern>] <pattern>
 .d.Searches clients' usernames for a particular
-.d.pattern and displays matching clients.
+.d.pattern and displays matching clients.  Use
+.d.the "-class" argument to search only clients
+.d.in matching user classes.
 .e.> .ulist /haz/
 .e.  foo (shazbot@argle.bargle) [192.168.1.2]
 .e.  baz (hazmat@razzle.dazzle) [192.168.52.69]

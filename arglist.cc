@@ -20,26 +20,25 @@
 // $Id$
 
 #include <string>
+#include <set>
 #include <map>
 #include <algorithm>
 
 #include "strtype"
 #include "arglist.h"
+#include "pattern.h"
 #include "util.h"
 
 
 ArgList::ArgList(std::string unaries, std::string binaries)
 {
-  unaries = UpCase(unaries);
-  binaries = UpCase(binaries);
-
   while (unaries.length() > 0)
   {
     unaries = trimLeft(unaries);
 
     std::string::size_type space = unaries.find_first_of(" \t");
 
-    this->unaries.push_back(unaries.substr(0, space));
+    this->unaries_.insert(UpCase(unaries.substr(0, space)));
 
     unaries.erase(0, space);
   }
@@ -50,9 +49,25 @@ ArgList::ArgList(std::string unaries, std::string binaries)
 
     std::string::size_type space = binaries.find_first_of(" \t");
 
-    this->binaries.push_back(binaries.substr(0, space));
+    this->binaries_.insert(UpCase(binaries.substr(0, space)));
 
     binaries.erase(0, space);
+  }
+}
+
+
+void
+ArgList::addPatterns(std::string patterns)
+{
+  while (patterns.length() > 0)
+  {
+    patterns = trimLeft(patterns);
+
+    std::string::size_type space = patterns.find_first_of(" \t");
+
+    this->patterns_.insert(UpCase(patterns.substr(0, space)));
+
+    patterns.erase(0, space);
   }
 }
 
@@ -62,9 +77,9 @@ ArgList::parseCommand(std::string & command)
 {
   int result = 0;
 
-  this->haveUnaries.clear();
-  this->haveBinaries.clear();
-  invalid = "";
+  this->haveUnaries_.clear();
+  this->haveBinaries_.clear();
+  this->invalid_.erase();
 
   command = trimLeft(command);
 
@@ -72,34 +87,30 @@ ArgList::parseCommand(std::string & command)
   {
     std::string arg = FirstWord(command);
 
-    bool foundIt = false;
-
     // Check unaries
-
-    if (this->unaries.end() != std::find(this->unaries.begin(),
-      this->unaries.end(), UpCase(arg)))
+    if (this->unaries_.end() != this->unaries_.find(UpCase(arg)))
     {
-      foundIt = true;
-      this->haveUnaries.push_back(UpCase(arg));
-      result++;
+      this->haveUnaries_.insert(UpCase(arg));
+      ++result;
     }
-
     // Check binaries
-    if (!foundIt)
+    else if (this->binaries_.end() != this->binaries_.find(UpCase(arg)))
     {
-      if (this->binaries.end() != std::find(this->binaries.begin(),
-	this->binaries.end(), UpCase(arg)))
-      {
-        foundIt = true;
-        this->haveBinaries[UpCase(arg)] = FirstWord(command);
-        result++;
-      }
+      this->haveBinaries_[UpCase(arg)] = FirstWord(command);
+      ++result;
     }
-
-    // Anything else is invalid
-    if (!foundIt)
+    // Check pattern binaries
+    else if (this->patterns_.end() != this->patterns_.find(UpCase(arg)))
     {
-      this->invalid = arg;
+      this->havePatterns_[UpCase(arg)] = smartPattern(grabPattern(command),
+          false);
+      command = trimLeft(command);
+      ++result;
+    }
+    // Anything else is invalid
+    else
+    {
+      this->invalid_ = arg;
       return -1;
     }
   }
@@ -111,8 +122,7 @@ ArgList::parseCommand(std::string & command)
 bool
 ArgList::haveUnary(const std::string & unary) const
 {
-  return (this->haveUnaries.end() != std::find(this->haveUnaries.begin(),
-    this->haveUnaries.end(), UpCase(unary)));
+  return (this->haveUnaries_.end() != this->haveUnaries_.find(UpCase(unary)));
 }
 
 
@@ -120,9 +130,25 @@ bool
 ArgList::haveBinary(const std::string & binary, std::string & parameter) const
 {
   std::map<std::string, std::string>::const_iterator pos =
-    this->haveBinaries.find(UpCase(binary));
+    this->haveBinaries_.find(UpCase(binary));
 
-  if (pos != this->haveBinaries.end())
+  if (pos != this->haveBinaries_.end())
+  {
+    parameter = pos->second;
+    return true;
+  }
+
+  return false;
+}
+
+
+bool
+ArgList::havePattern(const std::string & pattern, PatternPtr & parameter) const
+{
+  std::map<std::string, PatternPtr>::const_iterator pos =
+    this->havePatterns_.find(UpCase(pattern));
+
+  if (pos != this->havePatterns_.end())
   {
     parameter = pos->second;
     return true;

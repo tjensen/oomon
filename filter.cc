@@ -42,8 +42,7 @@ Filter::Filter(const std::string & text, const Filter::Field & defaultField,
   if (std::string::npos == equals)
   {
     std::string pattern(grabPattern(this->rest_, " "));
-    this->fields_[defaultField] = smartPattern(pattern,
-        FIELD_NICK == defaultField);
+    this->add(defaultField, smartPattern(pattern, FIELD_NICK == defaultField));
   }
   else
   {
@@ -55,7 +54,7 @@ Filter::Filter(const std::string & text, const Filter::Field & defaultField,
 
 Filter::Filter(const Filter::Field & field, const PatternPtr & pattern)
 {
-  this->fields_[field] = pattern;
+  this->add(field, pattern);
 }
 
 
@@ -66,6 +65,13 @@ Filter::Filter(const Filter & copy) : fields_(copy.fields_), rest_(copy.rest_)
 
 Filter::~Filter(void)
 {
+}
+
+
+void
+Filter::add(const Filter::Field & field, const PatternPtr & pattern)
+{
+  this->fields_[field] = pattern;
 }
 
 
@@ -86,7 +92,7 @@ Filter::parseFilter(std::string & text, const bool extended)
 
       Filter::Field field(Filter::fieldType(fieldName, extended));
       std::string pattern(grabPattern(text, " ,"));
-      this->fields_[field] = smartPattern(pattern, FIELD_NICK == field);
+      this->add(field, smartPattern(pattern, FIELD_NICK == field));
     }
 
     if (!text.empty())

@@ -52,6 +52,8 @@ public:
   Filter(const Filter & copy);
   virtual ~Filter(void);
 
+  void add(const Filter::Field & field, const PatternPtr & pattern);
+
   void parseFilter(std::string & text, const bool extended);
 
   bool matches(const UserEntryPtr & user, const std::string & version,

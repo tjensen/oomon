@@ -23,33 +23,41 @@
 
 // Std C++ Headers
 #include <string>
+#include <set>
 #include <map>
 
 // OOMon Headers
 #include "strtype"
+#include "pattern.h"
 
 
 class ArgList
 {
 public:
-  ArgList(std::string unaries, std::string binaries);
+  ArgList(std::string unaries = "", std::string binaries = "");
   virtual ~ArgList() { };
+
+  void addPatterns(std::string patterns);
 
   int parseCommand(std::string & command);
 
   bool haveUnary(const std::string & unary) const;
   bool haveBinary(const std::string & binary, std::string & parameter) const;
+  bool havePattern(const std::string & pattern, PatternPtr & parameter) const;
 
-  std::string getInvalid(void) const { return this->invalid; };
+  std::string getInvalid(void) const { return this->invalid_; };
 
 private:
-  StrList unaries;
-  StrList binaries;
+  typedef std::set<std::string> StrSet;
+  StrSet unaries_;
+  StrSet binaries_;
+  StrSet patterns_;
 
-  StrList haveUnaries;
-  std::map<std::string, std::string> haveBinaries;
+  StrSet haveUnaries_;
+  std::map<std::string, std::string> haveBinaries_;
+  std::map<std::string, PatternPtr> havePatterns_;
 
-  std::string invalid;
+  std::string invalid_;
 };
 
 #endif /* __ARGLIST_H__ */
