@@ -23,9 +23,6 @@
 #include <iostream>
 #include <string>
 
-// Std C Headers
-# include <sys/file.h>
-
 // OOMon Headers
 #include "oomon.h"
 #include "botdb.h"
@@ -41,6 +38,10 @@
 #else
 # include <map>
 #endif
+#ifdef HAVE_FLOCK
+# include <sys/file.h>
+#endif
+
 
 
 #ifdef DEBUG
@@ -62,14 +63,18 @@ class BotDB::Lock
     {
       if (this->fd_ != -1)
       {
+#ifdef HAVE_FLOCK
         flock(this->fd_, operation);
+#endif
       }
     }
     ~Lock(void)
     {
       if (this->fd_ != -1)
       {
+#ifdef HAVE_FLOCK
         flock(this->fd_, LOCK_UN);
+#endif
       }
     }
   private:
@@ -112,7 +117,9 @@ BotDB::~BotDB()
 int
 BotDB::del(const std::string & key)
 {
+#ifdef HAVE_FLOCK
   BotDB::Lock lock(this->fd(), LOCK_EX);
+#endif
 
 #if defined(HAVE_LIBGDBM)
   datum k = { dptr: const_cast<char *>(key.c_str()), dsize: key.length() + 1 };
@@ -166,7 +173,9 @@ BotDB::fd()
 int
 BotDB::get(const std::string & key, std::string & data)
 {
+#ifdef HAVE_FLOCK
   BotDB::Lock lock(this->fd(), LOCK_SH);
+#endif
 
 #if defined(HAVE_LIBGDBM)
   datum k = { dptr: const_cast<char *>(key.c_str()), dsize: key.length() + 1 };
@@ -214,7 +223,9 @@ BotDB::get(const std::string & key, std::string & data)
 int
 BotDB::put(const std::string & key, const std::string & data)
 {
+#ifdef HAVE_FLOCK
   BotDB::Lock lock(this->fd(), LOCK_EX);
+#endif
 
 #if defined(HAVE_LIBGDBM)
   datum k, d;
