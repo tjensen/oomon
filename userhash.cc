@@ -80,11 +80,11 @@ UserHash::~UserHash(void)
   this->clear();
 }
 
-int
+unsigned int
 UserHash::hashFunc(const std::string & key)
 {
   std::string::size_type len = key.length();
-  int i = 0;
+  unsigned int i = 0;
 
   if (len > 0)
   {
@@ -109,7 +109,7 @@ UserHash::hashFunc(const std::string & key)
 }
 
 
-int
+unsigned int
 UserHash::hashFunc(const BotSock::Address & key)
 {
   return (key & BotSock::ClassCNetMask) % HASHTABLESIZE;
@@ -460,7 +460,7 @@ void
 UserHash::addToHash(UserEntryTable & table, const std::string & key,
   const UserEntryPtr & item)
 {
-  int index = UserHash::hashFunc(key);
+  const unsigned int index = UserHash::hashFunc(key);
 
   table[index].push_back(item);
 }
@@ -470,7 +470,7 @@ void
 UserHash::addToHash(UserEntryTable & table, const BotSock::Address & key,
   const UserEntryPtr & item)
 {
-  int index = UserHash::hashFunc(key);
+  const unsigned int index = UserHash::hashFunc(key);
 
   table[index].push_back(item);
 }
@@ -501,7 +501,7 @@ UserHash::removeFromHash(UserEntryTable & table, const std::string & key,
 {
   if (key.length() > 0)
   {
-    int index = UserHash::hashFunc(key);
+    const unsigned int index = UserHash::hashFunc(key);
 
     return removeFromHashEntry(table[index], host, user, nick);
   }
@@ -524,7 +524,7 @@ bool
 UserHash::removeFromHash(UserEntryTable & table, const BotSock::Address & key,
   const std::string & host, const std::string & user, const std::string & nick)
 {
-  int index = UserHash::hashFunc(key);
+  const unsigned int index = UserHash::hashFunc(key);
 
   if (removeFromHashEntry(table[index], host, user, nick))
   {
@@ -810,7 +810,7 @@ UserHash::findUser(const std::string & nick, const std::string & userhost) const
     std::string lcUser(server.downCase(userhost.substr(0, at)));
     std::string lcHost(server.downCase(userhost.substr(at + 1)));
 
-    const int hashIndex = UserHash::hashFunc(lcUser);
+    const unsigned int hashIndex = UserHash::hashFunc(lcUser);
 
     const UserEntryList & bucket = this->usertable[hashIndex];
 
@@ -1405,7 +1405,7 @@ UserHash::reportVMulti(BotClient * client, const int minimum)
 void
 UserHash::checkHostClones(const std::string & host)
 {
-  const int index = UserHash::hashFunc(host);
+  const unsigned int index = UserHash::hashFunc(host);
   
   std::time_t now = std::time(NULL);
   std::time_t oldest = now;
@@ -1580,7 +1580,7 @@ UserHash::checkHostClones(const std::string & host)
 void
 UserHash::checkIpClones(const BotSock::Address & ip)
 {
-  const int index = UserHash::hashFunc(ip);
+  const unsigned int index = UserHash::hashFunc(ip);
   
   std::time_t now = std::time(NULL);
   std::time_t oldest = now;

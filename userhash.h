@@ -126,8 +126,8 @@ private:
     int score_;
   };
 
-  static int hashFunc(const BotSock::Address & key);
-  static int hashFunc(const std::string & key);
+  static unsigned int hashFunc(const BotSock::Address & key);
+  static unsigned int hashFunc(const std::string & key);
 
   static void addToHash(UserEntryTable & table, const BotSock::Address & key,
     const UserEntryPtr & item);
