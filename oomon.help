@@ -852,6 +852,7 @@ set
 .t.relay_msgs_to_locops
 .t.scan_for_proxies
 .t.scan_http_connect_ports
+.t.scan_http_post_ports
 .t.scan_proxy_action
 .t.scan_proxy_reason
 .t.scan_socks4_ports
@@ -1720,6 +1721,7 @@ set scan_for_proxies
 .d.OFF, no scanning will be performed.
 .f.mo
 .l.set scan_http_connect_ports
+.l.set scan_http_post_ports
 .l.set scan_proxy_action
 .l.set scan_proxy_reason
 .l.set scan_socks4_ports
@@ -1733,6 +1735,19 @@ set scan_http_connect_ports
 .d.and/or spaces.
 .f.mo
 .l.set scan_for_proxies
+.l.set scan_http_post_ports
+.l.set scan_socks4_ports
+.l.set scan_socks5_ports
+.l.set scan_wingate_ports
+set scan_http_post_ports
+.s.set scan_http_post_ports [<port>[,<port>[,...]]]
+.d.Determines the TCP port numbers to scan
+.d.when scanning for open HTTP POST proxies.
+.d.Port numbers should be separated by commas
+.d.and/or spaces.
+.f.mo
+.l.set scan_for_proxies
+.l.set scan_http_connect_ports
 .l.set scan_socks4_ports
 .l.set scan_socks5_ports
 .l.set scan_wingate_ports
@@ -1765,6 +1780,7 @@ set scan_socks4_ports
 .f.mo
 .l.set scan_for_proxies
 .l.set scan_http_connect_ports
+.l.set scan_http_post_ports
 .l.set scan_socks5_ports
 .l.set scan_wingate_ports
 set scan_socks5_ports
@@ -1776,6 +1792,7 @@ set scan_socks5_ports
 .f.mo
 .l.set scan_for_proxies
 .l.set scan_http_connect_ports
+.l.set scan_http_post_ports
 .l.set scan_socks4_ports
 .l.set scan_wingate_ports
 set scan_wingate_ports
@@ -1787,6 +1804,7 @@ set scan_wingate_ports
 .f.mo
 .l.set scan_for_proxies
 .l.set scan_http_connect_ports
+.l.set scan_http_post_ports
 .l.set scan_socks4_ports
 .l.set scan_socks5_ports
 set seedrand_command_min
