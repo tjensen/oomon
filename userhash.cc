@@ -312,7 +312,30 @@ UserHash::checkVersionTimeout(void)
     {
       for (UserEntryList::iterator hp = i->begin(); hp != i->end(); ++hp)
       {
-        (*hp)->checkVersionTimeout(now, timeout);
+        UserEntryPtr user(*hp);
+
+        std::time_t timedOut = user->checkVersionTimeout(now, timeout);
+        if (timedOut > 0)
+        {
+          std::string nick(user->getNick());
+          std::string userhost(user->getUserHost());
+
+          std::string notice("*** No CTCP VERSION reply from ");
+          notice += nick;
+          notice += " (";
+          notice += userhost;
+          notice += ") in ";
+          notice += boost::lexical_cast<std::string>(timedOut);
+          notice += " seconds.";
+
+          ::SendAll(notice, UserFlags::OPER, WATCH_CTCPVERSIONS);
+          Log::Write(notice);
+
+          doAction(nick, userhost, user->getIP(),
+              vars[VAR_CTCPVERSION_TIMEOUT_ACTION]->getAction(),
+              vars[VAR_CTCPVERSION_TIMEOUT_ACTION]->getInt(),
+              vars[VAR_CTCPVERSION_TIMEOUT_REASON]->getString(), false);
+        }
       }
     }
   }

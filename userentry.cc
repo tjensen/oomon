@@ -123,36 +123,23 @@ UserEntry::same(const std::string & nick, const std::string & user,
 }
 
 
-void
+std::time_t
 UserEntry::checkVersionTimeout(const std::time_t now, const std::time_t timeout)
 {
+  std::time_t result(0);
+
   if (this->versioned > 0)
   {
-    std::time_t elapsed = now - this->versioned;
+    std::time_t elapsed(now - this->versioned);
 
     if (elapsed > timeout)
     {
-      std::string userhost(this->getUserHost());
-
-      std::string notice("*** No CTCP VERSION reply from ");
-      notice += this->getNick();
-      notice += " (";
-      notice += userhost;
-      notice += ") in ";
-      notice += boost::lexical_cast<std::string>(elapsed);
-      notice += " seconds.";
-
-      ::SendAll(notice, UserFlags::OPER, WATCH_CTCPVERSIONS);
-      Log::Write(notice);
-
-      doAction(this->getNick(), userhost, this->getIP(),
-	vars[VAR_CTCPVERSION_TIMEOUT_ACTION]->getAction(),
-	vars[VAR_CTCPVERSION_TIMEOUT_ACTION]->getInt(),
-	vars[VAR_CTCPVERSION_TIMEOUT_REASON]->getString(), false);
-
+      result = elapsed;
       this->versioned = 0;
     }
   }
+
+  return result;
 }
 
 

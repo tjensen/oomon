@@ -57,7 +57,8 @@ public:
   bool same(const std::string & nick, const std::string & user,
     const std::string & host) const;
 
-  void checkVersionTimeout(const std::time_t now, const std::time_t timeout);
+  std::time_t checkVersionTimeout(const std::time_t now,
+      const std::time_t timeout);
 
   std::string getNick(void) const { return this->nick; };
   std::string getUser(void) const { return this->user; };
