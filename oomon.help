@@ -677,6 +677,9 @@ set
 .t.auto_save
 .t.broken_hostname_munging
 .t.check_for_spoofs
+.t.clone_max_time
+.t.clone_min_count
+.t.clone_report_interval
 .t.connect_flood_action
 .t.connect_flood_max_count
 .t.connect_flood_max_time
@@ -932,6 +935,48 @@ set check_for_spoofs
 .l.set fake_ip_spoof_action
 .l.set illegal_char_spoof_action
 .l.set illegal_tld_spoof_action
+set clone_max_time
+.s.set clone_max_time [<integer>]
+.d.This setting determines the maximum number of
+.d.seconds that may pass during which
+.d.CLONE_MIN_COUNT or more duplicate clients must
+.d.connect in order for them to be considered
+.d.clones.
+.f.mo
+.l.set auto_kline_host
+.l.set auto_kline_net
+.l.set auto_kline_noident
+.l.set auto_kline_userhost
+.l.set auto_kline_usernet
+.l.set clone_min_count
+.l.set clone_report_interval
+set clone_min_count
+.s.set clone_min_count [<integer>]
+.d.This setting determines the minimum number of
+.d.duplicate clients that must connect within
+.d.CLONE_MAX_TIME in order for them to be
+.d.considered clones.
+.f.mo
+.l.set auto_kline_host
+.l.set auto_kline_net
+.l.set auto_kline_noident
+.l.set auto_kline_userhost
+.l.set auto_kline_usernet
+.l.set clone_max_time
+.l.set clone_report_interval
+set clone_report_interval
+.s.set clone_report_interval [<integer>]
+.d.This setting determines how many seconds
+.d.must pass before additional detected clones
+.d.are reported.
+.f.mo
+.l.set auto_kline_host
+.l.set auto_kline_net
+.l.set auto_kline_noident
+.l.set auto_kline_userhost
+.l.set auto_kline_usernet
+.l.set clone_max_time
+.l.set clone_min_count
 set connect_flood_action
 .s.set connect_flood_action [<action>]
 .d.This setting determines how the monitor bot

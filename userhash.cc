@@ -47,8 +47,6 @@
 #include "pattern.h"
 
 
-const static int CLONE_CONNECT_COUNT = 3;
-const static int CLONE_CONNECT_FREQ = 30;
 const static int CLONE_DETECT_INC = 15;
 
 
@@ -1358,7 +1356,8 @@ UserHash::checkHostClones(const std::string & host)
   while (NULL != find)
   {
     if (server.same(find->info->getHost(), host) &&
-      ((now - find->info->getConnectTime()) < (CLONE_CONNECT_FREQ + 1)))
+      ((now - find->info->getConnectTime()) <
+      (vars[VAR_CLONE_MAX_TIME]->getInt() + 1)))
     {
       if (find->info->getReportTime() > 0)
       {
@@ -1382,8 +1381,9 @@ UserHash::checkHostClones(const std::string & host)
     find = find->collision;
   }
   
-  if (((reportedClones == 0) && (cloneCount < CLONE_CONNECT_COUNT)) ||
-    ((now - lastReport) < 10))
+  if (((reportedClones == 0) &&
+    (cloneCount < vars[VAR_CLONE_MIN_COUNT]->getInt())) ||
+    ((now - lastReport) < vars[VAR_CLONE_REPORT_INTERVAL]->getInt()))
   {
     return;
   }
@@ -1413,7 +1413,8 @@ UserHash::checkHostClones(const std::string & host)
   while (find)
   {
     if (server.same(find->info->getHost(), host) &&
-      (now - find->info->getConnectTime() < CLONE_CONNECT_FREQ + 1) &&
+      ((now - find->info->getConnectTime()) <
+      (vars[VAR_CLONE_MAX_TIME]->getInt() + 1)) &&
       (find->info->getReportTime() == 0))
     {
       ++cloneCount;
@@ -1521,7 +1522,8 @@ UserHash::checkIpClones(const BotSock::Address & ip)
   while (NULL != find)
   {
     if (BotSock::sameClassC(find->info->getIp(), ip) &&
-      ((now - find->info->getConnectTime()) < (CLONE_CONNECT_FREQ + 1)))
+      ((now - find->info->getConnectTime()) <
+      (vars[VAR_CLONE_MAX_TIME]->getInt() + 1)))
     {
       if (find->info->getReportTime() > 0)
       {
@@ -1545,8 +1547,9 @@ UserHash::checkIpClones(const BotSock::Address & ip)
     find = find->collision;
   }
   
-  if (((reportedClones == 0) && (cloneCount < CLONE_CONNECT_COUNT)) ||
-    ((now - lastReport) < 10))
+  if (((reportedClones == 0) &&
+    (cloneCount < vars[VAR_CLONE_MIN_COUNT]->getInt())) ||
+    ((now - lastReport) < vars[VAR_CLONE_REPORT_INTERVAL]->getInt()))
   {
     return;
   }
@@ -1578,8 +1581,9 @@ UserHash::checkIpClones(const BotSock::Address & ip)
   while (find)
   {
     if (BotSock::sameClassC(find->info->getIp(), ip) &&
-      (now - find->info->getConnectTime() < CLONE_CONNECT_FREQ + 1) &&
-      find->info->getReportTime() == 0)
+      ((now - find->info->getConnectTime()) <
+      (vars[VAR_CLONE_MAX_TIME]->getInt() + 1)) &&
+      (find->info->getReportTime() == 0))
     {
       ++cloneCount;
 
