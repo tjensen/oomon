@@ -25,6 +25,9 @@
 #include <string>
 #include <list>
 
+// Boost C++ headers
+#include <boost/shared_ptr.hpp>
+
 // OOMon headers
 #include "strtype"
 #include "oomon.h"
@@ -57,28 +60,84 @@ public:
   void status(StrList & output) const;
 
   DCCList() { };
-  virtual ~DCCList();
+  virtual ~DCCList() { };
 
 private:
-  typedef std::list<DCC *> SockList;
+  typedef boost::shared_ptr<DCC> DCCPtr;
+  typedef std::list<DCCPtr> SockList;
   SockList connections;
   SockList listeners;
 
-  DCC *find(const std::string &);
+  DCCPtr find(const std::string &);
+
+  class ListenProcessor
+  {
+  public:
+    ListenProcessor(const fd_set & readset, const fd_set & writeset,
+      SockList & connections) : _readset(readset), _writeset(writeset),
+      _connections(connections) { }
+    bool operator()(DCCPtr listener);
+  private:
+    const fd_set & _readset;
+    const fd_set & _writeset;
+    SockList & _connections;
+  };
+
+  class ClientProcessor
+  {
+  public:
+    ClientProcessor(const fd_set & readset, const fd_set & writeset)
+      : _readset(readset), _writeset(writeset) { }
+    bool operator()(DCCPtr listener);
+  private:
+    const fd_set & _readset;
+    const fd_set & _writeset;
+  };
+
+  class FDSetter
+  {
+  public:
+    FDSetter(fd_set & readset, fd_set & writeset) : _readset(readset),
+      _writeset(writeset) { }
+    void operator()(DCCPtr dccSocket)
+    {
+      dccSocket->setFD(this->_readset, this->_writeset);
+    }
+  private:
+    fd_set & _readset;
+    fd_set & _writeset;
+  };
+
+  class WhoList
+  {
+  public:
+    WhoList(StrList & output) : _output(output) { }
+    void operator()(DCCPtr client);
+  private:
+    StrList & _output;
+  };
+
+  class StatsPList
+  {
+  public:
+    StatsPList(StrList & output) : _output(output) { }
+    bool operator()(DCCPtr client);
+  private:
+    StrList & _output;
+  };
 
   class SendFilter
   {
   public:
     SendFilter(const std::string & message, const int flags, 
-      const WatchSet & watches, const DCC *exception)
-      : _message(message), _flags(flags), _watches(watches),
-      _exception(exception) { }
+      const WatchSet & watches, const DCC *exception) : _message(message),
+      _flags(flags), _watches(watches), _exception(exception) { }
 
-    void operator()(DCC *dccClient)
+    void operator()(DCCPtr client)
     {
-      if (this->_exception != dccClient)
+      if (this->_exception != client.get())
       {
-        dccClient->send(_message, _flags, _watches);
+        client->send(this->_message, this->_flags, this->_watches);
       }
     }
 
@@ -87,6 +146,31 @@ private:
     const int _flags;
     const WatchSet _watches;
     const DCC *_exception;
+  };
+
+  class SendToFilter
+  {
+  public:
+    SendToFilter(const std::string & handle, const std::string & message,
+      const int flags, const WatchSet & watches) : _handle(handle),
+      _message(message), _flags(flags), _watches(watches) { }
+
+    bool operator()(DCCPtr client)
+    {
+      bool count = false;
+      if (this->_handle == client->getHandle())
+      {
+        client->send(this->_message, this->_flags, this->_watches);
+        count = true;
+      }
+      return count;
+    }
+
+  private:
+    const std::string _handle;
+    const std::string _message;
+    const int _flags;
+    const WatchSet _watches;
   };
 };
 

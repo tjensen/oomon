@@ -52,22 +52,6 @@
 DCCList clients;
 
 
-DCCList::~DCCList()
-{
-  for (SockList::iterator pos = this->connections.begin();
-    pos != this->connections.end(); ++pos)
-  {
-    delete (*pos);
-  }
-
-  for (SockList::iterator pos = this->listeners.begin();
-    pos != this->listeners.end(); ++pos)
-  {
-    delete (*pos);
-  }
-}
-
-
 // connect(address, port, nick, userhost)
 //
 // Makes a DCC connection to the given address and port.
@@ -80,7 +64,7 @@ DCCList::connect(const DCC::Address address, const int port,
 {
   try
   {
-    class DCC *newClient = new DCC;
+    class DCCPtr newClient(new DCC);
 
     if (newClient->connect(ntohl(address), port, nick, userhost))
     {
@@ -89,7 +73,6 @@ DCCList::connect(const DCC::Address address, const int port,
     }
     else
     {
-      delete newClient;
       return false;
     }
   }
@@ -110,7 +93,7 @@ DCCList::listen(const std::string & nick, const std::string & userhost)
 {
   try
   {
-    class DCC *newListener = new DCC;
+    class DCCPtr newListener(new DCC);
 
     if (newListener->listen(nick, userhost))
     {
@@ -122,7 +105,6 @@ DCCList::listen(const std::string & nick, const std::string & userhost)
     }
     else
     {
-      delete newListener;
       return false;
     }
   }
@@ -132,6 +114,7 @@ DCCList::listen(const std::string & nick, const std::string & userhost)
   }
 }
 
+
 // setAllFD(readset)
 //
 // Do this if you want to be able to receive data :P
@@ -139,18 +122,95 @@ DCCList::listen(const std::string & nick, const std::string & userhost)
 void
 DCCList::setAllFD(fd_set & readset, fd_set & writeset)
 {
-  for (SockList::iterator pos = this->listeners.begin();
-    pos != this->listeners.end(); ++pos)
+  FDSetter s(readset, writeset);
+
+  std::for_each(this->listeners.begin(), this->listeners.end(), s);
+  std::for_each(this->connections.begin(), this->connections.end(), s);
+}
+
+
+bool
+DCCList::ListenProcessor::operator()(DCCPtr listener)
+{
+  bool remove;
+
+  try
   {
-    (*pos)->setFD(readset, writeset);
+    remove = !listener->process(this->_readset, this->_writeset);
+  }
+  catch (OOMon::ready_for_accept)
+  {
+#ifdef DCCLIST_DEBUG
+    std::cout << "DCC::process() threw exception: ready_for_accept" <<
+      std::endl;
+#endif
+
+    remove = true;
+
+    DCCPtr newConnection;
+    bool addClient = true;
+
+    try
+    {
+      newConnection = DCCPtr(new DCC(listener.get()));
+    }
+    catch (OOMon::errno_error & e)
+    {
+      std::cerr << "DCC::accept() threw exception: " << e.what() << std::endl;
+      addClient = (EWOULDBLOCK == e.getErrno());
+    }
+
+    if (addClient && newConnection->onConnect())
+    {
+      this->_connections.push_back(newConnection);
+    }
+  }
+  catch (OOMon::timeout_error)
+  {
+    std::cerr << "DCC listener socket timed out!" << std::endl;
+    remove = true;
   }
 
-  for (SockList::iterator pos = this->connections.begin();
-    pos != this->connections.end(); ++pos)
-  {
-    (*pos)->setFD(readset, writeset);
-  }
+  return remove;
 }
+
+
+bool
+DCCList::ClientProcessor::operator()(DCCPtr client)
+{
+  bool remove;
+
+  try
+  {
+    remove = !client->process(this->_readset, this->_writeset);
+  }
+  catch (OOMon::timeout_error)
+  {
+    remove = true;
+#ifdef DCCLIST_DEBUG
+    std::cout << "DCC::process() threw exception: timeout_error" << std::endl;
+#endif
+    if (!client->isConnected())
+    {
+      server.notice(client->getNick(), "DCC CHAT connection timed out.");
+      Log::Write(client->getUserhost() + " timed out on DCC connect");
+    }
+  }
+  catch (OOMon::errno_error & e)
+  {
+    remove = true;
+    std::cerr << "DCC::process() threw exception: errno_error: " <<
+      e.what() << std::endl;
+  }
+
+  if (remove && client->isConnected())
+  {
+    ::SendAll(client->getUserhost() + " has disconnected", UF_AUTHED);
+  }
+
+  return remove;
+}
+
 
 // processAll(readset, writeset)
 //
@@ -161,98 +221,11 @@ DCCList::setAllFD(fd_set & readset, fd_set & writeset)
 void
 DCCList::processAll(const fd_set & readset, const fd_set & writeset)
 {
-  for (SockList::iterator pos = this->listeners.begin();
-    pos != this->listeners.end(); ++pos)
-  {
-    bool keepListener;
-
-    try
-    {
-      keepListener = (*pos)->process(readset, writeset);
-    }
-    catch (OOMon::ready_for_accept)
-    {
-#ifdef DCCLIST_DEBUG
-      std::cout << "DCC::process() threw exception: ready_for_accept" <<
-	std::endl;
-#endif
-      try
-      {
-        DCC *newConnection = new DCC((*pos));
-        if (newConnection->onConnect())
-	{
-	  this->connections.push_back(newConnection);
-	}
-	else
-	{
-	  delete newConnection;
-	}
-        keepListener = false;
-      }
-      catch (OOMon::errno_error & e)
-      {
-        std::cerr << "DCC::accept() threw exception: " << e.what() << std::endl;
-        keepListener = (EWOULDBLOCK == e.getErrno());
-      }
-    }
-    catch (OOMon::timeout_error)
-    {
-      std::cerr << "DCC listener socket timed out!" << std::endl;
-      keepListener = false;
-    }
-
-    if (!keepListener)
-    {
-      DCC *tmp = (*pos);
-      pos = this->listeners.erase(pos);
-      delete tmp;
-      --pos;
-    }
-  }
-
-  for (SockList::iterator pos = this->connections.begin();
-    pos != this->connections.end(); ++pos)
-  {
-    bool keepConnection;
-
-    try
-    {
-      keepConnection = (*pos)->process(readset, writeset);
-    }
-    catch (OOMon::timeout_error)
-    {
-#ifdef DCCLIST_DEBUG
-      std::cout << "DCC::process() threw exception: timeout_error" << std::endl;
-#endif
-      keepConnection = false;
-
-      if (!(*pos)->isConnected())
-      {
-        server.notice((*pos)->getNick(), "DCC CHAT connection timed out.");
-        Log::Write((*pos)->getUserhost() + " timed out on DCC connect");
-      }
-    }
-    catch (OOMon::errno_error & e)
-    {
-      keepConnection = false;
-      std::cerr << "DCC::process() threw exception: errno_error: " <<
-	e.what() << std::endl;
-    }
-
-    if (!keepConnection)
-    {
-      DCC *tmp = (*pos);
-      pos = this->connections.erase(pos);
-
-      if (tmp->isConnected())
-      {
-        ::SendAll(tmp->getUserhost() + " has disconnected", UF_AUTHED);
-      }
-
-      delete tmp;
-      --pos;
-    }
-  }
+  ListenProcessor lp(readset, writeset, this->connections);
+  this->listeners.remove_if(lp);
+    
+  ClientProcessor cp(readset, writeset);
+  this->connections.remove_if(cp);
 }
 
 
@@ -291,37 +264,68 @@ DCCList::sendChat(const std::string & From, std::string Text,
 }
 
 
+void
+DCCList::WhoList::operator()(DCCPtr client)
+{
+  if (client->isConnected())
+  {
+    this->_output.push_back(client->getFlags() + " " + client->getHandle() +
+      " (" + client->getUserhost() + ") " + IntToStr(client->getIdle()));
+  }
+  else
+  {
+    this->_output.push_back(client->getFlags() + " " + client->getHandle() +
+      " (" + client->getUserhost() + ") -connecting-");
+  }
+}
+
+
 // who(Output)
 //
 // Returns a list of connected users
 //
 void
-DCCList::who(StrList & Output)
+DCCList::who(StrList & output)
 {
-  Output.clear();
-  if (this->connections.size() > 0)
-  {
-    Output.push_back("Client connections:");
+  output.clear();
 
-    for (SockList::iterator pos = this->connections.begin();
-      pos != this->connections.end(); ++pos)
-    {
-      if ((*pos)->isConnected())
-      {
-        Output.push_back((*pos)->getFlags() + " " + (*pos)->getHandle() +
-	  " (" + (*pos)->getUserhost() + ") " + IntToStr((*pos)->getIdle()));
-      }
-      else
-      {
-        Output.push_back((*pos)->getFlags() + " " + (*pos)->getHandle() +
-	  " (" + (*pos)->getUserhost() + ") -connecting-");
-      }
-    }
+  if (this->connections.empty())
+  {
+    output.push_back("No client connections!");
   }
   else
   {
-    Output.push_back("No client connections!");
+    output.push_back("Client connections:");
+
+    std::for_each(this->connections.begin(), this->connections.end(),
+      WhoList(output));
   }
+}
+
+
+bool
+DCCList::StatsPList::operator()(DCCPtr client)
+{
+  bool count = false;
+
+  if (client->isConnected() && client->isOper())
+  {
+    std::string notice(client->getHandle(false));
+
+    if (vars[VAR_STATSP_SHOW_USERHOST]->getBool())
+    {
+      notice += " (" + client->getUserhost() + ")";
+    }
+    if (vars[VAR_STATSP_SHOW_IDLE]->getBool())
+    {
+      notice += " Idle: " + IntToStr(client->getIdle());
+    }
+
+    this->_output.push_back(notice);
+    count = true;
+  }
+
+  return count;
 }
 
 
@@ -330,30 +334,14 @@ DCCList::who(StrList & Output)
 // Returns a list of connected users (in a pseudo-"stats p" format)
 //
 void
-DCCList::statsP(StrList & Output)
+DCCList::statsP(StrList & output)
 {
-  int operCount = 0;
+  output.clear();
 
-  Output.clear();
-  for (SockList::iterator pos = this->connections.begin();
-    pos != this->connections.end(); ++pos)
-  {
-    if ((*pos)->isConnected() && (*pos)->isOper())
-    {
-      std::string notice((*pos)->getHandle(false));
-      if (vars[VAR_STATSP_SHOW_USERHOST]->getBool())
-      {
-	notice += " (" + (*pos)->getUserhost() + ")";
-      }
-      if (vars[VAR_STATSP_SHOW_IDLE]->getBool())
-      {
-	notice += " Idle: " + IntToStr((*pos)->getIdle());
-      }
-      Output.push_back(notice);
-      operCount++;
-    }
-  }
-  Output.push_back(IntToStr(operCount) + " OOMon oper" +
+  int operCount = std::count_if(this->connections.begin(),
+    this->connections.end(), StatsPList(output));
+
+  output.push_back(IntToStr(operCount) + " OOMon oper" +
     (operCount == 1 ? "" : "s"));
 }
 
@@ -397,19 +385,8 @@ bool
 DCCList::sendTo(const std::string & handle, const std::string & message,
   const int flags, const WatchSet & watches)
 {
-  bool result = false;
-
-  for (SockList::iterator pos = this->connections.begin();
-    pos != this->connections.end(); ++pos)
-  {
-    if (handle == (*pos)->getHandle())
-    {
-      (*pos)->send(message, flags, watches);
-      result = true;
-    }
-  }
-
-  return result;
+  return (0 != std::count_if(this->connections.begin(), this->connections.end(),
+    SendToFilter(handle, message, flags, watches)));
 }
 
 
