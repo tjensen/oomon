@@ -579,8 +579,8 @@ private:
 //  Revision History :
 //
 //  $Log$
-//  Revision 1.1  2004/03/05 22:22:53  tjensen
-//  Initial revision
+//  Revision 1.1.1.1  2004/03/05 22:22:53  tjensen
+//  This is version 1.31.0 of the Boost libraries
 //
 //  Revision 1.35.2.1  2004/01/06 13:33:28  johnmaddock
 //  merged changes from main branch

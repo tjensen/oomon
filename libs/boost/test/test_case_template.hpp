@@ -130,8 +130,8 @@ create_test_case_template( TestCaseTemplate, TestTypesList, std::string name_ )
 //  Revision History :
 //  
 //  $Log$
-//  Revision 1.1  2004/03/05 22:22:53  tjensen
-//  Initial revision
+//  Revision 1.1.1.1  2004/03/05 22:22:53  tjensen
+//  This is version 1.31.0 of the Boost libraries
 //
 //  Revision 1.4  2003/12/01 00:41:56  rogeeff
 //  prerelease cleaning

@@ -74,8 +74,8 @@ init_unit_test_suite( int /* argc */, char* /* argv */ [] ) {
 //  Revision History :
 //  
 //  $Log$
-//  Revision 1.1  2004/03/05 22:22:52  tjensen
-//  Initial revision
+//  Revision 1.1.1.1  2004/03/05 22:22:52  tjensen
+//  This is version 1.31.0 of the Boost libraries
 //
 //  Revision 1.7  2003/12/01 00:41:56  rogeeff
 //  prerelease cleaning

@@ -32,8 +32,8 @@
 //  Revision History :
 //  
 //  $Log$
-//  Revision 1.1  2004/03/05 22:22:53  tjensen
-//  Initial revision
+//  Revision 1.1.1.1  2004/03/05 22:22:53  tjensen
+//  This is version 1.31.0 of the Boost libraries
 //
 //  Revision 1.11  2003/12/01 17:13:22  rogeeff
 //  *** empty log message ***

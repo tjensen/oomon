@@ -55,8 +55,8 @@ using std::distance;
 //  Revision History :
 //  
 //  $Log$
-//  Revision 1.1  2004/03/05 22:22:55  tjensen
-//  Initial revision
+//  Revision 1.1.1.1  2004/03/05 22:22:55  tjensen
+//  This is version 1.31.0 of the Boost libraries
 //
 //  Revision 1.16  2003/12/01 00:41:56  rogeeff
 //  prerelease cleaning

@@ -109,8 +109,8 @@ create_test_case( function1<void,ParameterType> const& fct_, std::string name_,
 //  Revision History :
 //  
 //  $Log$
-//  Revision 1.1  2004/03/05 22:22:54  tjensen
-//  Initial revision
+//  Revision 1.1.1.1  2004/03/05 22:22:54  tjensen
+//  This is version 1.31.0 of the Boost libraries
 //
 //  Revision 1.15  2003/12/01 00:41:56  rogeeff
 //  prerelease cleaning
