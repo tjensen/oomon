@@ -59,18 +59,25 @@ LDFLAGS = @LDFLAGS@
 BOOST_DEFS = -DBOOST_DISABLE_THREADS
 OOMON_DEFS = @DEFS@ $(BOOST_DEFS) -DLOGDIR=\"$(logdir)\" -DETCDIR=\"$(sysconfdir)\" $(DEFS)
 EXE = oomon
+MKPASSWD = mkpasswd
 RM = @RM@
 
 VERSION = @VERSION@
 
+all: $(EXE) $(MKPASSWD)
+
 $(EXE): $(OBJS)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)
+
+$(MKPASSWD): mkpasswd.o
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ mkpasswd.o $(LIBS)
 
 .cc.o:
 	$(CXX) $(CXXFLAGS) $(OOMON_DEFS) -c $<
 
-install: $(EXE) install-mkdirs
+install: $(EXE) $(MKPASSWD) install-mkdirs
 	$(INSTALL_BIN) $(EXE) $(bindir)
+	$(INSTALL_BIN) $(MKPASSWD) $(bindir)
 	$(INSTALL_DATA) oomon.cf $(sysconfdir)/oomon.cf.sample
 	-@if test ! -e $(sysconfdir)/oomon.cf; then \
 		echo "$(INSTALL_DATA) oomon.cf $(sysconfdir)/oomon.cf"; \
@@ -111,7 +118,7 @@ install-mkdirs:
 	fi
 
 clean:
-	$(RM) $(EXE) $(OBJS) oomon.core oomon.pid oomon.out make.out oomon.log
+	$(RM) $(EXE) $(MKPASSWD) $(OBJS) oomon.core oomon.pid oomon.out make.out oomon.log
 
 distclean: clean
 	$(RM) makefile sig.inc config.status config.cache config.log defs.h
