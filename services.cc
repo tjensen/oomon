@@ -92,7 +92,7 @@ Services::onXoNotice(std::string text)
     std::string nick = parms[0];
 
     std::string notice = vars[VAR_XO_SERVICES_RESPONSE]->getString() +
-      " reports " + IntToStr(this->cloneCount) + " cloning " +
+      " reports " + IntToStr(this->cloneCount) + " users cloning " +
       this->cloningUserhost + " nick " + nick;
 
     ::SendAll(notice, UF_OPER);
