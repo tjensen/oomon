@@ -235,7 +235,7 @@ klineClones(const bool kline, const std::string & rate,
     std::string suggestedHost;
     if (INADDR_NONE == ip)
     {
-      if (isNumericIPv4(Host))
+      if (isStrictIPv4(Host))
       {
 	// Get subnet from hostname
         suggestedHost = classCMask(Host);
@@ -1201,7 +1201,7 @@ checkForSpoof(const std::string & nick, const std::string & user,
         !config.isExempt(userhost, ip, Config::EXEMPT_SPOOF) &&
         !config.isExemptClass(userClass, Config::EXEMPT_SPOOF))
     {
-      if (isNumericIPv4(host))
+      if (isStrictIPv4(host))
       {
         // If we're dealing with an IP that that doesn't reverse-resolve,
         // make sure the "hostname" and ip match up.

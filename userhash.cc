@@ -30,9 +30,7 @@
 
 // Boost C++ Headers
 #include <boost/lexical_cast.hpp>
-
-// Std C Headers
-#include <stdio.h>
+#include <boost/format.hpp>
 
 // OOMon Headers
 #include "strtype"
@@ -144,7 +142,7 @@ UserHash::add(const std::string & nick, const std::string & userhost,
 
       UserEntryPtr newuser(new UserEntry(nick, user, host, fakeHost, userClass,
         gecos, ip.empty() ? INADDR_NONE : BotSock::inet_addr(ip),
-        (fromTrace ? 0 : std::time(NULL)), isOper));
+        (fromTrace ? 0 : std::time(0)), isOper));
 
       // Add it to the hash tables
       UserHash::addToHash(this->hosttable, newuser->getHost(), newuser);
@@ -1193,18 +1191,17 @@ UserHash::reportClones(BotClient * client) const
               client->send("Possible clones from the following hosts:");
 	    }
 
-            char outmsg[MAX_BUFF];
-            sprintf(outmsg,
-	      "  %2d connections in %3ld seconds (%2d total) from %s", k + 1,
-	      connfromhost[j] - connfromhost[j + k], numfound,
-	      (*userptr)->getHost().c_str());
-
-            client->send(outmsg);
-          }   
-        } 
-      }     
+            boost::format outfmt(
+                "  %2d connections in %3ld seconds (%2d total) from %s");
+            client->send(str(outfmt % (k + 1) %
+                  (connfromhost[j] - connfromhost[j + k]) % numfound %
+                  (*userptr)->getHost()));
+          }
+        }
+      }
     }
   }
+
   if (!foundany)
   {
     client->send("No potential clones found.");
@@ -1282,19 +1279,18 @@ UserHash::reportVClones(BotClient * client) const
               client->send("Possible vhosted clones from the following users:");
 	    }
 
-            char outmsg[MAX_BUFF];
-            sprintf(outmsg,
-	      "  %2d connections in %3ld seconds (%2d total) from %s@%s", k + 1,
-	      connectTime[j] - connectTime[j + k], numfound,
-	      (*userptr)->getUser().c_str(),
-              classCMask(BotSock::inet_ntoa((*userptr)->getIP())).c_str());
-
-            client->send(outmsg);
-          }   
-        } 
-      }     
+            boost::format outfmt(
+                "  %2d connections in %3ld seconds (%2d total) from %s%s");
+            client->send(str(outfmt % (k + 1) %
+                  (connectTime[j] - connectTime[j + k]) % numfound %
+                  (*userptr)->getUser() %
+                  classCMask(BotSock::inet_ntoa((*userptr)->getIP()))));
+          }
+        }
+      }
     }
   }
+
   if (!foundany)
   {
     client->send("No potential vhosted clones found.");
@@ -1305,14 +1301,8 @@ UserHash::reportVClones(BotClient * client) const
 void
 UserHash::reportMulti(BotClient * client, const int minimum) const
 {
-  int numfound;
-  char foundany = 0;
-  char outmsg[MAX_BUFF];
-  int minclones = vars[VAR_MULTI_MIN]->getInt();
-
-  if (minimum > 0)
-    minclones = minimum;
-
+  char foundany(0);
+  int minclones((minimum > 0) ? minimum : vars[VAR_MULTI_MIN]->getInt());
   bool operInMulti(vars[VAR_OPER_IN_MULTI]->getBool());
 
   for (UserEntryTable::const_iterator i = this->domaintable.begin();
@@ -1321,53 +1311,56 @@ UserHash::reportMulti(BotClient * client, const int minimum) const
     for (UserEntryList::const_iterator userptr = i->begin();
         userptr != i->end(); ++userptr)
     {
-      numfound = 0;
-      /* Ensure we haven't already checked this user & domain */
-      UserEntryList::const_iterator temp = i->begin();
-      for (; temp != userptr; ++temp)
+      if (operInMulti || (!(*userptr)->getOper() && !config.isOper(*userptr)))
       {
-        if (server.same((*temp)->getUser(), (*userptr)->getUser()) &&
-          server.same((*temp)->getDomain(), (*userptr)->getDomain()))
-	{
-          break;
-	}
-      }
-      if (temp == userptr)
-      {
-        for (++temp; temp != i->end(); ++temp)
-	{
-          if (server.same((*temp)->getUser(), (*userptr)->getUser()) &&
-            server.same((*temp)->getDomain(), (*userptr)->getDomain()))
-	  {
-            if (operInMulti || (!(*temp)->getOper() && !config.isOper(*temp)))
-            {
-              ++numfound;       /* - zaph & Dianora :-) */
-	    }
-	  }
-        }
-        if (numfound >= (minclones - 1))
-	{
-          if (!foundany++)
-	  {
-            client->send("Multiple clients from the following userhosts:");
-	  }
+        int numfound(1);
 
-          char notip = strncmp((*userptr)->getDomain().c_str(),
-	    (*userptr)->getHost().c_str(),
-            strlen((*userptr)->getDomain().c_str())) ||
-            (strlen((*userptr)->getDomain().c_str()) ==
-	    strlen((*userptr)->getHost().c_str()));
-          ++numfound; /* - zaph and next line*/
-          sprintf(outmsg, " %s %2d -- %s@%s%s",
-            (numfound > minclones) ? "==>" : "   ", numfound,
-	    (*userptr)->getUser().c_str(),
-	    notip ? "*" : (*userptr)->getDomain().c_str(),
-	    notip ? (*userptr)->getDomain().c_str() : "*");
-          client->send(outmsg);
+        /* Ensure we haven't already checked this user & domain */
+        UserEntryList::const_iterator temp = i->begin();
+        for (; temp != userptr; ++temp)
+        {
+          if (server.same((*temp)->getUser(), (*userptr)->getUser()) &&
+              server.same((*temp)->getDomain(), (*userptr)->getDomain()) &&
+              (operInMulti || (!(*temp)->getOper() && !config.isOper(*temp))))
+          {
+            break;
+          }
         }
-      }  
+
+        if (temp == userptr)
+        {
+          for (++temp; temp != i->end(); ++temp)
+          {
+            if (server.same((*temp)->getUser(), (*userptr)->getUser()) &&
+                server.same((*temp)->getDomain(), (*userptr)->getDomain()) &&
+                (operInMulti || (!(*temp)->getOper() && !config.isOper(*temp))))
+            {
+              ++numfound;
+            }
+          }
+
+          if (numfound >= minclones)
+          {
+            if (!foundany++)
+            {
+              client->send("Multiple clients from the following userhosts:");
+            }
+
+            std::string domain((*userptr)->getDomain());
+            std::string host((*userptr)->getHost());
+
+            bool isIP(isNumericIP(domain));
+
+            boost::format outfmt(" %s %2d -- %s@%s%s");
+            client->send(str(outfmt % ((numfound > minclones) ? "==>" : "   ") %
+                  numfound % (*userptr)->getUser() % (isIP ? domain : "*") %
+                  (isIP ? "*" : domain)));
+          }
+        }
+      }
     }
-  }         
+  }
+
   if (!foundany)
   {
     client->send("No multiple logins found.");
@@ -1378,14 +1371,8 @@ UserHash::reportMulti(BotClient * client, const int minimum) const
 void
 UserHash::reportHMulti(BotClient * client, const int minimum) const
 {
-  int numfound;
-  char foundany = 0;
-  char outmsg[MAX_BUFF];
-  int minclones = vars[VAR_MULTI_MIN]->getInt();
-
-  if (minimum > 0)
-    minclones = minimum;
-
+  char foundany(0);
+  int minclones((minimum > 0) ? minimum : vars[VAR_MULTI_MIN]->getInt());
   bool operInMulti(vars[VAR_OPER_IN_MULTI]->getBool());
 
   for (UserEntryTable::const_iterator i = this->domaintable.begin();
@@ -1394,44 +1381,48 @@ UserHash::reportHMulti(BotClient * client, const int minimum) const
     for (UserEntryList::const_iterator userptr = i->begin();
         userptr != i->end(); ++userptr)
     {
-      numfound = 0;
-      // Ensure we haven't already checked this hostname
-      UserEntryList::const_iterator temp = i->begin();
-      for (; temp != userptr; ++temp)
+      if (operInMulti || (!(*userptr)->getOper() && !config.isOper(*userptr)))
       {
-        if (server.same((*temp)->getHost(), (*userptr)->getHost()))
+        int numfound(1);
+
+        // Ensure we haven't already checked this hostname
+        UserEntryList::const_iterator temp = i->begin();
+        for (; temp != userptr; ++temp)
         {
-          break;
+          if (server.same((*temp)->getHost(), (*userptr)->getHost()) &&
+              (operInMulti || (!(*temp)->getOper() && !config.isOper(*temp))))
+          {
+            break;
+          }
+        }
+
+        if (temp == userptr)
+        {
+          for (++temp; temp != i->end(); ++temp)
+          {
+            if (server.same((*temp)->getHost(), (*userptr)->getHost()) &&
+                (operInMulti || (!(*temp)->getOper() && !config.isOper(*temp))))
+            {
+              ++numfound;
+            }
+          }
+
+          if (numfound >= minclones)
+          {
+            if (!foundany++)
+            {
+              client->send("Multiple clients from the following hosts:");
+            }
+
+            boost::format outfmt(" %s %2d -- *@%s");
+            client->send(str(outfmt % ((numfound > minclones) ? "==>" : "   ") %
+                  numfound % (*userptr)->getHost()));
+          }
         }
       }
-      if (temp == userptr)
-      {
-        for (++temp; temp != i->end(); ++temp)
-        {
-          if (server.same((*temp)->getHost(), (*userptr)->getHost()))
-	  {
-            if (operInMulti || (!(*temp)->getOper() && !config.isOper(*temp)))
-            {
-              ++numfound;       /* - zaph & Dianora :-) */
-	    }
-	  }
-        }
-        if (numfound >= (minclones - 1))
-	{
-          if (!foundany++)
-	  {
-            client->send("Multiple clients from the following hosts:");
-	  }
-
-          ++numfound; /* - zaph and next line*/
-          sprintf(outmsg, " %s %2d -- *@%s",
-	    (numfound > minclones) ? "==>" : "   ", numfound,
-	    (*userptr)->getHost().c_str());
-          client->send(outmsg);
-        }
-      }  
     }
-  }         
+  }
+
   if (!foundany)
   {
     client->send("No multiple logins found.");
@@ -1441,14 +1432,8 @@ UserHash::reportHMulti(BotClient * client, const int minimum) const
 void
 UserHash::reportUMulti(BotClient * client, const int minimum) const
 {
-  int numfound;
-  char foundany = 0;
-  char outmsg[MAX_BUFF];
-  int minclones = vars[VAR_MULTI_MIN]->getInt();
-
-  if (minimum > 0)
-    minclones = minimum;
-
+  char foundany(0);
+  int minclones((minimum > 0) ? minimum : vars[VAR_MULTI_MIN]->getInt());
   bool operInMulti(vars[VAR_OPER_IN_MULTI]->getBool());
 
   for (UserEntryTable::const_iterator i = this->usertable.begin();
@@ -1457,44 +1442,48 @@ UserHash::reportUMulti(BotClient * client, const int minimum) const
     for (UserEntryList::const_iterator userptr = i->begin();
         userptr != i->end(); ++userptr)
     {
-      numfound = 0;
-      // Ensure we haven't already checked this username
-      UserEntryList::const_iterator temp = i->begin();
-      for (; temp != userptr; ++temp)
+      if (operInMulti || (!(*userptr)->getOper() && !config.isOper(*userptr)))
       {
-        if (server.same((*temp)->getUser(), (*userptr)->getUser()))
+        int numfound(1);
+
+        // Ensure we haven't already checked this username
+        UserEntryList::const_iterator temp = i->begin();
+        for (; temp != userptr; ++temp)
         {
-          break;
+          if (server.same((*temp)->getUser(), (*userptr)->getUser()) &&
+              (operInMulti || (!(*temp)->getOper() && !config.isOper(*temp))))
+          {
+            break;
+          }
+        }
+
+        if (temp == userptr)
+        {
+          for (++temp; temp != i->end(); ++temp)
+          {
+            if (server.same((*temp)->getUser(), (*userptr)->getUser()) &&
+                (operInMulti || (!(*temp)->getOper() && !config.isOper(*temp))))
+            {
+              ++numfound;
+            }
+          }
+
+          if (numfound >= minclones)
+          {
+            if (!foundany++)
+            {
+              client->send("Multiple clients from the following usernames:");
+            }
+
+            boost::format outfmt(" %s %2d -- %s@*");
+            client->send(str(outfmt % ((numfound > minclones) ? "==>" : "   ") %
+                  numfound % (*userptr)->getUser()));
+          }
         }
       }
-      if (temp == userptr)
-      {
-        for (++temp; temp != i->end(); ++temp)
-        {
-          if (server.same((*temp)->getUser(), (*userptr)->getUser()))
-	  {
-            if (operInMulti || (!(*temp)->getOper() && !config.isOper(*temp)))
-            {
-              ++numfound;       /* - zaph & Dianora :-) */
-	    }
-	  }
-        }
-        if (numfound >= (minclones - 1))
-	{
-          if (!foundany++)
-	  {
-            client->send("Multiple clients from the following usernames:");
-	  }
-
-          ++numfound; /* - zaph and next line*/
-          sprintf(outmsg, " %s %2d -- %s@*",
-	    (numfound > minclones) ? "==>" : "   ", numfound,
-	    (*userptr)->getUser().c_str());
-          client->send(outmsg);
-        }
-      }  
     }
-  }         
+  }
+
   if (!foundany)
   {
     client->send("No multiple logins found.");
@@ -1504,14 +1493,8 @@ UserHash::reportUMulti(BotClient * client, const int minimum) const
 void
 UserHash::reportVMulti(BotClient * client, const int minimum) const
 {
-  int numfound;
-  char foundany = 0;
-  char outmsg[MAX_BUFF];
-  int minclones = vars[VAR_MULTI_MIN]->getInt();
-
-  if (minimum > 0)
-    minclones = minimum;
-
+  char foundany(0);
+  int minclones((minimum > 0) ? minimum : vars[VAR_MULTI_MIN]->getInt());
   bool operInMulti(vars[VAR_OPER_IN_MULTI]->getBool());
 
   for (UserEntryTable::const_iterator i = this->iptable.begin();
@@ -1520,54 +1503,59 @@ UserHash::reportVMulti(BotClient * client, const int minimum) const
     for (UserEntryList::const_iterator userptr = i->begin();
         userptr != i->end(); ++userptr)
     {
-      numfound = 0;
-      /* Ensure we haven't already checked this user & domain */
-      UserEntryList::const_iterator temp = i->begin();
-      for (; temp != userptr; ++temp)
+      if (operInMulti || (!(*userptr)->getOper() && !config.isOper(*userptr)))
       {
-        if (server.same((*temp)->getUser(), (*userptr)->getUser()) &&
-          (((*userptr)->getIP() & BotSock::ClassCNetMask) ==
-	  ((*userptr)->getIP() & BotSock::ClassCNetMask)))
-	{
-          break;
-	}
-      }
-      if (temp == userptr)
-      {
-        for (++temp; temp != i->end(); ++temp)
+        int numfound(1);
+
+        /* Ensure we haven't already checked this user & domain */
+        UserEntryList::const_iterator temp = i->begin();
+        for (; temp != userptr; ++temp)
         {
           if (server.same((*temp)->getUser(), (*userptr)->getUser()) &&
-            (((*userptr)->getIP() & BotSock::ClassCNetMask) ==
-	    ((*userptr)->getIP() & BotSock::ClassCNetMask)))
-	  {
-            if (operInMulti || (!(*temp)->getOper() && !config.isOper(*temp)))
-            {
-              ++numfound;       /* - zaph & Dianora :-) */
-	    }
-	  }
+              (((*userptr)->getIP() & BotSock::ClassCNetMask) ==
+               ((*userptr)->getIP() & BotSock::ClassCNetMask)) &&
+              (operInMulti || (!(*temp)->getOper() && !config.isOper(*temp))))
+          {
+            break;
+          }
         }
-        if (numfound >= (minclones - 1))
-	{
-          if (!foundany++)
-	  {
-            client->send("Multiple clients from the following vhosts:");
-	  }
 
-          ++numfound; /* - zaph and next line*/
-	  std::string IP = BotSock::inet_ntoa((*userptr)->getIP());
-	  std::string::size_type lastDot = IP.rfind('.');
-	  if (std::string::npos != lastDot)
-	  {
-	    IP = IP.substr(0, lastDot);
-	  }
-          sprintf(outmsg, " %s %2d -- %s@%s.*",
-	    (numfound > minclones) ? "==>" : "   ", numfound,
-	    (*userptr)->getUser().c_str(), IP.c_str());
-          client->send(outmsg);
+        if (temp == userptr)
+        {
+          for (++temp; temp != i->end(); ++temp)
+          {
+            if (server.same((*temp)->getUser(), (*userptr)->getUser()) &&
+                (((*userptr)->getIP() & BotSock::ClassCNetMask) ==
+                 ((*userptr)->getIP() & BotSock::ClassCNetMask)) &&
+                (operInMulti || (!(*temp)->getOper() && !config.isOper(*temp))))
+            {
+              ++numfound;
+            }
+          }
+
+          if (numfound >= minclones)
+          {
+            if (!foundany++)
+            {
+              client->send("Multiple clients from the following vhosts:");
+            }
+
+            std::string IP = BotSock::inet_ntoa((*userptr)->getIP());
+            std::string::size_type lastDot = IP.rfind('.');
+            if (std::string::npos != lastDot)
+            {
+              IP = IP.substr(0, lastDot);
+            }
+
+            boost::format outfmt(" %s %2d -- %s@%s.*");
+            client->send(str(outfmt % ((numfound > minclones) ? "==>" : "   ") %
+                  numfound % (*userptr)->getUser() % IP));
+          }
         }
-      }  
+      }
     }
-  }         
+  }
+
   if (!foundany)
   {
     client->send("No multiple logins found.");
@@ -1579,12 +1567,12 @@ void
 UserHash::checkHostClones(const std::string & host)
 {
   const unsigned int index = UserHash::hashFunc(host);
-  
-  std::time_t now = std::time(NULL);
+
+  std::time_t now = std::time(0);
   std::time_t oldest = now;
   std::time_t lastReport = 0;
-  
-  int cloneCount = 0; 
+
+  int cloneCount = 0;
   int reportedClones = 0;
 
   for (UserEntryList::iterator find = this->hosttable[index].begin();
@@ -1613,7 +1601,7 @@ UserHash::checkHostClones(const std::string & host)
       }
     }
   }
-  
+
   if (((reportedClones == 0) &&
     (cloneCount < vars[VAR_CLONE_MIN_COUNT]->getInt())) ||
     ((now - lastReport) < vars[VAR_CLONE_REPORT_INTERVAL]->getInt()))
@@ -1655,9 +1643,9 @@ UserHash::checkHostClones(const std::string & host)
   }
   ::SendAll(notice, UserFlags::OPER);
   Log::Write(notice);
-            
+
   cloneCount = 0;
-    
+
   std::string lastUser;
   bool lastIdentd, currentIdentd;
   bool differentUser;
@@ -1680,7 +1668,7 @@ UserHash::checkHostClones(const std::string & host)
 #endif
 
       std::string notice;
-      if (cloneCount == 1)  
+      if (cloneCount == 1)
       {
 	notice1 = (*find)->output(
 	  vars[VAR_CLONE_REPORT_FORMAT]->getString());
@@ -1689,10 +1677,10 @@ UserHash::checkHostClones(const std::string & host)
       {
 	notice = (*find)->output(vars[VAR_CLONE_REPORT_FORMAT]->getString());
       }
-  
+
       lastIdentd = currentIdentd = true;
       differentUser = false;
-        
+
       if (1 == cloneCount)
       {
         lastUser = (*find)->getUser();
@@ -1729,7 +1717,7 @@ UserHash::checkHostClones(const std::string & host)
       {
 	// do nothing
       }
-      else if (cloneCount == 2) 
+      else if (cloneCount == 2)
       {
         ::SendAll(notice1, UserFlags::OPER);
         ::SendAll(notice, UserFlags::OPER);
@@ -1755,12 +1743,12 @@ void
 UserHash::checkIpClones(const BotSock::Address & ip)
 {
   const unsigned int index = UserHash::hashFunc(ip);
-  
-  std::time_t now = std::time(NULL);
+
+  std::time_t now = std::time(0);
   std::time_t oldest = now;
   std::time_t lastReport = 0;
-  
-  int cloneCount = 0; 
+
+  int cloneCount = 0;
   int reportedClones = 0;
 
   for (UserEntryList::iterator find = this->iptable[index].begin();
@@ -1789,7 +1777,7 @@ UserHash::checkIpClones(const BotSock::Address & ip)
       }
     }
   }
-  
+
   if (((reportedClones == 0) &&
     (cloneCount < vars[VAR_CLONE_MIN_COUNT]->getInt())) ||
     ((now - lastReport) < vars[VAR_CLONE_REPORT_INTERVAL]->getInt()))
@@ -1831,7 +1819,7 @@ UserHash::checkIpClones(const BotSock::Address & ip)
   }
   ::SendAll(notice, UserFlags::OPER);
   Log::Write(notice);
-            
+
   cloneCount = 0;
 
   BotSock::Address lastIp = 0;
@@ -1857,7 +1845,7 @@ UserHash::checkIpClones(const BotSock::Address & ip)
 #endif
 
       std::string notice;
-      if (cloneCount == 1)  
+      if (cloneCount == 1)
       {
 	notice1 = (*find)->output(
 	  vars[VAR_CLONE_REPORT_FORMAT]->getString());
@@ -1866,11 +1854,11 @@ UserHash::checkIpClones(const BotSock::Address & ip)
       {
 	notice = (*find)->output(vars[VAR_CLONE_REPORT_FORMAT]->getString());
       }
-  
+
       lastIdentd = currentIdentd = true;
       differentIp = false;
       differentUser = false;
-        
+
       if (1 == cloneCount)
       {
         lastUser = (*find)->getUser();
@@ -1916,7 +1904,7 @@ UserHash::checkIpClones(const BotSock::Address & ip)
       {
 	// do nothing
       }
-      else if (cloneCount == 2) 
+      else if (cloneCount == 2)
       {
         ::SendAll(notice1, UserFlags::OPER);
         ::SendAll(notice, UserFlags::OPER);

@@ -608,7 +608,7 @@ CountChars(const std::string & text, const std::string::value_type ch)
 
 
 //////////////////////////////////////////////////////////////////////
-// isNumericIPv4(host)
+// isStrictIPv4(host)
 //
 // Description:
 //  Determines if a hostname is a numeric IPv4 address.  The checking
@@ -630,10 +630,49 @@ CountChars(const std::string & text, const std::string::value_type ch)
 //  false if it contains a hostname.
 //////////////////////////////////////////////////////////////////////
 bool
-isNumericIPv4(const std::string & host)
+isStrictIPv4(const std::string & host)
 {
   return ((std::string::npos == host.find_first_not_of(".0123456789")) &&
     (3 == CountChars(host, '.')));
+}
+
+
+//////////////////////////////////////////////////////////////////////
+// isNumericIPv4(host)
+//
+// Description:
+//  Determines if a hostname is a numeric IPv4 address.
+//
+// Parameters:
+//  host - A string possibly containing an IPv4 address.
+//
+// Return Value:
+//  The function returns true if host contains an IPv4 address or
+//  false otherwise.
+//////////////////////////////////////////////////////////////////////
+bool
+isNumericIPv4(const std::string & host)
+{
+  bool result = false;
+#ifdef HAVE_GETADDRINFO
+  struct addrinfo * info = 0;
+  struct addrinfo hints;
+
+  memset(&hints, 0, sizeof(hints));
+  hints.ai_flags = AI_NUMERICHOST;
+  hints.ai_protocol = PF_INET;
+
+  if (0 == getaddrinfo(host.c_str(), 0, &hints, &info))
+  {
+    freeaddrinfo(info);
+
+    result = true;
+  }
+#else
+  result = ((std::string::npos == host.find_first_not_of(".0123456789")) &&
+    (CountChars(host, '.') <= 3));
+#endif
+  return result;
 }
 
 
@@ -644,7 +683,7 @@ isNumericIPv4(const std::string & host)
 //  Determines if a hostname is a numeric IPv6 address.
 //
 // Parameters:
-//  host - A string possible containing an IPv6 address.
+//  host - A string possibly containing an IPv6 address.
 //
 // Return Value:
 //  The function returns true if host contains an IPv6 address or
@@ -660,6 +699,7 @@ isNumericIPv6(const std::string & host)
 
   memset(&hints, 0, sizeof(hints));
   hints.ai_flags = AI_NUMERICHOST;
+  hints.ai_protocol = PF_INET6;
 
   if (0 == getaddrinfo(host.c_str(), 0, &hints, &info))
   {
