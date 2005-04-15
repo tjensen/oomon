@@ -225,6 +225,11 @@ Config::parse(const std::string & filename)
       {
         std::string text;
         std::getline(file, text);
+        // Remove trailing CR if file uses DOS-style line terminators
+        if (!text.empty() && ('\r' == text[text.length() - 1]))
+        {
+          text.erase(text.length() - 1);
+        }
         text = trimLeft(text);
 
         if (!text.empty() && (text[0] != '#'))
@@ -1165,6 +1170,12 @@ Config::loadSettings(void)
 
     while (std::getline(file, line))
     {
+      // Remove trailing CR if file uses DOS-style line terminators
+      if (!line.empty() && ('\r' == line[line.length() - 1]))
+      {
+        line.erase(line.length() - 1);
+      }
+
       std::string cmd = UpCase(FirstWord(line));
 
       if ((cmd.length() > 0) && (cmd[0] == '#'))

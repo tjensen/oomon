@@ -265,10 +265,10 @@ HelpTopic::getHelp(BotClient * client, const std::string & topic)
 
   while (std::getline(helpFile, line))
   {
-    std::string::size_type crlf = line.find_first_of("\r\n");
-    if (crlf != std::string::npos)
+    // Remove trailing CR if file uses DOS-style line terminators
+    if (!line.empty() && ('\r' == line[line.length() - 1]))
     {
-      line = line.substr(0, crlf);
+      line.erase(line.length() - 1);
     }
 
     if ((line.length() >= 2) && (line[0] == '.'))

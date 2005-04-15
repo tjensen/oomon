@@ -312,16 +312,22 @@ process()
 void
 motd(BotClient * client)
 {
-  std::ifstream	motdfile;
-  char		line[MAX_BUFF];
+  std::ifstream	motdfile(config.motdFilename().c_str());
 
-  motdfile.open(config.motdFilename().c_str());
-  if (!motdfile.fail())
+  if (motdfile.good())
   {
     client->send("Message Of The Day:");
-    while (motdfile.getline(line, MAX_BUFF - 1))
+
+    std::string line;
+    while (std::getline(motdfile, line))
     {
-      client->send(std::string(line));
+      // Remove trailing CR if file uses DOS-style line terminators
+      if (!line.empty() && ('\r' == line[line.length() - 1]))
+      {
+        line.erase(line.length() - 1);
+      }
+
+      client->send(line);
     }
     client->send("End of MOTD");
   }
@@ -329,7 +335,6 @@ motd(BotClient * client)
   {
     client->send("No MOTD");
   }
-  motdfile.close();
 }
 
 
