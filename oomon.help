@@ -1464,6 +1464,7 @@ set jupe_join_action
 .l.set jupe_join_max_count
 .l.set jupe_join_max_time
 .l.set jupe_join_reason
+.l.set watch_jupe_notices
 set jupe_join_ignore_channel
 .s.set jupe_join_ignore_channel [ON|OFF]
 .d.This setting determines whether the monitor
@@ -1476,6 +1477,7 @@ set jupe_join_ignore_channel
 .l.set jupe_join_max_count
 .l.set jupe_join_max_time
 .l.set jupe_join_reason
+.l.set watch_jupe_notices
 set jupe_join_max_count
 .s.set jupe_join_max_count [<integer>]
 .d.This setting determines how many times a
@@ -1486,6 +1488,7 @@ set jupe_join_max_count
 .l.set jupe_join_ignore_channel
 .l.set jupe_join_max_time
 .l.set jupe_join_reason
+.l.set watch_jupe_notices
 set jupe_join_max_time
 .s.set jupe_join_max_time [<integer>]
 .d.This setting determines the number of seconds
@@ -1497,6 +1500,7 @@ set jupe_join_max_time
 .l.set jupe_join_ignore_channel
 .l.set jupe_join_max_count
 .l.set jupe_join_reason
+.l.set watch_jupe_notices
 set jupe_join_reason
 .s.set jupe_join_reason [<text>]
 .d.This setting determines the kill, k-line, or
@@ -1513,6 +1517,7 @@ set jupe_join_reason
 .l.set jupe_join_ignore_channel
 .l.set jupe_join_max_count
 .l.set jupe_join_max_time
+.l.set watch_jupe_notices
 set killlist_reason
 .s.set killlist_reason [<text>]
 .d.This setting determines the default kill reason
