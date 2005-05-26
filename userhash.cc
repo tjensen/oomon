@@ -27,6 +27,7 @@
 #include <map>
 #include <algorithm>
 #include <ctime>
+#include <cmath>
 
 // Boost C++ Headers
 #include <boost/lexical_cast.hpp>
