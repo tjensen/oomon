@@ -79,6 +79,7 @@ IRC::IRC(): sock_(false, true), supportETrace(false), supportKnock(false),
   this->gettingKlines = false;
   this->gettingTempKlines = false;
   this->gettingDlines = false;
+  this->gettingTempDlines = false;
   this->gettingTrace = false;
   this->myNick = "";
   this->lastUserDeltaCheck = 0;
@@ -259,6 +260,7 @@ IRC::onRead(std::string text)
         this->dlines.Clear();
         this->gettingDlines = false;
         this->gettingKlines = false;
+        this->gettingTempDlines = false;
         this->gettingTempKlines = false;
         this->gettingTrace = false;
         {
@@ -355,6 +357,10 @@ IRC::onRead(std::string text)
           else if (params[3] == "k")
           {
             this->gettingTempKlines = false;
+          }
+          else if (params[3] == "d")
+          {
+            this->gettingTempDlines = false;
           }
 	}
         break;
@@ -1059,7 +1065,7 @@ IRC::reloadDlines(void)
   }
   if (IRC::trackTempDlines_)
   {
-    this->gettingTempKlines = true;
+    this->gettingTempDlines = true;
     this->write("STATS d\n");
   }
 }

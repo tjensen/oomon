@@ -171,6 +171,7 @@ private:
   bool gettingKlines;
   bool gettingTempKlines;
   bool gettingDlines;
+  bool gettingTempDlines;
   bool supportETrace;
   bool supportKnock;
   CaseMapping caseMapping;
