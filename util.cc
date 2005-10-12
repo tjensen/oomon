@@ -1204,11 +1204,14 @@ hexDump(const void *buffer, const int size)
 // chopNick(NUH)
 //
 // Description:
-//  Takes the nick out of a nick[user@host].  Unfortunately, this
-//  isn't as easy to do as you might expect because both the nickname
-//  and username can contain '[' characters.  Therefore, we do a
-//  little guesswork to figure out where the nickname ends and the
-//  username begins.
+//  Takes the nick out of a "nick[user@host]" or "nick!user@host"
+//  string.
+//
+//  Unfortunately, in the case of "nick[user@host]", this isn't as
+//  easy to do as you might expect because both the nickname and
+//  username can contain '[' characters.  Therefore, we do a little
+//  guesswork to figure out where the nickname ends and the username
+//  begins.
 //
 //  Update: Recent versions of ratbox (and hybrid?) disallow '['
 //  characters in usernames and hostnames.  This makes parsing
@@ -1216,7 +1219,7 @@ hexDump(const void *buffer, const int size)
 //
 // Parameters:
 //  NUH - A string containing a nickname, username, and hostname in
-//        the format, "nick[user@host]"
+//        the format, "nick[user@host]", or "nick!user@host"
 //
 // Return value:
 //  The function returns the nickname portion of the string.
@@ -1226,63 +1229,80 @@ chopNick(std::string NUH)
 {
   std::string result;
 
+  if (!NUH.empty() && (*NUH.rbegin() == ']'))
+  {
+    // "nick[user@host]" format detected
+
 #if NO_BRACKET_IN_USERHOST
 
-  // '[' characters are disallowed in usernames and hostnames, so simply
-  // find the last occurrance of '[' and make that the separator between
-  // the nickname and username.
+    // '[' characters are disallowed in usernames and hostnames, so simply
+    // find the last occurrance of '[' and make that the separator between
+    // the nickname and username.
 
-  std::string:size_type lastBracket = NUH.find_last('[');
+    std::string:size_type lastBracket = NUH.find_last('[');
 
-  if (std::string::npos != lastBracket)
-  {
-    result = NUH.substr(0, lastBracket - 1);
-  }
+    if (std::string::npos != lastBracket)
+    {
+      result = NUH.substr(0, lastBracket - 1);
+    }
 
 #else
 
-  // How many '[' characters are in the string?
-  if (CountChars(NUH, '[') > 1)
-  {
-    // More than one '[' character.  Yuck.  Let's do some guesswork.
-
-    // Is there a "[~" sequence?  That's usually a pretty good indicator.
-    std::string::size_type pos = NUH.find("[~");
-
-    if (pos != std::string::npos)
+    // How many '[' characters are in the string?
+    if (CountChars(NUH, '[') > 1)
     {
-      result = NUH.substr(0, pos);
+      // More than one '[' character.  Yuck.  Let's do some guesswork.
+
+      // Is there a "[~" sequence?  That's usually a pretty good indicator.
+      std::string::size_type pos = NUH.find("[~");
+
+      if (pos != std::string::npos)
+      {
+        result = NUH.substr(0, pos);
+      }
+      else
+      {
+        // No luck.  Okay, assume all of the '[' characters are in the
+        // nickname.  Don't expect this to be correct every time.
+        int nicklen = 0;
+
+        while (nicklen < 9)
+        {
+          if ((NUH[nicklen] == '[') &&
+            (CountChars(NUH.substr(nicklen), '[') == 1))
+          {
+            break;
+          }
+          nicklen++;
+        }
+        result = NUH.substr(0, nicklen);
+      }
     }
     else
     {
-      // No luck.  Okay, assume all of the '[' characters are in the
-      // nickname.  Don't expect this to be correct every time.
-      int nicklen = 0;
+      // Only 1 '[' character and that must be the nickname/username divider.
+      std::string::size_type pos = NUH.find('[');
 
-      while (nicklen < 9)
+      if (pos != std::string::npos)
       {
-        if ((NUH[nicklen] == '[') &&
-	  (CountChars(NUH.substr(nicklen), '[') == 1))
-        {
-	  break;
-        }
-        nicklen++;
+        result = NUH.substr(0, pos);
       }
-      result = NUH.substr(0, nicklen);
     }
+
+#endif /* NO_BRACKET_IN_USERHOST */
+
   }
   else
   {
-    // Only 1 '[' character and that must be the nickname/username divider.
-    std::string::size_type pos = NUH.find('[');
+    // "nick!user@host" format detected
 
-    if (pos != std::string::npos)
+    std::string::size_type bang = NUH.find('!');
+
+    if (bang != std::string::npos)
     {
-      result = NUH.substr(0, pos);
+      result = NUH.substr(0, bang);
     }
   }
-
-#endif /* NO_BRACKET_IN_USERHOST */
 
   return result;
 }
@@ -1292,15 +1312,22 @@ chopNick(std::string NUH)
 // chopUserhost(NUH)
 //
 // Description:
-//  Takes the user@host out of a nick[user@host].  Unfortunately, this
-//  isn't as easy to do as you might expect because both the nickname
-//  and username can contain '[' characters.  Therefore, we do a
-//  little guesswork to figure out where the nickname ends and the
-//  username begins.
+//  Takes the user@host out of a "nick[user@host]" or "nick!user@host"
+//  string.
+//
+//  Unfortunately, in the case of "nick[user@host]", this isn't as
+//  easy to do as you might expect because both the nickname and
+//  username can contain '[' characters.  Therefore, we do a little
+//  guesswork to figure out where the nickname ends and the username
+//  begins.
+//
+//  Update: Recent versions of ratbox (and hybrid?) disallow '['
+//  characters in usernames and hostnames.  This makes parsing
+//  much easier.
 //
 // Parameters:
 //  NUH - A string containing a nickname, username, and hostname in
-//        the format, "nick[user@host]"
+//        the format, "nick[user@host]", or "nick!user@host"
 //
 // Return value:
 //  The function returns the user@host portion of the string.
@@ -1308,70 +1335,89 @@ chopNick(std::string NUH)
 std::string
 chopUserhost(std::string NUH)
 {
+  if (!NUH.empty() && (*NUH.rbegin() == ']'))
+  {
+    // "nick[user@host]" format detected
+
 #if NO_BRACKET_IN_USERHOST
 
-  // '[' characters are disallowed in usernames and hostnames, so find the
-  // last occurrance of '[' and make that the separator between the nickname
-  // and the username.
+    // '[' characters are disallowed in usernames and hostnames, so find the
+    // last occurrance of '[' and make that the separator between the nickname
+    // and the username.
 
-  std::string result;
+    std::string result;
 
-  std::string::size_type lastBracket = NUH.find_last('[');
+    std::string::size_type lastBracket = NUH.find_last('[');
 
-  if (std::string::npos != lastBracket)
-  {
-    result = NUH.substr(lastBracket);
+    if (std::string::npos != lastBracket)
+    {
+      result = NUH.substr(lastBracket);
 
-    // Remove the closing ']' too.
-    result.erase(result.end() - 1);
-  }
+      // Remove the closing ']' too.
+      result.erase(result.end() - 1);
+    }
 
-  return result;
+    return result;
 
 #else
 
-  if (!NUH.empty())
-  {
-    std::string::size_type pos = NUH.find('[');
-    if (pos != std::string::npos)
+    if (!NUH.empty())
     {
-      if (CountChars(NUH, '[') > 1)
+      std::string::size_type pos = NUH.find('[');
+      if (pos != std::string::npos)
       {
-	// Moron has '[' characters in his nick or username
-	// Look for '~' to mark the start of an non-ident'ed
-	// username...
-	std::string::size_type tilde = NUH.find("[~");
-	if (tilde != std::string::npos)
-	{
-	  NUH = NUH.substr(tilde + 1);
-	}
-	else
-	{
-	  // Blah. Loser is running identd with a screwy
-	  // username or nick.
-	  // Find the last '[' in the string and assume it is
-	  // the divider, unless this produces an illegal
-	  // length nick :P
-	  int nicklen = 0;
-	  while ((nicklen <= 9) && ((pos = NUH.find('[')) != std::string::npos))
-	  {
-	    NUH = NUH.substr(1);
-	    nicklen++;
-	  }
-	}
+        if (CountChars(NUH, '[') > 1)
+        {
+          // Moron has '[' characters in his nick or username
+          // Look for '~' to mark the start of an non-ident'ed
+          // username...
+          std::string::size_type tilde = NUH.find("[~");
+          if (tilde != std::string::npos)
+          {
+            NUH = NUH.substr(tilde + 1);
+          }
+          else
+          {
+            // Blah. Loser is running identd with a screwy
+            // username or nick.
+            // Find the last '[' in the string and assume it is
+            // the divider, unless this produces an illegal
+            // length nick :P
+            int nicklen = 0;
+            while ((nicklen <= 9) && ((pos = NUH.find('[')) != std::string::npos))
+            {
+              NUH = NUH.substr(1);
+              nicklen++;
+            }
+          }
+        }
+        else
+        {
+          NUH = NUH.substr(pos + 1);
+        }
+        // Remove the trailing ']'
+        NUH.erase(NUH.length() - 1, 1);
+        return NUH;
       }
-      else
-      {
-        NUH = NUH.substr(pos + 1);
-      }
-      // Remove the trailing ']'
-      NUH.erase(NUH.length() - 1, 1);
-      return NUH;
     }
-  }
-  return "";
+    return "";
 
 #endif /* NO_BRACKET_IN_USERHOST */
+
+  }
+  else
+  {
+    std::string result;
+
+    std::string::size_type bang = NUH.find('!');
+
+    if (bang != std::string::npos)
+    {
+      result = NUH.substr(bang + 1);
+    }
+
+    return result;
+  }
 }
 
 
