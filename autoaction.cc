@@ -285,7 +285,8 @@ doAction(const std::string & nick, const std::string & userhost,
     ident = ident.substr(ident.length() - 8);
   }
 
-  if ((domain.length() > 1) && (domain[domain.length() - 1] == '.'))
+  if (!domain.empty() &&
+      ((*domain.rbegin() == '.') || (*domain.rbegin() == ':')))
   {
     domain = domain + "*";
   }
