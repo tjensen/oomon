@@ -188,7 +188,11 @@ CommandParser::parse(BotClient * from, const std::string & command,
       std::endl;
 #endif /* CMDPARSER_DEBUG */
 
-    if (1 == count)
+    if (count > 1)
+    {
+      throw CommandParser::exception("*** Ambiguous command: " + command);
+    }
+    else if (1 == count)
     {
       cmd = std::find_if(this->commands.begin(),
         this->commands.end(), CommandParser::partial_match(command));
@@ -197,7 +201,7 @@ CommandParser::parse(BotClient * from, const std::string & command,
 
   if (cmd == this->commands.end())
   {
-    throw CommandParser::exception("*** Ambigious command: " + command);
+    throw CommandParser::exception("*** Invalid command: " + command);
   }
   else
   {
