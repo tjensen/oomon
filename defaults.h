@@ -187,7 +187,7 @@
 #define DEFAULT_TRACK_TEMP_KLINES	false
 #define DEFAULT_TRAP_CONNECTS		true
 #define DEFAULT_TRAP_CTCP_VERSIONS	true
-#define DEFAULT_TRAP_NICK_CHANGES	false
+#define DEFAULT_TRAP_NICK_CHANGES	true
 #define DEFAULT_TRAP_NOTICES		false
 #define DEFAULT_TRAP_PRIVMSGS		false
 #define DEFAULT_UMODE			"+bcfknrswyz"
