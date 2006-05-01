@@ -1,7 +1,7 @@
-//  (C) Copyright Gennadiy Rozental 2001-2003.
-//  Use, modification, and distribution are subject to the 
-//  Boost Software License, Version 1.0. (See accompanying file 
-//  LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+//  (C) Copyright Gennadiy Rozental 2001-2005.
+//  Distributed under the Boost Software License, Version 1.0.
+//  (See accompanying file LICENSE_1_0.txt or copy at 
+//  http://www.boost.org/LICENSE_1_0.txt)
 
 //  See http://www.boost.org/libs/test for the library home page.
 //
@@ -12,24 +12,29 @@
 //  Description : included (vs. linked ) version of Program Execution Monitor
 // ***************************************************************************
 
-#ifndef BOOST_INCLUDED_PRG_EXEC_MONITOR_HPP
-#define BOOST_INCLUDED_PRG_EXEC_MONITOR_HPP
+#ifndef BOOST_INCLUDED_PRG_EXEC_MONITOR_HPP_071894GER
+#define BOOST_INCLUDED_PRG_EXEC_MONITOR_HPP_071894GER
 
-#include <libs/test/src/execution_monitor.cpp>
+#include <boost/test/impl/execution_monitor.ipp>
 
-#include <libs/test/src/cpp_main.cpp>
+#include <boost/test/impl/cpp_main.ipp>
 
 // ***************************************************************************
 //  Revision History :
 //  
 //  $Log$
-//  Revision 1.1.1.1  2004/03/05 22:22:55  tjensen
-//  This is version 1.31.0 of the Boost libraries
+//  Revision 1.1.1.2  2006/05/01 14:12:16  tjensen
+//  - import of Boost-1.33.1 release
 //
-//  Revision 1.5  2003/12/01 00:41:56  rogeeff
-//  prerelease cleaning
+//  Revision 1.9  2005/02/01 06:40:07  rogeeff
+//  copyright update
+//  old log entries removed
+//  minor stilistic changes
+//  depricated tools removed
 //
-
+//  Revision 1.8  2005/01/22 19:22:13  rogeeff
+//  implementation moved into headers section to eliminate dependency of included/minimal component on src directory
+//
 // ***************************************************************************
 
-#endif // BOOST_INCLUDED_PRG_EXEC_MONITOR_HPP
+#endif // BOOST_INCLUDED_PRG_EXEC_MONITOR_HPP_071894GER

@@ -82,7 +82,7 @@ namespace boost
       class iterator : public boost::iterator_facade<
         iterator,
         std::string const,
-        boost::single_pass_traversal_tag >
+        boost::bidirectional_traversal_tag >
       {
       private:
         friend class boost::iterator_core_access;
@@ -91,8 +91,8 @@ namespace boost
         reference dereference() const { return m_name; }
         bool equal( const iterator & rhs ) const
           { return m_path_ptr == rhs.m_path_ptr && m_pos == rhs.m_pos; }
-        void increment();
-        void decrement();
+        BOOST_FILESYSTEM_DECL void increment();
+        BOOST_FILESYSTEM_DECL void decrement();
 
         std::string             m_name;     // cache current element.
         const path *            m_path_ptr; // path being iterated over.
@@ -115,6 +115,14 @@ namespace boost
       static bool default_name_check_writable(); 
       static void default_name_check( name_check new_check );
       static name_check default_name_check();
+
+      // relational operators
+      bool operator<( const path & that ) const;
+      bool operator==( const path & that ) const { return !(*this < that) && !(that < *this); }
+      bool operator!=( const path & that ) const { return !(*this == that); }
+      bool operator>( const path & that ) const  { return that < *this; }
+      bool operator<=( const path & that ) const { return !(that < *this); }
+      bool operator>=( const path & that ) const { return !(*this < that); }
 
     private:
       // Note: This is an implementation for POSIX and Windows, where there

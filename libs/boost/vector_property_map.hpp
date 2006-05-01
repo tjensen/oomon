@@ -1,8 +1,7 @@
-// Copyright (C) Vladimir Prus 2003. Permission to copy, use,
-// modify, sell and distribute this software is granted provided this
-// copyright notice appears in all copies. This software is provided
-// "as is" without express or implied warranty, and with no claim as
-// to its suitability for any purpose.
+// Copyright (C) Vladimir Prus 2003.
+// Distributed under the Boost Software License, Version 1.0. (See
+// accompanying file LICENSE_1_0.txt or copy at
+// http://www.boost.org/LICENSE_1_0.txt)
 //
 // See http://www.boost.org/libs/graph/vector_property_map.html for
 // documentation.
@@ -66,8 +65,8 @@ namespace boost {
         
         reference operator[](const key_type& v) const {
             typename property_traits<IndexMap>::value_type i = get(index, v);
-            if (i >= store->size()) {
-                store->resize(i + 1);
+            if (static_cast<unsigned>(i) >= store->size()) {
+                store->resize(i + 1, T());
             }
             return (*store)[i];
         }

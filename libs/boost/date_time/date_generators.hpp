@@ -1,7 +1,7 @@
 #ifndef DATE_TIME_DATE_GENERATORS_HPP__
 #define DATE_TIME_DATE_GENERATORS_HPP__
 
-/* Copyright (c) 2002,2003 CrystalClear Software, Inc.
+/* Copyright (c) 2002,2003,2005 CrystalClear Software, Inc.
  * Use, modification and distribution is subject to the 
  * Boost Software License, Version 1.0. (See accompanying
  * file LICENSE-1.0 or http://www.boost.org/LICENSE-1.0)
@@ -35,6 +35,8 @@ namespace date_time {
     year_based_generator() {};
     virtual ~year_based_generator() {};
     virtual date_type get_date(year_type y) const = 0;
+    //! Returns a string for use in a POSIX time_zone string
+    virtual std::string to_string() const =0;
   };
   
   //! Generates a date by applying the year to the given month and day.
@@ -123,9 +125,29 @@ namespace date_time {
    }
    
    // added for streaming purposes
-   month_type month()const{return month_;}
-   day_type day()const{return day_;}
-   
+   month_type month() const 
+   {
+     return month_;
+   }
+   day_type day() const
+   {
+     return day_;
+   }
+
+   //! Returns string suitable for use in POSIX time zone string
+   /*! Returns string formatted with up to 3 digits: 
+    * Jan-01 == "0" 
+    * Feb-29 == "58"
+    * Dec-31 == "365" */
+   virtual std::string to_string() const
+   {
+     std::stringstream ss;
+     date_type d(2004, month_, day_);
+     unsigned short c = d.day_of_year();     
+     c--; // numbered 0-365 while day_of_year is 1 based...
+     ss << c;
+     return ss.str();
+   }
  private:
    day_type day_;
    month_type month_;
@@ -203,6 +225,17 @@ namespace date_time {
     {
       return nth_as_str(wn_);
     }
+    //! Returns string suitable for use in POSIX time zone string
+    /*! Returns a string formatted as "M4.3.0" ==> 3rd Sunday in April. */
+    virtual std::string to_string() const
+    {
+     std::stringstream ss;
+     ss << 'M' 
+       << static_cast<int>(month_) << '.'
+       << static_cast<int>(wn_) << '.'
+       << static_cast<int>(dow_);
+     return ss.str();
+    }
   private:
     month_type month_;
     week_num wn_;
@@ -251,6 +284,17 @@ namespace date_time {
     day_of_week_type day_of_week() const
     {
       return dow_;
+    }
+    //! Returns string suitable for use in POSIX time zone string
+    /*! Returns a string formatted as "M4.1.0" ==> 1st Sunday in April. */
+    virtual std::string to_string() const
+    {
+     std::stringstream ss;
+     ss << 'M' 
+       << static_cast<int>(month_) << '.'
+       << 1 << '.'
+       << static_cast<int>(dow_);
+     return ss.str();
     }
   private:
     month_type month_;
@@ -301,6 +345,17 @@ namespace date_time {
     day_of_week_type day_of_week() const
     {
       return dow_;
+    }
+    //! Returns string suitable for use in POSIX time zone string
+    /*! Returns a string formatted as "M4.5.0" ==> last Sunday in April. */
+    virtual std::string to_string() const
+    {
+      std::stringstream ss;
+      ss << 'M' 
+         << static_cast<int>(month_) << '.'
+         << 5 << '.'
+         << static_cast<int>(dow_);
+      return ss.str();
     }
   private:
     month_type month_;
@@ -384,7 +439,67 @@ namespace date_time {
     day_of_week_type dow_;
   };
   
-  
+  //! Calculates the number of days until the next weekday
+  /*! Calculates the number of days until the next weekday.
+   * If the date given falls on a Sunday and the given weekday 
+   * is Tuesday the result will be 2 days */
+  template<typename date_type, class weekday_type>
+  inline
+  typename date_type::duration_type days_until_weekday(const date_type& d, const weekday_type& wd)
+  {
+    typedef typename date_type::duration_type duration_type;
+    duration_type wks(0);
+    duration_type dd(wd.as_number() - d.day_of_week().as_number());
+    if(dd.is_negative()){
+      wks = duration_type(7);
+    }
+    return dd + wks;
+  }
+
+  //! Calculates the number of days since the previous weekday
+  /*! Calculates the number of days since the previous weekday
+   * If the date given falls on a Sunday and the given weekday 
+   * is Tuesday the result will be 5 days. The answer will be a positive 
+   * number because Tuesday is 5 days before Sunday, not -5 days before. */
+  template<typename date_type, class weekday_type>
+  inline
+  typename date_type::duration_type days_before_weekday(const date_type& d, const weekday_type& wd)
+  {
+    typedef typename date_type::duration_type duration_type;
+    duration_type wks(0);
+    duration_type dd(wd.as_number() - d.day_of_week().as_number());
+    if(dd.days() > 0){
+      wks = duration_type(7);
+    }
+    // we want a number of days, not an offset. The value returned must
+    // be zero or larger.
+    return (-dd + wks);
+  }
+
+  //! Generates a date object representing the date of the following weekday from the given date
+  /*! Generates a date object representing the date of the following 
+   * weekday from the given date. If the date given is 2004-May-9 
+   * (a Sunday) and the given weekday is Tuesday then the resulting date 
+   * will be 2004-May-11. */
+  template<class date_type, class weekday_type>
+  inline
+  date_type next_weekday(const date_type& d, const weekday_type& wd)
+  {
+    return d + days_until_weekday(d, wd);
+  }
+
+  //! Generates a date object representing the date of the previous weekday from the given date
+  /*! Generates a date object representing the date of the previous 
+   * weekday from the given date. If the date given is 2004-May-9 
+   * (a Sunday) and the given weekday is Tuesday then the resulting date 
+   * will be 2004-May-4. */
+  template<class date_type, class weekday_type>
+  inline
+  date_type previous_weekday(const date_type& d, const weekday_type& wd)
+  {
+    return d - days_before_weekday(d, wd);
+  }
+
 } } //namespace date_time
 
 

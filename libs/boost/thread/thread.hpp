@@ -12,14 +12,11 @@
 #ifndef BOOST_THREAD_WEK070601_HPP
 #define BOOST_THREAD_WEK070601_HPP
 
-#include <boost/config.hpp>
-// insist on threading support being available:
-#include <boost/config/requires_threads.hpp>
+#include <boost/thread/detail/config.hpp>
 
 #include <boost/utility.hpp>
 #include <boost/function.hpp>
 #include <boost/thread/mutex.hpp>
-#include <boost/thread/detail/config.hpp>
 #include <list>
 #include <memory>
 
@@ -73,6 +70,7 @@ public:
     void add_thread(thread* thrd);
     void remove_thread(thread* thrd);
     void join_all();
+        int size();
 
 private:
     std::list<thread*> m_threads;

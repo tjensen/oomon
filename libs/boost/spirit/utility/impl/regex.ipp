@@ -19,8 +19,8 @@ namespace impl {
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-const char* rx_prefix(char) { return "\\A"; }
-const wchar_t* rx_prefix(wchar_t) { return L"\\A"; }
+inline const char* rx_prefix(char) { return "\\A"; }
+inline const wchar_t* rx_prefix(wchar_t) { return L"\\A"; }
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -62,7 +62,11 @@ public:
     }
 
 private:
+#if BOOST_VERSION >= 013300
+    boost::basic_regex<CharT> rxstr;       // regular expression to match
+#else
     boost::reg_expression<CharT> rxstr;    // regular expression to match
+#endif
 };
 
 }   // namespace impl

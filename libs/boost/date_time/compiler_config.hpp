@@ -1,13 +1,25 @@
 #ifndef DATE_TIME_COMPILER_CONFIG_HPP___
 #define DATE_TIME_COMPILER_CONFIG_HPP___
 
-/* Copyright (c) 2002,2003 CrystalClear Software, Inc.
- * Use, modification and distribution is subject to the 
- * Boost Software License, Version 1.0. (See accompanying
+/* Copyright (c) 2002-2004 CrystalClear Software, Inc.
+ * Subject to the Boost Software License, Version 1.0. (See accompanying
  * file LICENSE-1.0 or http://www.boost.org/LICENSE-1.0)
  * Author: Jeff Garland, Bart Garst
  * $Date$
  */
+
+
+// With boost release 1.33, date_time will be using a different,
+// more flexible, IO system. This new system is not compatible with
+// old compilers. The original date_time IO system remains for those 
+// compilers. They must define this macro to use the legacy IO.
+#if ((defined(__GNUC__) && (__GNUC__ < 3))                    || \
+     (defined(_MSC_VER) && (_MSC_VER <= 1300) )               || \
+     (defined(__BORLANDC__) && (__BORLANDC__ <= 0x0564) ) )   && \
+    !defined(USE_DATE_TIME_PRE_1_33_FACET_IO)
+#define USE_DATE_TIME_PRE_1_33_FACET_IO
+#endif
+
 
 // This file performs some local compiler configurations
 
@@ -15,15 +27,23 @@
 
 //Set up a configuration parameter for platforms that have 
 //GetTimeOfDay
-#ifdef BOOST_HAS_GETTIMEOFDAY
-#define BOOST_DATE_TIME_HAS_GETTIMEOFDAY_HIGH_PRECISION_CLOCK
+#if defined(BOOST_HAS_GETTIMEOFDAY) || defined(BOOST_HAS_FTIME)
+#define BOOST_DATE_TIME_HAS_HIGH_PRECISION_CLOCK
 #endif
 
+// To Force no default constructors for date & ptime, un-comment following
+//#define DATE_TIME_NO_DEFAULT_CONSTRUCTOR
+
+// Include extensions to date_duration - comment out to remove this feature
+#define BOOST_DATE_TIME_OPTIONAL_GREGORIAN_TYPES
+// these extensions are known to cause problems with gcc295
+#if defined(__GNUC__) && (__GNUC__ < 3)
+#undef BOOST_DATE_TIME_OPTIONAL_GREGORIAN_TYPES
+#endif
 
 #if (defined(BOOST_NO_INCLASS_MEMBER_INITIALIZATION) || (defined(__BORLANDC__)))
 #define BOOST_DATE_TIME_NO_MEMBER_INIT
 #endif
-
 
 // include these types before we try to re-define them
 #include "boost/cstdint.hpp"
@@ -48,6 +68,18 @@ namespace std {
   using stlport::ctype;
   using stlport::use_facet;
 }
+#endif
+
+// workaround for errors associated with output for date classes 
+// modifications and input streaming for time classes. 
+// Compilers affected are:
+// gcc295, msvc (neither with STLPort), any borland
+// 
+#if (((defined(__GNUC__) && (__GNUC__ < 3)) || \
+      (defined(_MSC_VER) && (_MSC_VER <= 1200)) ) && \
+      !defined(_STLP_OWN_IOSTREAMS) ) || \
+       defined(__BORLANDC__)
+#define BOOST_DATE_TIME_INCLUDE_LIMITED_HEADERS
 #endif
 
 /* The following handles the definition of the necessary macros
@@ -101,5 +133,14 @@ namespace std {
 //
 #include <boost/config/auto_link.hpp>
 #endif  // auto-linking disabled
+
+#if defined(BOOST_HAS_THREADS) 
+#  if defined(_MSC_VER) || defined(__MWERKS__) || defined(__MINGW32__) ||  defined(__BORLANDC__)
+     //no reentrant posix functions (eg: localtime_r)
+#  else
+#   define BOOST_DATE_TIME_HAS_REENTRANT_STD_FUNCTIONS
+#  endif
+#endif
+
 
 #endif

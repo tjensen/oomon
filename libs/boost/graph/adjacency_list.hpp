@@ -2,25 +2,9 @@
 // Copyright 1997, 1998, 1999, 2000 University of Notre Dame.
 // Authors: Andrew Lumsdaine, Lie-Quan Lee, Jeremy G. Siek
 //
-// This file is part of the Boost Graph Library
-//
-// You should have received a copy of the License Agreement for the
-// Boost Graph Library along with the software; see the file LICENSE.
-// If not, contact Office of Research, University of Notre Dame, Notre
-// Dame, IN 46556.
-//
-// Permission to modify the code and to distribute modified code is
-// granted, provided the text of this NOTICE is retained, a notice that
-// the code was modified is included with the above COPYRIGHT NOTICE and
-// with the COPYRIGHT NOTICE in the LICENSE file, and that the LICENSE
-// file is distributed with the modified code.
-//
-// LICENSOR MAKES NO REPRESENTATIONS OR WARRANTIES, EXPRESS OR IMPLIED.
-// By way of example, but not limitation, Licensor MAKES NO
-// REPRESENTATIONS OR WARRANTIES OF MERCHANTABILITY OR FITNESS FOR ANY
-// PARTICULAR PURPOSE OR THAT THE USE OF THE LICENSED SOFTWARE COMPONENTS
-// OR DOCUMENTATION WILL NOT INFRINGE ANY PATENTS, COPYRIGHTS, TRADEMARKS
-// OR OTHER RIGHTS.
+// Distributed under the Boost Software License, Version 1.0. (See
+// accompanying file LICENSE_1_0.txt or copy at
+// http://www.boost.org/LICENSE_1_0.txt)
 //=======================================================================
 
 #ifndef BOOST_GRAPH_ADJACENCY_LIST_HPP
@@ -46,6 +30,9 @@
 #include <boost/property_map.hpp>
 #include <boost/pending/ct_if.hpp>
 #include <boost/graph/detail/edge.hpp>
+#include <boost/type_traits/is_same.hpp>
+#include <boost/detail/workaround.hpp>
+#include <boost/graph/properties.hpp>
 
 namespace boost {
 
@@ -311,21 +298,67 @@ namespace boost {
       adjacency_list<OutEdgeListS,VertexListS,DirectedS,
                      VertexProperty,EdgeProperty,GraphProperty,EdgeListS>,
       VertexListS, OutEdgeListS, DirectedS, 
-      VertexProperty, EdgeProperty, GraphProperty, EdgeListS>::type
+#if !defined(BOOST_GRAPH_NO_BUNDLED_PROPERTIES)
+      typename detail::retag_property_list<vertex_bundle_t,
+                                           VertexProperty>::type,
+      typename detail::retag_property_list<edge_bundle_t, EdgeProperty>::type,
+#else
+      VertexProperty, EdgeProperty,
+#endif
+      GraphProperty, EdgeListS>::type
   {
+#if !defined(BOOST_GRAPH_NO_BUNDLED_PROPERTIES)
+    typedef typename detail::retag_property_list<vertex_bundle_t,
+                                                 VertexProperty>::retagged
+      maybe_vertex_bundled;
+
+     typedef typename detail::retag_property_list<edge_bundle_t,
+                                                  EdgeProperty>::retagged
+      maybe_edge_bundled;
+#endif
+
+  public:
+#if !defined(BOOST_GRAPH_NO_BUNDLED_PROPERTIES)
+    typedef typename detail::retag_property_list<vertex_bundle_t,
+                                                 VertexProperty>::type
+      vertex_property_type;
+    typedef typename detail::retag_property_list<edge_bundle_t,
+                                                 EdgeProperty>::type
+      edge_property_type;
+
+    // The types that are actually bundled
+    typedef typename ct_if<(is_same<maybe_vertex_bundled, no_property>::value),
+                           no_vertex_bundle,
+                           maybe_vertex_bundled>::type vertex_bundled;
+    typedef typename ct_if<(is_same<maybe_edge_bundled, no_property>::value),
+                           no_edge_bundle,
+                           maybe_edge_bundled>::type edge_bundled;
+#else
+    typedef VertexProperty vertex_property_type;
+    typedef EdgeProperty edge_property_type;
+    typedef no_vertex_bundle vertex_bundled;
+    typedef no_edge_bundle edge_bundled;
+#endif
+
+  private:
     typedef adjacency_list self;
     typedef typename detail::adj_list_gen<
       self, VertexListS, OutEdgeListS, DirectedS, 
-      VertexProperty, EdgeProperty, GraphProperty, EdgeListS
+      vertex_property_type, edge_property_type, GraphProperty, EdgeListS
     >::type Base;
+
   public:
     typedef typename Base::stored_vertex stored_vertex;
     typedef typename Base::vertices_size_type vertices_size_type;
     typedef typename Base::edges_size_type edges_size_type;
     typedef typename Base::degree_size_type degree_size_type;
+    typedef typename Base::vertex_descriptor vertex_descriptor;
+    typedef typename Base::edge_descriptor edge_descriptor;
+    typedef OutEdgeListS out_edge_list_selector;
+    typedef VertexListS vertex_list_selector;
+    typedef DirectedS directed_selector;
+    typedef EdgeListS edge_list_selector;
 
-    typedef EdgeProperty edge_property_type;
-    typedef VertexProperty vertex_property_type;
     typedef GraphProperty graph_property_type;
 
     inline adjacency_list(const GraphProperty& p = GraphProperty()) 
@@ -335,8 +368,11 @@ namespace boost {
       : Base(x), m_property(x.m_property) { }
 
     inline adjacency_list& operator=(const adjacency_list& x) {
-      Base::operator=(x);
-      m_property = x.m_property;
+      // TBD: probably should give the strong guarantee
+      if (&x != this) {
+        Base::operator=(x);
+        m_property = x.m_property;
+      }
       return *this;
     }
 
@@ -345,12 +381,12 @@ namespace boost {
                           const GraphProperty& p = GraphProperty())
       : Base(num_vertices), m_property(p) { }
 
-#if !defined(BOOST_MSVC) || BOOST_MSVC > 1300
+#if !defined(BOOST_MSVC) || BOOST_MSVC >= 1300
     // Required by Iterator Constructible Graph
     template <class EdgeIterator>
     inline adjacency_list(EdgeIterator first, EdgeIterator last,
                           vertices_size_type n,
-                          edges_size_type m = 0,
+                          edges_size_type = 0,
                           const GraphProperty& p = GraphProperty())
       : Base(n, first, last), m_property(p) { }
 
@@ -358,7 +394,7 @@ namespace boost {
     inline adjacency_list(EdgeIterator first, EdgeIterator last,
                           EdgePropertyIterator ep_iter,
                           vertices_size_type n,
-                          edges_size_type m = 0,
+                          edges_size_type = 0,
                           const GraphProperty& p = GraphProperty())
       : Base(n, first, last, ep_iter), m_property(p) { }
 #endif
@@ -370,32 +406,47 @@ namespace boost {
       *this = tmp;
     }
 
+#ifndef BOOST_GRAPH_NO_BUNDLED_PROPERTIES
+    // Directly access a vertex or edge bundle
+    vertex_bundled& operator[](vertex_descriptor v)
+    { return get(vertex_bundle, *this)[v]; }
+
+    const vertex_bundled& operator[](vertex_descriptor v) const
+    { return get(vertex_bundle, *this)[v]; }
+
+    edge_bundled& operator[](edge_descriptor e)
+    { return get(edge_bundle, *this)[e]; }
+
+    const edge_bundled& operator[](edge_descriptor e) const
+    { return get(edge_bundle, *this)[e]; }
+#endif
+
     //  protected:  (would be protected if friends were more portable)
     GraphProperty m_property;
   };
 
-  template <class OEL, class VL, class DS, class VP,class EP, class GP,
+  template <class OEL, class VL, class DirS, class VP,class EP, class GP,
             class EL, class Tag, class Value>
   inline void
-  set_property(adjacency_list<OEL,VL,DS,VP,EP,GP,EL>& g, Tag,
+  set_property(adjacency_list<OEL,VL,DirS,VP,EP,GP,EL>& g, Tag,
                const Value& value) {
     get_property_value(g.m_property, Tag()) = value;;
   }
 
-  template <class OEL, class VL, class DS, class VP, class EP, class GP,
+  template <class OEL, class VL, class DirS, class VP, class EP, class GP,
             class Tag, class EL>
   inline
-  typename graph_property<adjacency_list<OEL,VL,DS,VP,EP,GP,EL>, Tag>::type&
-  get_property(adjacency_list<OEL,VL,DS,VP,EP,GP,EL>& g, Tag) {
+  typename graph_property<adjacency_list<OEL,VL,DirS,VP,EP,GP,EL>, Tag>::type&
+  get_property(adjacency_list<OEL,VL,DirS,VP,EP,GP,EL>& g, Tag) {
     return get_property_value(g.m_property, Tag());
   }
 
-  template <class OEL, class VL, class DS, class VP, class EP, class GP,
+  template <class OEL, class VL, class DirS, class VP, class EP, class GP,
             class Tag, class EL>
   inline
   const
-  typename graph_property<adjacency_list<OEL,VL,DS,VP,EP,GP,EL>, Tag>::type&
-  get_property(const adjacency_list<OEL,VL,DS,VP,EP,GP,EL>& g, Tag) {
+  typename graph_property<adjacency_list<OEL,VL,DirS,VP,EP,GP,EL>, Tag>::type&
+  get_property(const adjacency_list<OEL,VL,DirS,VP,EP,GP,EL>& g, Tag) {
     return get_property_value(g.m_property, Tag());
   }
 
@@ -425,6 +476,59 @@ namespace boost {
   {
     return e.m_target;
   }
+
+  // Support for bundled properties
+#ifndef BOOST_GRAPH_NO_BUNDLED_PROPERTIES
+  template<typename OutEdgeListS, typename VertexListS, typename DirectedS, typename VertexProperty,
+           typename EdgeProperty, typename GraphProperty, typename EdgeListS, typename T, typename Bundle>
+  inline
+  typename property_map<adjacency_list<OutEdgeListS, VertexListS, DirectedS, VertexProperty, EdgeProperty,
+                                       GraphProperty, EdgeListS>, T Bundle::*>::type
+  get(T Bundle::* p, adjacency_list<OutEdgeListS, VertexListS, DirectedS, VertexProperty, EdgeProperty,
+                                    GraphProperty, EdgeListS>& g)
+  {
+    typedef typename property_map<adjacency_list<OutEdgeListS, VertexListS, DirectedS, VertexProperty, 
+                                                 EdgeProperty, GraphProperty, EdgeListS>, T Bundle::*>::type
+      result_type;
+    return result_type(&g, p);
+  }
+  
+  template<typename OutEdgeListS, typename VertexListS, typename DirectedS, typename VertexProperty,
+           typename EdgeProperty, typename GraphProperty, typename EdgeListS, typename T, typename Bundle>
+  inline
+  typename property_map<adjacency_list<OutEdgeListS, VertexListS, DirectedS, VertexProperty, EdgeProperty,
+                                       GraphProperty, EdgeListS>, T Bundle::*>::const_type
+  get(T Bundle::* p, adjacency_list<OutEdgeListS, VertexListS, DirectedS, VertexProperty, EdgeProperty,
+                                    GraphProperty, EdgeListS> const & g)
+  {
+    typedef typename property_map<adjacency_list<OutEdgeListS, VertexListS, DirectedS, VertexProperty, 
+                                                 EdgeProperty, GraphProperty, EdgeListS>, T Bundle::*>::const_type
+      result_type;
+    return result_type(&g, p);
+  }
+
+  template<typename OutEdgeListS, typename VertexListS, typename DirectedS, typename VertexProperty,
+           typename EdgeProperty, typename GraphProperty, typename EdgeListS, typename T, typename Bundle,
+           typename Key>
+  inline T
+  get(T Bundle::* p, adjacency_list<OutEdgeListS, VertexListS, DirectedS, VertexProperty, EdgeProperty,
+                                    GraphProperty, EdgeListS> const & g, const Key& key)
+  {
+    return get(get(p, g), key);
+  }
+
+  template<typename OutEdgeListS, typename VertexListS, typename DirectedS, typename VertexProperty,
+           typename EdgeProperty, typename GraphProperty, typename EdgeListS, typename T, typename Bundle,
+           typename Key>
+  inline void
+  put(T Bundle::* p, adjacency_list<OutEdgeListS, VertexListS, DirectedS, VertexProperty, EdgeProperty,
+                                    GraphProperty, EdgeListS>& g, const Key& key, const T& value)
+  {
+    put(get(p, g), key, value);
+  }
+
+#endif
+
 
 } // namespace boost
 

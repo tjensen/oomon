@@ -1,7 +1,7 @@
-// (C) Copyright Jeremy Siek 2000. Permission to copy, use, modify, sell and
-// distribute this software is granted provided this copyright notice appears
-// in all copies. This software is provided "as is" without express or implied
-// warranty, and with no claim as to its suitability for any purpose.
+// (C) Copyright Jeremy Siek 2000.
+// Distributed under the Boost Software License, Version 1.0. (See
+// accompanying file LICENSE_1_0.txt or copy at
+// http://www.boost.org/LICENSE_1_0.txt)
 
 // The ct_if implementation that avoids partial specialization is
 // based on the IF class by Ulrich W. Eisenecker and Krzysztof
@@ -19,12 +19,11 @@
   problem.
 */
 
+#include <boost/type_traits/integral_constant.hpp> // true_type and false_type
+
 namespace boost {
 
   struct ct_if_error { };
-
-  struct true_type { enum { value = true }; };
-  struct false_type { enum { value = false }; };
 
   template <class A, class B>
   struct ct_and { typedef false_type type; };

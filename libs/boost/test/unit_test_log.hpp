@@ -1,7 +1,7 @@
-//  (C) Copyright Gennadiy Rozental 2001-2003.
-//  Use, modification, and distribution are subject to the 
-//  Boost Software License, Version 1.0. (See accompanying file 
-//  LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+//  (C) Copyright Gennadiy Rozental 2001-2005.
+//  Distributed under the Boost Software License, Version 1.0.
+//  (See accompanying file LICENSE_1_0.txt or copy at 
+//  http://www.boost.org/LICENSE_1_0.txt)
 
 //  See http://www.boost.org/libs/test for the library home page.
 //
@@ -14,225 +14,177 @@
 //  completely hidden with pimple idiom
 // ***************************************************************************
 
-#ifndef BOOST_UNIT_TEST_LOG_HPP
-#define BOOST_UNIT_TEST_LOG_HPP
+#ifndef BOOST_TEST_UNIT_TEST_LOG_HPP_071894GER
+#define BOOST_TEST_UNIT_TEST_LOG_HPP_071894GER
 
 // Boost.Test
-#include <boost/test/detail/unit_test_config.hpp>
+#include <boost/test/test_observer.hpp>
 
-// BOOST
+#include <boost/test/detail/global_typedef.hpp>
+#include <boost/test/detail/log_level.hpp>
+#include <boost/test/detail/fwd_decl.hpp>
+
+#include <boost/test/utils/trivial_singleton.hpp>
+
+// Boost
 #include <boost/utility.hpp>
 
 // STL
 #include <iosfwd>   // for std::ostream&
-#include <string>   // for std::string&; in fact need only forward declaration
 
-#ifdef BOOST_MSVC
-# pragma warning(push)
-# pragma warning(disable: 4512) // assignment operator could not be generated
-#endif
+#include <boost/test/detail/suppress_warnings.hpp>
+
+//____________________________________________________________________________//
 
 namespace boost {
 
-namespace unit_test_framework {
-
-//  each log level includes all subsequent higher loging levels
-enum            log_level {
-    log_successful_tests     = 0,
-    log_test_suites          = 1,
-    log_messages             = 2,
-    log_warnings             = 3,
-    log_all_errors           = 4, // reported by unit test macros
-    log_cpp_exception_errors = 5, // uncaught C++ exceptions
-    log_system_errors        = 6, // including timeouts, signals, traps
-    log_fatal_errors         = 7, // including unit test macros or
-                                     // fatal system errors
-    log_progress_only        = 8, // only unit test progress to be reported
-    log_nothing              = 9
-};
-
-// ************************************************************************** //
-// **************                log_entry_data                ************** //
-// ************************************************************************** //
-
-struct log_entry_data
-{
-    std::string     m_file;
-    std::size_t     m_line;
-    log_level       m_level;
-
-    void clear()
-    {
-        m_file    = std::string();
-        m_line    = 0;
-        m_level   = log_nothing;
-    }
-};
-
-// ************************************************************************** //
-// **************                checkpoint_data               ************** //
-// ************************************************************************** //
-
-struct log_checkpoint_data
-{
-    std::string     m_file;
-    std::size_t     m_line;
-    std::string     m_message;
-
-    void clear()
-    {
-        m_file    = std::string();
-        m_line    = 0;
-        m_message = std::string();
-    }
-};
+namespace unit_test {
 
 // ************************************************************************** //
 // **************                log manipulators              ************** //
 // ************************************************************************** //
 
-struct begin {
-};
+namespace log {
 
-struct end {
-};
+struct begin {};
 
-struct level {
-    explicit    level( log_level l_ ) : m_level( l_ ) {}
-
-    log_level m_level;
-};
+struct end {};
 
 struct line {
-    explicit    line( std::size_t ln_ ) : m_line_num( ln_ ) {}
+    explicit    line( std::size_t ln ) : m_line_num( ln ) {}
 
     std::size_t m_line_num;
 };
 
 struct file {
-    explicit    file( c_string_literal fn_ ) : m_file_name( fn_ ) {}
+    explicit    file( const_string fn ) : m_file_name( fn ) {}
 
-    c_string_literal m_file_name;
+    const_string m_file_name;
 };
 
 struct checkpoint {
-    explicit    checkpoint( std::string const& message_ ) : m_message( message_ ) {}
+    explicit    checkpoint( const_string message ) : m_message( message ) {}
 
-    std::string const& m_message;
+    const_string m_message;
 };
 
-struct log_exception {
-    explicit    log_exception( c_string_literal what_ ) : m_what( what_ ) {}
+} // namespace log
 
-    c_string_literal     m_what;
+// ************************************************************************** //
+// **************             entry_value_collector            ************** //
+// ************************************************************************** //
+
+namespace ut_detail {
+
+class entry_value_collector {
+public:
+    // Constructors
+    entry_value_collector() : m_last( true ) {}
+    entry_value_collector( entry_value_collector& rhs ) : m_last( true ) { rhs.m_last = false; }
+    ~entry_value_collector();
+
+    // collection interface
+    entry_value_collector operator<<( const_string );
+    entry_value_collector operator<<( log::checkpoint const& );
+
+private:
+    // Data members
+    bool    m_last;
 };
 
-struct log_progress {
-};
+} // namespace ut_detail
 
 // ************************************************************************** //
 // **************                 unit_test_log                ************** //
 // ************************************************************************** //
 
-class test_case;
-class unit_test_log_formatter;
-
-class unit_test_log : private boost::noncopyable { //!! Singleton
+class unit_test_log_t : public test_observer, public singleton<unit_test_log_t> {
 public:
-    // Destructor
-    ~unit_test_log();
+    // test_observer interface implementation
+    void                test_start( counter_t test_cases_amount );
+    void                test_finish();
+    void                test_aborted();
 
-    // instance access method;
-    static unit_test_log& instance();
+    void                test_unit_start( test_unit const& );
+    void                test_unit_finish( test_unit const&, unsigned long elapsed );
+    void                test_unit_skipped( test_unit const& );
+    void                test_unit_aborted( test_unit const& );
 
-
-    void            start( bool print_build_info_ = false );
-    void            header( unit_test_counter test_cases_amount_ );
-    void            finish( unit_test_counter test_cases_amount_ );
+    void                assertion_result( bool passed );
+    void                exception_caught( execution_exception const& );
 
     // log configuration methods
-    void            set_log_stream( std::ostream& str_ );
-    void            set_log_threshold_level( log_level lev_ );
-    void            set_log_threshold_level_by_name( std::string const& lev_ );
-    void            set_log_format( std::string const& of );
-    void            set_log_formatter( unit_test_log_formatter* the_formatter );
-    void            clear_checkpoint();
+    void                set_stream( std::ostream& );
+    void                set_threshold_level( log_level );
+    void                set_format( output_format );
+    void                set_formatter( unit_test_log_formatter* );
 
-    // test case scope tracking
-    void            track_test_case_scope( test_case const& tc, bool in_out );
+    // entry logging
+    unit_test_log_t&    operator<<( log::begin const& );        // begin entry 
+    unit_test_log_t&    operator<<( log::end const& );          // end entry
+    unit_test_log_t&    operator<<( log::file const& );         // set entry file name
+    unit_test_log_t&    operator<<( log::line const& );         // set entry line number
+    unit_test_log_t&    operator<<( log::checkpoint const& );   // set checkpoint
+    unit_test_log_t&    operator<<( log_level );                // set entry level
+    unit_test_log_t&    operator<<( const_string );             // log entry value
 
-    // entry configuration methods
-    unit_test_log&  operator<<( begin const& );         // begin entry 
-    unit_test_log&  operator<<( end const& );           // end entry
-    unit_test_log&  operator<<( file const& );          // set file name
-    unit_test_log&  operator<<( line const& );          // set line number
-    unit_test_log&  operator<<( level const& );         // set entry level
-    unit_test_log&  operator<<( checkpoint const& );    // set checkpoint
-
-    // print value_ methods
-    unit_test_log&  operator<<( log_progress const& );
-    unit_test_log&  operator<<( log_exception const& );
-    unit_test_log&  operator<<( c_string_literal value_ );
-    unit_test_log&  operator<<( std::string const& value_ );
+    ut_detail::entry_value_collector operator()( log_level );   // initiate entry collection
 
 private:
-    // formatters interface
-    friend class unit_test_log_formatter;
-    log_entry_data      const& entry_data() const;
-    log_checkpoint_data const& checkpoint_data() const;
+    BOOST_TEST_SINGLETON_CONS( unit_test_log_t );
+}; // unit_test_log_t
 
-private:
-    // Constructor
-    unit_test_log();
-
-    struct          Impl;
-    Impl*           m_pimpl;
-}; // unit_test_log
+BOOST_TEST_SINGLETON_INST( unit_test_log )
 
 // helper macros
-#define BOOST_UT_LOG_BEGIN( file_name, line_num, loglevel )                             \
-    boost::unit_test_framework::unit_test_log::instance()                               \
-                                     << boost::unit_test_framework::begin()             \
-                                     << boost::unit_test_framework::level( loglevel )   \
-                                     << boost::unit_test_framework::file( file_name )   \
-                                     << boost::unit_test_framework::line( line_num ) << \
+#define BOOST_UT_LOG_ENTRY                                             \
+    (boost::unit_test::unit_test_log << boost::unit_test::log::begin() \
+        << boost::unit_test::log::file( BOOST_TEST_L( __FILE__ ) )     \
+        << boost::unit_test::log::line( __LINE__ ))                    \
 /**/
-#define BOOST_UT_LOG_END             << boost::unit_test_framework::end();
 
-// ************************************************************************** //
-// **************            test_case_scope_tracker           ************** //
-// ************************************************************************** //
-
-struct test_case_scope_tracker {
-    explicit            test_case_scope_tracker( test_case const& tc ) 
-    : m_tc( tc )                                    { unit_test_log::instance().track_test_case_scope( m_tc, true ); }
-                        ~test_case_scope_tracker()  { unit_test_log::instance().track_test_case_scope( m_tc, false ); }
-
-private:
-    test_case const&    m_tc;
-};
-
-} // namespace unit_test_framework
+} // namespace unit_test
 
 } // namespace boost
 
-#ifdef BOOST_MSVC
-# pragma warning(default: 4512) // assignment operator could not be generated
-# pragma warning(pop)
-#endif
+//____________________________________________________________________________//
+
+#include <boost/test/detail/enable_warnings.hpp>
 
 // ***************************************************************************
 //  Revision History :
 //  
 //  $Log$
-//  Revision 1.1.1.1  2004/03/05 22:22:54  tjensen
-//  This is version 1.31.0 of the Boost libraries
+//  Revision 1.1.1.2  2006/05/01 14:12:16  tjensen
+//  - import of Boost-1.33.1 release
 //
-//  Revision 1.20  2003/12/01 00:41:56  rogeeff
-//  prerelease cleaning
+//  Revision 1.30  2005/02/20 08:27:06  rogeeff
+//  This a major update for Boost.Test framework. See release docs for complete list of fixes/updates
 //
-
+//  Revision 1.29  2005/02/02 12:08:14  rogeeff
+//  namespace log added for log manipulators
+//
+//  Revision 1.28  2005/02/01 06:40:06  rogeeff
+//  copyright update
+//  old log entries removed
+//  minor stilistic changes
+//  depricated tools removed
+//
+//  Revision 1.27  2005/01/30 03:26:29  rogeeff
+//  return an ability for explicit end()
+//
+//  Revision 1.26  2005/01/21 07:30:24  rogeeff
+//  to log testing time log formatter interfaces changed
+//
+//  Revision 1.25  2005/01/18 08:26:12  rogeeff
+//  unit_test_log rework:
+//     eliminated need for ::instance()
+//     eliminated need for << end and ...END macro
+//     straitend interface between log and formatters
+//     change compiler like formatter name
+//     minimized unit_test_log interface and reworked to use explicit calls
+//
 // ***************************************************************************
 
-#endif // BOOST_UNIT_TEST_LOG_HPP
+#endif // BOOST_TEST_UNIT_TEST_LOG_HPP_071894GER
 

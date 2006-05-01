@@ -1,14 +1,9 @@
 /* boost random/uniform_real.hpp header file
  *
  * Copyright Jens Maurer 2000-2001
- * Permission to use, copy, modify, sell, and distribute this software
- * is hereby granted without fee provided that the above copyright notice
- * appears in all copies and that both that copyright notice and this
- * permission notice appear in supporting documentation,
- *
- * Jens Maurer makes no representations about the suitability of this
- * software for any purpose. It is provided "as is" without express or
- * implied warranty.
+ * Distributed under the Boost Software License, Version 1.0. (See
+ * accompanying file LICENSE_1_0.txt or copy at
+ * http://www.boost.org/LICENSE_1_0.txt)
  *
  * See http://www.boost.org for most recent version including documentation.
  *
@@ -39,7 +34,7 @@ public:
   typedef RealType result_type;
 
   explicit uniform_real(RealType min = RealType(0),
-                        RealType max = RealType(1)) 
+                        RealType max = RealType(1))
     : _min(min), _max(max)
   {
 #ifndef BOOST_NO_LIMITS_COMPILE_TIME_CONSTANTS
@@ -50,12 +45,16 @@ public:
 
   // compiler-generated copy ctor and assignment operator are fine
 
-  result_type min() const { return _min; }
-  result_type max() const { return _max; }
+  result_type min BOOST_PREVENT_MACRO_SUBSTITUTION () const { return _min; }
+  result_type max BOOST_PREVENT_MACRO_SUBSTITUTION () const { return _max; }
   void reset() { }
 
   template<class Engine>
-  result_type operator()(Engine& eng) { return eng() * (_max - _min) + _min; }
+  result_type operator()(Engine& eng) {
+    return static_cast<result_type>(eng() - eng.min BOOST_PREVENT_MACRO_SUBSTITUTION())
+           / static_cast<result_type>(eng.max BOOST_PREVENT_MACRO_SUBSTITUTION() - eng.min BOOST_PREVENT_MACRO_SUBSTITUTION())
+           * (_max - _min) + _min;
+  }
 
 #if !defined(BOOST_NO_OPERATORS_IN_NAMESPACE) && !defined(BOOST_NO_MEMBER_TEMPLATE_FRIENDS)
   template<class CharT, class Traits>

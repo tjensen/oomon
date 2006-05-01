@@ -1,41 +1,15 @@
-//
 //=======================================================================
 // Copyright 1997, 1998, 1999, 2000 University of Notre Dame.
+// Copyright 2003 Bruce Barr
 // Authors: Andrew Lumsdaine, Lie-Quan Lee, Jeremy G. Siek
 //
-// This file is part of the Boost Graph Library
-//
-// You should have received a copy of the License Agreement for the
-// Boost Graph Library along with the software; see the file LICENSE.
-// If not, contact Office of Research, University of Notre Dame, Notre
-// Dame, IN 46556.
-//
-// Permission to modify the code and to distribute modified code is
-// granted, provided the text of this NOTICE is retained, a notice that
-// the code was modified is included with the above COPYRIGHT NOTICE and
-// with the COPYRIGHT NOTICE in the LICENSE file, and that the LICENSE
-// file is distributed with the modified code.
-//
-// LICENSOR MAKES NO REPRESENTATIONS OR WARRANTIES, EXPRESS OR IMPLIED.
-// By way of example, but not limitation, Licensor MAKES NO
-// REPRESENTATIONS OR WARRANTIES OF MERCHANTABILITY OR FITNESS FOR ANY
-// PARTICULAR PURPOSE OR THAT THE USE OF THE LICENSED SOFTWARE COMPONENTS
-// OR DOCUMENTATION WILL NOT INFRINGE ANY PATENTS, COPYRIGHTS, TRADEMARKS
-// OR OTHER RIGHTS.
+// Distributed under the Boost Software License, Version 1.0. (See
+// accompanying file LICENSE_1_0.txt or copy at
+// http://www.boost.org/LICENSE_1_0.txt)
 //=======================================================================
-//
 
 // Nonrecursive implementation of depth_first_visit_impl submitted by
 // Bruce Barr, schmoost <at> yahoo.com, May/June 2003.
-//
-// (C) Copyright Bruce Barr, 2003
-// Permission to copy, use, modify, sell and distribute this software
-// is granted provided this copyright notice appears in all copies.
-// This software is provided "as is" without express or implied
-// warranty, and with no claim as to its suitability for any purpose.
-
-
-
 #ifndef BOOST_GRAPH_RECURSIVE_DFS_HPP
 #define BOOST_GRAPH_RECURSIVE_DFS_HPP
 
@@ -129,7 +103,7 @@ namespace boost {
       vis.discover_vertex(u, g);
       tie(ei, ei_end) = out_edges(u, g);
       // Variable is needed to workaround a borland bug.
-      TF& fn(static_cast<TF&>(func));
+      TF& fn = static_cast<TF&>(func);
       if (fn(u, g)) {
           // If this vertex terminates the search, we push empty range
           stack.push_back(std::make_pair(u, std::make_pair(ei_end, ei_end)));
@@ -191,7 +165,7 @@ namespace boost {
 
       typedef typename unwrap_reference<TerminatorFunc>::type TF;
       // Variable is needed to workaround a borland bug.
-      TF& fn(static_cast<TF&>(func));
+      TF& fn = static_cast<TF&>(func);
       if (!fn(u, g))
         for (tie(ei, ei_end) = out_edges(u, g); ei != ei_end; ++ei) {
           Vertex v = target(*ei, g);           vis.examine_edge(*ei, g);

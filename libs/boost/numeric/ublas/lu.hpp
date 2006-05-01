@@ -14,10 +14,15 @@
 //  GeNeSys mbH & Co. KG in producing this work.
 //
 
-// LU factorizations in the spirit of LAPACK and Golub & van Loan
+#ifndef _BOOST_UBLAS_LU_
+#define _BOOST_UBLAS_LU_
 
-#ifndef BOOST_UBLAS_LU_H
-#define BOOST_UBLAS_LU_H
+#include <boost/numeric/ublas/operation.hpp>
+#include <boost/numeric/ublas/matrix_expression.hpp>
+#include <boost/numeric/ublas/vector.hpp>
+#include <boost/numeric/ublas/detail/matrix_assign.hpp>
+
+// LU factorizations in the spirit of LAPACK and Golub & van Loan
 
 namespace boost { namespace numeric { namespace ublas {
 
@@ -74,27 +79,27 @@ namespace boost { namespace numeric { namespace ublas {
     template<class PM, class MV>
     BOOST_UBLAS_INLINE
     void swap_rows (const PM &pm, MV &mv) {
-        swap_rows (pm, mv, BOOST_UBLAS_TYPENAME MV::type_category ());
+        swap_rows (pm, mv, typename MV::type_category ());
     }
 
     // LU factorization without pivoting
     template<class M>
     typename M::size_type lu_factorize (M &m) {
         typedef M matrix_type;
-        typedef BOOST_UBLAS_TYPENAME M::size_type size_type;
-        typedef BOOST_UBLAS_TYPENAME M::value_type value_type;
+        typedef typename M::size_type size_type;
+        typedef typename M::value_type value_type;
 
-#ifdef BOOST_UBLAS_TYPE_CHECK
+#if BOOST_UBLAS_TYPE_CHECK
         matrix_type cm (m);
 #endif
         int singular = 0;
         size_type size1 = m.size1 ();
         size_type size2 = m.size2 ();
-        size_type size = std::min (size1, size2);
+        size_type size = (std::min) (size1, size2);
         for (size_type i = 0; i < size; ++ i) {
             matrix_column<M> mci (column (m, i));
             matrix_row<M> mri (row (m, i));
-            if (m (i, i) != value_type ()) {
+            if (m (i, i) != value_type/*zero*/()) {
                 project (mci, range (i + 1, size1)) *= value_type (1) / m (i, i);
             } else if (singular == 0) {
                 singular = i + 1;
@@ -103,10 +108,11 @@ namespace boost { namespace numeric { namespace ublas {
                 outer_prod (project (mci, range (i + 1, size1)),
                             project (mri, range (i + 1, size2))));
         }
-#ifdef BOOST_UBLAS_TYPE_CHECK
+#if BOOST_UBLAS_TYPE_CHECK
         BOOST_UBLAS_CHECK (singular != 0 ||
-                           equals (prod (triangular_adaptor<matrix_type, unit_lower> (m),
-                                         triangular_adaptor<matrix_type, upper> (m)), cm), internal_logic ());
+                           detail::expression_type_check (prod (triangular_adaptor<matrix_type, unit_lower> (m),
+                                                                triangular_adaptor<matrix_type, upper> (m)), 
+                                                          cm), internal_logic ());
 #endif
         return singular;
     }
@@ -115,22 +121,22 @@ namespace boost { namespace numeric { namespace ublas {
     template<class M, class PM>
     typename M::size_type lu_factorize (M &m, PM &pm) {
         typedef M matrix_type;
-        typedef BOOST_UBLAS_TYPENAME M::size_type size_type;
-        typedef BOOST_UBLAS_TYPENAME M::value_type value_type;
+        typedef typename M::size_type size_type;
+        typedef typename M::value_type value_type;
 
-#ifdef BOOST_UBLAS_TYPE_CHECK
+#if BOOST_UBLAS_TYPE_CHECK
         matrix_type cm (m);
 #endif
         int singular = 0;
         size_type size1 = m.size1 ();
         size_type size2 = m.size2 ();
-        size_type size = std::min (size1, size2);
+        size_type size = (std::min) (size1, size2);
         for (size_type i = 0; i < size; ++ i) {
             matrix_column<M> mci (column (m, i));
             matrix_row<M> mri (row (m, i));
             size_type i_norm_inf = i + index_norm_inf (project (mci, range (i, size1)));
             BOOST_UBLAS_CHECK (i_norm_inf < size1, external_logic ());
-            if (m (i_norm_inf, i) != value_type ()) {
+            if (m (i_norm_inf, i) != value_type/*zero*/()) {
                 if (i_norm_inf != i) {
                     pm (i) = i_norm_inf;
                     row (m, i_norm_inf).swap (mri);
@@ -145,11 +151,11 @@ namespace boost { namespace numeric { namespace ublas {
                 outer_prod (project (mci, range (i + 1, size1)),
                             project (mri, range (i + 1, size2))));
         }
-#ifdef BOOST_UBLAS_TYPE_CHECK
+#if BOOST_UBLAS_TYPE_CHECK
         swap_rows (pm, cm);
         BOOST_UBLAS_CHECK (singular != 0 ||
-                           equals (prod (triangular_adaptor<matrix_type, unit_lower> (m),
-                                         triangular_adaptor<matrix_type, upper> (m)), cm), internal_logic ());
+                           detail::expression_type_check (prod (triangular_adaptor<matrix_type, unit_lower> (m),
+                                                                triangular_adaptor<matrix_type, upper> (m)), cm), internal_logic ());
 #endif
         return singular;
     }
@@ -157,17 +163,17 @@ namespace boost { namespace numeric { namespace ublas {
     template<class M, class PM>
     typename M::size_type axpy_lu_factorize (M &m, PM &pm) {
         typedef M matrix_type;
-        typedef BOOST_UBLAS_TYPENAME M::size_type size_type;
-        typedef BOOST_UBLAS_TYPENAME M::value_type value_type;
+        typedef typename M::size_type size_type;
+        typedef typename M::value_type value_type;
         typedef vector<value_type> vector_type;
 
-#ifdef BOOST_UBLAS_TYPE_CHECK
+#if BOOST_UBLAS_TYPE_CHECK
         matrix_type cm (m);
 #endif
         int singular = 0;
         size_type size1 = m.size1 ();
         size_type size2 = m.size2 ();
-        size_type size = std::min (size1, size2);
+        size_type size = (std::min) (size1, size2);
 #ifndef BOOST_UBLAS_LU_WITH_INPLACE_SOLVE
         matrix_type mr (m);
         mr.assign (zero_matrix<value_type> (size1, size2));
@@ -181,7 +187,7 @@ namespace boost { namespace numeric { namespace ublas {
                 axpy_prod<vector_type> (project (mr, range (i, size1), range (0, i)), urr));
             size_type i_norm_inf = i + index_norm_inf (project (v, range (i, size1)));
             BOOST_UBLAS_CHECK (i_norm_inf < size1, external_logic ());
-            if (v (i_norm_inf) != value_type ()) {
+            if (v (i_norm_inf) != value_type/*zero*/()) {
                 if (i_norm_inf != i) {
                     pm (i) = i_norm_inf;
                     std::swap (v (i_norm_inf), v (i));
@@ -216,7 +222,7 @@ namespace boost { namespace numeric { namespace ublas {
                 axpy_prod<vector_type> (project (lr, range (i, size1), range (0, i)), urr));
             size_type i_norm_inf = i + index_norm_inf (project (v, range (i, size1)));
             BOOST_UBLAS_CHECK (i_norm_inf < size1, external_logic ());
-            if (v (i_norm_inf) != value_type ()) {
+            if (v (i_norm_inf) != value_type/*zero*/()) {
                 if (i_norm_inf != i) {
                     pm (i) = i_norm_inf;
                     std::swap (v (i_norm_inf), v (i));
@@ -237,11 +243,11 @@ namespace boost { namespace numeric { namespace ublas {
         m.assign (triangular_adaptor<matrix_type, strict_lower> (lr) +
                   triangular_adaptor<matrix_type, upper> (ur));
 #endif
-#ifdef BOOST_UBLAS_TYPE_CHECK
+#if BOOST_UBLAS_TYPE_CHECK
         swap_rows (pm, cm);
         BOOST_UBLAS_CHECK (singular != 0 ||
-                           equals (prod (triangular_adaptor<matrix_type, unit_lower> (m),
-                                         triangular_adaptor<matrix_type, upper> (m)), cm), internal_logic ());
+                           detail::expression_type_check (prod (triangular_adaptor<matrix_type, unit_lower> (m),
+                                                                triangular_adaptor<matrix_type, upper> (m)), cm), internal_logic ());
 #endif
         return singular;
     }
@@ -252,17 +258,17 @@ namespace boost { namespace numeric { namespace ublas {
         typedef const M const_matrix_type;
         typedef vector<typename E::value_type> vector_type;
 
-#ifdef BOOST_UBLAS_TYPE_CHECK
+#if BOOST_UBLAS_TYPE_CHECK
         vector_type cv1 (e);
 #endif
         inplace_solve (m, e, unit_lower_tag ());
-#ifdef BOOST_UBLAS_TYPE_CHECK
-        BOOST_UBLAS_CHECK (equals (prod (triangular_adaptor<const_matrix_type, unit_lower> (m), e), cv1), internal_logic ());
+#if BOOST_UBLAS_TYPE_CHECK
+        BOOST_UBLAS_CHECK (detail::expression_type_check (prod (triangular_adaptor<const_matrix_type, unit_lower> (m), e), cv1), internal_logic ());
         vector_type cv2 (e);
 #endif
         inplace_solve (m, e, upper_tag ());
-#ifdef BOOST_UBLAS_TYPE_CHECK
-        BOOST_UBLAS_CHECK (equals (prod (triangular_adaptor<const_matrix_type, upper> (m), e), cv2), internal_logic ());
+#if BOOST_UBLAS_TYPE_CHECK
+        BOOST_UBLAS_CHECK (detail::expression_type_check (prod (triangular_adaptor<const_matrix_type, upper> (m), e), cv2), internal_logic ());
 #endif
     }
     template<class M, class E>
@@ -270,17 +276,17 @@ namespace boost { namespace numeric { namespace ublas {
         typedef const M const_matrix_type;
         typedef matrix<typename E::value_type> matrix_type;
 
-#ifdef BOOST_UBLAS_TYPE_CHECK
+#if BOOST_UBLAS_TYPE_CHECK
         matrix_type cm1 (e);
 #endif
         inplace_solve (m, e, unit_lower_tag ());
-#ifdef BOOST_UBLAS_TYPE_CHECK
-        BOOST_UBLAS_CHECK (equals (prod (triangular_adaptor<const_matrix_type, unit_lower> (m), e), cm1), internal_logic ());
+#if BOOST_UBLAS_TYPE_CHECK
+        BOOST_UBLAS_CHECK (detail::expression_type_check (prod (triangular_adaptor<const_matrix_type, unit_lower> (m), e), cm1), internal_logic ());
         matrix_type cm2 (e);
 #endif
         inplace_solve (m, e, upper_tag ());
-#ifdef BOOST_UBLAS_TYPE_CHECK
-        BOOST_UBLAS_CHECK (equals (prod (triangular_adaptor<const_matrix_type, upper> (m), e), cm2), internal_logic ());
+#if BOOST_UBLAS_TYPE_CHECK
+        BOOST_UBLAS_CHECK (detail::expression_type_check (prod (triangular_adaptor<const_matrix_type, upper> (m), e), cm2), internal_logic ());
 #endif
     }
     template<class M, class PMT, class PMA, class MV>
@@ -293,17 +299,17 @@ namespace boost { namespace numeric { namespace ublas {
         typedef const M const_matrix_type;
         typedef vector<typename E::value_type> vector_type;
 
-#ifdef BOOST_UBLAS_TYPE_CHECK
+#if BOOST_UBLAS_TYPE_CHECK
         vector_type cv1 (e);
 #endif
         inplace_solve (e, m, upper_tag ());
-#ifdef BOOST_UBLAS_TYPE_CHECK
-        BOOST_UBLAS_CHECK (equals (prod (e, triangular_adaptor<const_matrix_type, upper> (m)), cv1), internal_logic ());
+#if BOOST_UBLAS_TYPE_CHECK
+        BOOST_UBLAS_CHECK (detail::expression_type_check (prod (e, triangular_adaptor<const_matrix_type, upper> (m)), cv1), internal_logic ());
         vector_type cv2 (e);
 #endif
         inplace_solve (e, m, unit_lower_tag ());
-#ifdef BOOST_UBLAS_TYPE_CHECK
-        BOOST_UBLAS_CHECK (equals (prod (e, triangular_adaptor<const_matrix_type, unit_lower> (m)), cv2), internal_logic ());
+#if BOOST_UBLAS_TYPE_CHECK
+        BOOST_UBLAS_CHECK (detail::expression_type_check (prod (e, triangular_adaptor<const_matrix_type, unit_lower> (m)), cv2), internal_logic ());
 #endif
     }
     template<class E, class M>
@@ -311,17 +317,17 @@ namespace boost { namespace numeric { namespace ublas {
         typedef const M const_matrix_type;
         typedef matrix<typename E::value_type> matrix_type;
 
-#ifdef BOOST_UBLAS_TYPE_CHECK
+#if BOOST_UBLAS_TYPE_CHECK
         matrix_type cm1 (e);
 #endif
         inplace_solve (e, m, upper_tag ());
-#ifdef BOOST_UBLAS_TYPE_CHECK
-        BOOST_UBLAS_CHECK (equals (prod (e, triangular_adaptor<const_matrix_type, upper> (m)), cm1), internal_logic ());
+#if BOOST_UBLAS_TYPE_CHECK
+        BOOST_UBLAS_CHECK (detail::expression_type_check (prod (e, triangular_adaptor<const_matrix_type, upper> (m)), cm1), internal_logic ());
         matrix_type cm2 (e);
 #endif
         inplace_solve (e, m, unit_lower_tag ());
-#ifdef BOOST_UBLAS_TYPE_CHECK
-        BOOST_UBLAS_CHECK (equals (prod (e, triangular_adaptor<const_matrix_type, unit_lower> (m)), cm2), internal_logic ());
+#if BOOST_UBLAS_TYPE_CHECK
+        BOOST_UBLAS_CHECK (detail::expression_type_check (prod (e, triangular_adaptor<const_matrix_type, unit_lower> (m)), cm2), internal_logic ());
 #endif
     }
     template<class MV, class M, class PMT, class PMA>
@@ -333,5 +339,3 @@ namespace boost { namespace numeric { namespace ublas {
 }}}
 
 #endif
-
-

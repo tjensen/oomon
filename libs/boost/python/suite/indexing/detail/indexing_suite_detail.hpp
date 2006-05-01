@@ -1,8 +1,7 @@
 //  (C) Copyright Joel de Guzman 2003.
-//  Permission to copy, use, modify, sell and distribute this software
-//  is granted provided this copyright notice appears in all copies. This
-//  software is provided "as is" without express or implied warranty, and
-//  with no claim as to its suitability for any purpose.
+//  Distributed under the Boost Software License, Version 1.0. (See
+//  accompanying file LICENSE_1_0.txt or copy at
+//  http://www.boost.org/LICENSE_1_0.txt)
 
 #ifndef INDEXING_SUITE_DETAIL_JDG20036_HPP
 # define INDEXING_SUITE_DETAIL_JDG20036_HPP
@@ -11,8 +10,11 @@
 # include <boost/scoped_ptr.hpp>
 # include <boost/get_pointer.hpp>
 # include <boost/detail/binary_search.hpp>
+# include <boost/numeric/conversion/cast.hpp>
+# include <boost/type_traits/is_pointer.hpp>
 # include <vector>
 # include <map>
+#include <iostream>
 
 namespace boost { namespace python { namespace detail {
 
@@ -461,13 +463,29 @@ namespace boost { namespace python { namespace detail {
         { 
         }
 
+        template <class DataType> 
+        static object
+        base_get_item_helper(DataType const& p, mpl::true_)
+        { 
+            return object(ptr(p));
+        }
+
+        template <class DataType> 
+        static object
+        base_get_item_helper(DataType const& x, mpl::false_)
+        { 
+            return object(x);
+        }
+
         static object
         base_get_item_(back_reference<Container&> const& container, PyObject* i)
         { 
-            return object(
+            return base_get_item_helper(
                 DerivedPolicies::get_item(
                     container.get(), DerivedPolicies::
-                        convert_index(container.get(), i)));
+                        convert_index(container.get(), i))
+              , is_pointer<BOOST_DEDUCED_TYPENAME Container::value_type>()
+            );
         }
 
         static void
@@ -507,9 +525,9 @@ namespace boost { namespace python { namespace detail {
         static object
         base_get_item_(back_reference<Container&> const& container, PyObject* i)
         { 
-            // Proxy  
+            // Proxy
             Index idx = DerivedPolicies::convert_index(container.get(), i);
-            
+
             if (PyObject* shared = 
                 ContainerElement::get_links().find(container.get(), idx))
             {
@@ -568,17 +586,43 @@ namespace boost { namespace python { namespace detail {
 
         static void
         base_get_slice_data(
-            Container& container, PySliceObject* slice, Index& from, Index& to)
+            Container& container, PySliceObject* slice, Index& from_, Index& to_)
         {
-            if (Py_None == slice->start)
-                from = DerivedPolicies::get_min_index(container);
-            else 
-                from = DerivedPolicies::convert_index(container, slice->start);
+            if (Py_None != slice->step) {
+                PyErr_SetString( PyExc_IndexError, "slice step size not supported.");
+                throw_error_already_set();
+            }
 
-            if (Py_None == slice->stop)
-                to = DerivedPolicies::get_max_index(container);
-            else 
-                to = DerivedPolicies::convert_index(container, slice->stop);
+            Index min_index = DerivedPolicies::get_min_index(container);
+            Index max_index = DerivedPolicies::get_max_index(container);
+            
+            if (Py_None == slice->start) {
+                from_ = min_index;
+            }
+            else {
+                long from = extract<long>( slice->start);
+                if (from < 0) // Negative slice index
+                    from += max_index;
+                if (from < 0) // Clip lower bounds to zero
+                    from = 0;
+                from_ = boost::numeric_cast<Index>(from);
+                if (from_ > max_index) // Clip upper bounds to max_index.
+                    from_ = max_index;
+            }
+
+            if (Py_None == slice->stop) {
+                to_ = max_index;
+            }
+            else {
+                long to = extract<long>( slice->stop);
+                if (to < 0)
+                    to += max_index;
+                if (to < 0)
+                    to = 0;
+                to_ = boost::numeric_cast<Index>(to);
+                if (to_ > max_index)
+                    to_ = max_index;
+            }
         }        
    
         static void 

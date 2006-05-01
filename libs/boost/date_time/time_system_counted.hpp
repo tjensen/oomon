@@ -60,9 +60,22 @@ namespace date_time {
         return date_type(ymd);
       }
     }
-    int_type day_count() const
+    //int_type day_count() const
+    unsigned long day_count() const
     {
-      return resolution_traits::as_number(time_count_) / frac_sec_per_day();
+      /* resolution_traits::as_number returns a boost::int64_t & 
+       * frac_sec_per_day is also a boost::int64_t so, naturally, 
+       * the division operation returns a boost::int64_t. 
+       * The static_cast to an unsigned long is ok (results in no data loss) 
+       * because frac_sec_per_day is either the number of 
+       * microseconds per day, or the number of nanoseconds per day. 
+       * Worst case scenario: resolution_traits::as_number returns the 
+       * maximum value an int64_t can hold and frac_sec_per_day 
+       * is microseconds per day (lowest possible value). 
+       * The division operation will then return a value of 106751991 - 
+       * easily fitting in an unsigned long. 
+       */
+      return static_cast<unsigned long>(resolution_traits::as_number(time_count_) / frac_sec_per_day());
     }
     int_type time_count() const
     {
@@ -124,6 +137,34 @@ namespace date_time {
       unused_var(dst);
       return time_rep_type(day, tod);
     }
+
+    static time_rep_type get_time_rep(special_values sv)
+    {
+      switch (sv) {
+      case not_a_date_time:
+        return time_rep_type(date_type(not_a_date_time),
+                             time_duration_type(not_a_date_time));
+      case pos_infin:
+        return time_rep_type(date_type(pos_infin), 
+                             time_duration_type(pos_infin));
+      case neg_infin:
+        return time_rep_type(date_type(neg_infin), 
+                             time_duration_type(neg_infin));
+      case max_date_time: {
+        time_duration_type td = time_duration_type(24,0,0,0) - time_duration_type(0,0,0,1);
+        return time_rep_type(date_type(max_date_time), td);
+      }
+      case min_date_time:
+        return time_rep_type(date_type(min_date_time), time_duration_type(0,0,0,0));
+
+      default:
+        return time_rep_type(date_type(not_a_date_time),
+                             time_duration_type(not_a_date_time));
+        
+      }
+
+    }
+
     static date_type get_date(const time_rep_type& val)
     {
       return val.date();

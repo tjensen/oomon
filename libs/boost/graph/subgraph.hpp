@@ -2,25 +2,9 @@
 // Copyright 2001 University of Notre Dame.
 // Authors: Jeremy G. Siek and Lie-Quan Lee
 //
-// This file is part of the Boost Graph Library
-//
-// You should have received a copy of the License Agreement for the
-// Boost Graph Library along with the software; see the file LICENSE.
-// If not, contact Office of Research, University of Notre Dame, Notre
-// Dame, IN 46556.
-//
-// Permission to modify the code and to distribute modified code is
-// granted, provided the text of this NOTICE is retained, a notice that
-// the code was modified is included with the above COPYRIGHT NOTICE and
-// with the COPYRIGHT NOTICE in the LICENSE file, and that the LICENSE
-// file is distributed with the modified code.
-//
-// LICENSOR MAKES NO REPRESENTATIONS OR WARRANTIES, EXPRESS OR IMPLIED.
-// By way of example, but not limitation, Licensor MAKES NO
-// REPRESENTATIONS OR WARRANTIES OF MERCHANTABILITY OR FITNESS FOR ANY
-// PARTICULAR PURPOSE OR THAT THE USE OF THE LICENSED SOFTWARE COMPONENTS
-// OR DOCUMENTATION WILL NOT INFRINGE ANY PATENTS, COPYRIGHTS, TRADEMARKS
-// OR OTHER RIGHTS.
+// Distributed under the Boost Software License, Version 1.0. (See
+// accompanying file LICENSE_1_0.txt or copy at
+// http://www.boost.org/LICENSE_1_0.txt)
 //=======================================================================
 
 #ifndef BOOST_SUBGRAPH_HPP
@@ -36,6 +20,9 @@
 #include <boost/graph/graph_traits.hpp>
 #include <boost/graph/properties.hpp>
 #include <boost/iterator/indirect_iterator.hpp>
+
+#include <boost/static_assert.hpp>
+#include <boost/type_traits/is_same.hpp>
 
 namespace boost {
 
@@ -65,6 +52,12 @@ namespace boost {
     typedef typename Traits::directed_category         directed_category;
     typedef typename Traits::edge_parallel_category    edge_parallel_category;
     typedef typename Traits::traversal_category        traversal_category;
+
+    static vertex_descriptor null_vertex()
+    {
+      return Traits::null_vertex();
+    }
+
 
     // IncidenceGraph requirements
     typedef typename Traits::out_edge_iterator         out_edge_iterator;
@@ -112,7 +105,8 @@ namespace boost {
     subgraph(const subgraph& x)
       : m_graph(x.m_graph), m_parent(x.m_parent),
       m_edge_counter(x.m_edge_counter),
-      m_global_vertex(x.m_global_vertex)
+      m_global_vertex(x.m_global_vertex),
+      m_global_edge(x.m_global_edge)
     {
       // Do a deep copy
       for (typename ChildrenList::const_iterator i = x.m_children.begin();
@@ -176,7 +170,8 @@ namespace boost {
     {
       typename std::map<vertex_descriptor, vertex_descriptor>::const_iterator
         i = m_local_vertex.find(u_global);
-      return std::make_pair((*i).second, i != m_local_vertex.end());
+      bool valid = i != m_local_vertex.end();
+      return std::make_pair((valid ? (*i).second : null_vertex()), valid);
     }
 
     // Return the parent graph.
@@ -232,9 +227,30 @@ namespace boost {
 
     std::size_t num_children() const { return m_children.size(); }
 
+#ifndef BOOST_GRAPH_NO_BUNDLED_PROPERTIES
+    // Bundled properties support
+    template<typename Descriptor>
+    typename graph::detail::bundled_result<Graph, Descriptor>::type&
+    operator[](Descriptor x)
+    { 
+      if (m_parent == 0) return m_graph[x];
+      else return root().m_graph[local_to_global(x)];
+    }
+
+    template<typename Descriptor>
+    typename graph::detail::bundled_result<Graph, Descriptor>::type const&
+    operator[](Descriptor x) const
+    { 
+      if (m_parent == 0) return m_graph[x];
+      else return root().m_graph[local_to_global(x)];
+    }
+#endif // BOOST_GRAPH_NO_BUNDLED_PROPERTIES
+
     //  private:
     typedef typename property_map<Graph, edge_index_t>::type EdgeIndexMap;
     typedef typename property_traits<EdgeIndexMap>::value_type edge_index_type;
+    BOOST_STATIC_ASSERT((!is_same<edge_index_type, 
+                        boost::detail::error_property_not_found>::value));
 
     Graph m_graph;
     subgraph<Graph>* m_parent;
@@ -259,6 +275,14 @@ namespace boost {
     }
 
   };
+
+#ifndef BOOST_GRAPH_NO_BUNDLED_PROPERTIES
+  template<typename Graph>
+  struct vertex_bundle_type<subgraph<Graph> > : vertex_bundle_type<Graph> { };
+
+  template<typename Graph>
+  struct edge_bundle_type<subgraph<Graph> > : edge_bundle_type<Graph> { };
+#endif // BOOST_GRAPH_NO_BUNDLED_PROPERTIES
 
   //===========================================================================
   // Functions special to the Subgraph Class
@@ -664,11 +688,11 @@ namespace boost {
   //===========================================================================
   // Functions required by the PropertyGraph concept
 
-  template <typename GraphPtr, typename PropertyMap>
+  template <typename GraphPtr, typename PropertyMap, typename Tag>
   class subgraph_global_property_map
     : public put_get_helper<
         typename property_traits<PropertyMap>::reference,
-        subgraph_global_property_map<GraphPtr, PropertyMap> >
+        subgraph_global_property_map<GraphPtr, PropertyMap, Tag> >
   {
     typedef property_traits<PropertyMap> Traits;
   public:
@@ -679,24 +703,24 @@ namespace boost {
 
     subgraph_global_property_map() { }
 
-    subgraph_global_property_map(GraphPtr g, PropertyMap pmap)
-      : m_g(g), m_pmap(pmap) { }
+    subgraph_global_property_map(GraphPtr g)
+      : m_g(g) { }
 
     inline reference operator[](key_type e_local) const {
+      PropertyMap pmap = get(Tag(), m_g->root().m_graph);
       if (m_g->m_parent == 0)
-        return m_pmap[e_local];
+        return pmap[e_local];
       else
-        return m_pmap[m_g->local_to_global(e_local)];
+        return pmap[m_g->local_to_global(e_local)];
     }
     GraphPtr m_g;
-    PropertyMap m_pmap;
   };
 
-  template <typename GraphPtr, typename PropertyMap>
+  template <typename GraphPtr, typename PropertyMap, typename Tag>
   class subgraph_local_property_map
     : public put_get_helper<
         typename property_traits<PropertyMap>::reference,
-        subgraph_local_property_map<GraphPtr, PropertyMap> >
+        subgraph_local_property_map<GraphPtr, PropertyMap, Tag> >
   {
     typedef property_traits<PropertyMap> Traits;
   public:
@@ -707,14 +731,14 @@ namespace boost {
 
     subgraph_local_property_map() { }
 
-    subgraph_local_property_map(GraphPtr g, PropertyMap pmap)
-      : m_g(g), m_pmap(pmap) { }
+    subgraph_local_property_map(GraphPtr g)
+      : m_g(g) { }
 
     inline reference operator[](key_type e_local) const {
-      return m_pmap[e_local];
+      PropertyMap pmap = get(Tag(), *m_g);
+      return pmap[e_local];
     }
     GraphPtr m_g;
-    PropertyMap m_pmap;
   };
 
   namespace detail {
@@ -728,8 +752,8 @@ namespace boost {
         typedef typename property_map<Graph, Tag>::type PMap;
         typedef typename property_map<Graph, Tag>::const_type const_PMap;
       public:
-        typedef subgraph_global_property_map<SubGraphPtr, PMap> type;
-        typedef subgraph_global_property_map<const_SubGraphPtr, const_PMap>
+        typedef subgraph_global_property_map<SubGraphPtr, PMap, Tag> type;
+        typedef subgraph_global_property_map<const_SubGraphPtr, const_PMap, Tag>
           const_type;
       };
     };
@@ -742,8 +766,8 @@ namespace boost {
         typedef typename property_map<Graph, Tag>::type PMap;
         typedef typename property_map<Graph, Tag>::const_type const_PMap;
       public:
-        typedef subgraph_local_property_map<SubGraphPtr, PMap> type;
-        typedef subgraph_local_property_map<const_SubGraphPtr, const_PMap>
+        typedef subgraph_local_property_map<SubGraphPtr, PMap, Tag> type;
+        typedef subgraph_local_property_map<const_SubGraphPtr, const_PMap, Tag>
           const_type;
       };
     };
@@ -788,7 +812,7 @@ namespace boost {
   get(Property, subgraph<G>& g)
   {
     typedef typename property_map< subgraph<G>, Property>::type PMap;
-    return PMap(&g, get(Property(), g.m_graph));
+    return PMap(&g);
   }
 
   template <typename G, typename Property>
@@ -796,7 +820,7 @@ namespace boost {
   get(Property, const subgraph<G>& g)
   {
     typedef typename property_map< subgraph<G>, Property>::const_type PMap;
-    return PMap(&g, get(Property(), g.m_graph));
+    return PMap(&g);
   }
 
   template <typename G, typename Property, typename Key>
@@ -806,7 +830,7 @@ namespace boost {
   get(Property, const subgraph<G>& g, const Key& k)
   {
     typedef typename property_map< subgraph<G>, Property>::const_type PMap;
-    PMap pmap(&g, get(Property(), g.m_graph));
+    PMap pmap(&g);
     return pmap[k];
   }
 
@@ -815,7 +839,7 @@ namespace boost {
   put(Property, subgraph<G>& g, const Key& k, const Value& val)
   {
     typedef typename property_map< subgraph<G>, Property>::type PMap;
-    PMap pmap(&g, get(Property(), g.m_graph));
+    PMap pmap(&g);
     pmap[k] = val;
   }
 

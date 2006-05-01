@@ -1,14 +1,9 @@
 /* boost random/lagged_fibonacci.hpp header file
  *
  * Copyright Jens Maurer 2000-2001
- * Permission to use, copy, modify, sell, and distribute this software
- * is hereby granted without fee provided that the above copyright notice
- * appears in all copies and that both that copyright notice and this
- * permission notice appear in supporting documentation,
- *
- * Jens Maurer makes no representations about the suitability of this
- * software for any purpose. It is provided "as is" without express or
- * implied warranty.
+ * Distributed under the Boost Software License, Version 1.0. (See
+ * accompanying file LICENSE_1_0.txt or copy at
+ * http://www.boost.org/LICENSE_1_0.txt)
  *
  * See http://www.boost.org for most recent version including documentation.
  *
@@ -21,9 +16,11 @@
 #ifndef BOOST_RANDOM_LAGGED_FIBONACCI_HPP
 #define BOOST_RANDOM_LAGGED_FIBONACCI_HPP
 
+#include <cmath>
 #include <iostream>
 #include <algorithm>     // std::max
 #include <iterator>
+#include <cmath>         // std::pow
 #include <boost/config.hpp>
 #include <boost/limits.hpp>
 #include <boost/cstdint.hpp>
@@ -35,7 +32,15 @@
 namespace boost {
 namespace random {
 
-#  if BOOST_WORKAROUND(_MSC_FULL_VER, BOOST_TESTED_AT(13102292) && BOOST_MSVC > 1300)
+#if BOOST_WORKAROUND(_MSC_FULL_VER, BOOST_TESTED_AT(13102292)) && BOOST_MSVC > 1300
+#  define BOOST_RANDOM_EXTRACT_LF
+#endif
+
+#if defined(__APPLE_CC__) && defined(__GNUC__) && (__GNUC__ == 3) && (__GNUC_MINOR__ <= 3)
+#  define BOOST_RANDOM_EXTRACT_LF
+#endif
+
+#  ifdef BOOST_RANDOM_EXTRACT_LF
 namespace detail
 {
   template<class IStream, class F, class RealType>
@@ -84,8 +89,8 @@ public:
   BOOST_STATIC_CONSTANT(unsigned int, long_lag = p);
   BOOST_STATIC_CONSTANT(unsigned int, short_lag = q);
 
-  result_type min() const { return 0; }
-  result_type max() const { return wordmask; }
+  result_type min BOOST_PREVENT_MACRO_SUBSTITUTION () const { return 0; }
+  result_type max BOOST_PREVENT_MACRO_SUBSTITUTION () const { return wordmask; }
 
   lagged_fibonacci() { init_wordmask(); seed(); }
   explicit lagged_fibonacci(uint32_t value) { init_wordmask(); seed(value); }
@@ -151,7 +156,7 @@ public:
   friend std::basic_istream<CharT, Traits>&
   operator>>(std::basic_istream<CharT, Traits>& is, lagged_fibonacci& f)
   {
-# if BOOST_WORKAROUND(_MSC_FULL_VER, BOOST_TESTED_AT(13102292)) && BOOST_MSVC > 1300
+# ifdef BOOST_RANDOM_EXTRACT_LF
       return detail::extract_lagged_fibonacci(is, f, f.i, f.x);
 # else
       is >> f.i >> std::ws;
@@ -232,7 +237,7 @@ struct fibonacci_validation<T, P, Q>  \
   BOOST_STATIC_CONSTANT(bool, is_specialized = true);     \
   static T value() { return V; }      \
   static T tolerance()                \
-    { return std::max(E, static_cast<T>(5*std::numeric_limits<T>::epsilon())); } \
+{ return (std::max)(E, static_cast<T>(5*std::numeric_limits<T>::epsilon())); } \
 };
 // (The extra static_cast<T> in the std::max call above is actually
 // unnecessary except for HP aCC 1.30, which claims that
@@ -324,8 +329,8 @@ public:
       throw std::invalid_argument("lagged_fibonacci_01::seed");
   }
 
-  result_type min() const { return result_type(0); }
-  result_type max() const { return result_type(1); }
+  result_type min BOOST_PREVENT_MACRO_SUBSTITUTION () const { return result_type(0); }
+  result_type max BOOST_PREVENT_MACRO_SUBSTITUTION () const { return result_type(1); }
 
   result_type operator()()
   {
@@ -368,7 +373,7 @@ public:
   friend std::basic_istream<CharT, Traits>&
   operator>>(std::basic_istream<CharT, Traits>& is, lagged_fibonacci_01& f)
     {
-# if BOOST_WORKAROUND(_MSC_FULL_VER, BOOST_TESTED_AT(13102292)) && BOOST_MSVC > 1300
+# ifdef BOOST_RANDOM_EXTRACT_LF
         return detail::extract_lagged_fibonacci_01(is, f, f.i, f.x, f._modulus);
 # else
         is >> f.i >> std::ws;

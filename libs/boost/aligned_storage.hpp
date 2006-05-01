@@ -6,13 +6,9 @@
 // Copyright (c) 2002-2003
 // Eric Friedman, Itay Maman
 //
-// Permission to use, copy, modify, distribute and sell this software
-// and its documentation for any purpose is hereby granted without fee, 
-// provided that the above copyright notice appears in all copies and 
-// that both the copyright notice and this permission notice appear in 
-// supporting documentation. No representations are made about the 
-// suitability of this software for any purpose. It is provided "as is" 
-// without express or implied warranty.
+// Distributed under the Boost Software License, Version 1.0. (See
+// accompanying file LICENSE_1_0.txt or copy at
+// http://www.boost.org/LICENSE_1_0.txt)
 
 #ifndef BOOST_ALIGNED_STORAGE_HPP
 #define BOOST_ALIGNED_STORAGE_HPP
@@ -23,9 +19,12 @@
 #include "boost/detail/workaround.hpp"
 #include "boost/type_traits/alignment_of.hpp"
 #include "boost/type_traits/type_with_alignment.hpp"
+#include "boost/type_traits/is_pod.hpp"
 
-#include "boost/mpl/apply_if.hpp"
+#include "boost/mpl/eval_if.hpp"
 #include "boost/mpl/identity.hpp"
+
+#include "boost/type_traits/detail/bool_trait_def.hpp"
 
 namespace boost {
 
@@ -35,6 +34,27 @@ BOOST_STATIC_CONSTANT(
       std::size_t
     , alignment_of_max_align = ::boost::alignment_of<max_align>::value
     );
+
+//
+// To be TR1 conforming this must be a POD type:
+//
+template <
+      std::size_t size_
+    , std::size_t alignment_
+>
+struct aligned_storage_imp
+{
+    union data_t
+    {
+        char buf[size_];
+
+        typename mpl::eval_if_c<
+              alignment_ == std::size_t(-1)
+            , mpl::identity<detail::max_align>
+            , type_with_alignment<alignment_>
+            >::type align_;
+    } data_;
+};
 
 }} // namespace detail::aligned_storage
 
@@ -46,18 +66,11 @@ class aligned_storage
 {
 private: // representation
 
-    union data_t
-    {
-        char buf[size_];
-
-        typename mpl::apply_if_c<
-              alignment_ == std::size_t(-1)
-            , mpl::identity<detail::max_align>
-            , type_with_alignment<alignment_>
-            >::type align_;
-    } data_;
+   detail::aligned_storage::aligned_storage_imp<size_, alignment_> data_;
 
 public: // constants
+
+    typedef detail::aligned_storage::aligned_storage_imp<size_, alignment_> type;
 
     BOOST_STATIC_CONSTANT(
           std::size_t
@@ -72,21 +85,24 @@ public: // constants
             )
         );
 
-#if !BOOST_WORKAROUND(__GNUC__, <= 2)
+#if defined(__GNUC__) &&\
+    (__GNUC__ >  3) ||\
+    (__GNUC__ == 3 && (__GNUC_MINOR__ >  2 ||\
+                      (__GNUC_MINOR__ == 2 && __GNUC_PATCHLEVEL__ >=3)))
 
 private: // noncopyable
 
     aligned_storage(const aligned_storage&);
     aligned_storage& operator=(const aligned_storage&);
 
-#else // gcc2.x
+#else // gcc less than 3.2.3
 
 public: // _should_ be noncopyable, but GCC compiler emits error
 
     aligned_storage(const aligned_storage&);
     aligned_storage& operator=(const aligned_storage&);
 
-#endif // gcc2.x workaround
+#endif // gcc < 3.2.3 workaround
 
 public: // structors
 
@@ -102,14 +118,14 @@ public: // accessors
 
     void* address()
     {
-        return &data_.buf[0];
+        return this;
     }
 
 #if !BOOST_WORKAROUND(BOOST_MSVC, <= 1200)
 
     const void* address() const
     {
-        return &data_.buf[0];
+        return this;
     }
 
 #else // MSVC6
@@ -133,6 +149,22 @@ const void* aligned_storage<S,A>::address() const
 
 #endif // MSVC6 workaround
 
+#ifndef BOOST_NO_TEMPLATE_PARTIAL_SPECIALIZATION
+//
+// Make sure that is_pod recognises aligned_storage<>::type
+// as a POD (Note that aligned_storage<> itself is not a POD):
+//
+template <std::size_t size_, std::size_t alignment_>
+struct is_pod<boost::detail::aligned_storage::aligned_storage_imp<size_,alignment_> >
+   BOOST_TT_AUX_BOOL_C_BASE(true)
+{ 
+    BOOST_TT_AUX_BOOL_TRAIT_VALUE_DECL(true)
+}; 
+#endif
+
+
 } // namespace boost
+
+#include "boost/type_traits/detail/bool_trait_undef.hpp"
 
 #endif // BOOST_ALIGNED_STORAGE_HPP

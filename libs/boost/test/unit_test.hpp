@@ -1,7 +1,7 @@
-//  (C) Copyright Gennadiy Rozental 2001-2003.
-//  Use, modification, and distribution are subject to the 
-//  Boost Software License, Version 1.0. (See accompanying file 
-//  LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+//  (C) Copyright Gennadiy Rozental 2001-2005.
+//  Distributed under the Boost Software License, Version 1.0.
+//  (See accompanying file LICENSE_1_0.txt or copy at 
+//  http://www.boost.org/LICENSE_1_0.txt)
 
 //  See http://www.boost.org/libs/test for the library home page.
 //
@@ -12,8 +12,8 @@
 //  Description : wrapper include . To be used by end-user
 // ***************************************************************************
 
-#ifndef BOOST_UNIT_TEST_HPP
-#define BOOST_UNIT_TEST_HPP
+#ifndef BOOST_TEST_UNIT_TEST_HPP_071894GER
+#define BOOST_TEST_UNIT_TEST_HPP_071894GER
 
 #include <boost/test/test_tools.hpp>
 #include <boost/test/unit_test_suite.hpp>
@@ -32,16 +32,18 @@
 //  Revision History :
 //  
 //  $Log$
-//  Revision 1.1.1.1  2004/03/05 22:22:53  tjensen
-//  This is version 1.31.0 of the Boost libraries
+//  Revision 1.1.1.2  2006/05/01 14:12:16  tjensen
+//  - import of Boost-1.33.1 release
 //
-//  Revision 1.11  2003/12/01 17:13:22  rogeeff
-//  *** empty log message ***
+//  Revision 1.15  2005/02/20 08:27:06  rogeeff
+//  This a major update for Boost.Test framework. See release docs for complete list of fixes/updates
 //
-//  Revision 1.10  2003/12/01 00:41:56  rogeeff
-//  prerelease cleaning
+//  Revision 1.14  2005/02/01 06:40:06  rogeeff
+//  copyright update
+//  old log entries removed
+//  minor stilistic changes
+//  depricated tools removed
 //
-
 // ***************************************************************************
 
-#endif // BOOST_UNIT_TEST_HPP
+#endif // BOOST_TEST_UNIT_TEST_HPP_071894GER

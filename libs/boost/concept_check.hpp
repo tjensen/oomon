@@ -1,9 +1,8 @@
 //
-// (C) Copyright Jeremy Siek 2000. Permission to copy, use, modify,
-// sell and distribute this software is granted provided this
-// copyright notice appears in all copies. This software is provided
-// "as is" without express or implied warranty, and with no claim as
-// to its suitability for any purpose.
+// (C) Copyright Jeremy Siek 2000.
+// Distributed under the Boost Software License, Version 1.0. (See
+// accompanying file LICENSE_1_0.txt or copy at
+// http://www.boost.org/LICENSE_1_0.txt)
 //
 // Revision History:
 //   05 May   2001: Workarounds for HP aCC from Thomas Matelich. (Jeremy Siek)
@@ -180,7 +179,7 @@ struct require_same { typedef T type; };
   template <> struct SignedIntegerConcept<int> { void constraints() {} };
   template <> struct SignedIntegerConcept<long> { void constraints() {} };
 # if defined(BOOST_HAS_LONG_LONG)
-  template <> struct SignedIntegerConcept<long long> { void constraints() {} };
+  template <> struct SignedIntegerConcept< ::boost::long_long_type> { void constraints() {} };
 # endif
   // etc.
 #endif      
@@ -689,12 +688,12 @@ struct require_same { typedef T type; };
       function_requires< AssignableConcept<Container> >();
       const_constraints(c);
     }
-    void const_constraints(const Container& c) {
-      i = c.begin();
-      i = c.end();
-      n = c.size();
-      n = c.max_size();
-      b = c.empty();
+    void const_constraints(const Container& cc) {
+      i = cc.begin();
+      i = cc.end();
+      n = cc.size();
+      n = cc.max_size();
+      b = cc.empty();
     }
     Container c;
     bool b;
@@ -758,9 +757,9 @@ struct require_same { typedef T type; };
         BidirectionalIteratorConcept<const_reverse_iterator> >();
       const_constraints(c);
     }
-    void const_constraints(const ReversibleContainer& c) {
-      const_reverse_iterator i = c.rbegin();
-      i = c.rend();
+    void const_constraints(const ReversibleContainer& cc) {
+      const_reverse_iterator i = cc.rbegin();
+      i = cc.rend();
     }
     ReversibleContainer c;
   };
@@ -802,8 +801,8 @@ struct require_same { typedef T type; };
 
       const_constraints(c);
     }
-    void const_constraints(const RandomAccessContainer& c) {
-      const_reference r = c[n];
+    void const_constraints(const RandomAccessContainer& cc) {
+      const_reference r = cc[n];
       ignore_unused_variable_warning(r);
     }
     RandomAccessContainer c;
@@ -906,8 +905,8 @@ struct require_same { typedef T type; };
       reference r = c.back();
       ignore_unused_variable_warning(r);
     }
-    void const_constraints(const BackInsertionSequence& c) {
-      const_reference r = c.back();
+    void const_constraints(const BackInsertionSequence& cc) {
+      const_reference r = cc.back();
       ignore_unused_variable_warning(r);
     };
     BackInsertionSequence c;
@@ -928,10 +927,10 @@ struct require_same { typedef T type; };
       c.erase(r.first, r.second);
       const_constraints(c);
     }
-    void const_constraints(const AssociativeContainer& c) {
-      ci = c.find(k);
-      n = c.count(k);
-      cr = c.equal_range(k);
+    void const_constraints(const AssociativeContainer& cc) {
+      ci = cc.find(k);
+      n = cc.count(k);
+      cr = cc.equal_range(k);
     }
     typedef typename AssociativeContainer::iterator iterator;
     typedef typename AssociativeContainer::const_iterator const_iterator;

@@ -1,8 +1,7 @@
-// Copyright David Abrahams 2002. Permission to copy, use,
-// modify, sell and distribute this software is granted provided this
-// copyright notice appears in all copies. This software is provided
-// "as is" without express or implied warranty, and with no claim as
-// to its suitability for any purpose.
+// Copyright David Abrahams 2002.
+// Distributed under the Boost Software License, Version 1.0. (See
+// accompanying file LICENSE_1_0.txt or copy at
+// http://www.boost.org/LICENSE_1_0.txt)
 #ifndef REGISTRATIONS_DWA2002223_HPP
 # define REGISTRATIONS_DWA2002223_HPP
 
@@ -34,7 +33,7 @@ struct rvalue_from_python_chain
 struct BOOST_PYTHON_DECL registration
 {
  public: // member functions
-    explicit registration(type_info);
+    explicit registration(type_info target, bool is_shared_ptr = false);
     
     // Convert the appropriately-typed data to Python
     PyObject* to_python(void const volatile*) const;
@@ -57,7 +56,11 @@ struct BOOST_PYTHON_DECL registration
 
     // The unique to_python converter for the associated C++ type.
     to_python_function_t m_to_python;
-    
+
+    // True iff this type is a shared_ptr.  Needed for special rvalue
+    // from_python handling.
+    const bool is_shared_ptr;
+
 # if BOOST_WORKAROUND(__MWERKS__, BOOST_TESTED_AT(0x3003))
  private:
     void operator=(registration); // This is not defined, and just keeps MWCW happy.
@@ -67,12 +70,13 @@ struct BOOST_PYTHON_DECL registration
 //
 // implementations
 //
-inline registration::registration(type_info target_type)
+inline registration::registration(type_info target_type, bool is_shared_ptr)
     : target_type(target_type)
       , lvalue_chain(0)
       , rvalue_chain(0)
       , m_class_object(0)
       , m_to_python(0)
+      , is_shared_ptr(is_shared_ptr)
 {}
 
 inline bool operator<(registration const& lhs, registration const& rhs)

@@ -14,24 +14,22 @@
 //  GeNeSys mbH & Co. KG in producing this work.
 //
 
-#ifndef BOOST_UBLAS_IO_H
-#define BOOST_UBLAS_IO_H
+#ifndef _BOOST_UBLAS_IO_
+#define _BOOST_UBLAS_IO_
 
-// Clients should only pay for what they use.
-// Thanks to Michael Stevens for spotting this.
-// #include <iostream>
+// Only forward definition required to define stream operations
 #include <iosfwd>
+#include <boost/numeric/ublas/matrix_expression.hpp>
+
 
 namespace boost { namespace numeric { namespace ublas {
 
-#ifdef BOOST_UBLAS_USE_BASIC_STREAM
-
     template<class E, class T, class VE>
-    // This function seems to be big. So we do not let the compiler inline it.
-    // BOOST_UBLAS_INLINE
+    // BOOST_UBLAS_INLINE This function seems to be big. So we do not let the compiler inline it.
     std::basic_ostream<E, T> &operator << (std::basic_ostream<E, T> &os,
                                            const vector_expression<VE> &v) {
-        std::size_t size = v ().size ();
+        typedef typename VE::size_type size_type;
+        size_type size = v ().size ();
         std::basic_ostringstream<E, T, std::allocator<E> > s;
         s.flags (os.flags ());
         s.imbue (os.getloc ());
@@ -39,51 +37,32 @@ namespace boost { namespace numeric { namespace ublas {
         s << '[' << size << "](";
         if (size > 0)
             s << v () (0);
-        for (std::size_t i = 1; i < size; ++ i)
+        for (size_type i = 1; i < size; ++ i)
             s << ',' << v () (i);
         s << ')';
         return os << s.str ().c_str ();
     }
 
     template<class E, class T, class VT, class VA>
-    // This function seems to be big. So we do not let the compiler inline it.
-    // BOOST_UBLAS_INLINE
-    std::basic_ostream<E, T> &operator << (std::basic_ostream<E, T> &os,
-                                           const vector<VT, VA> &v) {
-        std::size_t size = v.size ();
-        std::basic_ostringstream<E, T, std::allocator<E> > s;
-        s.flags (os.flags ());
-        s.imbue (os.getloc ());
-        s.precision (os.precision ());
-        s << '[' << size << "](";
-        if (size > 0)
-            s << v (0);
-        for (std::size_t i = 1; i < size; ++ i)
-            s << ',' << v (i);
-        s << ')';
-        return os << s.str ().c_str ();
-    }
-
-    template<class E, class T, class VT, class VA>
-    // This function seems to be big. So we do not let the compiler inline it.
-    // BOOST_UBLAS_INLINE
+    // BOOST_UBLAS_INLINE This function seems to be big. So we do not let the compiler inline it.
     std::basic_istream<E, T> &operator >> (std::basic_istream<E, T> &is,
                                            vector<VT, VA> &v) {
+        typedef typename vector<VT, VA>::size_type size_type;
         E ch;
-        std::size_t size;
+        size_type size;
         if (is >> ch && ch != '[') {
             is.putback (ch);
             is.setstate (std::ios_base::failbit);
         } else if (is >> size >> ch && ch != ']') {
             is.putback (ch);
             is.setstate (std::ios_base::failbit);
-        } else {
+        } else if (! is.fail ()) {
             vector<VT, VA> s (size);
             if (is >> ch && ch != '(') {
                 is.putback (ch);
                 is.setstate (std::ios_base::failbit);
-            } else {
-                for (std::size_t i = 0; i < size; i ++) {
+            } else if (! is.fail ()) {
+                for (size_type i = 0; i < size; i ++) {
                     if (is >> s (i) >> ch && ch != ',') {
                         is.putback (ch);
                         if (i < size - 1)
@@ -96,21 +75,19 @@ namespace boost { namespace numeric { namespace ublas {
                     is.setstate (std::ios_base::failbit);
                 }
             }
-            if (! is.fail ()) {
-                v.resize (size);
-                v = s;
-            }
+            if (! is.fail ())
+                v.swap (s);
         }
         return is;
     }
 
     template<class E, class T, class ME>
-    // This function seems to be big. So we do not let the compiler inline it.
-    // BOOST_UBLAS_INLINE
+    // BOOST_UBLAS_INLINE This function seems to be big. So we do not let the compiler inline it.
     std::basic_ostream<E, T> &operator << (std::basic_ostream<E, T> &os,
                                            const matrix_expression<ME> &m) {
-        std::size_t size1 = m ().size1 ();
-        std::size_t size2 = m ().size2 ();
+        typedef typename ME::size_type size_type;
+        size_type size1 = m ().size1 ();
+        size_type size2 = m ().size2 ();
         std::basic_ostringstream<E, T, std::allocator<E> > s;
         s.flags (os.flags ());
         s.imbue (os.getloc ());
@@ -120,15 +97,15 @@ namespace boost { namespace numeric { namespace ublas {
             s << '(' ;
             if (size2 > 0)
                 s << m () (0, 0);
-            for (std::size_t j = 1; j < size2; ++ j)
+            for (size_type j = 1; j < size2; ++ j)
                 s << ',' << m () (0, j);
             s << ')';
         }
-        for (std::size_t i = 1; i < size1; ++ i) {
+        for (size_type i = 1; i < size1; ++ i) {
             s << ",(" ;
             if (size2 > 0)
                 s << m () (i, 0);
-            for (std::size_t j = 1; j < size2; ++ j)
+            for (size_type j = 1; j < size2; ++ j)
                 s << ',' << m () (i, j);
             s << ')';
         }
@@ -137,44 +114,12 @@ namespace boost { namespace numeric { namespace ublas {
     }
 
     template<class E, class T, class MT, class MF, class MA>
-    // This function seems to be big. So we do not let the compiler inline it.
-    // BOOST_UBLAS_INLINE
-    std::basic_ostream<E, T> &operator << (std::basic_ostream<E, T> &os,
-                                           const matrix<MT, MF, MA> &m) {
-        std::size_t size1 = m.size1 ();
-        std::size_t size2 = m.size2 ();
-        std::basic_ostringstream<E, T, std::allocator<E> > s;
-        s.flags (os.flags ());
-        s.imbue (os.getloc ());
-        s.precision (os.precision ());
-        s << '[' << size1 << ',' << size2 << "](";
-        if (size1 > 0) {
-            s << '(' ;
-            if (size2 > 0)
-                s << m (0, 0);
-            for (std::size_t j = 1; j < size2; ++ j)
-                s << ',' << m (0, j);
-            s << ')';
-        }
-        for (std::size_t i = 1; i < size1; ++ i) {
-            s << ",(" ;
-            if (size2 > 0)
-                s << m (i, 0);
-            for (std::size_t j = 1; j < size2; ++ j)
-                s << ',' << m (i, j);
-            s << ')';
-        }
-        s << ')';
-        return os << s.str ().c_str ();
-    }
-
-    template<class E, class T, class MT, class MF, class MA>
-    // This function seems to be big. So we do not let the compiler inline it.
-    // BOOST_UBLAS_INLINE
+    // BOOST_UBLAS_INLINE This function seems to be big. So we do not let the compiler inline it.
     std::basic_istream<E, T> &operator >> (std::basic_istream<E, T> &is,
                                            matrix<MT, MF, MA> &m) {
+        typedef typename matrix<MT, MF, MA>::size_type size_type;
         E ch;
-        std::size_t size1, size2;
+        size_type size1, size2;
         if (is >> ch && ch != '[') {
             is.putback (ch);
             is.setstate (std::ios_base::failbit);
@@ -184,19 +129,19 @@ namespace boost { namespace numeric { namespace ublas {
         } else if (is >> size2 >> ch && ch != ']') {
             is.putback (ch);
             is.setstate (std::ios_base::failbit);
-        } else {
+        } else if (! is.fail ()) {
             matrix<MT, MF, MA> s (size1, size2);
             if (is >> ch && ch != '(') {
                 is.putback (ch);
                 is.setstate (std::ios_base::failbit);
-            } else {
-                for (std::size_t i = 0; i < size1; i ++) {
+            } else if (! is.fail ()) {
+                for (size_type i = 0; i < size1; i ++) {
                     if (is >> ch && ch != '(') {
                         is.putback (ch);
                         is.setstate (std::ios_base::failbit);
                         break;
                     }
-                    for (std::size_t j = 0; j < size2; j ++) {
+                    for (size_type j = 0; j < size2; j ++) {
                         if (is >> s (i, j) >> ch && ch != ',') {
                             is.putback (ch);
                             if (j < size2 - 1) {
@@ -223,212 +168,85 @@ namespace boost { namespace numeric { namespace ublas {
                     is.setstate (std::ios_base::failbit);
                 }
             }
-            if (! is.fail ()) {
-                m.resize (size1, size2);
-                m = s;
-            }
+            if (! is.fail ())
+                m.swap (s);
         }
         return is;
     }
 
-#endif
-
-#ifdef BOOST_UBLAS_USE_STREAM
-
-    template<class VE>
-    // This function seems to be big. So we do not let the compiler inline it.
-    // BOOST_UBLAS_INLINE
-    std::ostream &operator << (std::ostream &os,
-                               const vector_expression<VE> &v) {
-        std::size_t size = v ().size ();
-        os << '[' << size << "](";
-        if (size > 0)
-            os << v () (0);
-        for (std::size_t i = 1; i < size; ++ i)
-            os << ',' << v () (i);
-        os << ')';
-        return os;
-    }
-
-    template<class VT, class VA>
-    // This function seems to be big. So we do not let the compiler inline it.
-    // BOOST_UBLAS_INLINE
-    std::ostream &operator << (std::ostream &os,
-                               const vector<VT, VA> &v) {
-        std::size_t size = v.size ();
-        os << '[' << size << "](";
-        if (size > 0)
-            os << v (0);
-        for (std::size_t i = 1; i < size; ++ i)
-            os << ',' << v (i);
-        os << ')';
-        return os;
-    }
-
-    template<class VT, class VA>
-    // This function seems to be big. So we do not let the compiler inline it.
-    // BOOST_UBLAS_INLINE
-    std::istream &operator >> (std::istream &is,
-                               vector<VT, VA> &v) {
-        char ch;
-        std::size_t size;
+    // Special input operator for symmetrix_matrix
+    template<class E, class T, class MT, class MF1, class MF2, class MA>
+    // BOOST_UBLAS_INLINE This function seems to be big. So we do not let the compiler inline it.
+    std::basic_istream<E, T> &operator >> (std::basic_istream<E, T> &is,
+                                           symmetric_matrix<MT, MF1, MF2, MA> &m) {
+        typedef typename symmetric_matrix<MT, MF1, MF2, MA>::size_type size_type;
+        E ch;
+        size_type size1, size2;
+        MT value;
         if (is >> ch && ch != '[') {
             is.putback (ch);
-            is.setstate (std::ios::failbit);
-        } else if (is >> size >> ch && ch != ']') {
-            is.putback (ch);
-            is.setstate (std::ios::failbit);
-        } else {
-            vector<VT, VA> s (size);
-            if (is >> ch && ch != '(') {
-                is.putback (ch);
-                is.setstate (std::ios::failbit);
-            } else {
-                for (std::size_t i = 0; i < size; i ++) {
-                    if (is >> s (i) >> ch && ch != ',') {
-                        is.putback (ch);
-                        if (i < size - 1)
-                            is.setstate (std::ios::failbit);
-                        break;
-                    }
-                }
-                if (is >> ch && ch != ')') {
-                    is.putback (ch);
-                    is.setstate (std::ios::failbit);
-                }
-            }
-            if (! is.fail ()) {
-                v.resize (size);
-                v = s;
-            }
-        }
-        return is;
-    }
-
-    template<class ME>
-    // This function seems to be big. So we do not let the compiler inline it.
-    // BOOST_UBLAS_INLINE
-    std::ostream &operator << (std::ostream &os,
-                               const matrix_expression<ME> &m) {
-        std::size_t size1 = m ().size1 ();
-        std::size_t size2 = m ().size2 ();
-        os << '[' << size1 << ',' << size2 << "](";
-        if (size1 > 0) {
-            os << '(' ;
-            if (size2 > 0)
-                os << m () (0, 0);
-            for (std::size_t j = 1; j < size2; ++ j)
-                os << ',' << m () (0, j);
-            os << ')';
-        }
-        for (std::size_t i = 1; i < size1; ++ i) {
-            os << ",(" ;
-            if (size2 > 0)
-                os << m () (i, 0);
-            for (std::size_t j = 1; j < size2; ++ j)
-                os << ',' << m () (i, j);
-            os << ')';
-        }
-        os << ')';
-        return os;
-    }
-
-    template<class MT, class MF, class MA>
-    // This function seems to be big. So we do not let the compiler inline it.
-    // BOOST_UBLAS_INLINE
-    std::ostream &operator << (std::ostream &os,
-                               const matrix<MT, MF, MA> &m) {
-        std::size_t size1 = m.size1 ();
-        std::size_t size2 = m.size2 ();
-        os << '[' << size1 << ',' << size2 << "](";
-        if (size1 > 0) {
-            os << '(' ;
-            if (size2 > 0)
-                os << m (0, 0);
-            for (std::size_t j = 1; j < size2; ++ j)
-                os << ',' << m (0, j);
-            os << ')';
-        }
-        for (std::size_t i = 1; i < size1; ++ i) {
-            os << ",(" ;
-            if (size2 > 0)
-                os << m (i, 0);
-            for (std::size_t j = 1; j < size2; ++ j)
-                os << ',' << m (i, j);
-            os << ')';
-        }
-        os << ')';
-        return os;
-    }
-
-    template<class MT, class MF, class MA>
-    // This function seems to be big. So we do not let the compiler inline it.
-    // BOOST_UBLAS_INLINE
-    std::istream &operator >> (std::istream &is,
-                               matrix<MT, MF, MA> &m) {
-        char ch;
-        std::size_t size1, size2;
-        if (is >> ch && ch != '[') {
-            is.putback (ch);
-            is.setstate (std::ios::failbit);
+            is.setstate (std::ios_base::failbit);
         } else if (is >> size1 >> ch && ch != ',') {
             is.putback (ch);
-            is.setstate (std::ios::failbit);
-        } else if (is >> size2 >> ch && ch != ']') {
+            is.setstate (std::ios_base::failbit);
+        } else if (is >> size2 >> ch && (size2 != size1 || ch != ']')) { // symmetric matrix must be square
             is.putback (ch);
-            is.setstate (std::ios::failbit);
-        } else {
-            matrix<MT, MF, MA> s (size1, size2);
+            is.setstate (std::ios_base::failbit);
+        } else if (! is.fail ()) {
+            symmetric_matrix<MT, MF1, MF2, MA> s (size1, size2);
             if (is >> ch && ch != '(') {
                 is.putback (ch);
-                is.setstate (std::ios::failbit);
-            } else {
-                for (std::size_t i = 0; i < size1; i ++) {
+                is.setstate (std::ios_base::failbit);
+             } else if (! is.fail ()) {
+                for (size_type i = 0; i < size1; i ++) {
                     if (is >> ch && ch != '(') {
                         is.putback (ch);
-                        is.setstate (std::ios::failbit);
+                        is.setstate (std::ios_base::failbit);
                         break;
                     }
-                    for (std::size_t j = 0; j < size2; j ++) {
-                        if (is >> s (i, j) >> ch && ch != ',') {
+                    for (size_type j = 0; j < size2; j ++) {
+                        if (is >> value >> ch && ch != ',') {
                             is.putback (ch);
                             if (j < size2 - 1) {
-                                is.setstate (std::ios::failbit);
+                                is.setstate (std::ios_base::failbit);
                                 break;
                             }
                         }
-                    }
-                    if (is >> ch && ch != ')') {
-                        is.putback (ch);
-                        is.setstate (std::ios::failbit);
-                        break;
-                    }
-                    if (is >> ch && ch != ',') {
-                       is.putback (ch);
-                       if (i < size1 - 1) {
-                            is.setstate (std::ios::failbit);
+                        if (i <= j) { 
+                             // this is the first time we read this element - set the value
+                            s(i,j) = value;
+                        }
+                        else if ( s(i,j) != value ) {
+                            // matrix is not symmetric
+                            is.setstate (std::ios_base::failbit);
                             break;
-                       }
-                    }
+                        }
+                     }
+                     if (is >> ch && ch != ')') {
+                         is.putback (ch);
+                         is.setstate (std::ios_base::failbit);
+                         break;
+                     }
+                     if (is >> ch && ch != ',') {
+                        is.putback (ch);
+                        if (i < size1 - 1) {
+                             is.setstate (std::ios_base::failbit);
+                             break;
+                        }
+                     }
                 }
                 if (is >> ch && ch != ')') {
                     is.putback (ch);
-                    is.setstate (std::ios::failbit);
+                    is.setstate (std::ios_base::failbit);
                 }
             }
-            if (! is.fail ()) {
-                m.resize (size1, size2);
-                m = s;
-            }
+            if (! is.fail ())
+                m.swap (s);
         }
         return is;
     }
-
-#endif
+ 
 
 }}}
 
 #endif
-
-
-

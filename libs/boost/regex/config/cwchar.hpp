@@ -1,7 +1,7 @@
 /*
  *
  * Copyright (c) 1998-2002
- * Dr John Maddock
+ * John Maddock
  *
  * Use, modification and distribution are subject to the 
  * Boost Software License, Version 1.0. (See accompanying file 
@@ -22,6 +22,29 @@
 #include <cwchar>
 #include <cwctype>
 #include <boost/config.hpp>
+
+#if defined(__STD_RWCOMPILER_H__) || defined(_RWSTD_VER)
+// apparently this is required for the RW STL on Linux:
+#undef iswalnum
+#undef iswalpha
+#undef iswblank
+#undef iswcntrl
+#undef iswdigit
+#undef iswgraph
+#undef iswlower
+#undef iswprint
+#undef iswprint
+#undef iswpunct
+#undef iswspace
+#undef iswupper
+#undef iswxdigit
+#undef iswctype
+#undef towlower
+#undef towupper
+#undef towctrans
+#undef wctrans
+#undef wctype
+#endif
 
 namespace std{
 

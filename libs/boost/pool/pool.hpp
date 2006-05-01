@@ -1,9 +1,8 @@
 // Copyright (C) 2000, 2001 Stephen Cleary
 //
-// This file can be redistributed and/or modified under the terms found
-//  in "copyright.html"
-// This software and its documentation is provided "as is" without express or
-//  implied warranty, and with no claim as to its suitability for any purpose.
+// Distributed under the Boost Software License, Version 1.0. (See
+// accompanying file LICENSE_1_0.txt or copy at
+// http://www.boost.org/LICENSE_1_0.txt)
 //
 // See http://www.boost.org for updates, documentation, and revision history.
 
@@ -307,6 +306,9 @@ bool pool<UserAllocator>::release_memory()
     //  prev_free points to either:
     //    the last free chunk in some previous memory block
     //    0 if there is no such free chunk
+    //  prev is either:
+    //    the PODptr whose next() is ptr
+    //    !valid() if there is no such PODptr
 
     // If there are no more free memory chunks, then every remaining
     //  block is allocated out to its fullest capacity, and we can't
@@ -319,6 +321,8 @@ bool pool<UserAllocator>::release_memory()
     bool all_chunks_free = true;
 
     // Iterate 'i' through all chunks in the memory block
+    // if free starts in the memory block, be careful to keep it there
+    void * saved_free = free;
     for (char * i = ptr.begin(); i != ptr.end(); i += partition_size)
     {
       // If this chunk is not free
@@ -327,6 +331,8 @@ bool pool<UserAllocator>::release_memory()
         // We won't be able to free this block
         all_chunks_free = false;
 
+        // free might have travelled outside ptr
+        free = saved_free;
         // Abort searching the chunks; we won't be able to free this
         //  block because a chunk is not free.
         break;
@@ -336,25 +342,32 @@ bool pool<UserAllocator>::release_memory()
       free = nextof(free);
     }
 
+    // post: if the memory block has any chunks, free points to one of them
+    // otherwise, our assertions above are still valid
+
     const details::PODptr<size_type> next = ptr.next();
 
     if (!all_chunks_free)
     {
-      // Rush through all free chunks from this block
-      std::less<void *> lt;
-      void * const last = ptr.end() - partition_size;
-      do
+      if (is_from(free, ptr.begin(), ptr.element_size()))
       {
-        free = nextof(free);
-      } while (lt(free, last));
-
-      // Increment free one more time and set prev_free to maintain the
-      //  invariants:
+        std::less<void *> lt;
+        void * const end = ptr.end();
+        do
+        {
+          prev_free = free;
+          free = nextof(free);
+        } while (free && lt(free, end));
+      }
+      // This invariant is now restored:
       //     free points to the first free chunk in some next memory block, or
       //       0 if there is no such chunk.
       //     prev_free points to the last free chunk in this memory block.
-      prev_free = free;
-      free = nextof(free);
+      
+      // We are just about to advance ptr.  Maintain the invariant:
+      // prev is the PODptr whose next() is ptr, or !valid()
+      // if there is no such PODptr
+      prev = ptr;
     }
     else
     {
@@ -497,7 +510,8 @@ void * pool<UserAllocator>::ordered_malloc(const size_type n)
     return ret;
 
   // Not enougn memory in our storages; make a new storage,
-  next_size = std::max(next_size, num_chunks);
+  BOOST_USING_STD_MAX();
+  next_size = max BOOST_PREVENT_MACRO_SUBSTITUTION(next_size, num_chunks);
   const size_type POD_size = next_size * partition_size +
       details::pool::ct_lcm<sizeof(size_type), sizeof(void *)>::value + sizeof(size_type);
   char * const ptr = UserAllocator::malloc(POD_size);

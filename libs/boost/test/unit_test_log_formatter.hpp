@@ -1,7 +1,7 @@
-//  (C) Copyright Gennadiy Rozental 2003.
-//  Use, modification, and distribution are subject to the 
-//  Boost Software License, Version 1.0. (See accompanying file 
-//  LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+//  (C) Copyright Gennadiy Rozental 2003-2005.
+//  Distributed under the Boost Software License, Version 1.0.
+//  (See accompanying file LICENSE_1_0.txt or copy at 
+//  http://www.boost.org/LICENSE_1_0.txt)
 
 //  See http://www.boost.org/libs/test for the library home page.
 //
@@ -12,22 +12,60 @@
 //  Description : 
 // ***************************************************************************
 
-#ifndef BOOST_UNIT_TEST_LOG_FORMATTER_HPP
-#define BOOST_UNIT_TEST_LOG_FORMATTER_HPP
+#ifndef BOOST_TEST_UNIT_TEST_LOG_FORMATTER_HPP_071894GER
+#define BOOST_TEST_UNIT_TEST_LOG_FORMATTER_HPP_071894GER
 
 // Boost.Test
-#include <boost/test/detail/unit_test_config.hpp>
-#include <boost/test/unit_test_log.hpp>
-
-// BOOST
+#include <boost/test/detail/global_typedef.hpp>
+#include <boost/test/detail/log_level.hpp>
+#include <boost/test/detail/fwd_decl.hpp>
 
 // STL
 #include <iosfwd>
-#include <string> // need only forward decl
+#include <string> // for std::string
+
+#include <boost/test/detail/suppress_warnings.hpp>
+
+//____________________________________________________________________________//
 
 namespace boost {
 
-namespace unit_test_framework {
+namespace unit_test {
+
+// ************************************************************************** //
+// **************                log_entry_data                ************** //
+// ************************************************************************** //
+
+struct log_entry_data {
+    std::string     m_file;
+    std::size_t     m_line;
+    log_level       m_level;
+
+    void clear()
+    {
+        m_file    = std::string();
+        m_line    = 0;
+        m_level   = log_nothing;
+    }
+};
+
+// ************************************************************************** //
+// **************                checkpoint_data               ************** //
+// ************************************************************************** //
+
+struct log_checkpoint_data
+{
+    std::string     m_file;
+    std::size_t     m_line;
+    std::string     m_message;
+
+    void clear()
+    {
+        m_file    = std::string();
+        m_line    = 0;
+        m_message = std::string();
+    }
+};
 
 // ************************************************************************** //
 // **************            unit_test_log_formatter           ************** //
@@ -41,51 +79,69 @@ public:
                            BOOST_UTL_ET_ERROR,
                            BOOST_UTL_ET_FATAL_ERROR };
 
-    // Constructor
-    explicit unit_test_log_formatter( unit_test_log const& log )
-    : m_log( log ) {}
-
     // Destructor
     virtual             ~unit_test_log_formatter() {}
 
     // Formatter interface
-    virtual void        start_log( std::ostream& output, bool log_build_info ) = 0;
-    virtual void        log_header( std::ostream& output, unit_test_counter test_cases_amount ) = 0;
-    virtual void        finish_log( std::ostream& output ) = 0;
+    virtual void        log_start( std::ostream&, counter_t test_cases_amount ) = 0;
+    virtual void        log_finish( std::ostream& ) = 0;
+    virtual void        log_build_info( std::ostream& ) = 0;
 
-    virtual void        track_test_case_scope( std::ostream& output, test_case const& tc, bool in_out ) = 0;
-    virtual void        log_exception( std::ostream& output, std::string const& test_case_name, c_string_literal explanation ) = 0;
+    virtual void        test_unit_start( std::ostream&, test_unit const& tu ) = 0;
+    virtual void        test_unit_finish( std::ostream&, test_unit const& tu, unsigned long elapsed ) = 0;
+    virtual void        test_unit_skipped( std::ostream&, test_unit const& ) = 0;
 
-    virtual void        begin_log_entry( std::ostream& output, log_entry_types let ) = 0;
-    virtual void        log_entry_value( std::ostream& output, std::string const& value ) = 0;
-    virtual void        end_log_entry( std::ostream& output ) = 0;
+    virtual void        log_exception( std::ostream&, log_checkpoint_data const&, const_string explanation ) = 0;
 
-protected:
-    // Implementation interface
-    log_entry_data      const& entry_data() const       { return m_log.entry_data(); }
-    log_checkpoint_data const& checkpoint_data() const  { return m_log.checkpoint_data(); }
-
-private:
-    // Data members
-    unit_test_log const& m_log;
+    virtual void        log_entry_start( std::ostream&, log_entry_data const&, log_entry_types let ) = 0;
+    virtual void        log_entry_value( std::ostream&, const_string value ) = 0;
+    virtual void        log_entry_finish( std::ostream& ) = 0;
 };
 
-} // namespace unit_test_framework
+} // namespace unit_test
 
 } // namespace boost
+
+//____________________________________________________________________________//
+
+#include <boost/test/detail/enable_warnings.hpp>
 
 // ***************************************************************************
 //  Revision History :
 //  
 //  $Log$
-//  Revision 1.1.1.1  2004/03/05 22:22:54  tjensen
-//  This is version 1.31.0 of the Boost libraries
+//  Revision 1.1.1.2  2006/05/01 14:12:16  tjensen
+//  - import of Boost-1.33.1 release
 //
-//  Revision 1.4  2003/12/01 00:41:56  rogeeff
-//  prerelease cleaning
+//  Revision 1.13  2005/02/20 08:27:06  rogeeff
+//  This a major update for Boost.Test framework. See release docs for complete list of fixes/updates
 //
-
+//  Revision 1.12  2005/02/01 08:59:28  rogeeff
+//  supplied_log_formatters split
+//  change formatters interface to simplify result interface
+//
+//  Revision 1.11  2005/02/01 06:40:06  rogeeff
+//  copyright update
+//  old log entries removed
+//  minor stilistic changes
+//  depricated tools removed
+//
+//  Revision 1.10  2005/01/30 03:23:58  rogeeff
+//  counter type renamed
+//  log interface slightly shortened
+//
+//  Revision 1.9  2005/01/21 07:30:24  rogeeff
+//  to log testing time log formatter interfaces changed
+//
+//  Revision 1.8  2005/01/18 08:26:12  rogeeff
+//  unit_test_log rework:
+//     eliminated need for ::instance()
+//     eliminated need for << end and ...END macro
+//     straitend interface between log and formatters
+//     change compiler like formatter name
+//     minimized unit_test_log interface and reworked to use explicit calls
+//
 // ***************************************************************************
 
-#endif // BOOST_UNIT_TEST_LOG_FORMATTER_HPP
+#endif // BOOST_TEST_UNIT_TEST_LOG_FORMATTER_HPP_071894GER
 

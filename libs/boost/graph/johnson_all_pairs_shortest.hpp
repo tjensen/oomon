@@ -2,25 +2,9 @@
 // Copyright 1997, 1998, 1999, 2000 University of Notre Dame.
 // Authors: Andrew Lumsdaine, Lie-Quan Lee, Jeremy G. Siek
 //
-// This file is part of the Boost Graph Library
-//
-// You should have received a copy of the License Agreement for the
-// Boost Graph Library along with the software; see the file LICENSE.
-// If not, contact Office of Research, University of Notre Dame, Notre
-// Dame, IN 46556.
-//
-// Permission to modify the code and to distribute modified code is
-// granted, provided the text of this NOTICE is retained, a notice that
-// the code was modified is included with the above COPYRIGHT NOTICE and
-// with the COPYRIGHT NOTICE in the LICENSE file, and that the LICENSE
-// file is distributed with the modified code.
-//
-// LICENSOR MAKES NO REPRESENTATIONS OR WARRANTIES, EXPRESS OR IMPLIED.
-// By way of example, but not limitation, Licensor MAKES NO
-// REPRESENTATIONS OR WARRANTIES OF MERCHANTABILITY OR FITNESS FOR ANY
-// PARTICULAR PURPOSE OR THAT THE USE OF THE LICENSED SOFTWARE COMPONENTS
-// OR DOCUMENTATION WILL NOT INFRINGE ANY PATENTS, COPYRIGHTS, TRADEMARKS
-// OR OTHER RIGHTS.
+// Distributed under the Boost Software License, Version 1.0. (See
+// accompanying file LICENSE_1_0.txt or copy at
+// http://www.boost.org/LICENSE_1_0.txt)
 //=======================================================================
 
 /*
@@ -58,7 +42,7 @@ namespace boost {
     typedef graph_traits<VertexAndEdgeListGraph> Traits1;
     typedef typename property_traits<Weight>::value_type DT;
     function_requires< BasicMatrixConcept<DistanceMatrix,
-      typename Traits1::vertex_descriptor, DT> >();
+      typename Traits1::vertices_size_type, DT> >();
 
     typedef typename Traits1::directed_category DirCat;
     bool is_undirected = is_same<DirCat, undirected_tag>::value;
@@ -76,8 +60,8 @@ namespace boost {
       w_hat = get(edge_weight2, g2);
     typename property_map<Graph2, vertex_distance_t>::type 
       d = get(vertex_distance, g2);
-    typename property_map<Graph2, vertex_index_t>::type 
-      id2 = get(vertex_index, g2);
+    typedef typename property_map<Graph2, vertex_index_t>::type VertexID2;
+    VertexID2 id2 = get(vertex_index, g2);
 
     // Construct g2 where V[g2] = V[g1] U {s}
     //   and  E[g2] = E[g1] U {(s,v)| v in V[g1]}
@@ -89,20 +73,20 @@ namespace boost {
       int i = 1;
       for (tie(v, v_end) = vertices(g1); v != v_end; ++v, ++i) {
         typename Traits2::edge_descriptor e; bool z;
-        tie(e, z) = add_edge(s, id1[*v] + 1, g2);
-        w[e] = zero;
+        tie(e, z) = add_edge(s, get(id1, *v) + 1, g2);
+        put(w, e, zero);
         verts1[i] = *v;
       }
       typename Traits1::edge_iterator e, e_end;
       for (tie(e, e_end) = edges(g1); e != e_end; ++e) {
         typename Traits2::edge_descriptor e2; bool z;
-        tie(e2, z) = add_edge(id1[source(*e, g1)] + 1, 
-                             id1[target(*e, g1)] + 1, g2);
-        w[e2] = w1[*e];
+        tie(e2, z) = add_edge(get(id1, source(*e, g1)) + 1, 
+                              get(id1, target(*e, g1)) + 1, g2);
+        put(w, e2, get(w1, *e));
         if (is_undirected) {
-          tie(e2, z) = add_edge(id1[target(*e, g1)] + 1, 
-                                id1[source(*e, g1)] + 1, g2);
-          w[e2] = w1[*e];
+          tie(e2, z) = add_edge(get(id1, target(*e, g1)) + 1, 
+                                get(id1, source(*e, g1)) + 1, g2);
+          put(w, e2, get(w1, *e));
         }
       }
     }
@@ -110,9 +94,9 @@ namespace boost {
     typename Traits2::edge_iterator e, e_end;
     std::vector<DT> h_vec(num_vertices(g2));
     typedef typename std::vector<DT>::iterator iter_t;
-    iterator_property_map<iter_t,VertexID,DT,DT&> h(h_vec.begin(), id2);
+    iterator_property_map<iter_t,VertexID2,DT,DT&> h(h_vec.begin(), id2);
 
-    DT inf = std::numeric_limits<DT>::max();
+    DT inf = (std::numeric_limits<DT>::max)();
     for (tie(v, v_end) = vertices(g2); v != v_end; ++v)
       d[*v] = inf;
 
@@ -139,7 +123,7 @@ namespace boost {
           if (*u != s && *v != s) {
             typename Traits1::vertex_descriptor u1, v1;
             u1 = verts1[id2[*u]]; v1 = verts1[id2[*v]];
-            D[u1][v1] = get(d, *v) + get(h, *v) - get(h, *u);
+            D[id2[*u]-1][id2[*v]-1] = get(d, *v) + get(h, *v) - get(h, *u);
           }
         }
       }

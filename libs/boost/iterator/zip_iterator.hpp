@@ -19,6 +19,7 @@
 // Borland 5.5.1 (broken due to lack of support from Boost.Tuples)
 
 #ifndef BOOST_ZIP_ITERATOR_TMB_07_13_2003_HPP_
+# define BOOST_ZIP_ITERATOR_TMB_07_13_2003_HPP_
 
 #include <stddef.h>
 #include <boost/iterator.hpp>
@@ -35,7 +36,7 @@
 #include <boost/type_traits/is_same.hpp>
 #include <boost/mpl/and.hpp>
 #include <boost/mpl/apply.hpp>
-#include <boost/mpl/apply_if.hpp>
+#include <boost/mpl/eval_if.hpp>
 #include <boost/mpl/lambda.hpp>
 #include <boost/mpl/placeholders.hpp>
 #include <boost/mpl/aux_/lambda_support.hpp>
@@ -140,7 +141,7 @@ namespace boost {
 
       template<typename Tuple, class UnaryMetaFun>
       struct tuple_meta_transform
-        : mpl::apply_if<
+        : mpl::eval_if<
               boost::is_same<Tuple, tuples::null_type>
             , mpl::identity<tuples::null_type>
             , tuple_meta_transform_impl<Tuple, UnaryMetaFun>
@@ -179,7 +180,7 @@ namespace boost {
         , typename StartType
       >
       struct tuple_meta_accumulate
-        : mpl::apply_if<
+        : mpl::eval_if<
 #if BOOST_WORKAROUND(BOOST_MSVC, == 1200)
               mpl::or_<
 #endif 
@@ -337,7 +338,7 @@ namespace boost {
         typedef typename iterator_traits<Iterator>::reference type;
     };
 
-#ifdef BOOST_MPL_NO_FULL_LAMBDA_SUPPORT
+#ifdef BOOST_MPL_CFG_NO_FULL_LAMBDA_SUPPORT
     // Hack because BOOST_MPL_AUX_LAMBDA_SUPPORT doesn't seem to work
     // out well.  Instantiating the nested apply template also
     // requires instantiating iterator_traits on the
@@ -400,7 +401,7 @@ namespace boost {
       {
       };
     
-# ifdef BOOST_MPL_NO_FULL_LAMBDA_SUPPORT
+# ifdef BOOST_MPL_CFG_NO_FULL_LAMBDA_SUPPORT
   // Hack because BOOST_MPL_AUX_LAMBDA_SUPPORT doesn't seem to work
   // out well.  In this case I think it's an MPL bug
       template<>

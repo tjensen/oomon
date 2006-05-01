@@ -1,6 +1,6 @@
 // Boost.Function library
 
-//  Copyright Doug Gregor 2001-2003. Use, modification and
+//  Copyright Douglas Gregor 2001-2003. Use, modification and
 //  distribution is subject to the Boost Software License, Version
 //  1.0. (See accompanying file LICENSE_1_0.txt or copy at
 //  http://www.boost.org/LICENSE_1_0.txt)
@@ -22,7 +22,7 @@
 #include <boost/function/detail/prologue.hpp>
 
 // Visual Age C++ doesn't handle the file iteration well
-#if BOOST_WORKAROUND(__IBMCPP__, <= 600)
+#if BOOST_WORKAROUND(__IBMCPP__, >= 500)
 #  if BOOST_FUNCTION_MAX_ARGS >= 0
 #    include <boost/function/function0.hpp>
 #  endif

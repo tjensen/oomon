@@ -1,7 +1,7 @@
 #ifndef DATE_TIME_TIME_SYSTEM_SPLIT_HPP
 #define DATE_TIME_TIME_SYSTEM_SPLIT_HPP
 
-/* Copyright (c) 2002,2003 CrystalClear Software, Inc.
+/* Copyright (c) 2002,2003,2005 CrystalClear Software, Inc.
  * Use, modification and distribution is subject to the 
  * Boost Software License, Version 1.0. (See accompanying
  * file LICENSE-1.0 or http://www.boost.org/LICENSE-1.0)
@@ -12,6 +12,7 @@
 
 #include <string>
 #include "boost/date_time/compiler_config.hpp"
+#include "boost/date_time/special_defs.hpp"
 
 namespace boost {
 namespace date_time {
@@ -41,6 +42,33 @@ namespace date_time {
    public:
     typedef date_time::wrapping_int<int_type, ticks_per_day> wrap_int_type;
 #endif
+
+    static time_rep_type get_time_rep(special_values sv)
+    {
+      switch (sv) {
+      case not_a_date_time:
+        return time_rep_type(date_type(not_a_date_time),
+                             time_duration_type(not_a_date_time));
+      case pos_infin:
+        return time_rep_type(date_type(pos_infin), 
+                             time_duration_type(pos_infin));
+      case neg_infin:
+        return time_rep_type(date_type(neg_infin), 
+                             time_duration_type(neg_infin));
+      case max_date_time: {
+        time_duration_type td = time_duration_type(24,0,0,0) - time_duration_type(0,0,0,1);
+        return time_rep_type(date_type(max_date_time), td);
+      }
+      case min_date_time:
+        return time_rep_type(date_type(min_date_time), time_duration_type(0,0,0,0));
+
+      default:
+        return time_rep_type(date_type(not_a_date_time),
+                             time_duration_type(not_a_date_time));
+        
+      }
+
+    }
 
     static time_rep_type get_time_rep(const date_type& day,
                                       const time_duration_type& tod,
@@ -136,7 +164,7 @@ namespace date_time {
 
       //std::cout << td.ticks() << std::endl;
       wrap_int_type  day_offset(base.time_of_day.ticks());
-      date_duration_type day_overflow(static_cast<int_type>(day_offset.subtract(td.ticks())));
+      date_duration_type day_overflow(static_cast<typename date_duration_type::duration_rep_type>(day_offset.subtract(td.ticks())));
 //       std::cout << "sub: " << base.time_of_day.ticks() << "|"
 //                 << day_offset.as_int() << "|"
 //                 << day_overflow.days() << std::endl;
@@ -154,10 +182,10 @@ namespace date_time {
         return subtract_time_duration(base,td1);
       }
       wrap_int_type day_offset(base.time_of_day.ticks());      
-      int_type doff = day_offset.add(td.ticks());
+      typename date_duration_type::duration_rep_type doff = day_offset.add(td.ticks());
 //       std::cout << "day overflow: " << doff << std::endl;
 //       std::cout << "ticks: "         << td.ticks() << std::endl;
-      date_duration_type day_overflow(static_cast<int_type>(doff));
+      date_duration_type day_overflow(doff);
 //       std::cout << "base: " << to_simple_string(base.day) << std::endl;
 //       std::cout << "overflow " << day_overflow.days() << std::endl;
       return time_rep_type(base.day+day_overflow,

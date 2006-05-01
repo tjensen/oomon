@@ -1,8 +1,7 @@
-// Copyright David Abrahams 2002. Permission to copy, use,
-// modify, sell and distribute this software is granted provided this
-// copyright notice appears in all copies. This software is provided
-// "as is" without express or implied warranty, and with no claim as
-// to its suitability for any purpose.
+// Copyright David Abrahams 2002.
+// Distributed under the Boost Software License, Version 1.0. (See
+// accompanying file LICENSE_1_0.txt or copy at
+// http://www.boost.org/LICENSE_1_0.txt)
 #ifndef REGISTERED_DWA2002710_HPP
 # define REGISTERED_DWA2002710_HPP
 # include <boost/python/type_id.hpp>
@@ -12,7 +11,14 @@
 # include <boost/type_traits/cv_traits.hpp>
 # include <boost/detail/workaround.hpp>
 
-namespace boost { namespace python { namespace converter { 
+namespace boost {
+
+// You'll see shared_ptr mentioned in this header because we need to
+// note which types are shared_ptrs in their registrations, to
+// implement special shared_ptr handling for rvalue conversions.
+template <class T> class shared_ptr;
+
+namespace python { namespace converter { 
 
 struct registration;
 
@@ -27,9 +33,9 @@ namespace detail
 
 template <class T>
 struct registered
-    : detail::registered_base<
+  : detail::registered_base<
         typename add_reference<
-           typename add_cv<T>::type
+            typename add_cv<T>::type
         >::type
     >
 {
@@ -51,10 +57,37 @@ struct registered<T&>
 //
 namespace detail
 {
+  inline void
+  register_shared_ptr0(...)
+  {
+  }
+  
   template <class T>
-  registration const& registered_base<T>::converters
-     = registry::lookup(type_id<T>());
+  inline void
+  register_shared_ptr0(shared_ptr<T>*)
+  {
+      registry::lookup_shared_ptr(type_id<shared_ptr<T> >());
+  }
+  
+  template <class T>
+  inline void
+  register_shared_ptr1(T const volatile*)
+  {
+      detail::register_shared_ptr0((T*)0);
+  }
+  
+  template <class T>
+  registration const& 
+  registry_lookup(T&(*)())
+  {
+      detail::register_shared_ptr1((T*)0);
+      return registry::lookup(type_id<T&>());
+  }
+
+  template <class T>
+  registration const& registered_base<T>::converters = detail::registry_lookup((T(*)())0);
 }
+
 }}} // namespace boost::python::converter
 
 #endif // REGISTERED_DWA2002710_HPP

@@ -1,6 +1,6 @@
 // Boost.Signals library
 
-// Copyright Doug Gregor 2001-2003. Use, modification and
+// Copyright Douglas Gregor 2001-2004. Use, modification and
 // distribution is subject to the Boost Software License, Version
 // 1.0. (See accompanying file LICENSE_1_0.txt or copy at
 // http://www.boost.org/LICENSE_1_0.txt)
@@ -12,13 +12,13 @@
 
 #include <boost/signals/detail/config.hpp>
 #include <boost/signals/detail/signals_common.hpp>
+#include <boost/signals/detail/named_slot_map.hpp>
 #include <boost/signals/connection.hpp>
 #include <boost/signals/trackable.hpp>
+#include <boost/signals/slot.hpp>
 #include <boost/smart_ptr.hpp>
-#include <boost/any.hpp>
 #include <boost/utility.hpp>
 #include <boost/function/function2.hpp>
-#include <map>
 #include <utility>
 #include <vector>
 
@@ -29,41 +29,6 @@
 namespace boost {
   namespace BOOST_SIGNALS_NAMESPACE {
     namespace detail {
-      // Forward declaration for the mapping from slot names to connections
-      class named_slot_map;
-
-      // This function object bridges from a pair of any objects that hold
-      // values of type Key to the underlying function object that compares
-      // values of type Key.
-      template<typename Compare, typename Key>
-      class any_bridge_compare {
-      public:
-        typedef bool result_type;
-        typedef const any& first_argument_type;
-        typedef const any& second_argument_type;
-
-        any_bridge_compare(const Compare& c) : comp(c) {}
-
-        bool operator()(const any& k1, const any& k2) const
-        {
-          // if k1 is empty, then it precedes nothing
-          if (k1.empty())
-            return false;
-
-          // if k2 is empty, then k1 must precede it
-          if (k2.empty())
-            return true;
-
-          // Neither is empty, so compare their values to order them
-          // The strange */& is so that we will get a reference to the
-          // value stored in the any object instead of a copy
-          return comp(*any_cast<Key>(&k1), *any_cast<Key>(&k2));
-        }
-
-      private:
-        Compare comp;
-      };
-
       // Must be constructed before calling the slots, because it safely
       // manages call depth
       class BOOST_SIGNALS_DECL call_notification {
@@ -80,7 +45,7 @@ namespace boost {
       public:
         friend class call_notification;
 
-        typedef function2<bool, any, any> compare_type;
+        typedef function2<bool, stored_group, stored_group> compare_type;
 
         // Make sure that an exception does not cause the "clearing" flag to
         // remain set
@@ -102,7 +67,7 @@ namespace boost {
 
         friend class temporarily_set_clearing;
 
-        signal_base_impl(const compare_type&);
+        signal_base_impl(const compare_type&, const any&);
         ~signal_base_impl();
 
         // Disconnect all slots connected to this signal
@@ -115,14 +80,15 @@ namespace boost {
         std::size_t num_slots() const;
 
         // Disconnect all slots in the given group
-        void disconnect(const any&);
+        void disconnect(const stored_group&);
 
         // We're being notified that a slot has disconnected
         static void slot_disconnected(void* obj, void* data);
 
         connection connect_slot(const any& slot,
-                                const any& name,
-                                const std::vector<const trackable*>&);
+                                const stored_group& name,
+                                shared_ptr<slot_base::data_t> data,
+                                connect_position at);
 
       private:
         // Remove all of the slots that have been marked "disconnected"
@@ -143,11 +109,11 @@ namespace boost {
         } flags;
 
         // Slots
-        typedef std::multimap<any, connection_slot_pair, compare_type>
-          slot_container_type;
-        typedef slot_container_type::iterator slot_iterator;
-        typedef slot_container_type::value_type stored_slot_type;
-        mutable slot_container_type slots_;
+        mutable named_slot_map slots_;
+        any combiner_;
+
+        // Types
+        typedef named_slot_map::iterator iterator;
       };
 
       class BOOST_SIGNALS_DECL signal_base : public noncopyable {
@@ -156,7 +122,7 @@ namespace boost {
 
         friend class call_notification;
 
-        signal_base(const compare_type& comp);
+        signal_base(const compare_type& comp, const any& combiner);
         ~signal_base();
 
       public:
@@ -171,14 +137,14 @@ namespace boost {
 
       protected:
         connection connect_slot(const any& slot,
-                                const any& name,
-                                const std::vector<const trackable*>& bound)
+                                const stored_group& name,
+                                shared_ptr<slot_base::data_t> data,
+                                connect_position at)
         {
-          return impl->connect_slot(slot, name, bound);
+          return impl->connect_slot(slot, name, data, at);
         }
 
-        typedef signal_base_impl::slot_iterator slot_iterator;
-        typedef signal_base_impl::stored_slot_type stored_slot_type;
+        typedef named_slot_map::iterator iterator;
 
         shared_ptr<signal_base_impl> impl;
       };

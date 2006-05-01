@@ -1,6 +1,6 @@
 //  Boost CRC library crc.hpp header file  -----------------------------------//
 
-//  Copyright 2001 Daryle Walker.  Use, modification, and distribution are
+//  Copyright 2001, 2004 Daryle Walker.  Use, modification, and distribution are
 //  subject to the Boost Software License, Version 1.0.  (See accompanying file
 //  LICENSE_1_0.txt or a copy at <http://www.boost.org/LICENSE_1_0.txt>.)
 
@@ -349,8 +349,12 @@ namespace detail
 #else
         BOOST_STATIC_CONSTANT( least, sig_bits = (~( ~(least( 0u )) << Bits )) );
 #endif
+#if defined(__GNUC__) && __GNUC__ == 4 && __GNUC_MINOR__ == 0 && __GNUC_PATCHLEVEL__ == 2
+        // Work around a weird bug that ICEs the compiler in build_c_cast
+        BOOST_STATIC_CONSTANT( fast, sig_bits_fast = static_cast<fast>(sig_bits) );
+#else
         BOOST_STATIC_CONSTANT( fast, sig_bits_fast = fast(sig_bits) );
-
+#endif
     };  // boost::detail::mask_uint_t
 
     template <  >
@@ -458,7 +462,7 @@ namespace detail
         typedef typename masking_type::fast  value_type;
 #if defined(__BORLANDC__) && defined(_M_IX86) && (__BORLANDC__ == 0x560)
         // for some reason Borland's command line compiler (version 0x560)
-        // chokes over this unless we do the calculation for it: 
+        // chokes over this unless we do the calculation for it:
         typedef value_type                   table_type[ 0x100 ];
 #else
         typedef value_type                   table_type[ byte_combos ];
@@ -527,6 +531,30 @@ namespace detail
         did_init = true;
     }
 
+    #ifndef BOOST_NO_TEMPLATE_PARTIAL_SPECIALIZATION
+    // Align the msb of the remainder to a byte
+    template < std::size_t Bits, bool RightShift >
+    class remainder
+    {
+    public:
+        typedef typename uint_t<Bits>::fast  value_type;
+
+        static unsigned char align_msb( value_type rem )
+            { return rem >> (Bits - CHAR_BIT); }
+    };
+
+    // Specialization for the case that the remainder has less
+    // bits than a byte: align the remainder msb to the byte msb
+    template < std::size_t Bits >
+    class remainder< Bits, false >
+    {
+    public:
+        typedef typename uint_t<Bits>::fast  value_type;
+
+        static unsigned char align_msb( value_type rem )
+            { return rem << (CHAR_BIT - Bits); }
+    };
+    #endif
 
     // CRC helper routines
     template < std::size_t Bits, bool DoReflect >
@@ -555,7 +583,9 @@ namespace detail
 
         // Compare a byte to the remainder's highest byte
         static  unsigned char  index( value_type rem, unsigned char x )
-            { return x ^ ( rem >> (DoReflect ? 0u : Bits - CHAR_BIT) ); }
+            { return x ^ ( DoReflect ? rem :
+                                ((Bits>CHAR_BIT)?( rem >> (Bits - CHAR_BIT) ) :
+                                    ( rem << (CHAR_BIT - Bits) ))); }
 
         // Shift out the remainder's highest byte
         static  value_type  shift( value_type rem )
@@ -578,7 +608,7 @@ namespace detail
 
         // Compare a byte to the remainder's highest byte
         static  unsigned char  index( value_type rem, unsigned char x )
-            { return x ^ ( rem >> (Bits - CHAR_BIT) ); }
+            { return x ^ remainder<Bits,(Bits>CHAR_BIT)>::align_msb( rem ); }
 
         // Shift out the remainder's highest byte
         static  value_type  shift( value_type rem )
@@ -706,7 +736,7 @@ crc_basic<Bits>::process_bit
     // a full polynominal division step is done when the highest bit is one
     bool const  do_poly_div = static_cast<bool>( rem_ & high_bit_mask );
 
-    // shift out the highest bit 
+    // shift out the highest bit
     rem_ <<= 1;
 
     // carry out the division, if needed

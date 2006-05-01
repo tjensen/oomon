@@ -1,16 +1,11 @@
 /* Boost interval/hw_rounding.hpp template implementation file
  *
- * Copyright Hervé Brönnimann, Guillaume Melquiond, Sylvain Pion 2002
- * Permission to use, copy, modify, sell, and distribute this software
- * is hereby granted without fee provided that the above copyright notice
- * appears in all copies and that both that copyright notice and this
- * permission notice appear in supporting documentation,
+ * Copyright 2002 Hervé Brönnimann, Guillaume Melquiond, Sylvain Pion
+ * Copyright 2005 Guillaume Melquiond
  *
- * None of the above authors nor Polytechnic University make any
- * representation about the suitability of this software for any
- * purpose. It is provided "as is" without express or implied warranty.
- *
- * $Id$
+ * Distributed under the Boost Software License, Version 1.0.
+ * (See accompanying file LICENSE_1_0.txt or
+ * copy at http://www.boost.org/LICENSE_1_0.txt)
  */
 
 #ifndef BOOST_NUMERIC_INTERVAL_HW_ROUNDING_HPP
@@ -19,6 +14,8 @@
 #include <boost/numeric/interval/rounding.hpp>
 #include <boost/numeric/interval/rounded_arith.hpp>
 
+#define BOOST_NUMERIC_INTERVAL_NO_HARDWARE
+
 // define appropriate specialization of rounding_control for built-in types
 #if defined(__i386__) || defined(_M_IX86) || defined(__BORLANDC__)
 #  include <boost/numeric/interval/detail/x86_rounding_control.hpp>
@@ -26,9 +23,14 @@
 #  include <boost/numeric/interval/detail/ppc_rounding_control.hpp>
 #elif defined(sparc) || defined(__sparc__)
 #  include <boost/numeric/interval/detail/sparc_rounding_control.hpp>
-#elif defined(__USE_ISOC99)
+#endif
+
+#if defined(BOOST_NUMERIC_INTERVAL_NO_HARDWARE) && (defined(__USE_ISOC99) || defined(__MSL__))
 #  include <boost/numeric/interval/detail/c99_rounding_control.hpp>
-#else
+#endif
+
+#if defined(BOOST_NUMERIC_INTERVAL_NO_HARDWARE)
+#  undef BOOST_NUMERIC_INTERVAL_NO_HARDWARE
 #  error Boost.Numeric.Interval: Please specify rounding control mechanism.
 #endif
 
