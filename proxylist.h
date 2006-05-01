@@ -78,8 +78,8 @@ private:
 
   typedef std::set<BotSock::Port> PortSet;
 
-  void ProxyList::enqueueScans(const UserEntryPtr user,
-      const ProxyList::PortSet & ports, const Proxy::Protocol protocol);
+  void enqueueScans(const UserEntryPtr user, const ProxyList::PortSet & ports,
+      const Proxy::Protocol protocol);
 
   typedef std::list<ProxyPtr> SockList;
   SockList scanners;
