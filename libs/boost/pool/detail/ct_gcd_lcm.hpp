@@ -1,9 +1,8 @@
 // Copyright (C) 2000 Stephen Cleary
 //
-// This file can be redistributed and/or modified under the terms found
-//  in "copyright.html"
-// This software and its documentation is provided "as is" without express or
-//  implied warranty, and with no claim as to its suitability for any purpose.
+// Distributed under the Boost Software License, Version 1.0. (See
+// accompanying file LICENSE_1_0.txt or copy at
+// http://www.boost.org/LICENSE_1_0.txt)
 //
 // See http://www.boost.org for updates, documentation, and revision history.
 
@@ -38,7 +37,7 @@ struct ct_gcd_helper<A, B, false>
   BOOST_STATIC_CONSTANT(unsigned, A_mod_B_ = A % B);
   BOOST_STATIC_CONSTANT(unsigned, value =
       (::boost::details::pool::details::ct_gcd_helper<
-        B, static_cast<unsigned>(A_mod_B_),
+        B, A_mod_B_,
         ::boost::type_traits::ice_eq<A_mod_B_, 0>::value
         >::value) );
 };

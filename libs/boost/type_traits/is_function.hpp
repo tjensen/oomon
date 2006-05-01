@@ -1,6 +1,6 @@
 
-//  Copyright (C) 2000 John Maddock (john@johnmaddock.co.uk)
-//  Copyright (C) 2002 Aleksey Gurtovoy (agurtovoy@meta-comm.com)
+//  Copyright 2000 John Maddock (john@johnmaddock.co.uk)
+//  Copyright 2002 Aleksey Gurtovoy (agurtovoy@meta-comm.com)
 //
 //  Use, modification and distribution are subject to the Boost Software License,
 //  Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
@@ -15,7 +15,7 @@
 #include "boost/type_traits/detail/false_result.hpp"
 #include "boost/config.hpp"
 
-#ifndef BOOST_NO_TEMPLATE_PARTIAL_SPECIALIZATION
+#if !defined(BOOST_NO_TEMPLATE_PARTIAL_SPECIALIZATION) && !defined(BOOST_TT_TEST_MS_FUNC_SIGS)
 #   include "boost/type_traits/detail/is_function_ptr_helper.hpp"
 #else
 #   include "boost/type_traits/detail/is_function_ptr_tester.hpp"
@@ -34,7 +34,7 @@
 namespace boost {
 namespace detail {
 
-#ifndef BOOST_NO_TEMPLATE_PARTIAL_SPECIALIZATION
+#if !defined(BOOST_NO_TEMPLATE_PARTIAL_SPECIALIZATION) && !defined(BOOST_TT_TEST_MS_FUNC_SIGS)
 template<bool is_ref = true>
 struct is_function_chooser
     : ::boost::type_traits::false_result
@@ -68,6 +68,12 @@ struct is_function_impl
         == sizeof(::boost::type_traits::yes_type)
         );
 };
+
+#if !defined(BOOST_NO_TEMPLATE_PARTIAL_SPECIALIZATION)
+template <typename T>
+struct is_function_impl<T&> : public false_type
+{};
+#endif
 
 #endif
 
