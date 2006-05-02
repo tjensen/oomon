@@ -71,6 +71,8 @@ AutoAction::get(const AutoAction * value)
       return "KLINE_USERNET" + server + dur;
     case AutoAction::KLINE_NET:
       return "KLINE_NET" + server + dur;
+    case AutoAction::KLINE_NICK:
+      return "KLINE_NICK" + server + dur;
     case AutoAction::SMART_KLINE:
       return "SMART_KLINE" + server + dur;
     case AutoAction::SMART_KLINE_HOST:
@@ -81,6 +83,8 @@ AutoAction::get(const AutoAction * value)
       return "DLINE_IP" + dur;
     case AutoAction::DLINE_NET:
       return "DLINE_NET" + dur;
+    case AutoAction::DLINE_NICK:
+      return "DLINE_NICK" + dur;
     default:
       return "NOTHING";
   }
@@ -110,9 +114,13 @@ AutoAction::set(AutoAction * value, const std::string & newValue)
   {
     value->type_ = AutoAction::DLINE_IP;
   }
-  else if (partialCompare(text, "DLINE_NET", 7))
+  else if (partialCompare(text, "DLINE_NET", 8))
   {
     value->type_ = AutoAction::DLINE_NET;
+  }
+  else if (partialCompare(text, "DLINE_NICK", 8))
+  {
+    value->type_ = AutoAction::DLINE_NICK;
   }
   else if (partialCompare(text, "KILL", 2))
   {
@@ -135,9 +143,13 @@ AutoAction::set(AutoAction * value, const std::string & newValue)
   {
     value->type_ = AutoAction::KLINE_IP;
   }
-  else if (partialCompare(text, "KLINE_NET", 7))
+  else if (partialCompare(text, "KLINE_NET", 8))
   {
     value->type_ = AutoAction::KLINE_NET;
+  }
+  else if (partialCompare(text, "KLINE_NICK", 8))
+  {
+    value->type_ = AutoAction::KLINE_NICK;
   }
   else if (partialCompare(text, "KLINE_USERNET", 11))
   {
@@ -161,7 +173,7 @@ AutoAction::set(AutoAction * value, const std::string & newValue)
   }
   else
   {
-    return "*** NOTHING, KILL, KLINE, KLINE_HOST, KLINE_DOMAIN, KLINE_IP, KLINE_USERNET, KLINE_NET, SMART_KLINE, SMART_KLINE_HOST, SMART_KLINE_IP, DLINE_IP, or DLINE_NET expected!";
+    return "*** NOTHING, KILL, KLINE, KLINE_HOST, KLINE_DOMAIN, KLINE_IP, KLINE_USERNET, KLINE_NET, KLINE_NICK, SMART_KLINE, SMART_KLINE_HOST, SMART_KLINE_IP, DLINE_IP, DLINE_NET, or DLINE_NICK expected!";
   }
 
   std::string dur = FirstWord(copy);
@@ -375,6 +387,10 @@ doAction(const std::string & nick, const std::string & userhost,
     }
     break;
 
+  case AutoAction::KLINE_NICK:
+    doKline(action.server(), nick, action.duration(), reason);
+    break;
+
   case AutoAction::SMART_KLINE:
     if (isDynamic(user, host))
     {
@@ -446,6 +462,10 @@ doAction(const std::string & nick, const std::string & userhost,
     {
       doDline(classCMask(BotSock::inet_ntoa(ip)), action.duration(), reason);
     }
+    break;
+
+  case AutoAction::DLINE_NICK:
+    doDline(nick, action.duration(), reason);
     break;
   }
 }

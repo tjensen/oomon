@@ -36,8 +36,8 @@ class AutoAction
     enum Type
     {
       NOTHING, KILL, KLINE, KLINE_HOST, KLINE_DOMAIN, KLINE_IP, KLINE_USERNET,
-      KLINE_NET, SMART_KLINE, SMART_KLINE_HOST, SMART_KLINE_IP, DLINE_IP,
-      DLINE_NET
+      KLINE_NET, KLINE_NICK, SMART_KLINE, SMART_KLINE_HOST, SMART_KLINE_IP,
+      DLINE_IP, DLINE_NET, DLINE_NICK
     };
 
     AutoAction(const AutoAction::Type type, const unsigned int duration = 0)
