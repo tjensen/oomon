@@ -295,6 +295,8 @@ info actions
 .d. - KLINE_IP[@<servers>] [<time>]:  K-line
 .d.   *@ipaddress
 .d. - KLINE_NET[@<servers>] [<time>]:  K-line *@net*
+.d. - KLINE_NICK[@<servers>] [<time>]:  Let ircd
+.d.   choose appropriate mask, if supported.
 .d. - KLINE_USERNET[@<servers>] [<time>]:  K-line
 .d.   *user@net*
 .d. - SMART_KLINE[@<servers>] [<time>]:  If hostname
@@ -308,6 +310,8 @@ info actions
 .d.   Otherwise, K-line *user@net*.
 .d. - DLINE_IP [<time>]:  D-line the abuser's IP.
 .d. - DLINE_NET [<time>]:  D-line the abuser's /24.
+.d. - DLINE_NICK [<time>]:  Let ircd choose
+.d.   appropriate mask, if supported.
 .d.
 .d.If a "time" is provided, the bot will issue a
 .d.temporary K-line or D-line to last for the desired
