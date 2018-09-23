@@ -1,0 +1,1974 @@
+# ===========================================================================
+# OOMon - Objected Oriented Monitor Bot
+# Copyright (C) 2003  Timothy L. Jensen
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+# ===========================================================================
+
+# $Id$
+#
+# Help File Syntax:
+# #   = comments
+# .s. = Syntax
+# .d. = Description
+# .e. = Example
+# .f. = Flags
+# .l. = See Also
+# .t. = Sub-topics
+#
+# All other lines are considered start-of-topic.
+#
+auth
+.s.auth [<handle> [<password>]]
+.d.Attempts to gain authorization to use the
+.d.monitor bot.  The handle and password are
+.d.defined in the configuration file.
+.d.
+.d.When successful, user gains flags defined
+.d.in the configuration file for his user@host
+.d.mask and all connections are notified.
+.d.When unsuccessful, no changes are made to
+.d.the user's flags, but the other connections
+.d.are notified of the authorization failure.
+.e.> .auth Toast nothing
+.e.*** Authorization denied!
+.e.> .auth Toast secret
+.e.*** Authorization granted!
+chat
+.s.chat <message>
+.d.Sends a message to all other users.  Also,
+.d.any line that does not begin with the '.'
+.d.character is considered chat.
+.e.> .chat Testing 1 2 3
+.e.<Toast@OOMon> Testing 1 2 3
+.e.> blah blah blah
+.e.<Toast@OOMon> blah blah blah
+.l.set unauthed_may_chat
+class
+.s.class [<class>]
+.d.Lists the number of connections in each
+.d.class.  If a class is specified, only the
+.d.number of connections in that particular
+.d.class is shown.
+.e.> .class
+.e.Class Count Description
+.e.   50 877   Client Class (*.com/*.net) - *700*
+.e.   80 435   Main Client Class (*@*)
+.e.   40 174   Client Class (*.org/*.edu) - *600*
+.e.   90 4     Oper Class
+.e.> .class 80
+.e.Class Count Description
+.e.   80 435   Main Client Class (*@*)
+.f.o
+.l.list
+clones
+.s.clones
+.d.Lists any instances of clones detected by
+.d.the monitor bot.
+.e.> .clones
+.e.Possible clonebots from the following hosts:
+.e.   7 connections in  32 seconds (18 total) from cheeseloaf.net
+.e.   3 connections in  26 seconds ( 4 total) from mainframe.sysedata.no
+.f.o
+.l.multi
+conn
+.s.conn <bot handle>
+.d.Links the monitor bot to another.
+.f.m
+.l.disconn
+.l.links
+die [<text>]
+.s.die
+.d.Causes the bot to stop functioning.  You may,
+.d.optionally, include a signoff message.
+.e.> .die
+.e.As you wish...
+.e.*** DCC CHAT connection to oomon lost
+.e.> .die Upgrading to latest version
+.e.As you wish...
+.e.*** DCC CHAT connection to oomon lost
+.f.m
+disconn
+.s.disconn <bot handle>
+.d.Disconnects from a linked monitor bot.
+.f.m
+.l.conn
+.l.links
+dline
+.s.dline [<duration>] <mask> <reason>
+.d.Adds a D: line (ban) for a particular IP
+.d.mask.
+.e.> .dline 255.255.255.* vhosted flood clones
+.e.OOMon added D-Line: 255.255.255.* (vhosted flood clones [Toast@OOMon])
+.f.d
+.l.findd
+.l.kline
+.l.set default_dline_timeout
+.l.undline
+domains
+.s.domains [<minimum users>]
+.d.Lists domains with at least as many users
+.d.connected to the server as specified in
+.d.the parameter.  If no minimum is passed,
+.d.the default (usually 5) is used.
+.e.> .domains 30
+.e.Domains with most users on the server:
+.e.  r0x.net                     186 users
+.e.  uu.net                       43 users
+.e.  isolnet.com                  38 users
+.e.  sy.net                       32 users
+.f.o
+.l.list
+.l.multi
+.l.nets
+echo
+.s.echo [ON|OFF]
+.d.Enables or disables the echoing of your chatter.
+.d.When ON, your chatter will be echoed back to you.
+.d.When OFF, your chatter will not be echoed.  Use
+.d.the .echo command without any arguments to see
+.d.the current setting.
+.e.> .echo
+.e.*** Echo is OFF.
+.l.chat
+findd
+.s.findd [-count | -remove] [-temp] -[perm] [-reason] <mask>
+.d.Searches for D: lines matching the mask.  Use the
+.d."-count" argument to count matching D: lines, but
+.d.not display them.  Use the "-remove" argument to
+.d.remove matching D: lines.  Use the "-temp" argument
+.d.to search temporary D: lines.  Use the "-perm"
+.d.argument to search permanent D: lines.  By default,
+.d.both temporary and permanent D: lines are searched.
+.d.Use the "-reason" argument to search by D: line
+.d.reason field.
+.d.argument to search by D: line reason field.
+.e.> .findd 10.*
+.e.  10.0.0.1 (too many cabbages [Toast@LarzMON])
+.e.  10.37.2.16 (Clones are prohibited [Toast@LarzMON])
+.e.End of FINDD 10.0.0.*
+.e.> .findd -reason /cabbages/
+.e.  10.0.0.1 (too many cabbages [Toast@LarzMON])
+.e.End of FINDD /cabbages/
+.f.o
+.l.dline
+.l.undline
+findk
+.s.findk [-count | -remove] [-temp] [-perm] [-reason] <pattern>
+.d.Searches for K: lines matching the mask.  Use the
+.d."-count" argument to count matching K: lines, but
+.d.not display them.  Use the "-remove" argument to
+.d.remove matching K: lines.  Use the "-temp" argument
+.d.to search temporary K: lines.  Use the "-perm"
+.d.argument to search permanent K: lines.  By default,
+.d.both temporary and permanent K: lines are searched.
+.d.Use the "-reason" argument to search by K: line
+.d.reason field.
+.e.> .findk *@*netscum.com
+.e.  ~*@*.ix.netscum.com (Auto-kline, clones)
+.e.  *vvvwarvvv@*.ix.netscum.com (Clones are prohibited [Toast@LarzMON])
+.e.  *Sauthbe@*.ix.netscum.com (Clones are prohibited [Toast@OOMon])
+.e.  *AluCiDe@*.ix.netscum.com (clones/multiple servers)
+.e.End of FINDK *@*netscum.com
+.e.> .findk -reason /Auto/
+.e.  ~*@*.ix.netscum.com (Auto-kline, clones)
+.e.End of FINDK /Auto/
+.f.o
+.l.kline
+.l.unkline
+gline
+.s.gline [<duration>] <nick|mask> <reason>
+.d.Adds a K: line (ban) for a particular nick
+.d.or user@host mask on all linked bots.
+.f.g
+.l.ungline
+glist
+.s.glist [-class <name>] [-count] [-r] <pattern>
+.d.Searches clients' GECOS fields for a
+.d.particular pattern.  Matching clients are
+.d.displayed.
+.e.> .glist *chalupa*
+.e.The following clients match *chalupa*:
+.e.  bob (bob@bag.wu) [1.2.3.20] <drop the chalupa!>
+.e.  felafel (~m@ip24.phx.slimenet.com) [1.2.17.24] <chalupa grande>
+.e.2 matches for *chalupa* found
+.f.o
+.l.list
+hmulti
+.s.hmulti [<number>]
+.d.Shows any *@host masks with multiple
+.d.connections.  Masks with more than MULTI_MIN
+.d.connections are indicated with an arrow.
+.d.The minimum number of clones to show can
+.d.be changed by using the number option.
+.e.> .hmulti
+.e.Multiple clients from the following hostnames:
+.e. ==>  3 -- *@derf.COM
+.e.      2 -- *@duh-m.org
+.e.> .hmulti 3
+.e.Multiple clients from the following hostnames:
+.e.      3 -- *@derf.COM
+.f.o
+.l.multi
+.l.set multi_min
+.l.umulti
+.l.vmulti
+info
+.s.info [<topic>]
+.s.help info [<topic>]
+.d.This command shows information regarding one
+.d.of the topics listed below.
+.t.actions
+.t.patterns
+.t.regex
+info actions
+.d.Settings taking a value of type "action" determine
+.d.how the monitor bot is to respond when a form of
+.d.abuse is detected.  Action settings can have one
+.d.of the following values:
+.d. - NOTHING:  Just report the abuse
+.d. - KILL:  Kill the abusive client
+.d. - KLINE [<time>]:  K-line *user@*domain
+.d. - KLINE_HOST [<time>]:  K-line *@hostname
+.d. - KLINE_DOMAIN [<time>]:  K-line *@*domain
+.d. - KLINE_IP [<time>]:  K-line *@ipaddress
+.d. - KLINE_NET [<time>]:  K-line *@net*
+.d. - KLINE_USERNET [<time>]:  K-line *user@net*
+.d. - SMART_KLINE [<time>]:  If hostname appears
+.d.   dynamic, K-line *@hostname.  Otherwise, K-line
+.d.   *user@*domain.
+.d. - SMART_KLINE_IP [<time>]:  If hostname appears
+.d.   dynamic, K-line *@ipaddress.  Otherwise, K-line
+.d.   *user@net*.
+.d. - DLINE_IP [<time>]:  D-line the abuser's IP.
+.d. - DLINE_NET [<time>]:  D-line the abuser's /24.
+.d.If a "time" is provided, the bot will issue a
+.d.temporary K-line or D-line to last for the desired
+.d.number of minutes.  Be aware that some IRC servers
+.d.do not support temporary K-lines and/or D-lines.
+.d.Note:  In some instances, only a subset of the
+.d.       above actions will make sense.  For example,
+.d.       if the bot does not know an abuser's IP
+.d.       address, the DLINE_* actions will have no
+.d.       effect.
+.e.> .set nick_flood_action smart_kline 10080
+.e.*** Toast@OOMon set NICK_FLOOD_ACTION to SMART_KLINE 10080
+.l.set
+info patterns
+.d.Patterns use wildcard characters to match text.
+.d.OOMon supports two different types of patterns.  The
+.d.first type of pattern resembles the type used by most
+.d.ircd versions.  In this type, the "?" character is a
+.d.wildcard that matches one character of any type.  The
+.d."*" character matches zero or more characters of any
+.d.type.  For example: *foo@*.bar.org
+.d.
+.d.OOMon supports a second type of pattern called a nick
+.d.pattern.  Nick patterns support five wildcard
+.d.characters: "?", "*", "#", "&", and "%".  The "?" and
+.d."*" wildcards work like in normal patterns. The "#"
+.d.wildcard will match any numeric character.  The "&"
+.d.wildcard will match any alphabetical character.  The
+.d."%" wildcard will match any alphanumeric character.
+.d.Nick patterns are used only when matching nicknames,
+.d.such as when using the ".nfind" command. For
+.d.example: S_&&&&&&#
+.l.info regex
+.l.list
+.l.nfind
+.l.trap
+info regex
+.d.Regular expressions may be used for matching text.
+.d.OOMon will detect you are using a regular expression
+.d.if you surround your regex with "/" characters.  For
+.d.example: /^cha[lr]upa$/  Your regular expressions
+.d.should follow the form, "/regex/flags", where "regex"
+.d.is your regular expression and "flags" is zero or
+.d.more optional flags.  Currently, OOMon only supports
+.d.one flag, "i", which causes the regex to be case-
+.d.insensitive.
+.d.
+.d.Almost all pattern matching OOMon commands support
+.d.the use of regular expressions.  Some commands, such
+.d.as ".nfind" and ".list", will accept a "-r"
+.d.parameter, which tells OOMon that you are using a
+.d.regular expression (allowing you to drop the
+.d.surrounding "/" characters), however it is optional
+.d.and regex may be used without "-r".
+.e.> .glist /stolen by/i
+.e.The following clients match /stolen by/i:
+.e.  GVZ-011 (~mmmmmm@hh1120001.direcpc.com) [206.71.120.1] <I Got My Bandwith Stolen By Gangsta>
+.e.1 match for /stolen by/i found.
+.l.info patterns
+.l.list
+.l.nfind
+.l.trap
+join
+.s.join <#channel> [<key>]
+.d.Causes the bot to join the channel.  The
+.d."key" parameter should be used for channels
+.d.set +k.
+.e.> .join #monitors
+.e.> .join #oomon magic
+.f.c
+.l.op
+.l.part
+kbot
+.s.kbot [<duration>] <nick|mask>
+.d.Adds a K: line (ban) for a particular nick
+.d.or user@host mask with the reason, "Bots
+.d.are prohibited".
+.e.> .kbot eviluser
+.e.OOMon added K-Line for [*monkey@*.spanky.com] [Bots are prohibited [Toast@OOMon]]
+.e.> .kbot 45 ~*@*cabbage.net
+.e.OOMon added temporary 45 min. K-Line for [~*@*cabbage.net] [Bots are prohibited [Toast@OOMon]]
+.f.k
+.l.gbot
+.l.kline
+.l.set default_kline_timeout
+kclone
+.s.kclone [<duration>] <nick|mask>
+.d.Adds a K: line (ban) for a particular nick
+.d.or user@host mask with the reason, "Clones
+.d.are prohibited".
+.e.> .kclone eviluser
+.e.OOMon added K-Line for [*monkey@*.spanky.com] [Clones are prohibited [Toast@OOMon]]
+.e.> .kclone 45 ~*@*cabbage.net
+.e.OOMon added temporary 45 min. K-Line for [~*@*cabbage.net] [Clones are prohibited [Toast@OOMon]]
+.f.k
+.l.gclone
+.l.kline
+.l.set default_kline_timeout
+kflood
+.s.kflood [<duration>] <nick|mask>
+.d.Adds a K: line (ban) for a particular nick
+.d.or user@host mask with the reason,
+.d."Flooding is prohibited".
+.e.> .kflood eviluser
+.e.OOMon added K-Line for [*monkey@*.spanky.com] [Flooding is prohibited [Toast@OOMon]]
+.e.> .kflood 45 ~*@*cabbage.net
+.e.OOMon added temporary 45 min. K-Line for [~*@*cabbage.net] [Flooding is prohibited [Toast@OOMon]]
+.f.k
+.l.gflood
+.l.kline
+.l.set default_kline_timeout
+kill
+.s.kill <nickname> <reason>
+.d.Forcibly disconnects a user from the IRC
+.d.server.
+.e.> .kill pooter do not spam!
+.e.Local kill for Pooter by OOMon ((Toast@OOMon) do not spam!)
+.f.o
+.l.killlist
+killlist.kl
+.s.killlist [-class <name>] <pattern> [<reason>]
+.s.kl [-class <name>] <pattern> [<reason>]
+.d.Forcibly disconnects all users whose
+.d.user@host data match the pattern.  If no
+.d.reason is provided, the default is used.
+.e.> .killlist *clones@*somehost.com
+.e.Local kill for Tooter by OOMon (Too many connections, read MOTD)
+.e.Local kill for Wooter by OOMon (Too many connections, read MOTD)
+.e.Local kill for Pooter by OOMon (Too many connections, read MOTD)
+.f.o
+.l.kill
+.l.killnfind
+.l.list
+.l.set killlist_reason
+killnfind.kn
+.s.killnfind [-class <name>] <pattern> [<reason>]
+.s.kn [-class <name>] <pattern> [<reason>]
+.d.Forcibly disconnects all users whose nicks
+.d.match the pattern.  If no reason is
+.d.provided, the default is used.
+.e.> .killnfind [ISO]-### XDCC bot
+.e.Local kill for [ISO]-074 by OOMon (XDCC bot)
+.e.Local kill for [ISO]-402 by OOMon (XDCC bot)
+.e.Local kill for [ISO]-671 by OOMon (XDCC bot)
+.f.o
+.l.kill
+.l.killlist
+.l.nfind
+.l.set killnfind_reason
+kline
+.s.kline [<duration>] <nick|mask> <reason>
+.d.Adds a K: line for a particular nick or
+.d.user@host mask.
+.e.> .kline *abuse@*naughty.org No naughty users allowed
+.e.OOMon added K-Line: *abuse@*naughty.org (No naughty users allowed [Toast@OOMon])
+.e.> .kline 60 *@trt-on1-01.netcom.ca go away and stuff
+.e.OOMon added temporary 60 min. K-Line for [*@trt-on1-01.netcom.ca] [go away and stuff [Toast@OOMon]]
+.f.k
+.l.findk
+.l.kbot
+.l.kclone
+.l.kflood
+.l.klink
+.l.kperm
+.l.kspam
+.l.set default_kline_timeout
+.l.unkline
+klink
+.s.klink [<duration>] <nick|mask>
+.d.Adds a K: line (ban) for a particular nick
+.d.or user@host mask with the reason, "Links
+.d.lookers are prohibited".
+.e.> .klink eviluser
+.e.OOMon added K-Line for [*monkey@*.spanky.com] [Links lookers are prohibited [Toast@OOMon]]
+.e.> .klink 45 ~*@*cabbage.net
+.e.OOMon added temporary 45 min. K-Line for [~*@*cabbage.net] [Links lookers are prohibited [Toast@OOMon]]
+.f.k
+.l.glink
+.l.kline
+.l.set default_kline_timeout
+kperm
+.s.kperm <nick|mask> <reason>
+.d.Adds a permanent K: line (ban) for a
+.d.particular nick or user@host mask.
+.e.> .kperm *abuse@*naughty.org No naughty users allowed
+.e.OOMon added K-Line for [*abuse@*naughty.org] [PERM No naughty users allowed [Toast@OOMon]]
+.f.k
+.l.gperm
+.l.kline
+kproxy
+.s.kproxy [<duration>] <nick|mask>
+.d.Adds a K: line (ban) for a particular nick
+.d.or user@host mask with the reason,
+.d."Open Proxy".
+.e.> .kproxy eviluser
+.e.OOMon added K-Line for [*monkey@*.spanky.com] [Open Proxy [Toast@OOMon]]
+.e.> .kproxy 45 ~*@*cabbage.net
+.e.OOMon added temporary 45 min. K-Line for [~*@*cabbage.net] [Open Proxy [Toast@OOMon]]
+.f.k
+.l.kline
+.l.set default_kline_timeout
+kspam
+.s.kspam [<duration>] <nick|mask>
+.d.Adds a K: line (ban) for a particular nick
+.d.or user@host mask with the reason,
+.d."Spamming is prohibited".
+.e.> .kspam eviluser
+.e.OOMon added K-Line for [*monkey@*.spanky.com] [Spamming is prohibited [Toast@OOMon]]
+.e.> .kspam 45 ~*@*cabbage.net
+.e.OOMon added temporary 45 min. K-Line for [~*@*cabbage.net] [Spamming is prohibited [Toast@OOMon]]
+.f.k
+.l.gspam
+.l.kline
+.l.set default_kline_timeout
+links
+.s.links
+.d.Lists all of the linked bots.
+.e.> .links
+.e.OOMon
+.e. \
+.e.  Foo
+.e.  |\
+.e.  | spunky
+.e.  | |\
+.e.  | | meaty
+.e.  |  \
+.e.  |   fruity
+.e.   \
+.e.    dorky
+.l.conn
+.l.disconn
+list.iplist
+.s.list [-count] [-class <name>] <mask>
+.s.iplist [-count] [-class <name>] <mask>
+.d.Lists all users whose user@host matches the
+.d.mask parameter.  Use the "-count" argument
+.d.to display the number of matching clients.
+.d.Use the "-class" argument to search only clients
+.d.in a particular user class.
+.e.> .list *@*.phx.slimenet.com
+.e.  madox (reining@ip20.tuc.slimenet.com) [1.2.3.20]
+.e.  Ter|away (~J@ip24.phx.slimenet.com) [1.2.17.24]
+.e.  tater (~prayhrd@ip22.flg.slimenet.com) [1.2.4.22]
+.e.  Mrr (~Someone@ip14.aus.slimenet.com) [1.2.6.14]
+.e.4 matches for *@*.???.slimenet.com found
+.e.> .list *bot*@192.168.*
+.e.  phlegm (hagbot@fakehost.localdomain) [192.168.4.73]
+.e.  sausage (aboth@192.168.204.12) [192.168.204.12]
+.e.  mcPoo (~botty@dhcp-4077.mash.nat) [192.168.17.2]
+.e.  zippy (~spambot@choo.choo.choose.me) [192.168.1.176]
+.e.4 matches for *bot*@192.168.* found
+.f.o
+.l.killlist
+.l.nfind
+.l.multi
+load
+.s.load
+.d.Loads settings and traps from file.
+.f.m
+.l.save
+.l.trap
+motd
+.s.motd
+.d.Redisplays the Message of the Day.
+.e.> .motd
+.e.Message Of The Day:
+.e.  This is a boring MOTD.
+.e.
+.e.  blah blah blah.
+.e.End of MOTD
+multi.bots
+.s.multi [<number>]
+.s.bots [<number>]
+.d.Shows any user@*host masks with multiple
+.d.connections.  Masks with more than MULTI_MIN
+.d.connections are indicated with an arrow.
+.d.The minimum number of clones to show can
+.d.be changed by using the number option.
+.e.> .multi
+.e.Multiple clients from the following userhosts:
+.e.      2 -- shadow@*rye.net
+.e.      2 -- ideal@*by.net
+.e. ==>  3 -- poofs@*derf.COM
+.e.      2 -- winata@*edu.au
+.e.> .multi 3
+.e.Multiple clients from the following userhosts:
+.e.      3 -- poofs@*derf.COM
+.f.o
+.l.hmulti
+.l.set multi_min
+.l.umulti
+.l.vmulti
+nets
+.s.nets [<minimum users>]
+.d.Lists nets with at least as many users
+.d.connected to the server as specified in
+.d.the parameter.  If no minimum is passed,
+.d.the default (usually 5) is used.
+.e.> .nets 30
+.e.Nets with most users on the server:
+.e.  192.168.1.*                  86 users
+.e.  10.0.0.*                     43 users
+.e.  172.16.0.*                   38 users
+.e.  127.0.0.*                    32 users
+.f.o
+.l.domains
+.l.list
+.l.multi
+nfind
+.s.nfind [-class <name>] [-count] [-r] <pattern>
+.d.Lists all users whose nicknames match the
+.d.pattern parameter.  Use the "-class" argument
+.d.to only match nicks in the specified class
+.d.name.  Wildcard characters: ? = 1 character of
+.d.any type. & = 1 alphabetical character.  # = 1
+.d.numerical character. % = 1 alphabetical or
+.d.numerical character. * = 0 or more characters
+.d.of any type.
+.e.> .nfind *bot*
+.e.The following clients match *bot*:
+.e.  Bebot (st0rm@sydney.shells.nu) [4.16.8.1]
+.e.  Hole-yBot (holeyman@citadel.datacourse.com) [10.2.7.8]
+.e.  AntiBot (~thebot@kermit.cs.hope.edu) [7.7.7.69]
+.e.  GoldenBot (2323@iowa.eel.ufl.edu) [3.1.2.4]
+.e.4 matches for *bot* found
+.f.o
+.l.list
+op
+.s.op <#channel> [<nickname>]
+.d.Ops a user in the channel.  If no nickname
+.d.is provided, the bot will attempt to op
+.d.you.  Note, if you have changed your IRC
+.d.nick since you connected to the bot via
+.d.DCC, this command might not work without a
+.d.nickname.
+.e.> .op #monitors
+.e.> .op #oomon Toast
+.f.c
+.l.join
+.l.part
+part
+.s.part <#channel>
+.d.Causes the bot to part the channel.
+.e.> .part #monitors
+.f.c
+.l.join
+.l.op
+quit
+.s.quit
+.d.Disconnects your DCC session with the
+.d.monitor bot.
+.e.> .quit
+.e.*** DCC CHAT connection to OOMon lost
+.l.auth
+reload
+.s.reload <type>
+.d.Reloads some aspect of the monitor bot.
+.d.Valid types are:
+.d.  CONFIG
+.d.  HELP
+.d.  DLINES
+.d.  KLINES
+.d.  USERS
+.e.> .reload klines
+.e.Reload KLINES requested by Toast@OOMon
+.f.o
+.l.trace
+save
+.s.save
+.d.Saves settings and traps to file.
+.f.m
+.l.load
+.l.trap
+seedrand
+.s.seedrand [-min <threshold>] [-count] [-r] [<pattern>]
+.d.Searches currently connected client nicknames
+.d.that match the "nickmask" for possibly random
+.d.generated characters.  This command may be
+.d.useful for detecting drones, etc.  Use the
+.d."-r" parameter to force the pattern to be a
+.d.regular expression.
+.e.> .seedrand -min 2500 *
+.e.Searching *.  Threshold is 2500
+.e.  3500 -- AIFGQMIU (toast@plasma.toast.pc) [192.168.1.1]
+.e.1 match for * found.
+.f.o
+.l.nfind
+.l.set seedrand_command_min
+set
+.s.set [<variable> [<value>]]
+.d.Reads or writes the value of one or more variables.
+.e.> .set auto_save on
+.e.*** Toast@OOMon set AUTO_SAVE to ON
+.e.> .set auto_pilot
+.e.*** AUTO_PILOT = ON
+.f.mo
+.t.auto_kline_host
+.t.auto_kline_host_time
+.t.auto_kline_noident
+.t.auto_kline_noident_time
+.t.auto_kline_userhost
+.t.auto_kline_userhost_time
+.t.auto_pilot
+.t.auto_save
+.t.broken_hostname_munging
+.t.check_for_spoofs
+.t.default_dline_timeout
+.t.default_kline_timeout
+.t.dnsbl_proxy_action
+.t.dnsbl_proxy_reason
+.t.dnsbl_proxy_zone
+.t.extra_kline_info
+.t.fake_ip_spoof_action
+.t.fake_ip_spoof_reason
+.t.flooder_action
+.t.flooder_max_count
+.t.flooder_max_time
+.t.flooder_reason
+.t.ignore_unknown_command
+.t.illegal_char_spoof_action
+.t.illegal_char_spoof_reason
+.t.illegal_tld_spoof_action
+.t.illegal_tld_spoof_reason
+.t.info_flood_action
+.t.info_flood_max_count
+.t.info_flood_max_time
+.t.info_flood_reason
+.t.invalid_username_action
+.t.invalid_username_reason
+.t.jupe_join_action
+.t.jupe_join_max_count
+.t.jupe_join_max_time
+.t.jupe_join_reason
+.t.killlist_reason
+.t.killnfind_reason
+.t.links_flood_action
+.t.links_flood_max_count
+.t.links_flood_max_time
+.t.links_flood_reason
+.t.motd_flood_action
+.t.motd_flood_max_count
+.t.motd_flood_max_time
+.t.motd_flood_reason
+.t.multi_min
+.t.nick_change_max_count
+.t.nick_change_t1_time
+.t.nick_change_t2_time
+.t.nick_flood_action
+.t.nick_flood_reason
+.t.oper_in_multi
+.t.oper_nick_in_reason
+.t.oper_only_dcc
+.t.relay_msgs_to_locops
+.t.scan_for_proxies
+.t.scan_proxy_action
+.t.scan_proxy_reason
+.t.seedrand_action
+.t.seedrand_command_min
+.t.seedrand_reason
+.t.seedrand_report_min
+.t.services_check_interval
+.t.services_clone_limit
+.t.spambot_action
+.t.spambot_max_count
+.t.spambot_max_time
+.t.spambot_reason
+.t.spamtrap_action
+.t.spamtrap_default_reason
+.t.spamtrap_enable
+.t.spamtrap_min_score
+.t.spamtrap_nick
+.t.spamtrap_userhost
+.t.stats_flood_action
+.t.stats_flood_max_count
+.t.stats_flood_max_time
+.t.stats_flood_reason
+.t.statsp_case_insensitive
+.t.statsp_message
+.t.statsp_reply
+.t.statsp_show_idle
+.t.statsp_show_userhost
+.t.trace_flood_action
+.t.trace_flood_max_count
+.t.trace_flood_max_time
+.t.trace_flood_reason
+.t.track_temp_dlines
+.t.track_temp_klines
+.t.trap_connects
+.t.trap_nick_changes
+.t.umode
+.t.unauthed_may_chat
+.t.user_count_delta_max
+.t.watch_flooder_notices
+.t.watch_info_notices
+.t.watch_jupe_notices
+.t.watch_links_notices
+.t.watch_motd_notices
+.t.watch_spambot_notices
+.t.watch_stats_notices
+.t.watch_trace_notices
+.t.xo_services_enable
+.t.xo_services_request
+.t.xo_services_response
+set auto_kline_host
+.s.set auto_kline_host [ON|OFF]
+.d.When ON, detected clones that have the same
+.d.hostname but different usernames will be
+.d.k-lined.
+.f.mo
+.l.set auto_kline_host_time
+set auto_kline_host_time
+.s.set auto_kline_host_time [<integer>]
+.d.If set to zero, detected same-hostname clones
+.d.will be k-lined permanently.  If greater than
+.d.zero, the clones will be temporarily k-lined.
+.f.mo
+.l.set auto_kline_host
+set auto_kline_noident
+.s.set auto_kline_noident [ON|OFF]
+.d.When ON, detected clones that do not have
+.d.identd enabled will be k-lined.
+.f.mo
+.l.set auto_kline_noident_time
+set auto_kline_noident_time
+.s.set auto_kline_noident_time [<integer>]
+.d.If set to zero, detected clones without identd
+.d.will be k-lined permanently.  If greater than
+.d.zero, the clones will be temporarily k-lined.
+.f.mo
+.l.set auto_kline_noident
+set auto_kline_userhost
+.s.set auto_kline_userhost [ON|OFF]
+.d.When ON, detected clones that have the same
+.d.username and domain will be k-lined.
+.f.mo
+.l.set auto_kline_userhost_time
+set auto_kline_userhost_time
+.s.set auto_kline_userhost_time [<integer>]
+.d.If set to zero, detected clones that have the
+.d.same username and domain will be k-lined
+.d.permanently.  If greater than zero, the
+.d.clones will be temporarily k-lined.
+.f.mo
+.l.set auto_kline_userhost
+set auto_pilot
+.s.set auto_pilot [ON|OFF]
+.d.When ON, the monitor bot will automatically
+.d.perform the configured action when abuse is
+.d.detected.  When OFF, the bot will recommend
+.d.a command to connected users.
+.f.mo
+set auto_save
+.s.set auto_save [ON|OFF]
+.d.When ON, all settings and traps will be saved
+.d.immediately after they are modified.  When OFF,
+.d.settings and traps will only be saved when a
+.d.user issues the .save command.
+.f.mo
+.l.load
+.l.save
+.l.set
+.l.trap
+set broken_hostname_munging
+.s.set broken_hostname_munging [ON|OFF]
+.d.When ON, the monitor bot will assume client
+.d.hostnames may have been munged, as in
+.d.LinkNet ircd's +h user mode.  This may
+.d.break some OOMon features and has not been
+.d.fully tested.
+.f.mo
+set check_for_spoofs
+.s.set check_for_spoofs [ON|OFF]
+.d.When ON, the monitor bot will check for spoofing
+.d.on all clients as they connect.  This variable
+.d.should probably be left OFF.
+.f.mo
+.l.set fake_ip_spoof_action
+.l.set illegal_char_spoof_action
+.l.set illegal_tld_spoof_action
+set default_dline_timeout
+.s.set default_dline_timeout [<minutes>]
+.d.This setting determines the default duration
+.d.of D-lines when added using the .dline command.
+.d.To make D-lines permanent by default, set this
+.d.to 0.  WARNING:  If your server does not support
+.d.temporary D-lines, do not set this to any value
+.d.other than 0!
+.f.mo
+.l.dline
+.l.set default_kline_timeout
+set default_kline_timeout
+.s.set default_kline_timeout [<minutes>]
+.d.This setting determines the default duration
+.d.of K-lines when added using the .kline command.
+.d.To make K-lines permanent by default, set this
+.d.to 0.  WARNING:  If your server does not support
+.d.temporary K-lines, do not set this to any value
+.d.other than 0!
+.f.mo
+.l.kline
+.l.set default_dline_timeout
+set dnsbl_proxy_action
+.s.set dnsbl_proxy_action [<action> [<time>]]
+.d.This setting determines how the monitor bot
+.d.should respond when a connecting client is,
+.d.according to the DNS Blackhole List (DNSBL),
+.d.coming from a proxy.  The optional "time"
+.d.parameter is for temporary k-lines only.
+.f.mo
+.l.info actions
+.l.set dnsbl_proxy_reason
+set dnsbl_proxy_reason
+.s.set dnsbl_proxy_reason [<text>]
+.d.The k-line or d-line reason to use for
+.d.proxies detected through a DNS Blackhole
+.d.List (DNSBL).
+.f.mo
+.l.set dnsbl_proxy_action
+set dnsbl_proxy_zone
+.s.set dnsbl_proxy_zone [<text>]
+.d.Determines the DNSBL zone to be used for
+.d.detecting proxies.
+.f.mo
+.l.set dnsbl_proxy_action
+set extra_kline_info
+.s.set extra_kline_info [ON|OFF]
+.d.When ON, subsequent k-lines and d-lines will
+.d.be stored internally with extra information in
+.d.the reason field.
+.f.mo
+.l.findk
+.l.kline
+set fake_ip_spoof_action
+.s.set fake_ip_spoof_action [<action> [<time>]]
+.d.This setting determines how the monitor bot
+.d.should respond when a connecting client is
+.d.detected to be spoofing its hostname to look
+.d.like a different IP address.
+.f.mo
+.l.info actions
+.l.set check_for_spoofs
+.l.set fake_ip_spoof_reason
+set fake_ip_spoof_reason
+.s.set fake_ip_spoof_reason [<text>]
+.d.This setting determines the kill, k-line, or
+.d.d-line reason to use after detecting a
+.d.spoofed IP address.
+.f.mo
+.l.set check_for_spoofs
+.l.set fake_ip_spoof_action
+set flooder_action
+.s.set flooder_action [<action>]
+.d.This setting determines how the monitor bot
+.d.should respond when it detects a client has
+.d.been flooding (through "Possible flooder"
+.d.server notices).
+.f.mo
+.l.set flooder_max_count
+.l.set flooder_max_time
+.l.set flooder_reason
+.l.set watch_flooder_notices
+set flooder_max_count
+.s.set flooder_max_count [<integer>]
+.d.This setting determines how many times the
+.d.monitor bot must receive "Possible flooder"
+.d.notices for a client before it is considered
+.d.to be flooding.
+.f.mo
+.l.set flooder_action
+.l.set flooder_max_time
+.l.set flooder_reason
+.l.set watch_flooder_notices
+set flooder_max_time
+.s.set flooder_max_time [<integer>]
+.d.This setting determines the maximum number
+.d.of seconds that may pass between "Possible
+.d.flooder" server notices for a client to be
+.d.considered a flooder.
+.f.mo
+.l.set flooder_action
+.l.set flooder_max_count
+.l.set flooder_reason
+.l.set watch_flooder_notices
+set flooder_reason
+.s.set flooder_reason [<text>]
+.d.This setting determines the kill, k-line, or
+.d.d-line reason to use when a client is
+.d.detected to be flooding (through "Possible
+.d.flooder" server notices).
+.f.mo
+.l.set flooder_action
+.l.set flooder_max_count
+.l.set flooder_max_time
+.l.set watch_flooder_notices
+set ignore_unknown_command
+.s.set ignore_unknown_command [ON|OFF]
+.d.When ON, the monitor bot will ignore the line,
+.d."Unknown command", coming from any of its DCC
+.d.connections.
+.f.mo
+set illegal_char_spoof_action
+.s.set illegal_char_spoof_action [<action>]
+.d.This setting determines how the monitor bot
+.d.should respond when a connecting client has
+.d.an illegal character in its hostname.
+.f.mo
+.l.info actions
+.l.set check_for_spoofs
+.l.set illegal_char_spoof_reason
+set illegal_char_spoof_reason
+.s.set illegal_char_spoof_reason [<text>]
+.d.This setting determines the kill, k-line, or
+.d.d-line reason to use after detecting illegal
+.d.characters in a hostname.
+.f.mo
+.l.set check_for_spoofs
+.l.set illegal_char_spoof_action
+set illegal_tld_spoof_action
+.s.set illegal_tld_spoof_action [<action>]
+.d.This setting determines how the monitor bot
+.d.should respond when a connecting client has
+.d.an illegal top-level domain name.
+.f.mo
+.l.info actions
+.l.set check_for_spoofs
+.l.set illegal_tld_spoof_reason
+set illegal_tld_spoof_reason
+.s.set illegal_tld_spoof_reason [<text>]
+.d.This setting determines the kill, k-line, or
+.d.d-line reason to use after detecting an
+.d.illegal top-level domain in a hostname.
+.f.mo
+.l.set check_for_spoofs
+.l.set illegal_tld_spoof_action
+set info_flood_action
+.s.set info_flood_action [<action>]
+.d.This setting determines how the monitor bot
+.d.should respond when a client is detected to
+.d.be flooding the server with /INFO commands.
+.f.mo
+.l.info actions
+.l.set info_flood_max_count
+.l.set info_flood_max_time
+.l.set info_flood_reason
+set info_flood_max_count
+.s.set info_flood_max_count [<integer>]
+.d.This setting determines how many times a
+.d.client may issue the /INFO command before
+.d.it is considered to be flooding.
+.f.mo
+.l.set info_flood_action
+.l.set info_flood_max_time
+.l.set info_flood_reason
+set info_flood_max_time
+.s.set info_flood_max_time [<integer>]
+.d.This setting determines the number of seconds
+.d.during which a client may issue the /INFO
+.d.command INFO_FLOOD_MAX_COUNT times before it
+.d.is considered to be flooding.
+.f.mo
+.l.set info_flood_action
+.l.set info_flood_max_count
+.l.set info_flood_reason
+set info_flood_reason
+.s.set info_flood_reason [<text>]
+.d.This setting determines the kill, k-line, or
+.d.d-line reason to use when a client is
+.d.detected to be flooding the server with the
+.d./INFO command.
+.f.mo
+.l.set info_flood_action
+.l.set info_flood_max_count
+.l.set info_flood_max_time
+set invalid_username_action
+.s.set invalid_username_action [<action> [<time>]]
+.d.This setting determines how the monitor bot
+.d.should respond when a client attempts to connect
+.d.with a username which the server considers
+.d.invalid.
+.f.mo
+.l.info actions
+.l.set invalid_username_reason
+set invalid_username_reason
+.s.set invalid_username_reason [<text>]
+.d.This setting determines the kill, k-line, or
+.d.d-line reason to use when a client attempts
+.d.to connect with an invalid username.
+.f.mo
+.l.set invalid_username_action
+set jupe_join_action
+.s.set jupe_join_action [<action>] [<time>]]
+.d.This setting determines how the monitor bot
+.d.should respond when a client repeatedly
+.d.attempts to join a juped channel.
+.f.mo
+.l.info actions
+.l.set jupe_join_max_count
+.l.set jupe_join_max_time
+.l.set jupe_join_reason
+set jupe_join_max_count
+.s.set jupe_join_max_count [<integer>]
+.d.This setting determines how many times a
+.d.client may attempt to join a juped channel
+.d.before it is considered to be abusive.
+.f.mo
+.l.set jupe_join_action
+.l.set jupe_join_max_time
+.l.set jupe_join_reason
+set jupe_join_max_time
+.s.set jupe_join_max_time [<integer>]
+.d.This setting determines the number of seconds
+.d.during which a client may attempt to join a
+.d.juped channel JUPE_JOIN_MAX_COUNT times before
+.d.it is considered to be abusive.
+.f.mo
+.l.set jupe_join_action
+.l.set jupe_join_max_count
+.l.set jupe_join_reason
+set jupe_join_reason
+.s.set jupe_join_reason [<text>]
+.d.This setting determines the kill, k-line, or
+.d.d-line reason to use when a client repeatedly
+.d.attempts to join a juped channel.
+.f.mo
+.l.set jupe_join_action
+.l.set jupe_join_max_count
+.l.set jupe_join_max_time
+set killlist_reason
+.s.set killlist_reason [<text>]
+.d.This setting determines the default kill reason
+.d.used with the .killlist command.
+.f.mo
+.l.killlist
+.l.set killnfind_reason
+set killnfind_reason
+.s.set killnfind_reason [<text>]
+.d.This setting determines the default kill reason
+.d.used with the .killnfind command.
+.f.mo
+.l.killnfind
+.l.set killlist_reason
+set links_flood_action
+.s.set links_flood_action [<action> [<time>]]
+.d.This setting determines how the monitor bot
+.d.should respond when a client is detected to
+.d.be flooding the server with /LINKS commands.
+.f.mo
+.l.info actions
+.l.set links_flood_max_count
+.l.set links_flood_max_time
+.l.set links_flood_reason
+set links_flood_max_count
+.s.set links_flood_max_count [<integer>]
+.d.This setting determines how many times a
+.d.client may issue the /LINKS command before
+.d.it is considered to be flooding.
+.f.mo
+.l.set links_flood_action
+.l.set links_flood_max_time
+.l.set links_flood_reason
+set links_flood_max_time
+.s.set links_flood_max_time [<integer>]
+.d.This setting determines the number of seconds
+.d.during which a client may issue the /LINKS
+.d.command LINKS_FLOOD_MAX_COUNT times before it
+.d.is considered to be flooding.
+.f.mo
+.l.set links_flood_action
+.l.set links_flood_max_count
+.l.set links_flood_reason
+set links_flood_reason
+.s.set links_flood_reason [<text>]
+.d.This setting determines the kill, k-line, or
+.d.d-line reason to use when a client is
+.d.detected to be flooding the server with the
+.d./LINKS command.
+.f.mo
+.l.set links_flood_action
+.l.set links_flood_max_count
+.l.set links_flood_max_time
+set motd_flood_action
+.s.set motd_flood_action [<action> [<time>]]
+.d.This setting determines how the monitor bot
+.d.should respond when a client is detected to
+.d.be flooding the server with /MOTD commands.
+.f.mo
+.l.info actions
+.l.set motd_flood_max_count
+.l.set motd_flood_max_time
+.l.set motd_flood_reason
+set motd_flood_max_count
+.s.set motd_flood_max_count [<integer>]
+.d.This setting determines how many times a
+.d.client may issue the /MOTD command before
+.d.it is considered to be flooding.
+.f.mo
+.l.set motd_flood_action
+.l.set motd_flood_max_time
+.l.set motd_flood_reason
+set motd_flood_max_time
+.s.set motd_flood_max_time [<integer>]
+.d.This setting determines the number of seconds
+.d.during which a client may issue the /MOTD
+.d.command MOTD_FLOOD_MAX_COUNT times before it
+.d.is considered to be flooding.
+.f.mo
+.l.set motd_flood_action
+.l.set motd_flood_max_count
+.l.set motd_flood_reason
+set motd_flood_reason
+.s.set motd_flood_reason [<text>]
+.d.This setting determines the kill, k-line, or
+.d.d-line reason to use when a client is
+.d.detected to be flooding the server with the
+.d./MOTD command.
+.f.mo
+.l.set motd_flood_action
+.l.set motd_flood_max_count
+.l.set motd_flood_max_time
+set multi_min
+.s.set multi_min [<integer>]
+.d.This setting determines the default minimum
+.d.number of multiple connections a client
+.d.pattern must have in order to show up in the
+.d.output of the .*multi commands.
+.f.mo
+.l.hmulti
+.l.multi
+.l.umulti
+.l.vmulti
+set nick_change_max_count
+.s.set nick_change_max_count [<integer>]
+.d.This setting determines the number of times a
+.d.client may change its nick before it is
+.d.considered to be flooding.
+.f.mo
+.l.set nick_change_t1_time
+.l.set nick_change_t2_time
+.l.set nick_flood_action
+.l.set nick_flood_reason
+set nick_change_t1_time
+.s.set nick_change_t1_time [<integer>]
+.d.This setting determines the minimum number of
+.d.seconds between nick changes a client must
+.d.wait in order to NOT be considered flooding.
+.f.mo
+.l.set nick_change_max_count
+.l.set nick_change_t2_time
+.l.set nick_flood_action
+.l.set nick_flood_reason
+set nick_change_t2_time
+.s.set nick_change_t2_time [<integer>]
+.d.This setting determines the number of seconds
+.d.during which a client may change its nick
+.d.NICK_CHANGE_MAX_COUNT times in order to be
+.d.considered flooding.
+.f.mo
+.l.set nick_change_max_count
+.l.set nick_change_t1_time
+.l.set nick_flood_action
+.l.set nick_flood_reason
+set nick_flood_action
+.s.set nick_flood_action [<action> [<time>]]
+.d.This setting determines how the monitor bot
+.d.should respond when a client is detected to
+.d.be nick flooding.
+.f.mo
+.l.info actions
+.l.set nick_change_max_count
+.l.set nick_change_t1_time
+.l.set nick_change_t2_time
+.l.set nick_flood_reason
+set nick_flood_reason
+.s.set nick_flood_reason [<text>]
+.d.This setting determines the kill, k-line, or
+.d.d-line reason to use when a client is
+.d.detected to be nick flooding.
+.f.mo
+.l.set nick_change_max_count
+.l.set nick_change_t1_time
+.l.set nick_change_t2_time
+.l.set nick_flood_action
+set oper_in_multi
+.s.set oper_in_multi [ON|OFF]
+.d.When ON, IRC operators may appear in the
+.d.output of the .*multi commands.  When OFF,
+.d.IRC operators do not appear in the output.
+.f.mo
+.l.hmulti
+.l.multi
+.l.umulti
+.l.vmulti
+set oper_nick_in_reason
+.s.set oper_nick_in_reason [ON|OFF]
+.d.When ON, the nickname of the OOMon operator
+.d.will appear in the kill, k-line, and d-line
+.d.reasons the user issues.  When OFF, the
+.d.user's nickname does not appear in the
+.d.reason.
+.f.mo
+.l.dline
+.l.kill
+.l.kline
+set oper_only_dcc
+.s.set oper_only_dcc [ON|OFF]
+.d.When ON, only IRC operators and users who
+.d.have the "O" flag in the config file will be
+.d.allowed to DCC CHAT with the monitor bot.
+.d.When OFF, all users may DCC CHAT with the
+.d.monitor bot.
+.f.mo
+set relay_msgs_to_locops
+.s.set relay_msgs_to_locops [ON|OFF]
+.d.When ON, all private messages sent to the
+.d.monitor bot will be relayed via the LOCOPS
+.d.server command.  This setting may be useful
+.d.for assisting users.
+.f.mo
+set scan_for_proxies
+.s.set scan_for_proxies [ON|OFF]
+.d.When ON, the monitor bot will scan all
+.d.connecting clients for open proxies.  When
+.d.OFF, no scanning will be performed.
+.f.mo
+.l.set scan_proxy_action
+.l.set scan_proxy_reason
+set scan_proxy_action
+.s.set scan_proxy_action [<action> [<time>]]
+.d.This setting determines how the monitor bot
+.d.should respond when a client is detected to
+.d.be connecting from an open proxy.
+.f.mo
+.l.info actions
+set scan_proxy_reason
+.s.set scan_proxy_reason [<text>]
+.d.This setting determines the kill, k-line, or
+.d.d-line reason to use when a client is
+.d.detected to be connecting from an open proxy.
+.f.mo
+set seedrand_command_min
+.s.set seedrand_command_min [<integer>]
+.d.This setting determines the default minimum
+.d.seedrand score to display when the .seedrand
+.d.command is used.  A user can override this
+.d.default by passing a minimum score to the
+.d..seedrand command.
+.f.mo
+.l.seedrand
+.l.set seedrand_action
+.l.set seedrand_reason
+.l.set seedrand_report_min
+set seedrand_action
+.s.set seedrand_action [<action> [<time>]]
+.d.This setting determines how the monitor bot
+.d.should respond when a client is detected to
+.d.have a nick with a seedrand score greater
+.d.than or equal to SEEDRAND_REPORT_MIN.
+.f.mo
+.l.info actions
+.l.seedrand
+.l.set seedrand_command_min
+.l.set seedrand_reason
+.l.set seedrand_report_min
+set seedrand_reason
+.s.set seedrand_reason [<text>]
+.d.This setting determines the kill, k-line, or
+.d.d-line reason to use when a client is
+.d.detected to have a seedrand score greater
+.d.than or equal to SEEDRAND_REPORT_MIN.
+.f.mo
+.l.seedrand
+.l.set seedrand_action
+.l.set seedrand_command_min
+.l.set seedrand_report_min
+set seedrand_report_min
+.s.set seedrand_report_min [<integer>]
+.d.This setting determines the minimum seedrand
+.d.score that is reported while checking clients
+.d.that are connecting or changing their nicks.
+.f.mo
+.l.seedrand
+.l.set seedrand_action
+.l.set seedrand_command_min
+.l.set seedrand_reason
+set services_check_interval
+.s.set services_check_interval [<integer>]
+.d.This setting determines the number of minutes
+.d.between each time the monitor bot will check
+.d.services for clones.
+.f.mo
+.l.clones
+set services_clone_limit
+.s.set services_clone_limit [<integer>]
+.d.This setting determines the minimum number of
+.d.duplicate user@hosts that must exist in order
+.d.for them to be considered clones.
+.f.mo
+.l.clones
+set spambot_action
+.s.set spambot_action [<action>]
+.d.This setting determines how the monitor bot
+.d.should respond when it detects a client is a
+.d.spambot (through "possible spambot" server
+.d.notices).
+.f.mo
+.l.set spambot_max_count
+.l.set spambot_max_time
+.l.set spambot_reason
+.l.set watch_spambot_notices
+set spambot_max_count
+.s.set spambot_max_count [<integer>]
+.d.This setting determines how many times the
+.d.monitor bot must receive "possible spambot"
+.d.notices for a client before it is considered
+.d.to be spamming.
+.f.mo
+.l.set spambot_action
+.l.set spambot_max_time
+.l.set spambot_reason
+.l.set watch_spambot_notices
+set spambot_max_time
+.s.set spambot_max_time [<integer>]
+.d.This setting determines the maximum number
+.d.of seconds that may pass between "possible
+.d.spambot" server notices for a client to be
+.d.considered a spammer.
+.f.mo
+.l.set spambot_action
+.l.set spambot_max_count
+.l.set spambot_reason
+.l.set watch_spambot_notices
+set spambot_reason
+.s.set spambot_reason [<text>]
+.d.This setting determines the kill, k-line, or
+.d.d-line reason to use when a client is
+.d.detected to be spamming (through "possible
+.d.spambot" server notices).
+.f.mo
+.l.set spambot_action
+.l.set spambot_max_count
+.l.set spambot_max_time
+.l.set watch_spambot_notices
+set spamtrap_action
+.s.set spamtrap_action [<action> [<time>]]
+.d.This setting determines how the monitor bot
+.d.should respond when a client is reported to
+.d.be spamming by spamtrap.
+.f.mo
+.l.info actions
+.l.set spamtrap_default_reason
+.l.set spamtrap_enable
+.l.set spamtrap_min_score
+.l.set spamtrap_nick
+.l.set spamtrap_userhost
+.l.spamsub
+.l.spamunsub
+set spamtrap_default_reason
+.s.set spamtrap_default_reason [<text>]
+.d.This setting determines the kill, k-line, or
+.d.d-line reason to use when a client is
+.d.detected to be spamming by spamtrap, if
+.d.spamtrap does not provide its own reason.
+.f.mo
+.l.set spamtrap_action
+.l.set spamtrap_enable
+.l.set spamtrap_min_score
+.l.set spamtrap_nick
+.l.set spamtrap_userhost
+.l.spamsub
+.l.spamunsub
+set spamtrap_enable
+.s.set spamtrap_enable [ON|OFF]
+.d.This setting determines whether the monitor
+.d.bot should inteface with SpamTrap to check
+.d.for spammers.
+.f.mo
+.l.set spamtrap_action
+.l.set spamtrap_default_reason
+.l.set spamtrap_min_score
+.l.set spamtrap_nick
+.l.set spamtrap_userhost
+.l.spamsub
+.l.spamunsub
+set spamtrap_min_score
+.s.set spamtrap_min_score [<integer>]
+.d.This setting determines the minimum spamtrap
+.d.score required for the monitor bot to take
+.d.action on a detected spammer.
+.f.mo
+.l.set spamtrap_action
+.l.set spamtrap_default_reason
+.l.set spamtrap_enable
+.l.set spamtrap_nick
+.l.set spamtrap_userhost
+.l.spamsub
+.l.spamunsub
+set spamtrap_nick
+.s.set spamtrap_nick [<text>]
+.d.This setting determines the nickname of the
+.d.SpamTrap services.  The monitor bot will send
+.d.spamtrap commands to this nickname.
+.f.mo
+.l.set spamtrap_action
+.l.set spamtrap_default_reason
+.l.set spamtrap_enable
+.l.set spamtrap_min_score
+.l.set spamtrap_userhost
+.l.spamsub
+.l.spamunsub
+set spamtrap_userhost
+.s.set spamtrap_userhost [<text>]
+.d.This setting determines what user@host
+.d.mask the monitor expects all spamtrap
+.d.responses to come from.  If the responses
+.d.come from a different user@host, they are
+.d.ignored.
+.f.mo
+.l.set spamtrap_action
+.l.set spamtrap_default_reason
+.l.set spamtrap_enable
+.l.set spamtrap_min_score
+.l.set spamtrap_nick
+.l.spamsub
+.l.spamunsub
+set stats_flood_action
+.s.set stats_flood_action [<action> [<time>]]
+.d.This setting determines how the monitor bot
+.d.should respond when a client is detected to
+.d.be flooding the server with /STATS commands.
+.f.mo
+.l.info actions
+.l.set stats_flood_max_count
+.l.set stats_flood_max_time
+.l.set stats_flood_reason
+set stats_flood_max_count
+.s.set stats_flood_max_count [<integer>]
+.d.This setting determines how many times a
+.d.client may issue the /STATS command before
+.d.it is considered to be flooding.
+.f.mo
+.l.set stats_flood_action
+.l.set stats_flood_max_time
+.l.set stats_flood_reason
+set stats_flood_max_time
+.s.set stats_flood_max_time [<integer>]
+.d.This setting determines the number of seconds
+.d.during which a client may issue the /STATS
+.d.command STATS_FLOOD_MAX_COUNT times before it
+.d.is considered to be flooding.
+.f.mo
+.l.set stats_flood_action
+.l.set stats_flood_max_count
+.l.set stats_flood_reason
+set stats_flood_reason
+.s.set stats_flood_reason [<text>]
+.d.This setting determines the kill, k-line, or
+.d.d-line reason to use when a client is
+.d.detected to be /STATS flooding.
+.f.mo
+.l.set stats_flood_action
+.l.set stats_flood_max_count
+.l.set stats_flood_max_time
+set statsp_case_insensitive
+.s.set statsp_case_insensitive [ON|OFF]
+.d.When ON, the monitor bot will consider a
+.d./STATS P request to be the same as a /STATS p
+.d.request.  When OFF, the are different
+.d.requests.
+.f.mo
+.l.set statsp_reply
+.l.set statsp_show_idle
+.l.set statsp_show_userhost
+set statsp_message
+.s.set statsp_message [<text>]
+.d.This message is appended to the monitor bot's
+.d./stats p reply output.  This setting may be
+.d.useful for providing important contact
+.d.information, etc.
+.e.> .set statsp_message Visit http://oomon.sourceforge.net/ to download me!
+.e.*** Toast@OOMon set STATSP_MESSAGE to Visit http://oomon.sourceforge.net/ to download me!
+.e.> .set -statsp_message
+.e.*** Toast@OOMon cleared STATSP_MESSAGE
+.f.mo
+.l.set statsp_reply
+set statsp_reply
+.s.set statsp_reply [ON|OFF]
+.d.When ON, the monitor bot will respond to
+.d./STATS p requests by sending the user a list
+.d.of the currently connected OOMon operators.
+.f.mo
+.l.set statsp_case_insensitive
+.l.set statsp_message
+.l.set statsp_show_idle
+.l.set statsp_show_userhost
+set statsp_show_idle
+.s.set statsp_show_idle [ON|OFF]
+.d.When ON, the monitor bot will include each
+.d.connected OOMon operator's idle time when
+.d.replying to a /STATS p request.
+.f.mo
+.l.set statsp_case_insensitive
+.l.set statsp_reply
+.l.set statsp_show_userhost
+set statsp_show_userhost
+.s.set statsp_show_userhost [ON|OFF]
+.d.When ON, the monitor bot will include each
+.d.connected OOMon operator's user@host when
+.d.replying to a /STATS p request.
+.f.mo
+.l.set statsp_case_insensitive
+.l.set statsp_reply
+.l.set statsp_show_idle
+set trace_flood_action
+.s.set trace_flood_action [<action> [<time>]]
+.d.This setting determines how the monitor bot
+.d.should respond when a client is detected to
+.d.be flooding the server with /TRACE commands.
+.f.mo
+.l.info actions
+.l.set trace_flood_max_count
+.l.set trace_flood_max_time
+.l.set trace_flood_reason
+set trace_flood_max_count
+.s.set trace_flood_max_count [<integer>]
+.d.This setting determines how many times a
+.d.client may issue the /TRACE command before
+.d.it is considered to be flooding.
+.f.mo
+.l.set trace_flood_action
+.l.set trace_flood_max_time
+.l.set trace_flood_reason
+set trace_flood_max_time
+.s.set trace_flood_max_time [<integer>]
+.d.This setting determines the number of seconds
+.d.during which a client may issue the /TRACE
+.d.command TRACE_FLOOD_MAX_COUNT times before it
+.d.is considered to be flooding.
+.f.mo
+.l.set trace_flood_action
+.l.set trace_flood_max_count
+.l.set trace_flood_reason
+set trace_flood_reason
+.s.set trace_flood_reason [<text>]
+.d.This setting determines the kill, k-line, or
+.d.d-line reason to use when a client is
+.d.detected to be /TRACE flooding.
+.f.mo
+.l.set trace_flood_action
+.l.set trace_flood_max_count
+.l.set trace_flood_max_time
+set track_temp_dlines
+.s.set track_temp_dlines [ON|OFF]
+.d.When ON, the monitor bot will keep track
+.d.off temporary d-lines in addition to
+.d.permanent d-lines.  This setting should not
+.d.be enabled unless your ircd reports when
+.d.temporary d-lines expire.
+.f.mo
+.l.dline
+.l.findd
+.l.undline
+set track_temp_klines
+.s.set track_temp_klines [ON|OFF]
+.d.When ON, the monitor bot will keep track
+.d.off temporary k-lines in addition to
+.d.permanent k-lines.  This setting should not
+.d.be enabled unless your ircd reports when
+.d.temporary k-lines expire.
+.f.mo
+.l.findk
+.l.kline
+.l.unkline
+set trap_connects
+.s.set trap_connects [ON|OFF]
+.d.When ON, the monitor bot will try to match
+.d.connecting clients with all traps.
+.f.mo
+.l.set trap_nick_changes
+.l.trap
+.l.watch
+set trap_nick_changes
+.s.set trap_nick_changes [ON|OFF]
+.d.When ON, the monitor bot will try to match
+.d.nick-changing clients with all traps.
+.f.mo
+.l.set trap_connects
+.l.trap
+.l.watch
+set umode
+.s.set umode [<modes>]
+.d.Determines what user modes the monitor bot should
+.d.set.  Some ircd versions may require specific
+.d.user modes to be set in order to receive particular
+.d.server notices.  If this setting is configured
+.d.improperly, the monitor bot may produce unexpected
+.d.behavior.
+.f.mo
+set unauthed_may_chat
+.s.set unauthed_may_chat [ON|OFF]
+.d.When ON, users who connect to the monitor
+.d.bot but do not authenticate themselves using
+.d.the .auth command may chat.  When OFF, they
+.d.must use the .auth command before they are
+.d.allowed to chat.
+.f.mo
+.l.auth
+.l.chat
+set user_count_delta_max
+.s.set user_count_delta_max [<integer>]
+.d.When the number of connected clients increases
+.d.by this amount or more in 10 seconds, the
+.d.monitor bot will notify connected opers.  This
+.d.setting may be useful for detecting clones.
+.f.mo
+.l.clones
+.l.hmulti
+.l.multi
+.l.umulti
+.l.vmulti
+set watch_flooder_notices
+.s.set watch_flooder_notices [ON|OFF]
+.d.When ON, the monitor bot will watch for
+.d.flooding through "Possible flooder" server
+.d.notices.
+.f.mo
+.l.set watch_info_notices
+.l.set watch_jupe_notices
+.l.set watch_links_notices
+.l.set watch_motd_notices
+.l.set watch_spambot_notices
+.l.set watch_stats_notices
+.l.set watch_trace_notices
+set watch_info_notices
+.s.set watch_info_notices [ON|OFF]
+.d.When ON, the monitor bot will watch for
+.d.flooding through the use of the /INFO
+.d.command.
+.f.mo
+.l.set watch_flooder_notices
+.l.set watch_jupe_notices
+.l.set watch_links_notices
+.l.set watch_motd_notices
+.l.set watch_spambot_notices
+.l.set watch_stats_notices
+.l.set watch_trace_notices
+set watch_jupe_notices
+.s.set watch_jupe_notices [ON|OFF]
+.d.When ON, the monitor bot will watch for
+.d.flooding through the use of the /JUPE
+.d.command.
+.f.mo
+.l.set watch_flooder_notices
+.l.set watch_info_notices
+.l.set watch_links_notices
+.l.set watch_motd_notices
+.l.set watch_spambot_notices
+.l.set watch_stats_notices
+.l.set watch_trace_notices
+set watch_links_notices
+.s.set watch_links_notices [ON|OFF]
+.d.When ON, the monitor bot will watch for
+.d.flooding through the use of the /LINKS
+.d.command.
+.f.mo
+.l.set watch_flooder_notices
+.l.set watch_info_notices
+.l.set watch_jupe_notices
+.l.set watch_motd_notices
+.l.set watch_spambot_notices
+.l.set watch_stats_notices
+.l.set watch_trace_notices
+set watch_motd_notices
+.s.set watch_motd_notices [ON|OFF]
+.d.When ON, the monitor bot will watch for
+.d.flooding through the use of the /MOTD
+.d.command.
+.f.mo
+.l.set watch_flooder_notices
+.l.set watch_info_notices
+.l.set watch_jupe_notices
+.l.set watch_links_notices
+.l.set watch_spambot_notices
+.l.set watch_stats_notices
+.l.set watch_trace_notices
+set watch_spambot_notices
+.s.set watch_spambot_notices [ON|OFF]
+.d.When ON, the monitor bot will watch for
+.d.spamming through "possible spambot" server
+.d.notices.
+.f.mo
+.l.set watch_flooder_notices
+.l.set watch_info_notices
+.l.set watch_jupe_notices
+.l.set watch_links_notices
+.l.set watch_motd_notices
+.l.set watch_stats_notices
+.l.set watch_trace_notices
+set watch_stats_notices
+.s.set watch_stats_notices [ON|OFF]
+.d.When ON, the monitor bot will watch for
+.d.flooding through the use of the /STATS
+.d.command.
+.f.mo
+.l.set watch_flooder_notices
+.l.set watch_info_notices
+.l.set watch_jupe_notices
+.l.set watch_links_notices
+.l.set watch_motd_notices
+.l.set watch_spambot_notices
+.l.set watch_trace_notices
+set watch_trace_notices
+.s.set watch_trace_notices [ON|OFF]
+.d.When ON, the monitor bot will watch for
+.d.flooding through the use of the /TRACE
+.d.command.
+.f.mo
+.l.set watch_flooder_notices
+.l.set watch_info_notices
+.l.set watch_jupe_notices
+.l.set watch_links_notices
+.l.set watch_motd_notices
+.l.set watch_spambot_notices
+.l.set watch_stats_notices
+set xo_services_enable
+.s.set xo_services_enable [ON|OFF]
+.d.When ON, the monitor bot will periodically
+.d.check XO-style services for clones.
+.f.mo
+.l.set xo_services_request
+.l.set xo_services_response
+set xo_services_request
+.s.set xo_services_request [<text>]
+.d.This setting determines where the monitor bot
+.d.should send XO-style services commands.
+.d.Typically, this is the XO-style services
+.d.user@host.
+.f.mo
+.l.set xo_services_enable
+.l.set xo_services_response
+set xo_services_response
+.s.set xo_services_response [<text>]
+.d.This setting determines from whom the monitor
+.d.bot should expect to receive responses to its
+.d.XO-style services commands.  Typically, this
+.d.is the XO-style services server name.
+.f.mo
+.l.set xo_services_enable
+.l.set xo_services_request
+spamsub
+.s.spamsub
+.d.Subscribes the monitor bot to Spam Trap
+.d.services.
+.f.m
+.l.set spamtrap_action
+.l.set spamtrap_default_reason
+.l.set spamtrap_enable
+.l.set spamtrap_min_score
+.l.set spamtrap_nick
+.l.set spamtrap_userhost
+.l.spamunsub
+spamunsub
+.s.spamunsub
+.d.Unsubscribes the monitor bot from Spam Trap
+.d.services.
+.f.m
+.l.set spamtrap_action
+.l.set spamtrap_default_reason
+.l.set spamtrap_enable
+.l.set spamtrap_min_score
+.l.set spamtrap_nick
+.l.set spamtrap_userhost
+.l.spamunsub
+status
+.s.status
+.d.Dumps general information about the monitor
+.d.bot.
+trace
+.s.trace
+.d.Reloads the monitor bot's internal list of
+.d.users.  This command performs the same
+.d.action as ".reload users".
+.f.o
+.l.reload
+trap
+.s.trap [list]
+.s.trap remove <rules>
+.s.trap <action> [<timeout>] <rules> [<reason>]
+.d.Watches client connects and nick changes and
+.d.performs the desired action when they match the
+.d.rules specified in the format:
+.d.   <field>=<pattern>[,<field>=<pattern>[,...]]
+.d.The "field" may be "nick", "userhost", or
+.d."gecos".  The pattern may be a regular expression
+.d.or old-style cluster pattern.  Action may be one
+.d.of the following:
+.d. echo - notify opers of matching clients
+.d. kill - forcefully disconnect matching clients
+.d. kline - k-line *user@*domain matching clients
+.d. kline_host - k-line *@host matching clients
+.d. kline_domain - k-line *@*domain matching clients
+.d. kline_ip - k-line the client's IP
+.d. kline_usernet - k-line *user@/24 matching clients
+.d. kline_net - k-line the client's /24 network
+.d. dline - d-line the client's IP
+.d. dline_net - d-line the client's /24 network
+.e.> .trap kline_host nick=pK-????? pK drone
+.e.Toast@OOMon added trap KLINE_HOST: nick=pK-????? (pK drone)
+.e.> .trap dline_net userhost=*rolex*@* packet monkey
+.e.Toast@OOMon added trap DLINE_NET: userhost=*rolex*@* (packet monkey)
+.e.> .trap kline_ip 1440 gecos=/-[0-9]{5}$/ flooding drone
+.e.Toast@OOMon added trap KLINE_IP: 1440 gecos=/-[0-9]{5}$/ (flooding drone)
+.f.mo
+.l.dline
+.l.info patterns
+.l.info regex
+.l.kill
+.l.kline
+.l.set trap_connects
+.l.set trap_nick_changes
+umulti
+.s.umulti [<number>]
+.d.Shows any user@* masks with multiple
+.d.connections.  Masks with more than MULTI_MIN
+.d.connections are indicated with an arrow.
+.d.The minimum number of clones to show can be
+.d.changed by using the number option.
+.e.> .umulti
+.e.Multiple clients from the following usernames:
+.e. ==>  3 -- poofs@*
+.e.      2 -- jonpas@*
+.e.> .umulti 3
+.e.Multiple clients from the following userhosts:
+.e.      3 -- poofs@*
+.f.o
+.l.hmulti
+.l.multi
+.l.set multi_min
+.l.vmulti
+ungline
+.s.ungline <mask>
+.d.Removes a server K: line (ban) for a
+.d.particular user@host mask on all linked
+.d.monitor bots.
+.f.g
+.l.gline
+.l.unkline
+undline
+.s.undline <mask>
+.d.Removes a server D: line (ban) for a
+.d.particular IP mask.
+.e.> .undline 192.168.1.*
+.e.OOMon removed D-Line: 192.168.1.*
+.f.d
+.l.dline
+.l.findd
+.l.unkline
+unkline
+.s.unkline <mask>
+.d.Removes a server K: line (ban) for a
+.d.particular user@host mask.
+.e.> .unkline *foo@*.blah.org
+.e.OOMon removed K-Line: *foo@*.blah.org
+.f.k
+.l.findk
+.l.kline
+.l.undline
+vmulti.vbots
+.s.vmulti [<number>]
+.s.vbots [<number>]
+.d.Shows any user@net* masks with multiple
+.d.connections.  Masks with more than MULTI_MIN
+.d.connections are indicated with an arrow.
+.d.The minimum number of clones to show can be
+.d.changed by using the number option.
+.e.> .vmulti
+.e.Multiple clients from the following vhosts:
+.e.      2 -- l0ngb0ng@208.222.182.*
+.e.      2 -- test@193.15.35.*
+.e. ==>  3 -- poofs@192.168.1.*
+.e.> .vmulti 3
+.e.Multiple clients from the following vhosts:
+.e.      3 -- poofs@192.168.1.*
+.f.o
+.l.hmulti
+.l.multi
+.l.set multi_min
+.l.umulti
+watch
+.s.watch [[-]<type> ...]
+.s.watch [-]ALL
+.s.watch NONE
+.d.Adds or removes watch types from your WATCH
+.d.list.  If no parameters are given, this command
+.d.will display your current WATCH list.  Use the
+.d.minus (-) prefix to remove a watch type from
+.d.the list, otherwise the type will be added to
+.d.the list.  Use "ALL" to add all watch types.
+.d.Use "NONE" or "-ALL" to remove all watch types.
+.e.> .watch
+.e.Watching: CHAT DLINES KILLS KLINES TRAPS WALLOPS
+.e.> .watch -CHAT
+.e.Watching: DLINES KILLS KLINES TRAPS WALLOPS
+.e.> .watch NONE
+.e.Watching: NONE
+.e.> .watch ALL
+.e.Watching: CHAT CONNECTS DISCONNECTS DLINES DLINE_MATCHES KILLS KLINES KLINE_MATCHES NICK_CHANGES TRAPS WALLOPS
+.l.echo
+who
+.s.who
+.d.Lists the currently connected users, their
+.d.flags, and their idle times.
+.e.> .who
+.e.Client connections:
+.e.DGKMOR Toast (toast@lalalala.Cheese.EDU) 0
+.e.D K O  i386 (i386@MooCow.com) 179162
+.e.  K O  narcotic (crusher@irc.monkeys.com) 362
+.e.  K O  xer (xer@friends.of.polofool.org) 6536
+.e. GK OR moogle (lb@invalid.fqdn.net) 43449
+.e.  K O  sublimez (sublimez@cheap.beer.com) 4

@@ -1,0 +1,248 @@
+<HTML>
+<HEAD>
+<TITLE>Configuring the oomon.h file</TITLE>
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFFF">
+<CENTER><TABLE WIDTH=600><TR><TD BGCOLOR="#000000" CELLPADDING=1 CELLSPACING=0>
+<TABLE WIDTH=100%><TR><TD BGCOLOR="#FFFFFF" CELLPADDING=2>
+<B>NOTE</B>: As of OOMon v2.0, this document is no longer accurate.  Please
+refer to the <A HREF="help.cgi?topic=set">.set</A> command for information
+on how to configure your OOMon.  The following is included for historical
+purposes and to provide assistance to anyone who is still running an old
+version of OOMon.
+</TD></TR></TABLE>
+</TD></TR></TABLE></CENTER>
+<OL type=I>
+<B><LI>Debug output</B>
+ <UL><PRE>
+#undef DEBUG
+
+#ifdef DEBUG
+# define CONFIG_DEBUG
+# define IRC_DEBUG
+# define DCC_DEBUG
+# define REMOTE_DEBUG
+# define REMOTELIST_DEBUG
+# define ENGINE_DEBUG
+# define LOG_DEBUG
+# define KLINES_DEBUG
+# define LINKS_DEBUG
+# define WINGATE_DEBUG
+# define PROXY_DEBUG
+#endif
+ </PRE></UL>
+ Unless you plan on doing any debugging, you should leave these defines as
+ they are.  Turning debug on can produce large amounts of output.
+</LI><P>
+<B><LI>Default filenames</B>
+ <UL><PRE>#define DEFAULT_CFGFILE         "oomon.cf"
+
+#define DEFAULT_PIDFILE         "oomon.pid"
+
+#define DEFAULT_HELPFILE        "oomon.help"</PRE></UL>
+ Again, these options are probably going to be just fine in their default
+ state.
+</LI><P>
+<A NAME="use_crypt"><B><LI>Password encryption</B>
+ <UL><PRE>
+#define USE_CRYPT
+ </PRE></UL>
+ If you want to use plaintext password fields or if your operating system
+ does not have a crypt(3) function, undefine USE_CRYPT.  If USE_CRYPT is
+ defined but configure was unable to find a crypt(3) function, a warning
+ message will be displayed during a make, indicating that plaintext
+ passwords are being used.  Note that encrypted passwords only apply to
+ <A HREF="oomon_cf.html#o_lines">O: lines</A> in the config files.
+</LI><P>
+<B><LI>Ircd flags</B>
+ <UL><PRE>
+#undef USE_FLAGS
+ </PRE></UL>
+ If you are using OOMon on a server running ircd-comstud, you should
+ define USE_FLAGS.  Comstud's ircd uses the FLAGS command to turn on
+ the passing of various server notices which OOMon depends upon.  Using
+ this option with other versions of ircd may produce unpredictable
+ results.
+</LI><P>
+<B><LI>Automatic k-lines</B>
+ <UL><PRE>
+#undef AUTO_KLINE_HOST
+
+#define AUTO_KLINE_NOIDENT
+
+#define AUTO_KLINE_USERHOST
+ </PRE></UL>
+ These three defines tell OOMon if and when it should automatically
+ k-line clones, flooders, etc.  AUTO_KLINE_HOST controls whether OOMon
+ will automatically k-line masks in the format *@hostname.domain.com.
+ AUTO_KLINE_NOIDENT controls k-line masks in the format ~*@*.domain.com.
+ AUTO_KLINE_USERHOST controls k-line masks in the format
+ *user@*.domain.com.  The defaults shown above should suit your needs.
+</LI><P>
+<B><LI>AutoPilot default setting</B>
+ <UL><PRE>
+#define AUTOPILOT_DEFAULT       true
+ </PRE></UL>
+ This define sets the value of AutoPilot when OOMon is started.
+ Acceptable values are true and false.
+</LI><P>
+<B><LI>The .multi command</B>
+ <UL><PRE>
+#define MULTI_MINIMUM           3
+
+#define NO_OPERS_IN_MULTI
+ </PRE></UL>
+ The MULTI_MINIMUM define sets the default minimum number of connections
+ to report when using the .multi, .umulti, and .hmulti commands.  If
+ NO_OPERS_IN_MULTI is defined, OOMon will not count opers when detecting
+ multiple connections.
+</LI><P>
+<B><LI>Watching TRACE requests</B>
+ <UL><PRE>
+#undef TRACE_BASTARD
+ </PRE></UL>
+ Eggdrops, when their desired nicknames are in use by another user, will
+ continuously send TRACE requests to the server in order to detect when
+ the user signs off IRC.  If you consider this behaviour unacceptable,
+ define TRACE_BASTARD.
+</LI><P>
+<B><LI>Detecting virtual host clones</B>
+ <UL><PRE>
+#define DETECT_VHOST_CLONES
+
+#define VHOST_NETMASK "255.255.255.0"
+
+#define MAX_IP_CONNECTS 5
+#define MAX_IP_TIME 10
+ </PRE></UL>
+ Most modern version of ircd, including hybrid and comstud, report a
+ client's IP in his connect server notice.  OOMon can take advantage of
+ this feature to detect when a large number of clones connect from
+ the same IP subnet.
+ <P>
+ To turn off this detection, undefine DETECT_VHOST_CLONES.
+ <P>
+ To change the size of the subnet mask used for detecting virtual host
+ clones, modify VHOST_NETMASK.  The default value will detect /24
+ (also known as class C) or smaller subnet clones.
+ <P>
+ MAX_IP_CONNECTS and MAX_IP_TIME control how strict OOMon should be
+ when detecting virtual host clones.  The default values show above
+ imply OOMon should notify connected opers when 5 or more clients from
+ the same subnet connect in 10 seconds or less.
+</LI><P>
+<B><LI>Detecting open-access WinGates</B>
+ <UL><PRE>
+#define DETECT_WINGATES
+
+#undef AUTO_DLINE_WINGATES
+#define AUTO_KLINE_WINGATES
+
+#define WINGATE_KLINE_TIME      0
+ </PRE></UL>
+ If you want to allow clients to connect through open-access WinGates
+ and wreak havoc over your IRC network, undefine DETECT_WINGATES.  The
+ WinGate detector will attempt a connection to the telnet (23) port
+ of all connecting clients' IP addresses.  If you or your Internet
+ Service Provider find this unacceptable, you may want to turn off the
+ detector.
+ <P>
+ When OOMon detects an open-access WinGate, it has three options:  It
+ can d-line it, k-line it, or simply report it.  If your ircd does not
+ support the DLINE command, or if you prefer a k-line, leave
+ AUTO_DLINE_WINGATES undefined and AUTO_KLINE_WINGATES defined.  If
+ both options are defined, the client's IP address will be d-lined, as
+ AUTO_DLINE_WINGATES has higher precedence.
+ <P>
+ If you choose to k-line open-access WinGates and you would prefer that
+ the k-line be lifted some time later, define WINGATE_KLINE_TIME to be
+ the number of minutes the k-line should stay in effect.  Note that in
+ order for this to work, your ircd MUST support temporary k-lines.
+</LI><P>
+<B><LI>Detecting open-access SOCKS proxies</B>
+ <UL><PRE>
+#define DETECT_PROXIES
+
+#undef AUTO_DLINE_PROXIES
+#define AUTO_KLINE_PROXIES
+
+#define PROXY_KLINE_TIME        0
+ </PRE></UL>
+ Like the open-access WinGate detector, OOMon's open-access SOCKS proxy
+ detector will attempt to make a connection to port 1080 on each clients'
+ IP address.  See the WinGate detector section for details.
+</LI><P>
+<B><LI>K-lines an E: lines</B>
+ <UL><PRE>
+#define DONT_KLINE_OUR_E
+ </PRE></UL>
+ If you don't want OOMon k-lining or suggesting k-lines on clients
+ matching <A HREF="oomon_cf.html#e_lines">E: lines</A> in the config
+ files, define this option.
+</LI><P>
+<B><LI>Illegal top-level domain spoofers</B>
+ <UL><PRE>
+ #define KILL_ILLEGAL_TLD_DNS_SPOOFERS
+ </PRE></UL>
+ If a client connects and its hostname does not end in "net", "com", "org",
+ "gov", "edu", "mil", "int", or any two-letter country abbreviation, when
+ this option is defined, OOMon will automatically kill the client's
+ connection.  This does NOT affect clients with non-resolving IP addresses.
+</LI><P>
+<B><LI>Automatic kills</B>
+ <UL><PRE>
+#define AUTO_KILL_NICK_FLOODING 
+#define AUTO_KILL_LINK_LOOKERS
+#define AUTO_KILL_TRACE_LOOKERS
+#define AUTO_KILL_MOTD_LOOKERS
+#define AUTO_KILL_INFO_LOOKERS
+
+#define NICK_CHANGE_T1_TIME  10
+#define NICK_CHANGE_T2_TIME 300
+#define NICK_CHANGE_MAX_COUNT 5
+
+#define MAX_LINK_LOOKS 2
+#define MAX_LINK_TIME 600
+
+#define MAX_TRACE_LOOKS 2
+#define MAX_TRACE_TIME 600
+
+#define MAX_MOTD_LOOKS 2
+#define MAX_MOTD_TIME 600
+
+#define MAX_INFO_LOOKS 2
+#define MAX_INFO_TIME 600
+ </PRE></UL>
+ These defines control if and when OOMon should automatically kill nick
+ flooders, link lookers, trace lookers, motd lookers, and info lookers.
+</LI><P>
+<B><LI>IRC Services</B>
+ <UL><PRE>
+#define SERVICES
+#define AUTOKSERVICES
+#define AUTO_KLINE_SERVICES
+
+#define SERVICES_NICK           "x@services.us"
+#define SERVICES_NAME           "services.us"
+#define CA_SERVICES_NAME        "services.ca"
+ </PRE></UL>
+ OOMon has the ability to query IRC services for a list of clients with
+ multiple connections on multiple IRC servers.  If your IRC network
+ does not have services which can provide this information, or if you
+ would prefer not to use it, undefine SERVICES.
+ <P>
+ If you want OOMon to kill or k-line clones reported by services, be
+ sure to leave AUTOKSERVICES defined.  If you want OOMon to k-line
+ clones detected by services, leave AUTO_KLINE_SERVICES defined.
+ <P>
+ SERVICES_NICK should be set to the nick OOMon should query for clones.
+ SERVICES_NAME is the address OOMon should expect replies from.
+ <P>
+ OOMon also supports an alternative version of services, used on EFnet
+ for a short while.  CA_SERVICES_NAME is the address OOMon expects to
+ receive replies from.
+</LI><P>
+<HR>
+<a href="http://sourceforge.net"><img src="http://sourceforge.net/sflogo.php?group_id=94236&amp;type=2" width="125" height="37" border="0" alt="SourceForge.net Logo" /></a>
+</BODY>
+</HTML>

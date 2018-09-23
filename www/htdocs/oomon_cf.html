@@ -1,0 +1,189 @@
+<HTML>
+<HEAD>
+<TITLE>Configuring the oomon.cf file</TITLE>
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFFF">
+<CENTER><TABLE WIDTH=600><TR><TD BGCOLOR="#000000" CELLPADDING=1 CELLSPACING=0>
+<TABLE WIDTH=100%><TR><TD BGCOLOR="#FFFFFF" CELLPADDING=2>
+<B>NOTE</B>: The format of the oomon.cf file may change without notice.
+Documentation reflecting those changes is NOT guaranteed to be shown in
+the text below.
+</TD></TR></TABLE>
+</TD></TR></TABLE></CENTER>
+<OL type=I>
+<A NAME="b_lines"><B><LI>B: (bot) lines</B>
+ <UL><PRE>
+B:nickname:username:vhost:realname:opernick:operpass:
+ </PRE></UL>
+ The B: line sets options regarding the OOMon's identity.
+ <P>
+ The nickname field tells OOMon what nick to use when it is connected to
+ IRC.
+ <P>
+ The username field tells OOMon how to identify its username when it
+ connects to IRC.  This field can be left blank, as OOMon will try to
+ retrieve its username from the operating system.
+ <P>
+ The vhost field tells OOMon what hostname it should connect to IRC
+ from.  If left blank, OOMon will retrieve the hostname from the
+ operating system.
+ <P>
+ The realname field tells OOMon what to use as its IRCNAME when connecting
+ to an IRC server.
+ <P>
+ The opernick field sets the nick OOMon should use when using the OPER
+ command after connecting to the IRC server.
+ <P>
+ The operpass field sets the password OOMon should use when using the
+ OPER command after connecting to the IRC server.  This field must be the
+ plaintext password!
+</LI><P>
+<A NAME="s_lines"><B><LI>S: (server) lines</B>
+ <UL><PRE>
+S:hostname:port:password:channels:
+ </PRE></UL>
+ The S: line tells OOMon how to connect to IRC.
+ <P>
+ The hostname field tells OOMon the address of the IRC server to connect
+ to.
+ <P>
+ The port field tells OOMon what port to connect to.
+ <P>
+ The password field tells OOMon what password to use to gain access to
+ the IRC server.  This field must be the plaintext password!  Leave this
+ field blank if no password is required to connect.
+ <P>
+ The channels field tells OOMon what channels to join after connecting to
+ the IRC server.
+</LI><P>
+<A NAME="h_lines"><A NAME="h_lines"><B><LI>H: (help file) lines</B>
+ <UL><PRE>H:filename:</PRE></UL>
+ An H: line tells OOMon where to find the help file.
+</LI><P>
+<A NAME="i_lines"><A NAME="i_lines"><B><LI>I: (include) lines</B>
+ <UL><PRE>I:filename:</PRE></UL>
+ An I: line tells OOMon to read an additional file for configuration
+ data.  This gives the user the ability to organize configuration
+ information, such as placing user data in another file.
+</LI><P>
+<A NAME="o_lines"><B><LI>O: (operator) lines</B>
+ <UL><PRE>
+O:handle:userhostmask:password:flags:
+ </PRE></UL>
+ O: lines tell OOMon who is authorized to connect via DCC.
+ <P>
+ The handle field is "nickname" an oper identifies himself as when he
+ uses the .auth command.  If no handle is specified, the user's IRC
+ nick is used for chatline features, etc.
+ <P>
+ The userhostmask field specifies what user@host mask the oper is
+ allowed to connect from.
+ <P>
+ The password field sets the password the oper must enter when using
+ the .auth command.  If USE_CRYPT is set (see
+ <A HREF="oomon_h.html#use_crypt">oomon.h</A>) this field should be
+ ciphertext.  Otherwise, it is the plaintext password.
+ <P>
+ The flags field determines which commands the oper may use.  Acceptable
+ flags are:
+ <UL>
+ <LI><TT>C</TT> - Channel (.join, .part, .op)
+ <LI><TT>D</TT> - D-line (.dline)
+ <LI><TT>G</TT> - G-line (.gline, .gclone, .gflood, etc.)
+ <LI><TT>K</TT> - K-line (.kline, .kclone, .kflood, etc.)
+ <LI><TT>M</TT> - Master (.die, .reload, etc.)
+ <LI><TT>N</TT> - Can see client nick changes
+ <LI><TT>O</TT> - Oper (.kill, .multi, .list, etc.)
+ <LI><TT>R</TT> - Remove (.command@otherbot)
+ <LI><TT>W</TT> - Can see WALLOPS/OPERWALL/LOCOPS messages
+ <LI><TT>X</TT> - Can see client connects/disconnects
+ </UL>
+ <P>
+ The stock <I>userlist.cf</I> file contains the line:
+ <UL><TT>O::*@*::</TT></UL>
+ Don't be fooled.  <B>This is NOT a back door</B>.  Because this line does not
+ specify any flags, it simply allows any user to connect and, after
+ entering the .auth command without specifying a handle or password,
+ talk on the chatline.  If you don't want J. Random User connecting
+ and using the chatline, remove this O: line.
+</LI><P>
+<A NAME="e_lines"><B><LI>E: (exception) lines</B>
+ <UL><PRE>
+E:mask:
+ </PRE></UL>
+ E: lines tell OOMon not to kill or k-line certain user@host masks.
+</LI><P>
+<A NAME="m_line"><B><LI>M: (MOTD) line</B>
+ <UL><PRE>
+M:filename:
+ </PRE></UL>
+ The M: line tells OOMon what file to read when displaying the Message
+ of the Day. The default is <A HREF="motd_txt.html"><I>motd.txt</I></A>.
+</LI><P>
+<A NAME="g_line"><B><LI>G: (log) line</B>
+ <UL><PRE>
+G:filename:
+ </PRE></UL>
+ The G: line tells OOMon what file to write its log to. The default is
+ "oomon.log".
+</LI><P>
+<A NAME="h_line"><B><LI>H: (help file) line</B>
+ <UL><PRE>
+H:filename:
+ </PRE></UL>
+ The H: line tells OOMon what file to read when displaying help text
+ The default is "oomon.help".
+</LI><P>
+<A NAME="t_line"><B><LI>T: (OOMon settings file) line</B>
+ <UL><PRE>
+T:filename:
+ </PRE></UL>
+ The T: line tells OOMon what file to read or write when loading or saving
+ its settings.  The default is "oomon.settings".
+</LI><P>
+<A NAME="u_line"><B><LI>U: (User settings file) line</B>
+ <UL><PRE>
+U:filename:
+ </PRE></UL>
+ The U: line tells OOMon what file to read/write when loading or saving
+ user-specific settings (watches, etc.).  The default is "users.db".
+</LI><P>
+<A NAME="p_lines"><B><LI>P: (port) lines</B>
+ <UL><PRE>
+P:portnum:
+ </PRE></UL>
+ The P: line tells OOMon what port to listen to for incoming OOMon
+ connections.  By default, OOMon listens to port 4000.
+</LI><P>
+<A NAME="l_lines"><B><LI>L: (link) lines</B>
+ <UL><PRE>
+L:Handle:hostmask:password:flags:
+ </PRE></UL>
+ <I>This section is under construction</I>
+</LI><P>
+<A NAME="c_lines"><B><LI>C: (connect) lines</B>
+ <UL><PRE>
+C:Handle:hostname:passowrd:flags:port:
+ </PRE></UL>
+ <I>This section is under construction</I>
+</LI><P>
+<A NAME="y_lines"><B><LI>Y: (class) lines</B>
+ <UL><PRE>
+Y:classnum:description:
+ </PRE></UL>
+ The Y: lines set the descriptions associated with particular user
+ classes when using the .class command.
+</LI><P>
+<A NAME="w_lines"><B><LI>W: (wingate) lines</B>
+ <UL><PRE>
+W:vhost:
+ </PRE></UL>
+ The W: line tells OOMon what hostname to use when detecting open-access
+ WinGates and SOCKS proxies.  By default, the vhost listed in the B:
+ line is used.
+</LI><P>
+</OL>
+<HR>
+<a href="http://sourceforge.net"><img src="http://sourceforge.net/sflogo.php?group_id=94236&amp;type=2" width="125" height="37" border="0" alt="SourceForge.net Logo" /></a>
+</BODY>
+</HTML>

@@ -1,0 +1,522 @@
+<!-- $Id$ -->
+
+  <h2 id="top">Frequently Asked Questions (FAQ)</h2>
+
+  <div class="section">
+    <h3><a href="#sec1.0">1.0 - What is OOMon and Where can I get
+    it?</a></h3>
+
+    <ul>
+      <li><a href="#sec1.1">1.1 - What is OOMon?</a></li>
+
+      <li><a href="#sec1.2">1.2 - Why should I use it?</a></li>
+
+      <li><a href="#sec1.3">1.3 - What Operating Systems are
+      supported?</a></li>
+
+      <li><a href="#sec1.4">1.4 - What IRC Servers are
+      supported?</a></li>
+
+      <li><a href="#sec1.5">1.5 - Where should I ask for
+      help?</a></li>
+    </ul>
+
+    <h3><a href="#sec2.0">2.0 - Compile-Time Issues</a></h3>
+
+    <ul>
+      <li><a href="#sec2.1">2.1 - How do I build the most recent
+      code?</a></li>
+
+      <li><a href="#sec2.2">2.2 - Why does it take so long to
+      compile OOMon?</a></li>
+
+      <li><a href="#sec2.3">2.3 - Why can't I build OOMon on
+      &lt;insert commercial Unix OS name&gt;</a></li>
+    </ul>
+
+    <h3><a href="#sec3.0">3.0 - Run-Time Issues</a></h3>
+
+    <ul>
+      <li><a href="#sec3.1">3.1 - Why is OOMon showing duplicate
+      "STATS p" notices?</a></li>
+
+      <li><a href="#sec3.2">3.2 - How do I completely disable Open
+      Proxy DNSBL look-ups?</a></li>
+
+      <li><a href="#sec3.3">3.3 - How do I make OOMon initiate a
+      DCC request?</a></li>
+    </ul>
+
+    <h3><a href="#sec4.0">4.0 - Bug Reports and
+    Suggestions</a></h3>
+
+    <ul>
+      <li><a href="#sec4.1">4.1 - How do I report bugs?</a></li>
+
+      <li><a href="#sec4.2">4.2 - Will you add &lt;feature&gt; in
+      the next version?</a></li>
+
+      <li><a href="#sec4.3">4.3 - My OOMon crashed or disconnected
+      with the message "Abnormal termination." What
+      happened?</a></li>
+
+      <li><a href="#sec4.4">4.4 - I can't find a core file! Now
+      what?</a></li>
+    </ul>
+
+    <h3><a href="#sec5.0">5.0 - Miscellaneous</a></h3>
+
+    <ul>
+      <li><a href="#sec5.1">5.1 - Why object oriented? Why
+      C++?</a></li>
+
+      <li><a href="#sec5.2">5.2 - How can I learn C++
+      programming?</a></li>
+    </ul>
+  </div><!-- end div.section -->
+
+  <h2 id="sec1.0">1.0 - What is OOMon and Where can I get it?</h2>
+
+  <div class="section">
+    <h2 class="indent" id="sec1.1">1.1 - What is OOMon?
+    &nbsp;(<a href="#top">top</a>)</h2>
+
+    <div class="section-indent">
+      <p>OOMon is an Object-Oriented Monitor bot for Internet Relay
+      Chat (IRC) servers. OOMon monitors various types of IRC
+      activity for possible abuse. When abuse is detected, the
+      OOMon may automatically remove and/or ban the abusive client
+      from the server, or notify server operators for them to deal
+      with the issue appropriately.</p>
+
+      <p>The official OOMon website is <a href=
+      "?p=home">http://oomon.sourceforge.net/</a>.</p>
+    </div><!-- end div.section-indent -->
+
+    <h2 class="indent" id="sec1.2">1.2 - Why should I use it?
+    &nbsp;(<a href="#top">top</a>)</h2>
+
+    <div class="section-indent">
+      <p>If you are an IRC server operator or administrator who
+      does not want users to abuse the service you provide and/or
+      support, you should run an OOMon connection monitor.</p>
+    </div><!-- end div.section-indent -->
+
+    <h2 class="indent" id="sec1.3">1.3 - What Operating Systems are
+    supported? &nbsp;(<a href="#top">top</a>)</h2>
+
+    <div class="section-indent">
+      <p>Practically any Unix-like operating system should compile
+      and run OOMon successfully. However, the following operating
+      systems have been confirmed to run OOMon without
+      problems:</p>
+
+      <ul>
+        <li>FreeBSD/OpenBSD/NetBSD</li>
+
+        <li>Linux</li>
+
+        <li>Solaris</li>
+
+        <li>Cygwin (Windows)</li>
+      </ul>
+
+      <p>If you are running an operating system other than one
+      listed above, don't despair! If you have GNU C++ and the GNU
+      Standard Template Library (STL) installed, chances are OOMon
+      will build successfully on your system.</p>
+    </div><!-- end div.section-indent -->
+
+    <h2 class="indent" id="sec1.4">1.4 - What IRC Servers are
+    supported? &nbsp;(<a href="#top">top</a>)</h2>
+
+    <div class="section-indent">
+      <p>OOMon is known to work well with the following IRC
+      Servers:</p>
+
+      <ul>
+        <li>ircd-hybrid (versions 5, 6, and 7)</li>
+
+        <li>ircd-ratbox</li>
+      </ul>
+
+      <p>If you run a different ircd version and OOMon works
+      correctly on your server, please let us know by submitting a
+      <a href=
+      "http://sourceforge.net/tracker/?group_id=94236&amp;atid=607186">
+      documentation bug</a> tracker item.</p>
+    </div><!-- end div.section-indent -->
+
+    <h2 class="indent" id="sec1.5">1.5 - Where should I ask for
+    help? &nbsp;(<a href="#top">top</a>)</h2>
+
+    <div class="section-indent">
+      <p>There are several ways to get your questions answered. In
+      the order of most likely to get answered, they are:</p>
+
+      <ol>
+        <li>Check the <a href="?p=home">official OOMon web
+        site</a>. In particular, read the <a href="?p=faq">FAQ</a>,
+        in case your question has already been answered there.</li>
+
+        <li>Post your question to the <a href=
+        "http://lists.sourceforge.net/lists/listinfo/oomon-discuss">
+        oomon-discuss mailing list</a>.</li>
+
+        <li>Post your question to the <a href=
+        "https://sourceforge.net/forum/forum.php?forum_id=326244">OOMon
+        Help forum</a>.</li>
+
+        <li>Join the IRC channel #OOMon on EFNet.</li>
+      </ol>
+
+      <p>When asking questions, please follow these guidelines to
+      ensure prompt and accurate answers:</p>
+
+        <p>Ask your question directly, without any unnecessary
+        preamble.</p>
+
+	    <p><b>Bad questions:</b><br />
+	    Can I ask a question?<br />
+	    Has anyone ever used <i>X</i>?<br />
+	    Can someone help me with <i>Y</i>?<br />
+	    </p>
+
+	    <p><b>Good questions:</b><br />
+	    When using <i>FOO</i>, why does <i>BAR</i> always make
+	    <i>QUUX</i> disconnect?</p>
+
+        <p>Saying "it doesn't work" is not a good problem
+        description. Rather than saying, "Spambot detection doesn't
+        work", say something like, "Even though I've enabled
+        WATCH_SPAMBOT_NOTICES and set SPAMBOT_ACTION to KLINE, my
+        OOMon never klines any spambots."</p>
+
+        <p>Don't be annoying, obnoxious, or offensive. Please
+        follow standard netiquette.</p>
+
+        <p>Ask your question in English only. While many users
+        speak other languages, asking your question in English
+        ensures the greatest possible audience for your question,
+        and allows others to benefit from any answers as well.</p>
+
+        <p>On IRC, please DO NOT paste large amounts of text.
+        Instead, use a "paste bin" site like <a href=
+        "http://www.nomorepasting.com/">http://www.nomorepasting.com/</a>
+        and paste the resulting URL to the channel.</p>
+
+        <p>On IRC, use your space bar to separate words. Doing the
+        following will likely get you removed from the channel:</p>
+<pre>
+&lt;n00b&gt; So
+&lt;n00b&gt; I tried
+&lt;n00b&gt; ".kline" and
+&lt;n00b&gt; ".dline" but uhm...
+&lt;n00b&gt; like...
+&lt;n00b&gt; it doesn't work
+</pre>
+    </div><!-- end div.section-indent -->
+  </div><!-- end div.section -->
+
+  <h2 id="sec2.0"><a>2.0 - Compile-Time Issues</a></h2>
+
+  <div class="section">
+    <h2 class="indent" id="sec2.1">2.1 - How do I build the most
+    recent code? &nbsp;(<a href="#top">top</a>)</h2>
+
+    <div class="section-indent">
+      <p>Check out the instructions for <a href=
+      "?p=cvs-install">checking out and building from CVS</a> or
+      <a href="?p=snap-install">building from a development
+      snapshot</a>.</p>
+    </div><!-- end div.section-indent -->
+
+    <h2 class="indent" id="sec2.2">2.2 - Why does it take so long
+    to compile OOMon? &nbsp;(<a href="#top">top</a>)</h2>
+
+    <div class="section-indent">
+      <p>A large portion of the time spent compiling OOMon is due
+      to the optimizations the compiler performs. You can reduce
+      the time it takes to compile OOMon by removing the
+      "<code>-O</code>" flag from <code>CXXFLAGS</code> in the
+      <i>makefile</i>.</p>
+
+      <p>There is a trade-off when removing the optimize flag.
+      Decreasing the compile time will probably cause OOMon to run
+      slower and use memory less efficiently.</p>
+    </div><!-- end div.section-indent -->
+
+    <h2 class="indent" id="sec2.3">2.3 - Why can't I build OOMon on
+    &lt;insert commercial Unix OS name&gt; &nbsp;(<a href=
+    "#top">top</a>)</h2>
+
+    <div class="section-indent">
+      <p>You're probably using the broken compiler shipped with the
+      OS. Please use the GNU C++ compiler to build OOMon. If you
+      know you already have GNU C++ installed, enter the following
+      command <em>prior</em> to running the <code>configure</code>
+      script:</p>
+
+      <p><code>CXX=g++; export CXX</code></p>
+
+      <p>Or, if you use the <code>csh</code> or <code>tcsh</code>
+      shell:</p>
+
+      <p><code>setenv CXX g++</code></p>
+    </div><!-- end div.section-indent -->
+  </div><!-- end div.section -->
+
+  <h2 id="sec3.0">3.0 - Run-Time Issues</h2>
+
+  <div class="section">
+    <h2 class="indent" id="sec3.1">3.1 - Why is OOMon showing
+    duplicate "STATS p" notices? &nbsp;(<a href=
+    "#top">top</a>)</h2>
+
+    <div class="section-indent">
+      <p>Most likely you are running ircd-hybrid-7, or an ircd
+      derived from it, and have the modules spy_stats_notice.so and
+      spy_stats_p_notice.so both loaded. Unload one of them, and
+      you'll stop seeing duplicates.</p>
+    </div><!-- end div.section-indent -->
+
+    <h2 class="indent" id="sec3.2">3.2 - How do I completely
+    disable Open Proxy DNSBL look-ups? &nbsp;(<a href=
+    "#top">top</a>)</h2>
+
+    <div class="section-indent">
+      <p>As of OOMon-2.3, you can completely disable all DNSBL
+      look-ups by setting <code>DNSBL_PROXY_ENABLE</code>:</p>
+
+      <p><code>.set dnsbl_proxy_enable off</code></p>
+
+      <p>Users of older version of OOMon can disable DNSBL look-ups
+      by clearing the <code>DNSBL_PROXY_ZONE</code> setting:</p>
+
+      <p><code>.set -dnsbl_proxy_zone</code></p>
+    </div><!-- end div.section-indent -->
+
+    <h2 class="indent" id="sec3.3">3.3 - How do I make OOMon
+    initiate a DCC request? &nbsp;(<a href="#top">top</a>)</h2>
+
+    <div class="section-indent">
+      <p>Users who IRC from behind a firewall or NAT device may
+      find it useful to have the bot initiate DCC requests so that
+      they do not have to open or forward TCP ports in their
+      network hardware. To make OOMon initiate a DCC request, issue
+      a CTCP CHAT command as follows:</p>
+
+      <p><code>/ctcp &lt;<i>nickname</i>&gt; chat</code></p>
+
+      <p>Note that the same rules apply in this scenario. If
+      <a href=
+      "help.cgi?topic=set%20oper_only_dcc">OPER_ONLY_DCC</a> is
+      enabled, your userhost must match one of the masks listed an
+      O: line in the config file. If no matching masks are found,
+      OOMon will ignore your CTCP command.</p>
+    </div><!-- end div.section-indent -->
+  </div><!-- end div.section -->
+
+  <h2><a id="sec4.0">4.0 - Bug Reports and Suggestions</a></h2>
+
+  <div class="section">
+    <h2 class="indent"><a id="sec4.1">4.1 - How should I report
+    bugs?</a> &nbsp;(<a href="#top">top</a>)</h2>
+
+    <div class="section-indent">
+      <p>Before submitting a bug report, please check this FAQ for
+      possible solutions.</p>
+
+      <p>Submit your bug reports through the SourceForge.net
+      <a href=
+      "http://sourceforge.net/tracker/?group_id=94236&amp;atid=607186">
+      bug tracker</a> interface. You do not have to login to a
+      SourceForge account to submit bug reports, but
+      <strong>PLEASE</strong> include contact information in the
+      text of your report. In particular, your email address or IRC
+      information (nick@network) will help me in case I need to
+      contact you for additional information.</p>
+
+      <p>Try to include as much information about the problem as
+      possible. Include excerpts from your OOMon log file if
+      necessary. Please do not send a core dump file unless it is
+      specifically requested.</p>
+
+      <p>It's always a good idea to periodically check on your bug
+      report in case additional information is requested.</p>
+    </div><!-- end div.section-indent -->
+
+    <h2 class="indent"><a id="sec4.2">4.2 - Will you add
+    &lt;feature&gt; in the next version?</a> &nbsp;(<a href=
+    "#top">top</a>)</h2>
+
+    <div class="section-indent">
+      <p>Submit your feature requests through the SourceForge.net
+      <a href=
+      "http://sourceforge.net/tracker/?group_id=94236&amp;atid=607189">
+      feature request</a> interface. Like bug reports, you do not
+      have to login to a SourceForge account to submit feature
+      requests, but <strong>PLEASE</strong> include contact
+      information in the text of your request!</p>
+
+      <p>Please note that asking in channel <code>#oomon</code> or
+      private messaging me <strong>will not</strong> get your
+      request automatically added to the list, even if I tell you
+      its a great idea! If the feature request is important to you,
+      you <strong>must</strong> submit it through the web site.</p>
+
+      <p>It's always a good idea to periodically check on your
+      feature request in case additional information is
+      requested.</p>
+    </div><!-- end div.section-indent -->
+
+    <h2 class="indent"><a id="sec4.3">4.3 - My OOMon crashed or
+    disconnected with the message "Abnormal termination." What
+    happened?</a> &nbsp;(<a href="#top">top</a>)</h2>
+
+    <div class="section-indent">
+      <p>Your OOMon appears to have crashed due to a bug. You can
+      help me out by filling out a bug report containing the
+      following information:</p>
+
+      <ol>
+        <li>The version of OOMon you were running if it was an
+        official release. If it was from CVS, the date and time of
+        the checkout. If it was a from a snapshot tarball, the date
+        of the snapshot.</li>
+
+        <li>A description of what you were doing when OOMon
+        crashed.</li>
+
+        <li>The last 5 to 10 lines of your <code>oomon.log</code>
+        file:
+
+        <p><code>tail -10 oomon.log</code></p>
+
+        <li>A full backtrace of the crash using the <a href=
+        "http://www.gnu.org/software/gdb/gdb.html">GDB</a>
+        debugger:</li>
+
+            <p>Find the location of the resulting core file. It's
+            usually called "<code>oomon.core</code>" or just
+            "<code>core</code>".</p>
+
+            <p>Change to the directory containing the source code
+            to your OOMon. The version of the source code
+            <em>MUST</em> match the version of the executable that
+            crashed Run GDB:
+
+            <p><code>gdb</code>&lt;<i>EXECUTABLE</i>&gt;&lt;<i>CORE</i>&gt;</p>
+
+            <p>Make sure you replace "&lt;EXECUTABLE&gt;" with the
+            OOMon executable filename that crashed and
+            "&lt;CORE&gt;" with the resulting core filename. At the
+            "<code>(gdb)</code>" prompt, type the following
+            command:
+
+            <p><code>bt full</code></p>
+
+            <p>Please copy the <em>entire</em> output of this command 
+            to your bug report.</p>
+      </ol>
+    </div><!-- end div.section-indent -->
+
+    <h2 class="indent"><a id="sec4.4">4.4 - I can't find a core
+    file! Now what?</a> &nbsp;(<a href="#top">top</a>)</h2>
+
+    <div class="section-indent">
+      <p>There are several reasons for why a core file might not be
+      generated:</p>
+
+      <ul>
+        <li>Your OOMon was built without debug information. Rebuild
+        OOMon with "<code>-g</code>" in the <code>CXXFLAGS</code>
+        environment variable.</li>
+
+        <li>Your OOMon executable was stripped. Rebuild OOMon and
+        don't strip the executable this time.</li>
+
+        <li>Your resource limits are preventing core files from
+        being generated. The command to change resource limits is
+        OS dependent, so check your documentation. On FreeBSD, you
+        can use this command to increase the core file limit:
+
+        <p><code>limits -c infinity</code></p>
+      </ul>
+
+      <p>If none of the above help you create core files, try
+      running your OOMon from inside <a href=
+      "http://www.gnu.org/software/gdb/gdb.html">GDB</a>:</p>
+
+      <ol>
+        <li>Start GDB (you might want to do this inside a
+          <a href="http://savannah.gnu.org/projects/screen/">screen</a>
+          session):
+
+          <p><code>gdb ./oomon</code></p>
+
+        <li>At the first "<code>(gdb)</code>" prompt, set your
+        command line arguments to include the "<code>-d</code>"
+        option:
+
+          <p><code>set args -d</code></p>
+
+        <li>Be sure to specify any other command line arguments you
+        would normally use. At the next "<code>(gdb)</code>"
+        prompt, run your OOMon:
+
+          <p><code>run</code></p>
+
+        <li>Now let your OOMon run until it crashes. When that
+        happens, enter the following command at the
+        "<code>(gdb)</code>" prompt:
+
+          <p><code>bt full</code></p>
+
+        <li>Copy the entire output of this command to your bug
+        report.</li>
+      </ol>
+    </div><!-- end div.section-indent -->
+  </div><!-- end div.section -->
+
+  <h2><a id="sec5.0">5.0 - Miscellaneous</a></h2>
+
+  <div class="section">
+    <h2 class="indent"><a id="sec5.1">5.1 - Why object oriented?
+    Why C++?</a> &nbsp;(<a href="#top">top</a>)</h2>
+
+    <div class="section-indent">
+      <p>I started writing OOMon while I was taking a C++ course at
+      the <a href="http://www.arizona.edu">University of
+      Arizona</a>. At the time, I had made some minor modifications
+      to the TCM (Texas.NET Connection Monitor) bot source code,
+      and I realized how much more pleasant it would have been to
+      work on TCM had it been written using object orientation.</p>
+
+      <p>Don't get me wrong--TCM was an amazing piece of work at
+      the time. In fact, much of OOMon's code is based on TCM, so
+      it deserves much credit. However, I wanted to apply what I
+      learned in my C++ course to make a better connection monitor
+      bot.</p>
+    </div><!-- end div.section-indent -->
+
+    <h2 class="indent"><a id="sec5.2">5.2 - How can I learn C++
+    programming?</a> &nbsp;(<a href="#top">top</a>)</h2>
+
+    <div class="section-indent">
+      <p>First, don't use my OOMon code as a model for good C++
+      programming. At heart, I'm really an x86 assembly and C
+      programmer. I learned C++ later on and that fact probably
+      shows well in my code. I'm still learning, however, so I'm
+      gradually rewriting various pieces of OOMon to make it better
+      and better.</p>
+
+      <p>If you are, like me, a C programmer and you want to pick
+      up some C++ skills, I highly recommend <a href=
+      "http://www.amazon.com/exec/obidos/ASIN/020170353X/qid%3D1044035363/sr%3D11-1/ref%3Dsr%5F11%5F1/104-8635610-5680738">
+      Accelerated C++: Practical Programming by Example</a>, by
+      Andrew Koenig and Barbara E. Moo. This book was recommended
+      to me and I promptly read it cover-to-cover. I still refer to
+      it regularly as I'm coding.</p>
+    </div><!-- end div.section-indent -->
+  </div><!-- end div.section -->

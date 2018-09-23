@@ -1,0 +1,193 @@
+/* $Id$ */
+
+a { 
+color: white;
+}
+
+a:hover { 
+background: rgb(102, 0, 0); 
+color: white; 
+text-decoration: none;
+}
+
+code {
+font-size: 12px;
+font-family: monospace;
+white-space:pre;
+}
+
+pre {
+font-family:monospace;
+white-space:pre;
+}
+
+html, body, #all { 
+background-color: black;
+}
+
+p {
+padding: 8px;
+}
+
+h2 { 
+background: rgb(51, 51, 51); 
+color: white; 
+font: bold 17px "Trebuchet MS", Verdana, Arial, sans-serif; 
+margin: 10px 0 0 0; 
+padding: 5px 15px 5px 5px;
+text-align: left;
+}
+
+h3 {
+font-size: 16px;
+padding-top: 10px;
+}
+
+h2.indent {
+padding: 0 0 0 5px;
+}
+
+ul {
+list-style-type: disc;
+padding: 5px;
+}
+
+ol {
+list-style-type: decimal;
+padding: 5px;
+}
+
+div.section ul {
+padding-left: 10px;
+}
+
+div.section ol {
+padding-left: 15px;
+}
+
+ul ul {
+list-style-type: none;
+}
+
+ul li, ol li {
+padding: 5px 0 5px 0;
+}
+
+em {
+font-style: italic;
+}
+
+strong {
+font-weight: bold;
+font-style: italic;
+}
+
+#all { 
+padding-bottom: 10px;
+}
+
+#header a, #menu ul ul li a { 
+text-decoration: none;
+}
+
+#header, #menu ul {
+margin: 0;
+}
+
+#content { 
+margin: 0 210px 0 10px; 
+display: block;
+}
+
+#content, #header, #menu ul, #menu ul ul {
+text-align: left;
+}
+
+#header a { 
+background-color: rgb(51, 51, 51); 
+color: white; 
+display: block; 
+border-bottom: 7px solid rgb(102, 0, 0); 
+font: bold 53px "Trebuchet MS", Verdana, Arial, sans-serif; 
+letter-spacing: -3px;
+padding: 12px 10px 12px 20px; 
+}
+
+#menu { 
+display: inline; 
+float: right; 
+position: relative; 
+padding: 10px 11px 0 0; 
+width: 190px; 
+}
+
+#menu ul {
+font-weight: bold; 
+padding: 0;
+}
+
+#menu ul li { 
+background-color: rgb(51, 51, 51); 
+color: white; 
+font: 14px "Trebuchet MS", Verdana, Arial, sans-serif !important; 
+letter-spacing: 2px;  
+padding: 3px;
+margin-bottom: 10px;
+text-transform: uppercase;
+}
+
+
+#menu ul ul li {
+background-color: rgb(51, 51, 51); 
+color: white;
+font: 14px "Trebuchet MS", Verdana, Arial, sans-serif !important; 
+letter-spacing: 0; 
+text-transform: none !important;
+margin: 0; 
+padding: 0;
+}
+
+#menu ul ul li a {
+color: white;
+display: block;
+padding: 5px;
+}
+
+#menu ul ul li a:hover { 
+background-color: rgb(102, 0, 0); 
+border-right: 20px solid black;
+}
+
+#menu ul, #menu ul ul {
+list-style-type: none; 
+}
+
+#techfooter {
+background-color: rgb(51, 51, 51); 
+color: white;
+font: 12px "Trebuchet MS", Verdana, Arial, sans-serif;
+text-align: center;
+margin: 10px 0 10px 0;
+}
+
+.hidden {
+display: none;
+visibility: hidden;
+}
+
+.highlighted {
+background: yellow;
+color: black;
+font: bold 15px monospace;
+}
+
+.section, .section-indent { 
+background: rgb(10, 10, 10);
+color: white; 
+font: normal 14px Verdana, Tahoma, Arial, sans-serif; 
+margin: 0 0 0 0; 
+padding: 5px 10px 5px 10px; 
+text-align: justify;
+line-height: 1.4;
+}
+

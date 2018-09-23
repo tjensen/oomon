@@ -1,0 +1,601 @@
+# $Id$
+#
+# OOMon Help File
+# By Timothy L. Jensen
+#
+# Help File Syntax:
+# #   = comments
+# .s. = Syntax
+# .d. = Description
+# .e. = Example
+# .f. = Flags
+# .l. = See Also
+#
+# All other lines are considered start-of-topic.
+#
+auth
+.s.auth [<handle> [<password>]]
+.d.Attempts to gain authorization to use the
+.d.monitor bot.  The handle and password are
+.d.defined in the configuration file.
+.d.
+.d.When successful, user gains flags defined
+.d.in the configuration file for his user@host
+.d.mask and all connections are notified.
+.d.When unsuccessful, no changes are made to
+.d.the user's flags, but the other connections
+.d.are notified of the authorization failure.
+.e.> .auth Toast nothing
+.e.*** Authorization denied!
+.e.> .auth Toast secret
+.e.*** Authorization granted!
+autopilot
+.s.autopilot [ON|OFF]
+.d.Turns the autopilot feature on or off, or
+.d.returns the current setting if no
+.d.parameters are passed.
+.e.> .autopilot
+.e.*** Autopilot is OFF
+.e.> .autopilot on
+.e.*** Autopilot turned ON by Toast@OOMon
+.f.m
+chat
+.s.chat <message>
+.d.Sends a message to all other users.  Also,
+.d.any line that does not begin with the '.'
+.d.character is considered chat.
+.e.> .chat Testing 1 2 3
+.e.<Toast@OOMon> Testing 1 2 3
+.e.> blah blah blah
+.e.<Toast@OOMon> blah blah blah
+class
+.s.class [<class>]
+.d.Lists the number of connections in each
+.d.class.  If a class is specified, only the
+.d.number of connections in that particular
+.d.class is shown.
+.e.> .class
+.e.Class Count Description
+.e.   50 877   Client Class (*.com/*.net) - *700*
+.e.   80 435   Main Client Class (*@*)
+.e.   40 174   Client Class (*.org/*.edu) - *600*
+.e.   90 4     Oper Class
+.e.> .class 80
+.e.Class Count Description
+.e.   80 435   Main Client Class (*@*)
+.f.o
+.l.list
+clones
+.s.clones
+.d.Lists any instances of clones detected by
+.d.the monitor bot.
+.e.> .clones
+.e.Possible clonebots from the following hosts:
+.e.   7 connections in  32 seconds (18 total) from cheeseloaf.net
+.e.   3 connections in  26 seconds ( 4 total) from mainframe.sysedata.no
+.f.o
+.l.multi
+conn
+.s.conn <bot handle>
+.d.Links the monitor bot to another.
+.f.m
+.l.disconn
+.l.links
+die
+.s.die
+.d.Causes the bot to stop functioning.
+.e.> .die
+.e.As you wish...
+.e.*** DCC CHAT connection to oomon lost
+.f.m
+disconn
+.s.disconn <bot handle>
+.d.Disconnects from a linked monitor bot.
+.f.m
+.l.conn
+.l.links
+dline
+.s.dline <mask> <reason>
+.d.Adds a D: line (ban) for a particular IP
+.d.mask.
+.e.> .dline 255.255.255.* vhosted flood clones
+.e.OOMon added D-Line: 255.255.255.* (vhosted flood clones [Toast@OOMon])
+.f.d
+.l.kline
+domains
+.s.domains [<minimum users>]
+.d.Lists domains with at least as many users
+.d.connected to the server as specified in
+.d.the parameter.  If no minimum is passed,
+.d.the default (usually 5) is used.
+.e.> .domains 30
+.e.Domains with most users on the server:
+.e.  r0x.net                     186 users
+.e.  uu.net                       43 users
+.e.  isolnet.com                  38 users
+.e.  sy.net                       32 users
+.f.o
+.l.list
+.l.multi
+echo
+.s.echo [ON|OFF]
+.d.Enables or disables the echoing of your chatter.
+.d.When ON, your chatter will be echoed back to you.
+.d.When OFF, your chatter will not be echoed.  Use
+.d.the .echo command without any arguments to see
+.d.the current setting.
+.e.> .echo
+.e.*** Echo is OFF.
+.l.chat
+findd
+.s.findd <mask>
+.d.Searches for D: lines matching the mask.
+.e.> .findd 10.*
+.e.Finding D-lines matching 10.0.0.*
+.e.  10.0.0.1 (too many cabbages [Toast@LarzMON])
+.e.  10.37.2.16 (Clones are prohibited [Toast@LarzMON])
+.e.End of FINDD 10.0.0.*
+.f.o
+.l.dline
+.l.undline
+findk
+.s.findk <mask>
+.d.Searches for K: lines matching the mask.
+.e.> .findk *@*netscum.com
+.e.Finding K-lines matching *@*netscum.com:
+.e.  ~*@*.ix.netscum.com (Auto-kline, clones)
+.e.  *vvvwarvvv@*.ix.netscum.com (Clones are prohibited [Toast@LarzMON])
+.e.  *Sauthbe@*.ix.netscum.com (Clones are prohibited [Toast@OOMon])
+.e.  *AluCiDe@*.ix.netscum.com (clones/multiple servers)
+.e.End of FINDK *@*netscum.com
+.f.o
+.l.kline
+.l.unkline
+gbot
+.s.gbot [<duration>] <nick|mask>
+.d.Adds a K: line (ban) for a particular nick
+.d.or user@host mask on all linked bots with
+.d.the reason, "Bots are prohibited"
+.f.g
+.l.gline
+.l.kbot
+gclone
+.s.gclone [<duration>] <nick|mask>
+.d.Adds a K: line (ban) for a particular nick
+.d.or user@host mask on all linked bots with
+.d.the reason, "Clones are prohibited"
+.f.g
+.l.gline
+.l.kclone
+gflood
+.s.gflood [<duration>] <nick|mask>
+.d.Adds a K: line (ban) for a particular nick
+.d.or user@host mask on all linked bots with
+.d.the reason, "Flooding is prohibited"
+.f.g
+.l.gline
+.l.kflood
+gline
+.s.gline [<duration>] <nick|mask> <reason>
+.d.Adds a K: line (ban) for a particular nick
+.d.or user@host mask on all linked bots.
+.f.g
+.l.gbot
+.l.gclone
+.l.gflood
+.l.glink
+.l.gspam
+.l.gperm
+.l.kline
+.l.ungline
+glink
+.s.glink [<duration>] <nick|mask>
+.d.Adds a K: line (ban) for a particular nick
+.d.or user@host mask on all linked bots with
+.d.the reason, "Links lookers are
+.d.prohibited".
+.f.g
+.l.gline
+.l.klink
+gperm
+.s.gperm <nick|mask> <reason>
+.d.Adds a permanent K: line (ban) for a
+.d.particular nick or .d.user@host mask on
+.d.all linked bots.
+.f.g
+.l.gline
+.l.kperm
+gspam
+.s.gspam [<duration>] <nick|mask>
+.d.Adds a K: line (ban) for a particular nick
+.d.or user@host mask on all linked bots with
+.d.the reason, "Spamming is prohibited".
+.f.g
+.l.gline
+.l.kspam
+hmulti
+.s.hmulti [<number>]
+.d.Shows any *@host masks with multiple
+.d.connections.  Masks with 3 or more
+.d.connections are indicated with an arrow.
+.d.The minimum number of clones to show can
+.d.be changed by using the number option.
+.e.> .hmulti
+.e.Multiple clients from the following hostnames:
+.e. ==>  3 -- *@derf.COM
+.e.      2 -- *@duh-m.org
+.e.> .hmulti 3
+.e.Multiple clients from the following hostnames:
+.e.      3 -- *@derf.COM
+.f.o
+.l.multi
+.l.umulti
+.l.vmulti
+iplist
+.s.iplist <mask>
+.d.Lists all users whose user@ipaddr matches
+.d.the mask parameter.
+.e.> .iplist *bot*@192.168.*
+.e.The following clients match *bot*@192.168.*
+.e.  phlegm (hagbot@fakehost.localdomain) [192.168.4.73]
+.e.  sausage (aboth@192.168.204.12) [192.168.204.12]
+.e.  mcPoo (~botty@dhcp-4077.mash.nat) [192.168.17.2]
+.e.  zippy (~spambot@choo.choo.choose.me) [192.168.1.176]
+.e.4 matches for *bot*@192.168.* found
+.e.> .iplist 10.0.0.*
+.e.The following clients match 10.0.0.*
+.e.  pooter (crab@nasty.dingleberries.guh) [10.0.0.96]
+.e.1 match for 10.0.0.* found
+.f.o
+.l.list
+.l.killlist
+.l.nfind
+.l.multi
+.l.vmulti
+join
+.s.join <#channel> [<key>]
+.d.Causes the bot to join the channel.  The
+.d."key" parameter should be used for channels
+.d.set +k.
+.e.> .join #monitors
+.e.> .join #oomon magic
+.f.c
+.l.op
+.l.part
+kbot
+.s.kbot [<duration>] <nick|mask>
+.d.Adds a K: line (ban) for a particular nick
+.d.or user@host mask with the reason, "Bots
+.d.are prohibited".
+.e.> .kbot eviluser
+.e.OOMon added K-Line for [*monkey@*.spanky.com] [Bots are prohibited [Toast@OOMon]]
+.e.> .kbot 45 ~*@*cabbage.net
+.e.OOMon added temporary 45 min. K-Line for [~*@*cabbage.net] [Bots are prohibited [Toast@OOMon]]
+.f.k
+.l.gbot
+.l.kline
+kclone
+.s.kclone [<duration>] <nick|mask>
+.d.Adds a K: line (ban) for a particular nick
+.d.or user@host mask with the reason, "Clones
+.d.are prohibited".
+.e.> .kclone eviluser
+.e.OOMon added K-Line for [*monkey@*.spanky.com] [Clones are prohibited [Toast@OOMon]]
+.e.> .kclone 45 ~*@*cabbage.net
+.e.OOMon added temporary 45 min. K-Line for [~*@*cabbage.net] [Clones are prohibited [Toast@OOMon]]
+.f.k
+.l.gclone
+.l.kline
+kflood
+.s.kflood [<duration>] <nick|mask>
+.d.Adds a K: line (ban) for a particular nick
+.d.or user@host mask with the reason,
+.d."Flooding is prohibited".
+.e.> .kflood eviluser
+.e.OOMon added K-Line for [*monkey@*.spanky.com] [Flooding is prohibited [Toast@OOMon]]
+.e.> .kflood 45 ~*@*cabbage.net
+.e.OOMon added temporary 45 min. K-Line for [~*@*cabbage.net] [Flooding is prohibited [Toast@OOMon]]
+.f.k
+.l.gflood
+.l.kline
+kill
+.s.kill <nickname> <reason>
+.d.Forcibly disconnects a user from the IRC
+.d.server.
+.e.> .kill pooter do not spam!
+.e.Local kill for Pooter by OOMon ((Toast@OOMon) do not spam!)
+.f.o
+.l.killlist
+killlist
+.s.killlist <mask> [<reason>]
+.d.Forcibly disconnects all users whose
+.d.user@host data match the mask.  If no
+.d.reason is provided, the default of "Too
+.d.many connections, read MOTD" is used.
+.e.> .killlist *clones@*somehost.com
+.e.Local kill for Tooter by OOMon (Too many connections, read MOTD)
+.e.Local kill for Wooter by OOMon (Too many connections, read MOTD)
+.e.Local kill for Pooter by OOMon (Too many connections, read MOTD)
+.f.o
+.l.kill
+.l.list
+kline
+.s.kline [<duration>] <nick|mask> <reason>
+.d.Adds a K: line for a particular nick or
+.d.user@host mask.
+.e.> .kline *abuse@*naughty.org No naughty users allowed
+.e.OOMon added K-Line: *abuse@*naughty.org (No naughty users allowed [Toast@OOMon])
+.e.> .kline 60 *@trt-on1-01.netcom.ca go away and stuff
+.e.OOMon added temporary 60 min. K-Line for [*@trt-on1-01.netcom.ca] [go away and stuff [Toast@OOMon]]
+.f.k
+.l.findk
+.l.gline
+.l.kbot
+.l.kclone
+.l.kflood
+.l.klink
+.l.kperm
+.l.kspam
+.l.unkline
+klink
+.s.klink [<duration>] <nick|mask>
+.d.Adds a K: line (ban) for a particular nick
+.d.or user@host mask with the reason, "Links
+.d.lookers are prohibited".
+.e.> .klink eviluser
+.e.OOMon added K-Line for [*monkey@*.spanky.com] [Links lookers are prohibited [Toast@OOMon]]
+.e.> .klink 45 ~*@*cabbage.net
+.e.OOMon added temporary 45 min. K-Line for [~*@*cabbage.net] [Links lookers are prohibited [Toast@OOMon]]
+.f.k
+.l.glink
+.l.kline
+kperm
+.s.kperm <nick|mask> <reason>
+.d.Adds a permanent K: line (ban) for a
+.d.particular nick or user@host mask.
+.e.> .kperm *abuse@*naughty.org No naughty users allowed
+.e.OOMon added K-Line for [*abuse@*naughty.org] [PERM No naughty users allowed [Toast@OOMon]]
+.f.k
+.l.gperm
+.l.kline
+kspam
+.s.kspam [<duration>] <nick|mask>
+.d.Adds a K: line (ban) for a particular nick
+.d.or user@host mask with the reason,
+.d."Spamming is prohibited".
+.e.> .kspam eviluser
+.e.OOMon added K-Line for [*monkey@*.spanky.com] [Spamming is prohibited [Toast@OOMon]]
+.e.> .kspam 45 ~*@*cabbage.net
+.e.OOMon added temporary 45 min. K-Line for [~*@*cabbage.net] [Spamming is prohibited [Toast@OOMon]]
+.f.k
+.l.gspam
+.l.kline
+links
+.s.links
+.d.Lists all of the linked bots.
+.e.> .links
+.e.OOMon
+.e. \
+.e.  Foo
+.e.  |\
+.e.  | spunky
+.e.  | |\
+.e.  | | meaty
+.e.  |  \
+.e.  |   fruity
+.e.   \
+.e.    dorky
+.l.conn
+.l.disconn
+list
+.s.list <mask>
+.d.Lists all users whose user@host matches the
+.d.mask parameter.
+.e.> .list *@*.phx.slimenet.com
+.e.The following clients match *@*.phx.slimenet.com:
+.e.  madox (reining@ip20.phx.slimenet.com)
+.e.  Ter|away (~J@ip24.phx.slimenet.com)
+.e.  tater (~prayhrd@ip22.phx.slimenet.com)
+.e.  Mrr (~Someone@ip14.phx.slimenet.com)
+.e.4 matches for *@*.phx.slimenet.com found
+.f.o
+.l.iplist
+.l.killlist
+.l.nfind
+.l.multi
+motd
+.s.motd
+.d.Redisplays the Message of the Day.
+.e.> .motd
+.e.Message Of The Day:
+.e.  This is a boring MOTD.
+.e.
+.e.  blah blah blah.
+.e.End of MOTD
+multi.bots
+.s.multi [<number>]
+.s.bots [<number>]
+.d.Shows any user@*host masks with multiple
+.d.connections.  Masks with 3 or more
+.d.connections are indicated with an arrow.
+.d.The minimum number of clones to show can
+.d.be changed by using the number option.
+.e.> .multi
+.e.Multiple clients from the following userhosts:
+.e.      2 -- shadow@*rye.net
+.e.      2 -- ideal@*by.net
+.e. ==>  3 -- poofs@*derf.COM
+.e.      2 -- winata@*edu.au
+.e.> .multi 3
+.e.Multiple clients from the following userhosts:
+.e.      3 -- poofs@*derf.COM
+.f.o
+.l.hmulti
+.l.umulti
+.l.vmulti
+nfind
+.s.nfind <mask>
+.d.Lists all users whose nicknames match the
+.d.mask parameter.
+.e.> .nfind *bot*
+.e.The following clients match *bot*:
+.e.  Bebot (st0rm@sydney.shells.nu)
+.e.  Hole-yBot (holeyman@citadel.datacourse.com)
+.e.  AntiBot (~thebot@kermit.cs.hope.edu)
+.e.  GoldenBot (2323@iowa.eel.ufl.edu)
+.e.4 matches for *bot* found
+.f.o
+.l.list
+op
+.s.op <#channel> [<nickname>]
+.d.Ops a user in the channel.  If no nickname
+.d.is provided, the bot will attempt to op
+.d.you.  Note, if you have changed your IRC
+.d.nick since you connected to the bot via
+.d.DCC, this command might not work without a
+.d.nickname.
+.e.> .op #monitors
+.e.> .op #oomon Toast
+.f.c
+.l.join
+.l.part
+part
+.s.part <#channel>
+.d.Causes the bot to part the channel.
+.e.> .part #monitors
+.f.c
+.l.join
+.l.op
+quit
+.s.quit
+.d.Disconnects your DCC session with the
+.d.monitor bot.
+.e.> .quit
+.e.*** DCC CHAT connection to OOMon lost
+.l.auth
+reload
+.s.reload <type>
+.d.Reloads some aspect of the monitor bot.
+.d.Valid types are:
+.d.  CONFIG
+.d.  HELP
+.d.  DLINES
+.d.  KLINES
+.d.  USERS
+.e.> .reload klines
+.e.Reload KLINES requested by Toast@OOMon
+.f.o
+.l.trace
+trace
+.s.trace
+.d.Reloads the monitor bot's internal list of
+.d.users.  This command performs the same
+.d.action as ".reload users".
+.f.o
+.l.reload
+trap
+.s.trap [list]
+.s.trap remove <mask>
+.s.trap echo <mask>
+.s.trap kill <mask> <reason>
+.s.trap kline [<timeout>] <mask> <reason>
+.s.trap klinehost [<timeout>] <mask> <reason>
+.s.trap dline <mask> <reason>
+.s.trap dlinenet <mask> <reason>
+.d.Watches connecting clients and performs
+.d.the desired action on matching masks in the form
+.d.of nick!user@host.  Use 'list' to view the current
+.d.list of traps.  Use 'remove' to remove one of the
+.d.traps.  Use 'echo' to notify opers when a matching
+.d.client connects.  Use 'kill' to forcefully dis-
+.d.connect matching clients.  Use 'kline' to have a
+.d.k-line in the form of *user@*domain added when a
+.d.matching client connects.  Use 'klinehost' to
+.d.have *@host style k-lines added.  Use 'dline' to
+.d.have d-lines on the client's IP added.  Use
+.d.'dlinenet' to have d-lines on the client's /24
+.d.network block added.
+.e.> .trap klinehost pK-?????!*@* pK drone
+.e.Toast@OOMon added KLINEHOST pK-?????!*@* (pK drone)
+.e.> .trap dlinenet *!*rolex*@* packet monkey
+.e.Toast@OOMon added DLINENET *!*rolex*@* (packet monkey)
+.f.m
+.l.dline
+.l.kill
+.l.kline
+umulti
+.s.umulti [<number>]
+.d.Shows any user@* masks with multiple
+.d.connections.  Masks with 3 or more
+.d.connections are indicated with an arrow.
+.d.The minimum number of clones to show can be
+.d.changed by using the number option.
+.e.> .umulti
+.e.Multiple clients from the following usernames:
+.e. ==>  3 -- poofs@*
+.e.      2 -- jonpas@*
+.e.> .umulti 3
+.e.Multiple clients from the following userhosts:
+.e.      3 -- poofs@*
+.f.o
+.l.hmulti
+.l.multi
+.l.vmulti
+ungline
+.s.ungline <mask>
+.d.Removes a server K: line (ban) for a
+.d.particular user@host mask on all linked
+.d.monitor bots.
+.f.g
+.l.gline
+.l.unkline
+undline
+.s.undline <mask>
+.d.Removes a server D: line (ban) for a
+.d.particular IP mask.
+.e.> .undline 192.168.1.*
+.e.OOMon removed D-Line: 192.168.1.*
+.f.d
+.l.dline
+unkline
+.s.unkline <mask>
+.d.Removes a server K: line (ban) for a
+.d.particular user@host mask.
+.e.> .unkline *foo@*.blah.org
+.e.OOMon removed K-Line: *foo@*.blah.org
+.f.k
+.l.kline
+.l.ungline
+vmulti.vbots
+.s.vmulti [<number>]
+.s.vbots [<number>]
+.d.Shows any user@net* masks with multiple
+.d.connections.  Masks with 3 or more
+.d.connections are indicated with an arrow.
+.d.The minimum number of clones to show can be
+.d.changed by using the number option.
+.e.> .vmulti
+.e.Multiple clients from the following vhosts:
+.e.      2 -- l0ngb0ng@208.222.182.*
+.e.      2 -- test@193.15.35.*
+.e. ==>  3 -- poofs@192.168.1.*
+.e.> .vmulti 3
+.e.Multiple clients from the following vhosts:
+.e.      3 -- poofs@192.168.1.*
+.f.o
+.l.hmulti
+.l.iplist
+.l.multi
+.l.umulti
+who
+.s.who
+.d.Lists the currently connected users, their
+.d.flags, and their idle times.
+.e.> .who
+.e.Client connections:
+.e.DGKMOR Toast (toast@lalalala.Cheese.EDU) 0
+.e.D K O  i386 (i386@MooCow.com) 179162
+.e.  K O  narcotic (crusher@irc.monkeys.com) 362
+.e.  K O  xer (xer@friends.of.polofool.org) 6536
+.e. GK OR moogle (lb@invalid.fqdn.net) 43449
+.e.  K O  sublimez (sublimez@cheap.beer.com) 4

@@ -1,0 +1,11 @@
+DirectoryIndex index.php
+
+Options +FollowSymLinks 
+
+#RewriteEngine on
+#RewriteRule ^faq$		/?p=faq
+#RewriteRule ^cvs-install$	/?p=cvs-install
+#RewriteRule ^snap-install$	/?p=snap-install
+#RewriteRule ^oomon-cf$		/?p=oomon-cf
+##RewriteRule ^cmd-ref$		/?p=cmd-ref
+

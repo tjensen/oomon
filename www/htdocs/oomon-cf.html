@@ -1,0 +1,237 @@
+  <h2>The oomon.cf file, demystified</h2>
+
+  <div class="section">
+
+  <p><b>NOTE</b>: The format of the oomon.cf file may change
+  without notice. Documentation reflecting those changes is NOT
+  guaranteed to be shown in the text below.</p>
+
+  <h2 class="indent" id="b_lines">B: (bot) lines</h2>
+
+  <div class="section-indent">
+  <p><code>B:nickname:username:vhost:realname:opernick:operpass:</code></p>
+
+  <p>The B: line sets options regarding the OOMon's identity.</p>
+
+  <p>The nickname field tells OOMon what nick to use when it is
+  connected to IRC.</p>
+
+  <p>The username field tells OOMon how to identify its username
+  when it connects to IRC. This field can be left blank, as OOMon
+  will try to retrieve its username from the operating system.</p>
+
+  <p>The vhost field tells OOMon what hostname it should connect to
+  IRC from. If left blank, OOMon will retrieve the hostname from
+  the operating system.</p>
+
+  <p>The realname field tells OOMon what to use as its IRCNAME when
+  connecting to an IRC server.</p>
+
+  <p>The opernick field sets the nick OOMon should use when using
+  the OPER command after connecting to the IRC server.</p>
+
+  <p>The operpass field sets the password OOMon should use when
+  using the OPER command after connecting to the IRC server. This
+  field must be the plaintext password!</p>
+  </div><!-- end div.section-indent -->
+
+  <h2 class="indent" id="s_lines">S: (server) lines</h2>
+
+  <div class="section-indent">
+  <p><code>S:hostname:port:password:channels:</code></p>
+
+  <p>The S: line tells OOMon how to connect to IRC.</p>
+
+  <p>The hostname field tells OOMon the address of the IRC server
+  to connect to.</p>
+
+  <p>The port field tells OOMon what port to connect to.</p>
+
+  <p>The password field tells OOMon what password to use to gain
+  access to the IRC server. This field must be the plaintext
+  password! Leave this field blank if no password is required to
+  connect.</p>
+
+  <p>The channels field tells OOMon what channels to join after
+  connecting to the IRC server.</p>
+  </div><!-- end div.section-indent -->
+
+  <h2 class="indent" id="h_lines">H: (help file) lines</h2>
+
+  <div class="section-indent">
+  <p><code>H:filename:</code></p>
+
+  <p>An H: line tells OOMon where to find the help file.</p>
+  </div><!-- end div.section-indent -->
+
+  <h2 class="indent" id="i_lines">I: (include) lines</h2>
+
+  <div class="section-indent">
+  <p><code>I:filename:</code></p>
+
+  <p>An I: line tells OOMon to read an additional file for
+  configuration data. This gives the user the ability to organize
+  configuration information, such as placing user data in another
+  file.</p>
+  </div><!-- end div.section-indent -->
+
+  <h2 class="indent" id="o_lines">O: (operator) lines</h2>
+
+  <div class="section-indent">
+  <p><code>O:handle:userhostmask:password:flags:</code></p>
+
+  <p>O: lines tell OOMon who is authorized to connect via DCC.</p>
+
+  <p>The handle field is "nickname" an oper identifies himself as
+  when he uses the .auth command. If no handle is specified, the
+  user's IRC nick is used for chatline features, etc.</p>
+
+  <p>The userhostmask field specifies what user@host mask the oper
+  is allowed to connect from.</p>
+
+  <p>The password field sets the password the oper must enter when
+  using the .auth command. If USE_CRYPT is set (see oomon.h) this
+  field should be ciphertext. Otherwise, it is the plaintext
+  password.</p>
+
+  <p>The flags field determines which commands the oper may use.
+  Acceptable flags are:</p>
+
+  <ul>
+    <li><code>C</code> - Channel (.join, .part, .op)</li>
+
+    <li><code>D</code> - D-line (.dline)</li>
+
+    <li><code>G</code> - G-line (.gline, .gclone, .gflood,
+    etc.)</li>
+
+    <li><code>K</code> - K-line (.kline, .kclone, .kflood,
+    etc.)</li>
+
+    <li><code>M</code> - Master (.die, .reload, etc.)</li>
+
+    <li><code>N</code> - Can see client nick changes</li>
+
+    <li><code>O</code> - Oper (.kill, .multi, .list, etc.)</li>
+
+    <li><code>R</code> - Remove (.command@otherbot)</li>
+
+    <li><code>W</code> - Can see WALLOPS/OPERWALL/LOCOPS
+    messages</li>
+
+    <li><code>X</code> - Can see client connects/disconnects</li>
+  </ul>
+
+  <p>The stock <i>userlist.cf</i> file contains the line:</p>
+
+  <p><code>O::*@*::</code></p>
+
+  <p>Don't be fooled. <strong>This is NOT a back door</strong>.
+  Because this line does not specify any flags, it simply allows
+  any user to connect and, after entering the .auth command without
+  specifying a handle or password, talk on the chatline. If you
+  don't want J. Random User connecting and using the chatline,
+  remove this O: line.</p>
+  </div><!-- end div.section-indent -->
+
+  <h2 class="indent" id="e_lines">E: (exception) lines</h2>
+
+  <div class="section-indent">
+  <p><code>E:mask:</code></p>
+
+  <p>E: lines tell OOMon not to kill or k-line certain user@host
+  masks.</p>
+  </div><!-- end div.section-indent -->
+
+  <h2 class="indent" id="m_line">M: (MOTD) line</h2>
+
+  <div class="section-indent">
+  <p><code>M:filename:</code></p>
+
+  <p>The M: line tells OOMon what file to read when displaying the
+  Message of the Day. The default is <i>motd.txt</i>.</p>
+  </div><!-- end div.section-indent -->
+
+  <h2 class="indent" id="g_line">G: (log) line</h2>
+
+  <div class="section-indent">
+  <p><code>G:filename:</code></p>
+
+  <p>The G: line tells OOMon what file to write its log to. The
+  default is "oomon.log".</p>
+  </div><!-- end div.section-indent -->
+
+  <h2 class="indent" id="h_line">H: (help file) line</h2>
+
+  <div class="section-indent">
+  <p><code>H:filename:</code></p>
+
+  <p>The H: line tells OOMon what file to read when displaying help
+  text The default is "oomon.help".</p>
+  </div><!-- end div.section-indent -->
+
+  <h2 class="indent" id="t_line">T: (OOMon settings file) line</h2>
+
+  <div class="section-indent">
+  <p><code>T:filename:</code></p>
+
+  <p>The T: line tells OOMon what file to read or write when
+  loading or saving its settings. The default is
+  "oomon.settings".</p>
+  </div><!-- end div.section-indent -->
+
+  <h2 class="indent" id="u_line">U: (User settings file) line</h2>
+
+  <div class="section-indent">
+  <p><code>U:filename:</code></p>
+
+  <p>The U: line tells OOMon what file to read/write when loading
+  or saving user-specific settings (watches, etc.). The default is
+  "users.db".</p>
+  </div><!-- end div.section-indent -->
+
+  <h2 class="indent" id="p_lines">P: (port) lines</h2>
+
+  <div class="section-indent">
+  <p><code>P:portnum:</code></p>
+
+  <p>The P: line tells OOMon what port to listen to for incoming
+  OOMon connections. By default, OOMon listens to port 4000.</p>
+  </div><!-- end div.section-indent -->
+
+  <h2 class="indent" id="l_lines">L: (link) lines</h2>
+
+  <div class="section-indent">
+  <p><code>L:Handle:hostmask:password:flags:</code></p>
+
+  <p><i>This section is under construction</i></p>
+  </div><!-- end div.section-indent -->
+
+  <h2 class="indent" id="c_lines">C: (connect) lines</h2>
+
+  <div class="section-indent">
+  <p><code>C:Handle:hostname:password:flags:port:</code></p>
+
+  <p><i>This section is under construction</i></p>
+  </div><!-- end div.section-indent -->
+
+  <h2 class="indent" id="y_lines">Y: (class) lines</h2>
+
+  <div class="section-indent">
+  <p><code>Y:classnum:description:</code></p>
+
+  <p>The Y: lines set the descriptions associated with particular
+  user classes when using the .class command.</p>
+  </div><!-- end div.section-indent -->
+
+  <h2 class="indent" id="w_lines">W: (wingate) lines</h2>
+
+  <div class="section-indent">
+  <p><code>W:vhost:</code></p>
+
+  <p>The W: line tells OOMon what hostname to use when detecting
+  open-access WinGates and SOCKS proxies. By default, the vhost
+  listed in the B: line is used.</p>
+  </div><!-- end div.section-indent -->
+
+  </div><!-- end div.section -->

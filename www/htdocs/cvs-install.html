@@ -1,0 +1,132 @@
+<!-- $Id -->
+
+  <h2>How to build OOMon from CVS sources</h2>
+
+  <div class="section">
+    <p>NOTE: Text in <tt>fixed width format</tt> is the input and
+    output you should see. <b>Boldface</b> indicates user input.
+    <span class="highlighted">Highlighted text</span> is user input
+    that is subject to change. Output may vary slightly, depending
+    on your configuration.</p>
+
+    <h2 class="indent">1. Make sure you have <a href=
+    "http://www.cvshome.org">CVS</a> installed, then checkout the
+    code from CVS.</h2>
+
+    <div class="section-indent">
+      <p><code>$ <b>cvs -d:pserver:anonymous@oomon.cvs.sf.net:/cvsroot/oomon login</b>
+Logging in to :pserver:anonymous@oomon.cvs.sf.net:2401/cvsroot/oomon
+CVS password: <b>(leave blank, just press return)</b>
+$ <b>cvs -Q -z3 -d:pserver:anonymous@oomon.cvs.sf.net:/cvsroot/oomon co oomon</b></code></p>
+    </div>
+
+    <h2 class="indent">2. Change to the newly created "oomon"
+    directory.</h2>
+
+    <div class="section-indent">
+       <p><code>$ <b>cd oomon</b></code></p>
+    </div>
+
+    <h2 class="indent">3. Because you're building from sources in
+    CVS, you will have to generate the "./configure" script. Make
+    sure you have <a href=
+    "http://www.gnu.org/software/autoconf/">Autoconf</a> installed,
+    then generate "defs.h.in" and "configure".</h2>
+
+    <div class="section-indent">
+      <p><code>$ <b>autoheader autoconf/configure.ac &gt; defs.h.in</b>
+$ <b>autoconf autoconf/configure.ac &gt; configure ; chmod 755 configure</b></code></p>
+
+      <p>NOTE: I know there are other ways to accomplish the above,
+      but this appears to be the best way to play nice with the
+      many different platforms and autoconf versions that
+      exist.</p>
+    </div>
+
+    <h2 class="indent">4. Build OOMon just as you would if you were
+    building from a snapshot or release tarball.</h2>
+
+    <div class="section-indent">
+      <p><code>$ <b>./configure</b> <span class=
+"highlighted">--prefix=/home/avj/sandbox/cvs/oomon-install</span>
+checking build system type... i686-pc-linux-gnu
+checking host system type... i686-pc-linux-gnu
+this is OOMon version 2.3-DEV
+
+checking for g++... g++
+checking for C++ compiler default output... a.out
+checking whether the C++ compiler works... yes
+
+--- snip ---
+
+configure: creating ./config.status
+config.status: creating makefile
+config.status: creating defs.h
+
+OOMon has been configured with the following options:
+
+-- snip --
+
+            Compiler: g++
+      Compiler flags: -g -O2 -Wall
+        Linker flags: 
+           Libraries: -lresolv -lcrypt -lstdc++  -lnsl</code></p>
+    </div>
+
+    <h2 class="indent">5. Run `make` to build the executable.</h2>
+
+    <div class="section-indent">
+      <p><code>$ <b>make</b>
+g++ -g -O2 -Wall -I./libs -DHAVE_CONFIG_H -DBOOST_DISABLE_THREADS 
+-DLOGDIR=\"/home/avj/sandbox/cvs/oomon-install/logs\" 
+-DETCDIR=\"/home/avj/sandbox/cvs/oomon-install/etc\" -c action.cc
+g++ -g -O2 -Wall -I./libs -DHAVE_CONFIG_H -DBOOST_DISABLE_THREADS 
+-DLOGDIR=\"/home/avj/sandbox/cvs/oomon-install/logs\" 
+-DETCDIR=\"/home/avj/sandbox/cvs/oomon-install/etc\" -c adnswrap.cc
+g++ -g -O2 -Wall -I./libs -DHAVE_CONFIG_H -DBOOST_DISABLE_THREADS 
+-DLOGDIR=\"/home/avj/sandbox/cvs/oomon-install/logs\" 
+-DETCDIR=\"/home/avj/sandbox/cvs/oomon-install/etc\" -c arglist.cc
+
+--- snip ---</code></p>
+    </div>
+
+    <h2 class="indent">6. Run `make install` to install OOMon in
+    the directory you chose with `--prefix`.</h2>
+
+    <div class="section-indent">
+      <p><code>$ <b>make install</b>
+/bin/mkdir -p /home/avj/sandbox/cvs/oomon-install
+/bin/mkdir -p /home/avj/sandbox/cvs/oomon-install/bin
+/bin/mkdir -p /home/avj/sandbox/cvs/oomon-install/etc
+/bin/mkdir -p /home/avj/sandbox/cvs/oomon-install/logs
+/usr/bin/install -c oomon /home/avj/sandbox/
+cvs/oomon-install/bin
+/usr/bin/install -c mkpasswd /home/avj/sandbox/
+cvs/oomon-install/bin
+/usr/bin/install -c -m 644 oomon.cf /home/avj/sandbox/
+cvs/oomon-install/etc/oomon.cf.sample
+/usr/bin/install -c -m 644 oomon.cf /home/avj/sandbox/
+cvs/oomon-install/etc/oomon.cf
+
+-- snip --</code></p>
+    </div>
+
+    <h2 class="indent">7. Edit the configuration files in
+    '$PREFIX/etc' to your liking. NOTE: All configuration files
+    have a corresponding (and identical to the original) '.sample'
+    file to keep as a reference.</h2>
+
+    <div class="section-indent">
+      <p><code>$ <b>cd</b> <span class=
+"highlighted">/home/avj/sandbox/cvs/oomon-install/etc</span>
+$ <b>vi oomon.cf userlist.cf remotes.cf scanner.cf oomon-motd.txt</b></code></p>
+    </div>
+
+    <h2 class="indent">8. Start OOMon!</h2>
+
+    <div class="section-indent">
+      <p><code>$ <b>cd</b> <span class=
+"highlighted">/home/avj/sandbox/cvs/oomon-install/bin</span>
+$ <b>./oomon</b></code></p>
+    </div>
+  </div><!-- end div.section -->

@@ -1,0 +1,142 @@
+<!-- $Id$ -->
+
+  <h2>How to build OOMon from a development snapshot</h2>
+
+  <div class="section">
+    <p style="color: red; font-size: 26px;"><b>THIS METHOD IS DEPRECATED.</p>
+    <p>PLEASE USE THE <a href="?p=cvs-install">CVS INSTALL</a> METHOD INSTEAD.</b></p>
+
+    <p>NOTE: Text in <tt>fixed width format</tt> is the input and
+    output you should see. <b>Boldface</b> indicates user input.
+    <span class="highlighted">Highlighted text</span> is user input
+    that is subject to change. Output may vary slightly, depending
+    on your configuration.</p>
+
+    <h2 class="indent">1. Retrieve the latest OOMon source snapshot
+    via FTP using <code>wget</code>, <code>curl</code>, or an FTP
+    client of your choosing.</h2>
+
+    <div class="section-indent">
+      <p><code>$ <b>wget <a href=
+"ftp://grind.realfx.net/pub/irc/oomon/oomon-latest_SNAP.tar.gz">ftp://grind.realfx.net/pub/irc/oomon/oomon-latest_SNAP.tar.gz</a></b>
+--21:06:55--  ftp://grind.realfx.net/pub/irc/oomon/oomon-latest_SNAP.tar.gz
+           =&gt; `oomon-latest_SNAP.tar.gz'
+Resolving grind.realfx.net... done.
+Connecting to grind.realfx.net[198.182.76.5]:21... connected.
+Logging in as anonymous ... Logged in!
+==&gt; SYST ... done.    ==&gt; PWD ... done.
+==&gt; TYPE I ... done.  ==&gt; CWD /pub/irc/oomon ... done.
+==&gt; PASV ... done.    ==&gt; RETR oomon-latest_SNAP.tar.gz ... done.
+Length: 1,873,443 (unauthoritative)
+
+100%[====================================&gt;] 1,873,443    152.28K/s    ETA 00:00
+
+21:07:24 (152.28 KB/s) - `oomon-latest_SNAP.tar.gz' saved [1873443]</code></p>
+    </div>
+
+    <h2 class="indent">2. Extract the source tarball and enter the
+    "oomon" directory.</h2>
+
+    <div class="section-indent">
+      <p><code>$ <b>gunzip -c oomon-latest_SNAP.tar.gz | tar xf -</b>
+
+$ <b>ls -l</b>
+total 1944
+drwx------    5 avj      avj          4096 Oct  7 15:53 oomon
+-rw-r--r--    1 avj      avj       1866105 Oct  7 18:07 oomon-late
+st_SNAP.tar.gz
+$ <b>cd oomon</b></code></p>
+    </div>
+
+    <h2 class="indent">3. Run `configure --help` and review the
+    options.</h2>
+
+    <div class="section-indent">
+      <p><code>$ <b>./configure --help</b></code></p>
+    </div>
+
+    <h2 class="indent">4. Run `configure --prefix=&lt;prefix&gt;
+    &lt;options&gt;`. NOTE: It's desirable at this step to know
+    where you plan on installing oomon and be sure and use the full
+    path (minus trailing slash) as the prefix.</h2>
+
+    <div class="section-indent">
+      <p><code>$ <b>./configure</b> <span class=
+"highlighted">--prefix=/home/avj/sandbox/oomon-install</span>
+checking build system type... i686-pc-linux-gnu
+checking host system type... i686-pc-linux-gnu
+this is OOMon version 2.3-DEV
+
+checking for g++... g++
+checking for C++ compiler default output... a.out
+checking whether the C++ compiler works... yes
+
+--- snip ---
+
+configure: creating ./config.status
+config.status: creating makefile
+config.status: creating defs.h
+
+-- snip --
+
+            Compiler: g++
+      Compiler flags: -g -O2 -Wall
+        Linker flags: 
+           Libraries: -lresolv -lcrypt -lstdc++  -lnsl</code></p>
+    </div>
+
+    <h2 class="indent">5. Run `make` to build the executable.</h2>
+
+    <div class="section-indent">
+      <p><code>$ <b>make</b>
+g++ -g -O2 -Wall -I./libs -DHAVE_CONFIG_H -DBOOST_DISABLE_THREADS 
+-DLOGDIR=\"/home/avj/sandbox/oomon-install/logs\" 
+-DETCDIR=\"/home/avj/sandbox/oomon-install/etc\"  -c action.cc
+g++ -g -O2 -Wall -I./libs -DHAVE_CONFIG_H -DBOOST_DISABLE_THREADS 
+-DLOGDIR=\"/home/avj/sandbox/oomon-install/logs\" 
+-DETCDIR=\"/home/avj/sandbox/oomon-install/etc\"  -c adnswrap.cc
+g++ -g -O2 -Wall -I./libs -DHAVE_CONFIG_H -DBOOST_DISABLE_THREADS 
+-DLOGDIR=\"/home/avj/sandbox/oomon-install/logs\" 
+-DETCDIR=\"/home/avj/sandbox/oomon-install/etc\"  -c arglist.cc
+
+--- snip ---</code></p>
+    </div>
+
+    <h2 class="indent">6. Run `make install` to install OOMon in
+    the directory you chose with `--prefix`.</h2>
+
+    <div class="section-indent">
+      <p><code>$ <b>make install</b>
+/bin/mkdir -p /home/avj/sandbox/oomon-install
+/bin/mkdir -p /home/avj/sandbox/oomon-install/bin
+/bin/mkdir -p /home/avj/sandbox/oomon-install/etc
+/bin/mkdir -p /home/avj/sandbox/oomon-install/logs
+/usr/bin/install -c oomon /home/avj/sandbox/oomon-install/bin
+/usr/bin/install -c mkpasswd /home/avj/sandbox/oomon-install/bin
+/usr/bin/install -c -m 644 oomon.cf /home/avj/sandbox
+/oomon-install/etc/oomon.cf.sample
+/usr/bin/install -c -m 644 oomon.cf /home/avj/sandbox
+/oomon-install/etc/oomon.cf
+
+-- snip --</code></p>
+    </div>
+
+    <h2 class="indent">7. Edit the configuration files in
+    '$PREFIX/etc' to your liking. NOTE: All configuration files
+    have a corresponding (and identical to the original) '.sample'
+    file to keep as a reference.</h2>
+
+    <div class="section-indent">
+      <p><code>$ <b>cd</b> <span class=
+"highlighted">/home/avj/sandbox/oomon-install/etc</span>
+$ <b>vi oomon.cf userlist.cf remotes.cf scanner.cf oomon-motd.txt</b></code></p>
+    </div>
+
+    <h2 class="indent">8. Start OOMon!</h2>
+
+    <div class="section-indent">
+      <p><code>$ <b>cd</b> <span class=
+"highlighted">/home/avj/sandbox/oomon-install/bin</span>
+$ <b>./oomon</b></code></p>
+    </div>
+  </div><!-- end div.section -->

@@ -1,0 +1,228 @@
+<HTML>
+<HEAD>
+<TITLE>Downloading, building, configuring, and running OOMon</TITLE>
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFFF">
+<CENTER><TABLE WIDTH=600><TR><TD BGCOLOR="#000000" CELLPADDING=1 CELLSPACING=0>
+<TABLE WIDTH=100%><TR><TD BGCOLOR="#FFFFFF" CELLPADDING=2>
+<B>NOTE</B>: Text in <TT>fixed width format</TT> is the input
+and output you should see.  <TT><B>Boldface</B></TT> indicates user input.
+<TT><B><FONT COLOR="#0000A0">Blue text</FONT></B></TT> is user input
+(filenames) which is subject to change.  Output may vary slightly, depending
+on your configuration.
+</TD></TR></TABLE>
+</TD></TR></TABLE></CENTER>
+<OL type=I>
+<B><LI>Retrieve the OOMon source via FTP:</B>
+ <UL><PRE>
+$ <B>ftp ftp.blackened.com</B>
+Connected to ftp.blackened.com.
+220 ftp.blackened.com FTP server ready.
+Name (ftp.blackened.com:username): <B>anonymous</B>
+331 Guest login ok, send your complete e-mail address as password.
+Password:
+230 Guest login ok, access restrictions apply.
+Remote system type is UNIX.
+Using binary mode to transfer files.
+ftp> <B>cd /pub/irc/oomon</B>
+250 CWD command successful.
+ftp> <B>dir</B>
+200 PORT command successful.
+150 Opening ASCII mode data connection for /bin/ls.
+total 156
+-rw-r--r--  1 toast  users  77478 Jul 24 19:01 oomon-19990724_SNAP.tar.gz
+226 Transfer complete.
+ftp> <B>binary</B>
+200 Type set to I.
+ftp> <B>get <FONT COLOR="#0000A0">oomon-19990724_SNAP.tar.gz</FONT></B>
+local: oomon-19990724_SNAP.tar.gz remote: oomon-19990724_SNAP.tar.gz
+200 PORT command successful.
+150 Opening BINARY mode data connection for oomon-19990724_SNAP.tar.gz (77478 by
+tes).
+100% |**************************************************| 77478       00:00 ETA
+226 Transfer complete.
+77478 bytes received in 36.89 seconds (2.05 KB/s)
+ftp> <B>quit</B>
+221-You have transferred 77478 bytes in 1 files.
+221-Total traffic for this session was 78470 bytes in 2 transfers.
+221-Thank you for using the FTP service on ftp.blackened.com.
+221 Goodbye.
+$ <B>gunzip -c <FONT COLOR="#0000A0">oomon-19990724_SNAP.tar.gz</FONT> | tar xvf -</B>
+oomon-1.1.0-CURRENT/
+oomon-1.1.0-CURRENT/INSTALL
+oomon-1.1.0-CURRENT/acconfig.h
+oomon-1.1.0-CURRENT/config.cc
+oomon-1.1.0-CURRENT/config.h
+oomon-1.1.0-CURRENT/configure
+oomon-1.1.0-CURRENT/configure.in
+oomon-1.1.0-CURRENT/dcc.cc
+oomon-1.1.0-CURRENT/dcc.h
+oomon-1.1.0-CURRENT/defs.h.in
+oomon-1.1.0-CURRENT/engine.cc
+oomon-1.1.0-CURRENT/engine.h
+oomon-1.1.0-CURRENT/irc.cc
+oomon-1.1.0-CURRENT/irc.h
+oomon-1.1.0-CURRENT/klines.cc
+oomon-1.1.0-CURRENT/klines.h
+oomon-1.1.0-CURRENT/links.cc
+oomon-1.1.0-CURRENT/links.h
+oomon-1.1.0-CURRENT/list.cc
+oomon-1.1.0-CURRENT/list.h
+oomon-1.1.0-CURRENT/log.cc
+oomon-1.1.0-CURRENT/log.h
+oomon-1.1.0-CURRENT/main.cc
+oomon-1.1.0-CURRENT/main.h
+oomon-1.1.0-CURRENT/makefile.in
+oomon-1.1.0-CURRENT/motd.txt
+oomon-1.1.0-CURRENT/oomon-supfile
+oomon-1.1.0-CURRENT/oomon.cf
+oomon-1.1.0-CURRENT/oomon.h
+oomon-1.1.0-CURRENT/proxy.cc
+oomon-1.1.0-CURRENT/proxy.h
+oomon-1.1.0-CURRENT/remote.cc
+oomon-1.1.0-CURRENT/remote.h
+oomon-1.1.0-CURRENT/run
+oomon-1.1.0-CURRENT/stringlist.h
+oomon-1.1.0-CURRENT/userlist.cf
+oomon-1.1.0-CURRENT/util.cc
+oomon-1.1.0-CURRENT/util.h
+oomon-1.1.0-CURRENT/wingate.cc
+oomon-1.1.0-CURRENT/wingate.h
+$ <B>cd <FONT COLOR="#0000A0">oomon-1.1.0-CURRENT</FONT></B>
+ </PRE></UL>
+<B><LI>Run configure</B>
+ <UL><PRE>
+$ <B>./configure</B>
+creating cache ./config.cache
+this is OOMon version 1.1.0-CURRENT
+
+checking for c++... c++
+checking whether the C++ compiler (c++  ) works... yes
+checking whether the C++ compiler (c++  ) is a cross-compiler... no
+checking whether we are using GNU C++... yes
+checking whether c++ accepts -g... yes
+checking how to run the C++ preprocessor... c++ -E
+checking for gcc... gcc
+checking whether the C compiler (gcc  ) works... yes
+checking whether the C compiler (gcc  ) is a cross-compiler... no
+checking whether we are using GNU C... yes
+checking whether gcc accepts -g... yes
+checking for POSIXized ISC... no
+checking for NeXT... checking how to run the C preprocessor... gcc -E
+no
+checking for AIX... no
+checking whether gcc needs -traditional... no
+checking for getpwnam in -lsun... no
+checking for qnx... no
+checking for solaris... no
+checking for SVR4... no
+checking for -I/usr/netinclude... no
+checking for sys/un.h... yes
+checking for sys/select.h... yes
+checking for sys/fcntl.h... yes
+checking for sys/file.h... yes
+checking for sys/time.h... yes
+checking for sys/wait.h... yes
+checking for sys/twg_config.h... no
+checking for sys/ptem.h... no
+checking for stdarg.h... yes
+checking for unistd.h... yes
+checking for fcntl.h... yes
+checking for string.h... yes
+checking for memory.h... yes
+checking for netdb.h... yes
+checking for limits.h... yes
+checking for termbits.h... no
+checking for setsid... yes
+checking for getpgid... yes
+checking for getsid... yes
+checking for scandir... yes
+checking for memmove... yes
+checking for uname... yes
+checking for getcwd... yes
+checking for fchmod... yes
+checking for strerror... yes
+checking for ANSI C header files... yes
+checking whether time.h and sys/time.h may both be included... yes
+checking for dirent.h that defines DIR... yes
+checking for opendir in -ldir... no
+checking return type of signal handlers... void
+checking for mode_t... yes
+checking for pid_t... yes
+checking for size_t... yes
+checking for uid_t in sys/types.h... yes
+checking for hpux version... no
+checking for ultrix... no
+checking for POSIX.1... yes
+checking for sequent/ptx... no
+checking for struct linger... yes
+checking for select... yes
+checking signal implimentation
+checking for sigaction... yes
+using posix signals
+checking for waitpid declaration... yes
+checking for sys_errlist declaration... yes
+checking for a 64 bit pointer... no
+checking for a 32 bit integer... unsigned long
+checking for crypt in -ldescrypt... yes
+checking for socket in -lsocket... no
+checking for socket in -linet... no
+checking for gethostname in -lnsl... no
+checking for inet_addr in -ldgc... no
+checking for gethostbyname in -lresolv... no
+generating a list of signal names...
+updating cache ./config.cache
+creating ./config.status
+creating makefile
+creating defs.h
+</PRE></UL>
+<B><LI><A HREF="oomon_h.html">Edit <I>oomon.h</I> to your liking</A> -- NOTE:
+Users of OOMon v2.0 and higher should <U>SKIP THIS STEP</U>!</B>
+ <UL><PRE>
+$ <B>vi oomon.h</B>
+ </PRE></UL>
+<B><LI>Run make to build executable</B>
+ <UL><PRE>
+$ <B>make</B>
+c++ -g -O2 -DHAVE_CONFIG_H -c config.cc
+c++ -g -O2 -DHAVE_CONFIG_H -c dcc.cc
+c++ -g -O2 -DHAVE_CONFIG_H -c engine.cc
+c++ -g -O2 -DHAVE_CONFIG_H -c irc.cc
+c++ -g -O2 -DHAVE_CONFIG_H -c klines.cc
+c++ -g -O2 -DHAVE_CONFIG_H -c links.cc
+c++ -g -O2 -DHAVE_CONFIG_H -c list.cc
+c++ -g -O2 -DHAVE_CONFIG_H -c log.cc
+c++ -g -O2 -DHAVE_CONFIG_H -c main.cc
+c++ -g -O2 -DHAVE_CONFIG_H -c proxy.cc
+c++ -g -O2 -DHAVE_CONFIG_H -c remote.cc
+c++ -g -O2 -DHAVE_CONFIG_H -c util.cc
+c++ -g -O2 -DHAVE_CONFIG_H -c wingate.cc
+c++ -g -O2 -DHAVE_CONFIG_H -o oomon config.o dcc.o engine.o irc.o klines.o links
+.o list.o  log.o main.o proxy.o remote.o util.o wingate.o -lstdc++ -lg++ -ldescr
+ypt
+ </PRE></UL>
+<B><LI><A HREF="oomon_cf.html">Edit <I>oomon.cf</I> to your liking</A></B>
+ <UL><PRE>
+$ <B>vi oomon.cf</B>
+ </PRE></UL>
+<B><LI><A HREF="userlist_cf.html">Edit <I>userlist.cf</I> to your liking</A></B>
+ <UL><PRE>
+$ <B>vi userlist.cf</B>
+ </PRE></UL>
+<B><LI><A HREF="motd_txt.html">Edit <I>motd.txt</I> to your liking</A></B>
+ <UL><PRE>
+$ <B>vi motd.txt</B>
+ </PRE></UL>
+<B><LI>NOTE:</B> You should copy your configuration files and OOMon executable
+to another directory before continuing, to prevent yourself from accidentally
+deleting or overwriting your changes next time you update your source
+tree.</LI><P>
+<B><LI>Run OOMon</B>
+ <UL><PRE>
+$ <B>./oomon</B>
+ </PRE></UL>
+</OL>
+<HR>
+<a href="http://sourceforge.net"><img src="http://sourceforge.net/sflogo.php?group_id=94236&amp;type=2" width="125" height="37" border="0" alt="SourceForge.net Logo" /></a>
+</BODY>
+</HTML>
