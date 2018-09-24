@@ -466,6 +466,13 @@ main()
   AC_MSG_RESULT(none, using unsigned long)
   AC_DEFINE(UNKNOWN_32INT, 1, [define this if you are unsure what is is 32 bits])), :)
 
+dnl Optionally report warnings as errors
+AC_ARG_ENABLE([strict],
+              AS_HELP_STRING([--enable-strict],
+                             [Enable strict compilation where warnings are reported as errors.]))
+AS_IF([test "x$enable_strict" = "xyes"],
+      [CXXFLAGS="$CXXFLAGS -Werror"])
+
 #
 # libraries
 #
