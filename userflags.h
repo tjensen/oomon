@@ -41,7 +41,7 @@ public:
 
   UserFlags(void);
   UserFlags(const Bit b);
-  UserFlags(const Bit b, const Bit b);
+  UserFlags(const Bit ba, const Bit bb);
   UserFlags(const std::string & bits, const char separator);
 
   ~UserFlags() { }

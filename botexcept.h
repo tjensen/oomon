@@ -25,6 +25,7 @@
 #include <string>
 #include <stdexcept>
 #include <cerrno>
+#include <cstring>
 
 // OOMon Headers
 #include "oomon.h"
@@ -57,7 +58,7 @@ namespace OOMon
     errno_error(const std::string & arg) : oomon_error(arg)
       { this->errno_ = errno; };
 #if defined(HAVE_STRERROR)
-    std::string why() const { return ::strerror(this->errno_); };
+    std::string why() const { return std::strerror(this->errno_); };
 #else
     std::string why() const { return std::string("error"); };
 #endif

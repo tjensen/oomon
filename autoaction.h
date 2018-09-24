@@ -48,7 +48,7 @@ class AutoAction
     StrVector server(void) const { return this->server_; }
 
     static std::string get(const AutoAction * value);
-    static std::string set(AutoAction * value, const std::string & value);
+    static std::string set(AutoAction * action, const std::string & value);
 
     static ::Setting Setting(AutoAction & action);
 

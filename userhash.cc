@@ -667,7 +667,7 @@ UserHash::findUsers(BotClient * client, const Filter & filter, ActionPtr action)
 bool
 UserHash::have(std::string nick) const
 {
-  return (this->findUser(nick));
+  return (this->findUser(nick).get());
 }
 
 
