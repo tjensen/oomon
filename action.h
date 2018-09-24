@@ -81,8 +81,8 @@ namespace Action
     bad_action(const std::string & arg) : oomon_error(arg) { }
   };
 
-  boost::shared_ptr<Nothing> parse(BotClient * client,
-      std::string text, const FormatSet & formats) throw(bad_action);
+  boost::shared_ptr<Nothing> parse(
+          BotClient * client, std::string text, const FormatSet & formats);
 };
 
 

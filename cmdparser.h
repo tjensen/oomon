@@ -50,12 +50,11 @@ public:
   public:
     exception(const std::string & arg) : oomon_error(arg) { };
   };
-  static void insufficient_privileges(void) throw(CommandParser::exception)
+  static void insufficient_privileges(void)
   {
     throw CommandParser::exception("*** Insufficient privileges!");
   }
   static void syntax(const std::string & command, const std::string & args)
-    throw(CommandParser::exception)
   {
     throw CommandParser::exception("*** Syntax: ." + command + " " + args);
   }

@@ -116,7 +116,6 @@ Action::Kill::operator()(const UserEntryPtr user)
 
 boost::shared_ptr<Action::Nothing>
 Action::parse(BotClient * client, std::string text, const FormatSet & formats)
-  throw(Action::bad_action)
 {
   boost::shared_ptr<Action::Nothing> result;
 
