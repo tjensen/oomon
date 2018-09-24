@@ -41,7 +41,7 @@ libexecdir = @libexecdir@
 sysconfdir = @sysconfdir@
 logdir = @localstatedir@/logs
 
-CXXFLAGS = @CXXFLAGS@ -I./libs
+CXXFLAGS = @CXXFLAGS@
 
 OBJS =	action.o adnswrap.o arglist.o autoaction.o botdb.o botsock.o \
         cmdparser.o config.o dcc.o dcclist.o dnsbl.o engine.o filter.o flood.o \
