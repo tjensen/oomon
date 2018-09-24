@@ -929,16 +929,21 @@ std::string classCMask(const std::string & ip)
 //  The resulting token-separated string.
 //////////////////////////////////////////////////////////////////////
 std::string
-StrJoin(char token, const StrVector & items)
+StrJoin(char, const StrVector & items)
 {
   std::string result;
 
   for (StrVector::size_type index = 0; index < items.size(); index++)
   {
     if (index == 0)
+    {
       result = items[index];
+    }
     else
-      result += " " + items[index];
+    {
+      result += " ";
+      result += items[index];
+    }
   }
 
   return result;
@@ -1185,7 +1190,7 @@ hexDump(const void *buffer, const int size)
   {
     for (int i = 0; i < size; ++i)
     {
-      char *nibble = "0123456789ABCDEF";
+      const char *nibble = "0123456789ABCDEF";
 
       if (result.length() > 0)
       {

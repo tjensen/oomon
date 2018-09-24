@@ -381,7 +381,7 @@ Remote::onRead(std::string text)
 
 
 bool
-Remote::onAuth(const std::string & from, const std::string & command,
+Remote::onAuth(const std::string &, const std::string & command,
   const StrVector & parameters)
 {
   bool result = false;
@@ -470,7 +470,7 @@ Remote::parse(std::string text)
 
 
 bool
-Remote::onError(const std::string & from, const std::string & command,
+Remote::onError(const std::string &, const std::string &,
   const StrVector & parameters)
 {
   std::string handle(this->getHandle());
@@ -504,8 +504,8 @@ Remote::onError(const std::string & from, const std::string & command,
 
 
 bool
-Remote::onPing(const std::string & from, const std::string & command,
-  const StrVector & parameters)
+Remote::onPing(const std::string & from, const std::string &,
+  const StrVector &)
 {
   if (from.empty())
   {
@@ -517,8 +517,7 @@ Remote::onPing(const std::string & from, const std::string & command,
 
 
 bool
-Remote::onPong(const std::string & from, const std::string & command,
-  const StrVector & parameters)
+Remote::onPong(const std::string &, const std::string &, const StrVector &)
 {
   return true;
 }

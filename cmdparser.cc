@@ -218,32 +218,31 @@ CommandParser::parse(BotClient * from, const std::string & command,
 
 
 void
-CommandParser::cmdWho(BotClient * from, const std::string & command,
-  std::string parameters)
+CommandParser::cmdWho(BotClient * from, const std::string &, std::string)
 {
   clients.who(from);
 }
 
 
 void
-CommandParser::cmdLinks(BotClient * from, const std::string & command,
-  std::string parameters)
+CommandParser::cmdLinks(BotClient * from, const std::string &,
+  std::string)
 {
   remotes.getLinks(from);
 }
 
 
 void
-CommandParser::cmdMotd(BotClient * from, const std::string & command,
-  std::string parameters)
+CommandParser::cmdMotd(BotClient * from, const std::string &,
+  std::string)
 {
   ::motd(from);
 }
 
 
 void
-CommandParser::cmdStatus(BotClient * from, const std::string & command,
-  std::string parameters)
+CommandParser::cmdStatus(BotClient * from, const std::string &,
+  std::string)
 {
   users.status(from);
   ::status(from);
@@ -357,7 +356,7 @@ CommandParser::cmdKline(BotClient * from, const std::string & command,
 
 
 void
-CommandParser::cmdUnkline(BotClient * from, const std::string & command,
+CommandParser::cmdUnkline(BotClient * from, const std::string &,
   std::string parameters)
 {
   std::string target = FirstWord(parameters);
@@ -376,7 +375,7 @@ CommandParser::cmdUnkline(BotClient * from, const std::string & command,
 
 
 void
-CommandParser::cmdDline(BotClient * from, const std::string & command,
+CommandParser::cmdDline(BotClient * from, const std::string &,
   std::string parameters)
 {
   unsigned int minutes = CommandParser::defaultDlineTimeout;
@@ -422,7 +421,7 @@ CommandParser::cmdDline(BotClient * from, const std::string & command,
 
 
 void
-CommandParser::cmdUndline(BotClient * from, const std::string & command,
+CommandParser::cmdUndline(BotClient * from, const std::string &,
   std::string parameters)
 {
   std::string target = FirstWord(parameters);
@@ -441,7 +440,7 @@ CommandParser::cmdUndline(BotClient * from, const std::string & command,
 
 
 void
-CommandParser::cmdJoin(BotClient * from, const std::string & command,
+CommandParser::cmdJoin(BotClient *, const std::string & command,
   std::string parameters)
 {
   std::string channel = FirstWord(parameters);
@@ -459,7 +458,7 @@ CommandParser::cmdJoin(BotClient * from, const std::string & command,
 
 
 void
-CommandParser::cmdOp(BotClient * from, const std::string & command,
+CommandParser::cmdOp(BotClient *, const std::string & command,
   std::string parameters)
 {
   std::string channel = FirstWord(parameters);
@@ -477,7 +476,7 @@ CommandParser::cmdOp(BotClient * from, const std::string & command,
 
 
 void
-CommandParser::cmdPart(BotClient * from, const std::string & command,
+CommandParser::cmdPart(BotClient *, const std::string & command,
   std::string parameters)
 {
   std::string channel = FirstWord(parameters);
@@ -624,7 +623,7 @@ CommandParser::cmdReload(BotClient * from, const std::string & command,
 
 
 void
-CommandParser::cmdTrap(BotClient * from, const std::string & command,
+CommandParser::cmdTrap(BotClient * from, const std::string &,
   std::string parameters)
 {
   TrapList::cmd(from, parameters);
@@ -632,7 +631,7 @@ CommandParser::cmdTrap(BotClient * from, const std::string & command,
 
 
 void
-CommandParser::cmdSet(BotClient * from, const std::string & command,
+CommandParser::cmdSet(BotClient * from, const std::string &,
   std::string parameters)
 {
   std::string varName = FirstWord(parameters);
@@ -933,7 +932,7 @@ CommandParser::cmdFindd(BotClient * from, const std::string & command,
 
 
 void
-CommandParser::cmdClass(BotClient * from, const std::string & command,
+CommandParser::cmdClass(BotClient * from, const std::string &,
   std::string parameters)
 {
   std::string className = FirstWord(parameters);
@@ -1016,7 +1015,7 @@ CommandParser::cmdMulti(BotClient * from, const std::string & command,
 
 void
 CommandParser::cmdClones(BotClient * from, const std::string & command,
-  std::string parameters)
+  std::string)
 {
   if (0 == command.compare("vclones"))
   {
@@ -1030,7 +1029,7 @@ CommandParser::cmdClones(BotClient * from, const std::string & command,
 
 
 void
-CommandParser::cmdSeedrand(BotClient * from, const std::string & command,
+CommandParser::cmdSeedrand(BotClient * from, const std::string &,
   std::string parameters)
 {
   ArgList args("-r -count", "-min");
@@ -1085,7 +1084,7 @@ CommandParser::cmdSeedrand(BotClient * from, const std::string & command,
 
 
 void
-CommandParser::cmdDie(BotClient * from, const std::string & command,
+CommandParser::cmdDie(BotClient * from, const std::string &,
   std::string parameters)
 {
   from->send("As you wish...");
@@ -1108,7 +1107,7 @@ CommandParser::cmdDie(BotClient * from, const std::string & command,
 
 
 void
-CommandParser::cmdRaw(BotClient * from, const std::string & command,
+CommandParser::cmdRaw(BotClient * from, const std::string &,
   std::string parameters)
 {
   Log::Write("RAW by " + from->handleAndBot() + ": " + parameters);
@@ -1117,8 +1116,7 @@ CommandParser::cmdRaw(BotClient * from, const std::string & command,
 
 
 void
-CommandParser::cmdSave(BotClient * from, const std::string & command,
-  std::string parameters)
+CommandParser::cmdSave(BotClient * from, const std::string &, std::string)
 {
   if (config.saveSettings())
   {
@@ -1134,8 +1132,7 @@ CommandParser::cmdSave(BotClient * from, const std::string & command,
 
 
 void
-CommandParser::cmdLoad(BotClient * from, const std::string & command,
-  std::string parameters)
+CommandParser::cmdLoad(BotClient * from, const std::string &, std::string)
 {
   if (config.loadSettings())
   {
@@ -1151,8 +1148,7 @@ CommandParser::cmdLoad(BotClient * from, const std::string & command,
 
 
 void
-CommandParser::cmdSpamsub(BotClient * from, const std::string & command,
-  std::string parameters)
+CommandParser::cmdSpamsub(BotClient * from, const std::string &, std::string)
 {
   std::string notice("*** " + from->handleAndBot() +
     " subscribing to SpamTrap");
@@ -1165,8 +1161,7 @@ CommandParser::cmdSpamsub(BotClient * from, const std::string & command,
 
 
 void
-CommandParser::cmdSpamunsub(BotClient * from, const std::string & command,
-  std::string parameters)
+CommandParser::cmdSpamunsub(BotClient * from, const std::string &, std::string)
 {
   std::string notice("*** " + from->handleAndBot() +
     " unsubscribing from SpamTrap");
@@ -1179,8 +1174,7 @@ CommandParser::cmdSpamunsub(BotClient * from, const std::string & command,
 
 
 void
-CommandParser::cmdVersion(BotClient * from, const std::string & command,
-  std::string parameters)
+CommandParser::cmdVersion(BotClient * from, const std::string &, std::string)
 {
   from->send("OOMon version " OOMON_VERSION
 #if defined(__DATE__) && defined(__TIME__)
@@ -1205,7 +1199,7 @@ CommandParser::cmdVersion(BotClient * from, const std::string & command,
 
 
 void
-CommandParser::cmdTest(BotClient * from, const std::string & command,
+CommandParser::cmdTest(BotClient *, const std::string &,
   std::string parameters)
 {
   server.onServerNotice(parameters);

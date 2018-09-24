@@ -130,7 +130,8 @@ Proxy::detectedProxy(void)
     fmt.setStringToken('t', this->typeName());
 
     std::string cmdline(fmt.format(Proxy::exec));
-    std::system(cmdline.c_str());
+    int result = std::system(cmdline.c_str());
+    std::cout << "External command returned " << result << std::endl;
   }
 }
 

@@ -72,7 +72,7 @@ Socks4::onConnect()
 
   struct passwd *tmppw = getpwuid(getuid());
 
-  char *tmp;
+  const char *tmp;
 
   if (tmppw && tmppw->pw_name)
     tmp = tmppw->pw_name;

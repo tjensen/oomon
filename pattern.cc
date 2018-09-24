@@ -436,10 +436,13 @@ grabPattern(std::string & input, const std::string & delimiters)
 
 
 void
+#ifdef PATTERN_DEBUG
 patternStatus(BotClient * client)
 {
-#ifdef PATTERN_DEBUG
   client->send("Patterns: " + boost::lexical_cast<std::string>(patternCount));
+#else
+patternStatus(BotClient *)
+{
 #endif
 }
 

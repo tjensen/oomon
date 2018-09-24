@@ -170,7 +170,7 @@ Services::onXoNotice(std::string text)
 
 
 void
-Services::onCaNotice(std::string Text)
+Services::onCaNotice(std::string)
 {
 #ifdef CA_SERVICES
   char *text[MAX_BUFF];
@@ -274,9 +274,9 @@ Services::onCaNotice(std::string Text)
 }
 
 void
+#ifdef CA_SERVICES
 Services::onIson(const std::string & text)
 {
-#ifdef CA_SERVICES
   StrVector nicks;
 
   StrSplit(nicks, " ", server.upCase(text), true);
@@ -296,6 +296,9 @@ Services::onIson(const std::string & text)
       this->gettingCaReports = true;
     }
   }
+#else
+Services::onIson(const std::string &)
+{
 #endif
 }
 

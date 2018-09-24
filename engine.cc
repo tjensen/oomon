@@ -715,7 +715,7 @@ onClientExit(std::string text)
 
 
 bool
-onBotReject(std::string text)
+onBotReject(std::string)
 {
   return false;
 }

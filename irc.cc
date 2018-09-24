@@ -331,8 +331,8 @@ IRC::onRead(std::string text)
         // IRC >> :plasma.engr.arizona.edu 216 OOMon K *.monkeys.org * * foo llalalala (1998/03/03 11.18)
         // IRC >> :plasma.engr.arizona.edu 216 OOMon K *bork.com * *hork moo la la la (1998/03/03 11.18)
         if ((params.size() > 6) &&
-            ((params[3] == "K") && IRC::trackPermKlines_) ||
-            ((params[3] == "k") && IRC::trackTempKlines_))
+                (((params[3] == "K") && IRC::trackPermKlines_) ||
+                 ((params[3] == "k") && IRC::trackTempKlines_)))
         {
 	  std::string reason = (params.size() > 7) ? params[7] : "";
 	  for (StrVector::size_type pos = 8; pos < params.size(); pos++)
@@ -367,8 +367,8 @@ IRC::onRead(std::string text)
       case 225:
         // IRC >> :plasma.toast.pc 225 ToastFOO D 1.2.3.4 :foo (2003/1/9 17.27)
         if ((params.size() > 4) &&
-            ((params[3] == "D") && IRC::trackPermDlines_) ||
-            ((params[3] == "d") && IRC::trackTempDlines_))
+                (((params[3] == "D") && IRC::trackPermDlines_) ||
+                 ((params[3] == "d") && IRC::trackTempDlines_)))
         {
 	  std::string reason = (params.size() > 5) ? params[5] : "";
 	  for (StrVector::size_type pos = 6; pos < params.size(); pos++)

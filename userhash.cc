@@ -285,7 +285,7 @@ UserHash::setMaskHost(const std::string & nick, const std::string & realHost,
 
 void
 UserHash::updateOper(const std::string & nick, const std::string & userhost,
-  bool isOper)
+  bool)
 {
   UserEntryPtr find(this->findUser(nick, userhost));
 
@@ -1893,12 +1893,11 @@ bool
 UserHash::isOper(std::string nick, const std::string & userhost) const
 {
   UserEntryPtr find(this->findUser(nick, userhost));
-  bool result = false;
 
   if (find)
   {
     // Found the user -- is it an oper?
-    result = find->getOper();
+    return find->getOper();
   }
 
   return false;

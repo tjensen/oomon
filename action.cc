@@ -41,7 +41,7 @@ Action::Nothing::~Nothing(void)
 
 
 void
-Action::Nothing::operator()(const UserEntryPtr user)
+Action::Nothing::operator()(const UserEntryPtr)
 {
   // do nothing!
 }

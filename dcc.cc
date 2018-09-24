@@ -263,8 +263,7 @@ DCC::parse(std::string text)
 
 
 void
-DCC::cmdAuth(BotClient *from, const std::string & command,
-  std::string parameters)
+DCC::cmdAuth(BotClient *from, const std::string &, std::string parameters)
 {
   std::string authHandle = FirstWord(parameters);
   std::string handle;
@@ -311,8 +310,7 @@ DCC::cmdAuth(BotClient *from, const std::string & command,
 
 
 void
-DCC::cmdQuit(BotClient *from, const std::string & command,
-  std::string parameters)
+DCC::cmdQuit(BotClient *, const std::string &, std::string)
 {
   throw DCC::quit("*** Client issued QUIT command.");
 }
@@ -323,8 +321,7 @@ DCC::cmdQuit(BotClient *from, const std::string & command,
 // Handles any text which should be interpretted as chatter.
 //
 void
-DCC::cmdChat(BotClient *from, const std::string & command,
-  std::string parameters)
+DCC::cmdChat(BotClient *from, const std::string &, std::string parameters)
 {
   if (DCC::unauthedMayChat || from->flags().has(UserFlags::AUTHED))
   {
@@ -480,8 +477,7 @@ DCC::statsP(StrList & output) const
 
 
 void
-DCC::cmdWatch(BotClient *from, const std::string & command,
-  std::string parameters)
+DCC::cmdWatch(BotClient *from, const std::string &, std::string parameters)
 {
   if (parameters.empty())
   {
@@ -498,8 +494,7 @@ DCC::cmdWatch(BotClient *from, const std::string & command,
 
 
 void
-DCC::cmdEcho(BotClient *from, const std::string & command,
-  std::string parameters)
+DCC::cmdEcho(BotClient *from, const std::string &, std::string parameters)
 {
   std::string parm = UpCase(FirstWord(parameters));
 

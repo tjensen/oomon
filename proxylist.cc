@@ -450,7 +450,8 @@ ProxyList::setPorts(ProxyList::PortSet * ports, const std::string & newValue)
 {
   std::string result;
 
-  if ((newValue.length() > 1) && (newValue[0] == '+') || (newValue[0] == '-'))
+  if ((newValue.length() > 1) &&
+          ((newValue[0] == '+') || (newValue[0] == '-')))
   {
     char action = newValue[0];
 

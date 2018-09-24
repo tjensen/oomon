@@ -103,7 +103,11 @@ class BotDB::Lock
 };
 
 
+#if defined(HAVE_LIBGDBM) || defined(HAVE_BSDDB)
 BotDB::BotDB(const std::string & file, int mode)
+#else
+BotDB::BotDB(const std::string &, int)
+#endif
 {
 #if defined(HAVE_LIBGDBM)
   db = gdbm_open(const_cast<char *>(file.c_str()), 0,
@@ -141,7 +145,7 @@ BotDB::del(const std::string & key)
   BotDB::Lock lock(this->fd(), BotDB::Lock::EXCLUSIVE);
 
 #if defined(HAVE_LIBGDBM)
-  datum k = { dptr: const_cast<char *>(key.c_str()), dsize: key.length() + 1 };
+  datum k = { dptr: const_cast<char *>(key.c_str()), dsize: static_cast<int>(key.length()) + 1 };
 
   return gdbm_delete(this->db, k);
 #elif defined(HAVE_BSDDB)
@@ -199,7 +203,7 @@ BotDB::get(const std::string & key, std::string & data)
   BotDB::Lock lock(this->fd(), BotDB::Lock::SHARED);
 
 #if defined(HAVE_LIBGDBM)
-  datum k = { dptr: const_cast<char *>(key.c_str()), dsize: key.length() + 1 };
+  datum k = { dptr: const_cast<char *>(key.c_str()), dsize: static_cast<int>(key.length()) + 1 };
 
   datum d = gdbm_fetch(this->db, k);
 
@@ -321,7 +325,7 @@ BotDB::strerror(const int db_errno)
   return gdbm_strerror(db_errno);
 #elif defined(HAVE_BSDDB)
 # if defined(HAVE_STRERROR)
-  return ::strerror(db_errno);
+  return std::strerror(db_errno);
 # else
   return std::string("error");
 # endif

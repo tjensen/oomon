@@ -84,7 +84,7 @@ UserEntry::version(void)
 
 
 void
-UserEntry::hasVersion(const std::string & version)
+UserEntry::hasVersion(const std::string &)
 {
   this->versioned = 0;
 }

@@ -167,7 +167,7 @@ public:
   // parameters, count and interval, indicate an action should be
   // taken.  They may also want to call this function to determine
   // if the user should be exempt from actions.
-  bool triggered(const int & count, const std::time_t & interval) const
+  bool triggered(const int &, const std::time_t &) const
   {
     // Return true if the user is not an Oper and is not E: lined.
     return (!config.isExempt(this->userhost, Config::EXEMPT_FLOOD) &&

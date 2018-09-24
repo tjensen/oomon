@@ -99,7 +99,7 @@ BotSock::BotSock(const BotSock *listener, const bool blocking,
 #endif
   bindAddress(listener->bindAddress), timeout(listener->timeout),
   connected(true), connecting(false), listening(false),
-  backlog(listener->backlog)
+  blocking(blocking), lineBuffered(lineBuffered), backlog(listener->backlog)
 {
   struct sockaddr remotehost;
   memset(&remotehost, 0, sizeof(remotehost));
@@ -838,10 +838,13 @@ BotSock::onRead(const char *data, const int size)
 
 
 void
+#ifdef BOTSOCK_DEBUG
 botSockStatus(BotClient * client)
 {
-#ifdef BOTSOCK_DEBUG
   client->send("Sockets: " + boost::lexical_cast<std::string>(botSockCount));
+#else
+botSockStatus(BotClient *)
+{
 #endif
 }
 

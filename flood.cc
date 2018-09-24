@@ -141,16 +141,20 @@ FloodList::onNotice(const std::string & notice, std::string text,
 
   // Remove brackets/parentheses from userhost
   if ((userhost.length() > 0) &&
-    ((userhost[0] == '[') && (userhost[userhost.length() - 1] == ']')) ||
-    ((userhost[0] == '(') && (userhost[userhost.length() - 1] == ')')))
+          (((userhost[0] == '[') &&
+            (userhost[userhost.length() - 1] == ']')) ||
+           ((userhost[0] == '(') &&
+            (userhost[userhost.length() - 1] == ')'))))
   {
     userhost = server.downCase(userhost.substr(1, userhost.length() - 2));
   }
 
   // Remove brackets/parentheses from serverName
   if ((serverName.length() > 0) &&
-    ((serverName[0] == '[') && (serverName[serverName.length() - 1] == ']')) ||
-    ((serverName[0] == '(') && (serverName[serverName.length() - 1] == ')')))
+          (((serverName[0] == '[') &&
+            (serverName[serverName.length() - 1] == ']')) ||
+           ((serverName[0] == '(') &&
+            (serverName[serverName.length() - 1] == ')'))))
   {
     serverName = server.downCase(serverName.substr(1, serverName.length() - 2));
   }
