@@ -15,3 +15,4 @@ oomon-users.db
 oomon.settings
 .depend
 autom4te.cache/
+*.o
