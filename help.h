@@ -32,8 +32,14 @@
 class Help
 {
 private:
+    
+#if __cplusplus >= 201103L // C++ v11 or newer    
+  static thread_local std::list<HelpTopic> topics;
+  static thread_local StrList topicList;
+#else
   static std::list<HelpTopic> topics;
-  static StrList topicList;
+  static StrList topicList;  
+#endif
 
   static bool haveTopic(const std::string &);
   static bool getIndex(class BotClient * client);

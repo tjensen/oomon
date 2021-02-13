@@ -29,17 +29,19 @@
 #include "util.h"
 #include "botclient.h"
 
-
+#if __cplusplus >= 201103L // C++ v11 or newer
+thread_local std::list<HelpTopic> Help::topics;
+thread_local StrList Help::topicList;
+#else
 std::list<HelpTopic> Help::topics;
 StrList Help::topicList;
+#endif
 
 
 bool
 Help::haveTopic(const std::string & topic)
 {
   return (topics.end() != std::find(topics.begin(), topics.end(), topic));
-
-  return false;
 }
 
 
